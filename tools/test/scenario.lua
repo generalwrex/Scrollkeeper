@@ -63,3 +63,40 @@ end
 for _, t in ipairs(tip.added) do print("  tip:", t) end
 SlashCmdList.SCROLLKEEPER("tooltips"); SlashCmdList.SCROLLKEEPER("bogus")
 print("errors:", #ScrollkeeperDB.errors); for _, e in ipairs(ScrollkeeperDB.errors) do print("  ERR", e.where, e.error) end
+
+-- NETWORK
+runTimers()  -- NET_READY after 8s timer
+print("sent after ready:", #SENT); for _, m in ipairs(SENT) do end
+for i = 1, 8 do tickAll() end
+for _, m in ipairs(SENT) do print("  sent", m[3], m[2]) end
+-- someone answers
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|0.5.0|MAGE|24|41|120|15.50|Saber", "GUILD", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "T|15#1|277483:12,-5:9", "GUILD", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "T|15#1|277483:999999", "GUILD", "Evil-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "P|1458#1|36.16:4,10.10:2", "GUILD", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "L|1458|0.731|0.335|The Magic Quarter", "GUILD", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|0.4.0|MAGE|20|57|100|15||Player-1-ABC", "GUILD", "Archmage Naage")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "T|15#1|277483:50", "GUILD", "Archmage Naage")
+local mages = SK.MagesWhoNeed(15); print("mages need 15:", #mages, mages[1] and mages[1].name)
+local odds, total, players = SK.CommunityOdds(15); print("odds 15 total", total, "players", players)
+for _, o in ipairs(odds) do print("  ", o.name, o.count) end
+local cells = SK.DropCells(1458); local n = 0; for c, v in pairs(cells) do n = n + 1 end; print("drop cells", n)
+print("library pins", #SK.LibraryPins(1458))
+-- my loot
+fire("CHAT_MSG_LOOT", "You receive loot: |cnIQ1:|Hitem:211786::::::::20:1482:::::::::|h[Scroll: CWAL]|h|r.")
+print("my drops", SK.db.drops[1458] and SK.db.drops[1458]["36.16"])
+-- tooltip with peers
+ScrollkeeperDB.showTooltips = true
+local tip = { added = {} }
+function tip:AddLine(t) self.added[#self.added + 1] = t end
+function tip:AddDoubleLine(a, b) self.added[#self.added + 1] = a .. " = " .. b end
+for _, fn in ipairs(TOOLTIP_CALLS) do fn(tip, { lines = { { leftText = "Requires Comprehension (15)" } } }) end
+for _, t in ipairs(tip.added) do print("  tip:", t) end
+SlashCmdList.SCROLLKEEPER("demo")
+print("peers with demo", #SK.PeerList())
+local odds1, t1, p1 = SK.CommunityOdds(1); print("demo odds tier1", t1, p1, odds1[1].name)
+SlashCmdList.SCROLLKEEPER("net")
+SlashCmdList.SCROLLKEEPER("demo")
+print("peers after demo off", #SK.PeerList())
+if SK.isMage then print("study button", ScrollkeeperStudyButton._attrs.spell, "bundle", ScrollkeeperBundleButton._attrs.item) end
+print("errors:", #ScrollkeeperDB.errors); for _, e in ipairs(ScrollkeeperDB.errors) do print("  ERR", e.where, e.error) end

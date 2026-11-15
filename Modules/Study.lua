@@ -60,6 +60,18 @@ local function CurrentPlace()
     return zone, sub
 end
 
+-- Where the player is on the zone map: mapID, x, y (0 to 1), or nil.
+function SK.PlayerMapPosition()
+    if not (C_Map and C_Map.GetBestMapForUnit) then return nil end
+    local mapID = C_Map.GetBestMapForUnit("player")
+    if not mapID then return nil end
+    local position = C_Map.GetPlayerMapPosition(mapID, "player")
+    if not position then return nil end
+    local x, y = position:GetXY()
+    if not x or (x == 0 and y == 0) then return nil end
+    return mapID, x, y
+end
+
 -- true if you are in a known or learned library, plus the place name.
 function SK.InLibrary()
     local zone, sub = CurrentPlace()
@@ -79,6 +91,13 @@ SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
     if not SK.db.libraries[key] then
         SK.db.libraries[key] = true
         SK.Print("learned a new library: " .. sub)
+    end
+    -- Remember where on the map, for the map pin and for sharing.
+    local mapID, x, y = SK.PlayerMapPosition()
+    if mapID then
+        SK.db.libraryPins = SK.db.libraryPins or {}
+        SK.db.libraryPins[key] = { mapID = mapID, x = x, y = y, name = sub }
+        SK.Send("MY_DATA_CHANGED")
     end
 end)
 

@@ -63,6 +63,17 @@ local function Finish()
     db.results[entry.tier] = db.results[entry.tier] or {}
     db.results[entry.tier][result] = (db.results[entry.tier][result] or 0) + 1
 
+    -- The same count by item ID, which is the same in every language.
+    -- This is what gets shared with other players.
+    if entry.resultID then
+        db.resultsByID = db.resultsByID or {}
+        db.resultsByID[entry.tier] = db.resultsByID[entry.tier] or {}
+        local byID = db.resultsByID[entry.tier]
+        byID[entry.resultID] = (byID[entry.resultID] or 0) + 1
+        db.itemNames = db.itemNames or {}
+        db.itemNames[entry.resultID] = result
+    end
+
     -- Remember whether it raised the skill, by tier and colour, so the
     -- skill-up guesses can be checked against what really happens.
     local skillNow = SK.GetComprehension().rank
@@ -88,6 +99,7 @@ local function Finish()
         SK.Print("deciphered: " .. result .. skillText)
     end
     SK.Send("LOG_CHANGED")
+    SK.Send("MY_DATA_CHANGED")
 end
 
 local function IsDecipherSpell(spellID)
@@ -123,7 +135,10 @@ end)
 SK.On("CHAT_MSG_LOOT", function(message)
     if not pending or pending.result or type(message) ~= "string" then return end
     local name = message:match("|h%[(.-)%]|h")
-    if name then pending.result = name end
+    if name then
+        pending.result = name
+        pending.resultID = tonumber(message:match("item:(%d+)"))
+    end
     if pending.tier and pending.result then Finish() end
 end)
 

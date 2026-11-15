@@ -12,6 +12,14 @@ Mage scroll helper for WoW Forever.
   other classes see that it's a mage scroll to mail or sell. Hold Shift to see
   what it can become.
 - **Luck log:** records what each decipher produced. `/sk log`.
+- **Network (guild and group):** other Scrollkeeper users share what their
+  scrolls became (community odds, Shift on a scroll tooltip), which mages
+  still get skill-ups from which tiers (tooltips name them), libraries, and
+  where scrolls drop. `/sk net` opens the Network window. Only scroll data
+  is sent; turn it off in the settings.
+- **World map pins:** libraries where Study worked, and spots where
+  untranslated scrolls dropped (yours and shared).
+- **Study and Open bundle buttons** on the panel, no bags needed.
 - **Settings:** Options > AddOns > Scrollkeeper, or `/sk options`.
 
 Nothing is automatic: every cast is one click from the player.
@@ -22,6 +30,8 @@ Nothing is automatic: every cast is one click from the player.
 | --- | --- |
 | `/sk` | show or hide the panel |
 | `/sk options` | open the settings page |
+| `/sk net` | the Network window |
+| `/sk demo` | try the network features with made-up players |
 | `/sk log` | what your deciphers have produced |
 | `/sk reset` | move the panel to the middle and reset its size |
 | `/sk scan` | developer: dump game data to the saved file |
@@ -37,6 +47,8 @@ Commands.lua          slash commands
 Core/                 shared helpers and game IDs
 Data/                 scroll tiers, skill-up colours, weapon upgrades
 Modules/              one feature per file, no drawing
+Network/              talking to other players' Scrollkeeper (protocol notes in each file)
+Map/                  world map pins
 UI/                   everything you can see
 Dev/                  /sk scan data collection tool
 tools/test/           runs the addon in a fake WoW (not loaded by the game)

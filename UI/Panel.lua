@@ -195,7 +195,7 @@ local function Build()
     -- Summary line beside the portrait, like "Level 20 Mage".
     parts.summary = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     parts.summary:SetPoint("TOPLEFT", 62, -32)
-    parts.summary:SetPoint("RIGHT", panel, "RIGHT", -52, 0)
+    parts.summary:SetPoint("RIGHT", panel, "RIGHT", -74, 0)
     parts.summary:SetJustifyH("CENTER")
     parts.summary:SetWordWrap(false)
 
@@ -210,6 +210,14 @@ local function Build()
             SK.RefreshPanel()
         end)
     parts.collapse:SetPoint("RIGHT", parts.gear, "LEFT", -4, 0)
+
+    parts.network = IconButton("Interface\\Icons\\INV_Misc_Book_09", 18,
+        function()
+            local count = #SK.PeerList()
+            return ("Network: %d Scrollkeeper |4user:users; heard from"):format(count)
+        end,
+        function() SK.ToggleNetwork() end)
+    parts.network:SetPoint("RIGHT", parts.collapse, "LEFT", -4, 0)
 
     -- Comprehension bar
     parts.skillBar = SK.UI.CreateBar(panel, INNER, 16)
@@ -257,6 +265,29 @@ local function Build()
     Row("feathers", "Light Feathers", true)
     Row("library", "Library", false)
 
+    -- Study and Open bundle: secure buttons, one click each, no bags needed.
+    local half = (INNER - 6) / 2
+    parts.study = CreateFrame("Button", "ScrollkeeperStudyButton", panel,
+        "SecureActionButtonTemplate,UIPanelButtonTemplate")
+    parts.study:SetSize(half, 22)
+    parts.study:RegisterForClicks("AnyUp", "AnyDown")
+    parts.study:SetAttribute("type", "spell")
+    parts.study:SetAttribute("spell", SK.SPELL_STUDY)
+    parts.study:SetText("Study")
+    parts.study:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Study")
+        GameTooltip:AddLine("Makes a Bundle of Scrolls. Needs a library and a Light Feather. One hour cooldown.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    parts.study:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    parts.bundle = CreateFrame("Button", "ScrollkeeperBundleButton", panel,
+        "SecureActionButtonTemplate,UIPanelButtonTemplate")
+    parts.bundle:SetSize(half, 22)
+    parts.bundle:RegisterForClicks("AnyUp", "AnyDown")
+    parts.bundle:SetText("Open bundle")
+
     parts.warning = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     parts.warning:SetWidth(INNER)
     parts.warning:SetJustifyH("LEFT")
@@ -285,7 +316,7 @@ local function Layout()
 
     local body = {
         parts.skillBar, parts.decipherHeader, parts.decipher, parts.scrollsHeader,
-        parts.studyHeader, parts.studyBar, parts.warning,
+        parts.studyHeader, parts.studyBar, parts.warning, parts.study, parts.bundle,
     }
     for _, region in ipairs(body) do region:SetShown(not collapsed) end
     for _, row in pairs(rows) do row:SetShown(not collapsed) end
@@ -340,6 +371,26 @@ local function Layout()
     y = Place(parts.studyBar, y, 16) - 6
     y = Place(rows.feathers, y, ROW_HEIGHT)
     y = Place(rows.library, y, ROW_HEIGHT)
+
+    -- Study / Open bundle
+    Place(parts.study, y - 6, 22)
+    parts.bundle:ClearAllPoints()
+    parts.bundle:SetPoint("LEFT", parts.study, "RIGHT", 6, 0)
+    y = y - 34
+    local knowsStudy = SK.KnowsStudy()
+    if knowsStudy and SK.StudySecondsLeft() == 0 and SK.bags.feathers > 0 and SK.bags.bundles == 0 then
+        parts.study:Enable()
+    else
+        parts.study:Disable()
+    end
+    if SK.bags.bundleBag then
+        parts.bundle:SetAttribute("type", "item")
+        parts.bundle:SetAttribute("item", SK.bags.bundleBag .. " " .. SK.bags.bundleSlot)
+        parts.bundle:Enable()
+    else
+        parts.bundle:SetAttribute("type", nil)
+        parts.bundle:Disable()
+    end
 
     local warning = parts.warning:GetText()
     if warning and warning ~= "" then
@@ -493,6 +544,7 @@ SK.Listen("READY", function()
     SK.Listen("SKILL_CHANGED", SK.RefreshPanel)
     SK.Listen("STUDY_CHANGED", SK.RefreshPanel)
     SK.Listen("PLACE_CHANGED", SK.RefreshPanel)
+    SK.Listen("PEERS_CHANGED", SK.RefreshPanel)
     SK.On("PLAYER_REGEN_ENABLED", function()
         if layoutWaiting then SK.RefreshPanel() end
     end)

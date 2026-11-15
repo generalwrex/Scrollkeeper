@@ -36,9 +36,9 @@ SK.TIER_RESULTS = {
 
 -- Scrolls that upgrade a dungeon weapon into a new one.
 SK.WEAPON_UPGRADES = {
-    { scroll = "Scroll of the Saber", weapon = "Blade of Silverlaine", from = "Shadowfang Keep", makes = "Coldflame Saber" },
-    { scroll = "Scroll of the Blade", weapon = "Hypnotic Blade", from = "Scarlet Monastery", makes = "Narpas Sword" },
-    { scroll = "Scroll of Wit", weapon = "Witchblade", from = "Scholomance", makes = "Wit's Edge" },
+    { short = "Saber", scroll = "Scroll of the Saber", weapon = "Blade of Silverlaine", from = "Shadowfang Keep", makes = "Coldflame Saber" },
+    { short = "Blade", scroll = "Scroll of the Blade", weapon = "Hypnotic Blade", from = "Scarlet Monastery", makes = "Narpas Sword" },
+    { short = "Wit", scroll = "Scroll of Wit", weapon = "Witchblade", from = "Scholomance", makes = "Wit's Edge" },
 }
 
 -- The highest tier a given skill can read, or nil if it can read none.

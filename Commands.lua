@@ -5,6 +5,8 @@
 -- /sk announce   turn the "deciphered: ..." chat line on or off
 -- /sk reset      move the panel back to the middle of the screen
 -- /sk options    open the settings page
+-- /sk net        the Network window: other Scrollkeeper users and community odds
+-- /sk demo       fill the Network window, map and tooltips with made-up players
 -- /sk scan       developer data dump (see Dev/Scan.lua)
 
 local _, SK = ...
@@ -46,10 +48,13 @@ commands.reset = function()
 end
 
 commands.options = function() SK.OpenOptions() end
+commands.net = function() SK.ToggleNetwork() end
+commands.network = commands.net
+commands.demo = function() SK.ToggleDemo() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print("commands: /sk, /sk options, /sk log, /sk reset")
+    SK.Print("commands: /sk, /sk net, /sk options, /sk log, /sk demo, /sk reset")
 end
 
 -- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.

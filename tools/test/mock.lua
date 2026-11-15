@@ -82,3 +82,28 @@ function runTimers() local t = TIMERS; TIMERS = {}; for _, f in ipairs(t) do f()
 MOCK_SUB = "Tarren Mill"; MOCK_ZONE = "Hillsbrad Foothills"
 function GetSubZoneText() return MOCK_SUB end
 function GetRealZoneText() return MOCK_ZONE end
+
+SENT = {}
+C_ChatInfo = {
+  RegisterAddonMessagePrefix = function() return true end,
+  SendAddonMessage = function(prefix, text, chan, target) SENT[#SENT+1] = { prefix, text, chan } end,
+}
+function IsInGuild() return true end
+function IsInGroup() return false end
+function IsInRaid() return false end
+function UnitFullName() return "Naage", "Realm" end
+function UnitName() return "Naage" end
+function UnitLevel() return 20 end
+function Ambiguate(n) return (n:gsub("%-.*$", "")) end
+function UnitInParty() return false end
+C_Timer.NewTicker = function(sec, fn) TICKERS = TICKERS or {}; TICKERS[#TICKERS+1] = fn end
+function tickAll() for _, f in ipairs(TICKERS or {}) do f() end end
+function GetChannelName() return 0 end
+LOOT_ITEM_SELF = "You receive loot: %s."
+C_Map = { GetBestMapForUnit = function() return 1458 end,
+  GetPlayerMapPosition = function() return { GetXY = function() return 0.73, 0.33 end } end }
+C_TooltipInfo.GetHyperlink = function(link) if link:find("211786") then return { lines = { { leftText = "Requires Comprehension (1)" } } } end return { lines = {} } end
+UISpecialFrames = {}
+tinsert = table.insert
+
+function UnitGUID() return "Player-1-ABC" end

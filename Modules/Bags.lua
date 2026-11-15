@@ -104,6 +104,7 @@ function SK.ScanBags()
                     found.feathers = found.feathers + count
                 elseif name == "Bundle of Scrolls" then
                     found.bundles = found.bundles + count
+                    found.bundleBag, found.bundleSlot = bag, slot
                 elseif IsScrollItem(id) then
                     local needs, mageOnly = ReadSlotTooltip(bag, slot)
                     if needs then

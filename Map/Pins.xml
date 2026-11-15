@@ -1,0 +1,25 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <!-- One Scrollkeeper map pin. Behaviour is in Map/Pins.lua. -->
+    <Frame name="ScrollkeeperMapPinTemplate" mixin="ScrollkeeperMapPinMixin" virtual="true" enableMouse="true">
+        <Size x="20" y="20"/>
+        <Layers>
+            <Layer level="ARTWORK">
+                <Texture parentKey="Icon" setAllPoints="true">
+                    <TexCoords left="0.07" right="0.93" top="0.07" bottom="0.93"/>
+                </Texture>
+            </Layer>
+            <Layer level="OVERLAY">
+                <FontString parentKey="Count" inherits="NumberFontNormalSmall">
+                    <Anchors>
+                        <Anchor point="BOTTOMRIGHT" x="3" y="-3"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+        </Layers>
+        <Scripts>
+            <OnLoad method="OnLoad"/>
+            <OnEnter method="OnMouseEnter"/>
+            <OnLeave method="OnMouseLeave"/>
+        </Scripts>
+    </Frame>
+</Ui>

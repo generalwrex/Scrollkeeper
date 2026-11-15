@@ -2,7 +2,7 @@
 ## Title: Scrollkeeper
 ## Notes: Mage scrolls made easy: what you can decipher, one-button deciphering, Study timer, and tooltips for every class.
 ## Author: generalwrex
-## Version: 0.3.0
+## Version: 0.4.0
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
 ## Category: Class
 
@@ -18,11 +18,22 @@ Modules\Skill.lua
 Modules\Bags.lua
 Modules\Study.lua
 Modules\Decipher.lua
+Modules\Drops.lua
 Modules\Tooltip.lua
+
+# Network: talking to other players' Scrollkeeper.
+Network\Comm.lua
+Network\Peers.lua
+Network\Share.lua
+
+# Map: pins on the world map.
+Map\Pins.lua
+Map\Pins.xml
 
 # UI: everything you can see.
 UI\Widgets.lua
 UI\Panel.lua
+UI\Network.lua
 UI\Options.lua
 
 # Slash commands.

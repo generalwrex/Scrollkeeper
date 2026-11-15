@@ -13,5 +13,5 @@ function run(code, name, nargs) {
 run(`MOCK_CLASS = "${cls}"; __NS = {}`, 'pre');
 run(fs.readFileSync(path.join(__dirname, 'mock.lua'), 'utf8'), 'mock.lua');
 const toc = fs.readFileSync(path.join(root, 'Scrollkeeper.toc'), 'utf8').split(/\r?\n/).filter(l => l.trim() && !l.startsWith('#'));
-for (const f of toc) run(fs.readFileSync(path.join(root, f.replace(/\\/g, '/')), 'utf8'), f, true);
+for (const f of toc.filter(f => f.endsWith('.lua'))) run(fs.readFileSync(path.join(root, f.replace(/\\/g, '/')), 'utf8'), f, true);
 run(fs.readFileSync(path.join(__dirname, 'scenario.lua'), 'utf8'), 'scenario.lua');

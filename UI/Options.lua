@@ -10,7 +10,11 @@ local category
 local function AddCheckbox(key, label, tooltip, default)
     local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_" .. key, key, SK.db,
         "boolean", label, default)
-    setting:SetValueChangedCallback(function() SK.ApplyPanelSettings() end)
+    setting:SetValueChangedCallback(function()
+        if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
+        if SK.Net and (key == "share" or key == "shareChannel") then SK.Net.UpdateChannel() end
+        SK.Send("DROPS_CHANGED")
+    end)
     Settings.CreateCheckbox(category, setting, tooltip)
 end
 
@@ -43,6 +47,13 @@ SK.Listen("READY", function()
             "Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll.", true)
         AddCheckbox("announce", "Decipher messages",
             "Prints a chat line such as \"deciphered: Scroll of Frog Familiar\".", true)
+
+        AddCheckbox("share", "Share with other players",
+            "Talk to other Scrollkeeper users in your guild and group: what scrolls became, where they drop, which libraries work, and which mages need which scrolls. Only scroll data is sent.", true)
+        AddCheckbox("shareChannel", "Use the public channel (experimental)",
+            "Also share through a hidden Scrollkeeper channel, reaching players outside your guild and group.", false)
+        AddCheckbox("mapPins", "Map pins",
+            "Show libraries and the spots where untranslated scrolls dropped on the world map.", true)
 
         SK.Safely("settings slider", AddScaleSlider)
 

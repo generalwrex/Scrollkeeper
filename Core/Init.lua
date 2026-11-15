@@ -5,7 +5,7 @@
 local ADDON_NAME, SK = ...
 
 SK.name = ADDON_NAME
-SK.version = "0.3.0"
+SK.version = "0.4.0"
 
 ------------------------------------------------------------------------
 -- Chat output
@@ -106,6 +106,9 @@ local DEFAULTS = {
     showTooltips = true,     -- add a line to scroll tooltips
     announce = true,         -- print what each decipher produced
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
+    share = true,            -- talk to other Scrollkeeper users in your guild and group
+    shareChannel = false,    -- also use the public Scrollkeeper channel (experimental)
+    mapPins = true,          -- show libraries and scroll drop spots on the world map
     locked = false,          -- stop the panel from being dragged
     collapsed = false,       -- panel shrunk to its title bar
     scale = 1,               -- panel size
