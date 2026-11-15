@@ -1,7 +1,7 @@
 -- Scrollkeeper: Modules/Tooltip.lua
 -- Adds a line to untranslated scroll tooltips, for every class.
 --
---   Mage who can read it:   "You can decipher this."
+--   Mage who can read it:   "you can decipher this, skill-up likely."
 --   Mage who can't yet:     "Needs 15 Comprehension. You have 9."
 --   Any other class:        "Mage scroll. Mail it to a mage or sell it."
 
@@ -13,7 +13,9 @@ local function AddScrollLines(tooltip, needs)
     if SK.isMage then
         local skill = SK.GetComprehension()
         if skill.effective >= needs then
-            tooltip:AddLine(TITLE .. ": you can decipher this.", 0.25, 1, 0.25)
+            local chance = SK.SkillUpChance(needs, skill.rank)
+            local skillUp = chance and (" " .. SK.ColoredChance(chance) .. ".") or ""
+            tooltip:AddLine(TITLE .. ": |cff40ff40you can decipher this,|r" .. skillUp)
         else
             tooltip:AddLine((TITLE .. ": needs %d Comprehension. You have %d."):format(needs, skill.effective), 1, 0.4, 0.4)
         end

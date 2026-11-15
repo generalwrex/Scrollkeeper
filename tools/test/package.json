@@ -3,7 +3,7 @@
   "private": true,
   "description": "Loads Scrollkeeper in a fake WoW and runs scenario.lua. Run: npm install, then npm test",
   "scripts": {
-    "test": "node run.js ../Scrollkeeper MAGE && node run.js ../Scrollkeeper WARRIOR"
+    "test": "node run.js ../.. MAGE && node run.js ../.. WARRIOR"
   },
   "dependencies": {
     "fengari": "^0.1.4"

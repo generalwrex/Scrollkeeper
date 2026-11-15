@@ -10,20 +10,32 @@ local _, SK = ...
 -- Which scroll is next
 ------------------------------------------------------------------------
 
--- Returns: next scroll you can read (or nil), how many you can read,
--- how many are too hard for your current skill.
+-- Returns: next scroll to decipher (or nil), how many you can read,
+-- how many are too hard, and how many of the readable ones can still
+-- raise your skill.
+--
+-- Order: scrolls that can still give a skill-up come first, easiest tier
+-- first, because easy scrolls are the next to stop giving points. Scrolls
+-- that can't raise your skill come last; they are still worth reading for
+-- what they turn into.
 function SK.NextDecipherable()
-    local skill = SK.GetComprehension().effective
-    local nextScroll, readable, tooHard = nil, 0, 0
+    local skill = SK.GetComprehension()
+    local best, bestRank
+    local readable, tooHard, skillUps = 0, 0, 0
     for _, scroll in ipairs(SK.bags.untranslated) do
-        if scroll.needs <= skill then
+        if scroll.needs <= skill.effective then
             readable = readable + 1
-            nextScroll = nextScroll or scroll
+            local chance = SK.SkillUpChance(scroll.needs, skill.rank)
+            local gives = not chance or chance.gives
+            if gives then skillUps = skillUps + 1 end
+            -- Lower rank = deciphered sooner.
+            local rank = (gives and 0 or 100000) + scroll.needs
+            if not bestRank or rank < bestRank then best, bestRank = scroll, rank end
         else
             tooHard = tooHard + 1
         end
     end
-    return nextScroll, readable, tooHard
+    return best, readable, tooHard, skillUps
 end
 
 ------------------------------------------------------------------------
@@ -51,11 +63,27 @@ local function Finish()
     db.results[entry.tier] = db.results[entry.tier] or {}
     db.results[entry.tier][result] = (db.results[entry.tier][result] or 0) + 1
 
+    -- Remember whether it raised the skill, by tier and colour, so the
+    -- skill-up guesses can be checked against what really happens.
+    local skillNow = SK.GetComprehension().rank
+    local rose = skillNow > entry.skillBefore
+    local chance = SK.SkillUpChance(entry.tier, entry.skillBefore)
+    if chance then
+        db.skillups = db.skillups or {}
+        local key = entry.tier .. " " .. chance.key
+        local seen = db.skillups[key] or { tries = 0, ups = 0 }
+        seen.tries = seen.tries + 1
+        if rose then seen.ups = seen.ups + 1 end
+        seen.lastSkill = entry.skillBefore
+        db.skillups[key] = seen
+    end
+
     if db.announce then
-        local skillNow = SK.GetComprehension().rank
-        local skillText = ""
-        if skillNow > entry.skillBefore then
+        local skillText
+        if rose then
             skillText = (" |cff40ff40(skill %d > %d)|r"):format(entry.skillBefore, skillNow)
+        else
+            skillText = " |cff808080(no skill-up)|r"
         end
         SK.Print("deciphered: " .. result .. skillText)
     end
@@ -99,6 +127,23 @@ SK.On("CHAT_MSG_LOOT", function(message)
     if pending.tier and pending.result then Finish() end
 end)
 
+local function PrintSkillUps()
+    local seen = SK.db.skillups
+    if not seen or not next(seen) then return end
+    print("  |cffffd100Skill-ups seen|r (tier, colour: raised / read)")
+    local keys = {}
+    for key in pairs(seen) do keys[#keys + 1] = key end
+    table.sort(keys, function(a, b)
+        local ta, tb = tonumber(a:match("^%d+")), tonumber(b:match("^%d+"))
+        if ta ~= tb then return ta < tb end
+        return a < b
+    end)
+    for _, key in ipairs(keys) do
+        local row = seen[key]
+        print(("    %s: %d / %d"):format(key, row.ups, row.tries))
+    end
+end
+
 -- Print the luck log to chat.
 function SK.PrintLog()
     local db = SK.db
@@ -122,4 +167,5 @@ function SK.PrintLog()
             end
         end
     end
+    PrintSkillUps()
 end

@@ -76,3 +76,7 @@ math.ceil = math.ceil
 TIMERS = {}
 C_Timer = { After = function(sec, fn) TIMERS[#TIMERS+1] = fn end }
 function runTimers() local t = TIMERS; TIMERS = {}; for _, f in ipairs(t) do f() end end
+
+MOCK_SUB = "Tarren Mill"; MOCK_ZONE = "Hillsbrad Foothills"
+function GetSubZoneText() return MOCK_SUB end
+function GetRealZoneText() return MOCK_ZONE end

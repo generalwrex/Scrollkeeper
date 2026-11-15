@@ -5,6 +5,9 @@ Mage scroll helper for WoW Forever.
 - **Panel (mages):** Comprehension bar with tier marks, scrolls ready or too hard,
   a one-click **Decipher next scroll** button, buttons for your usable scrolls,
   and the Study cooldown with your Light Feathers.
+- **Skill-ups:** every scroll shows whether deciphering it will raise your
+  Comprehension (skill-up, likely, unlikely, none), and the decipher button
+  reads the ones that still give points first.
 - **Tooltips (every class):** mages see whether they can decipher a scroll;
   other classes see that it's a mage scroll to mail or sell. Hold Shift to see
   what it can become.
@@ -25,14 +28,17 @@ Nothing is automatic: every cast is one click from the player.
 
 ## Layout
 
+This repo is the addon folder itself: clone it straight into
+`Interface\AddOns\Scrollkeeper`.
+
 ```
-Scrollkeeper/           the addon (this folder goes in Interface\AddOns)
-  Scrollkeeper.toc      load order
-  Commands.lua          slash commands
-  Core/                 shared helpers and game IDs
-  Data/                 scroll tiers and weapon upgrades (edit when Blizzard changes them)
-  Modules/              one feature per file, no drawing
-  UI/                   everything you can see
-  Dev/                  /sk scan data collection tool
-test/                   runs the addon in a fake WoW: npm install, npm test
+Scrollkeeper.toc      load order
+Commands.lua          slash commands
+Core/                 shared helpers and game IDs
+Data/                 scroll tiers, skill-up colours, weapon upgrades
+Modules/              one feature per file, no drawing
+UI/                   everything you can see
+Dev/                  /sk scan data collection tool
+tools/test/           runs the addon in a fake WoW (not loaded by the game)
+                      cd tools/test, npm install, npm test
 ```

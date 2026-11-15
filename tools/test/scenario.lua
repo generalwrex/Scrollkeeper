@@ -6,7 +6,8 @@ print("class mage?", SK.isMage, "errors:", #ScrollkeeperDB.errors)
 local sk = SK.GetComprehension(); print("skill", sk.rank, sk.max, sk.known)
 print("untranslated:", #SK.bags.untranslated, "feathers", SK.bags.feathers, "bundles", SK.bags.bundles)
 for _, s in ipairs(SK.bags.untranslated) do print("  ", s.bag, s.slot, s.name, s.needs) end
-local nxt, ready, hard = SK.NextDecipherable(); print("next", nxt and nxt.name, ready, hard)
+local nxt, ready, hard, ups = SK.NextDecipherable(); print("next", nxt and nxt.name, ready, hard, "skillups", ups)
+for _, t in ipairs({1, 15, 50, 175}) do for _, k in ipairs({0, 14, 15, 22, 23, 29, 30, 57}) do local c = SK.SkillUpChance(t, k); io.write(t, "@", k, "=", c.key, " ") end print() end
 if SK.isMage then
   local b = ScrollkeeperDecipherButton
   print("button", b._text, b._attrs.type, b._attrs.spell, b._attrs["target-bag"], b._attrs["target-slot"])
@@ -29,7 +30,12 @@ if SK.isMage then
   runTimers()
   print("after decipher: total", ScrollkeeperDB.deciphered, "button", b._text, b._attrs["target-slot"])
   -- study
+  print("in library (Tarren Mill)", SK.InLibrary())
+  MOCK_ZONE = "Undercity"; MOCK_SUB = "The Magic Quarter"; fire("ZONE_CHANGED")
+  print("in library (Magic Quarter)", SK.InLibrary())
+  MOCK_SUB = "Odd Reading Nook"; fire("ZONE_CHANGED")
   fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1302508)
+  print("in library (learned nook)", SK.InLibrary())
   print("study left", SK.StudySecondsLeft(), SK.FormatStudyTime(SK.StudySecondsLeft()))
   advance(3500); print("study left", SK.FormatStudyTime(SK.StudySecondsLeft()))
   BAGS[3][1] = { id = 999, name = "Bundle of Scrolls", count = 1, tip = { "Bundle of Scrolls" } }

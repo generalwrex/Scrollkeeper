@@ -5,7 +5,7 @@
 local ADDON_NAME, SK = ...
 
 SK.name = ADDON_NAME
-SK.version = "0.2.1"
+SK.version = "0.3.0"
 
 ------------------------------------------------------------------------
 -- Chat output

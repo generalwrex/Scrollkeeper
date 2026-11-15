@@ -10,7 +10,7 @@ local BAR_TEXTURE = "Interface\\TargetingFrame\\UI-StatusBar"
 
 -- Colours used across the panel, as { red, green, blue }.
 SK.UI.COLORS = {
-    accent = { 0.41, 0.80, 0.94 },   -- mage blue
+    accent = { 0.25, 0.45, 0.95 },   -- classic skill-bar blue
     good   = { 0.25, 0.85, 0.35 },
     wait   = { 0.85, 0.65, 0.20 },
     dim    = { 0.55, 0.55, 0.55 },
@@ -30,7 +30,13 @@ function SK.UI.CreateBar(parent, width, height)
 
     local background = bar:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
-    background:SetColorTexture(0, 0, 0, 0.6)
+    background:SetColorTexture(0, 0, 0, 0.5)
+
+    -- The classic skill-bar frame from the character sheet's Skills tab.
+    local border = bar:CreateTexture(nil, "OVERLAY")
+    border:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder")
+    border:SetPoint("TOPLEFT", -5, 6)
+    border:SetPoint("BOTTOMRIGHT", 5, -6)
 
     -- Two labels, one at each end, so the tier marks in the middle never
     -- cut through the words. Outlined so they stay readable on the fill.
@@ -103,6 +109,12 @@ function SK.UI.CreateItemButton(parent, name, size)
     button.count = count
 
     button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+
+    -- Classic item slot border around the icon.
+    local frame = button:CreateTexture(nil, "OVERLAY")
+    frame:SetTexture("Interface\\Buttons\\UI-Quickslot2")
+    frame:SetPoint("TOPLEFT", -size * 0.35, size * 0.35)
+    frame:SetPoint("BOTTOMRIGHT", size * 0.35, -size * 0.35)
 
     button:SetScript("OnEnter", function(self)
         if not self.itemID then return end
