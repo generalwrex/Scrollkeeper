@@ -2,7 +2,7 @@
 ## Title: Scrollkeeper
 ## Notes: Mage scrolls made easy: what you can decipher, one-button deciphering, Study timer, and tooltips for every class.
 ## Author: generalwrex
-## Version: 0.2.0
+## Version: 0.2.1
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
 ## Category: Class
 

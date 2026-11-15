@@ -5,7 +5,7 @@
 local ADDON_NAME, SK = ...
 
 SK.name = ADDON_NAME
-SK.version = "0.2.0"
+SK.version = "0.2.1"
 
 ------------------------------------------------------------------------
 -- Chat output
@@ -125,6 +125,12 @@ SK.On("ADDON_LOADED", function(loaded)
         end
     end
     SK.db = ScrollkeeperDB
+
+    -- Errors from an older version are no longer useful.
+    if ScrollkeeperDB.version ~= SK.version then
+        ScrollkeeperDB.errors = {}
+        ScrollkeeperDB.version = SK.version
+    end
 
     local _, class = UnitClass("player")
     SK.isMage = (class == "MAGE")

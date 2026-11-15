@@ -28,62 +28,75 @@ end
 
 ------------------------------------------------------------------------
 -- Luck log
--- When Comprehend Scroll succeeds, compare the bags before and after to
--- see which untranslated scroll went away and what appeared instead.
+-- What the game does when you decipher (seen with /sk eventlog):
+--   1. the spellbook spell starts a 4 second cast
+--   2. the cast finishes and chat says "You receive item: [Scroll of ...]"
+--   3. one bag update removes the untranslated scroll
+--   4. a second bag update adds the new scroll
+-- So the tier comes from the bag update (which untranslated scroll went
+-- away) and the result comes from the loot message.
 ------------------------------------------------------------------------
 
-local pending   -- { tier = number, skillBefore = number } while waiting for the bags to update
+local WAIT_SECONDS = 4
+local pending   -- { at, tier, result, skillBefore } while a decipher is being recorded
 
+local function Finish()
+    local entry = pending
+    pending = nil
+    if not entry or not entry.tier then return end
+
+    local db = SK.db
+    local result = entry.result or "unknown"
+    db.deciphered = (db.deciphered or 0) + 1
+    db.results[entry.tier] = db.results[entry.tier] or {}
+    db.results[entry.tier][result] = (db.results[entry.tier][result] or 0) + 1
+
+    if db.announce then
+        local skillNow = SK.GetComprehension().rank
+        local skillText = ""
+        if skillNow > entry.skillBefore then
+            skillText = (" |cff40ff40(skill %d > %d)|r"):format(entry.skillBefore, skillNow)
+        end
+        SK.Print("deciphered: " .. result .. skillText)
+    end
+    SK.Send("LOG_CHANGED")
+end
+
+local function IsDecipherSpell(spellID)
+    return spellID == SK.SPELL_COMPREHEND_CAST or spellID == SK.SPELL_COMPREHEND_SCROLL
+end
+
+-- The cast finished: start recording. The instant spellbook spell also
+-- fires this event; starting twice is harmless.
 SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
-    if unit ~= "player" or spellID ~= SK.SPELL_COMPREHEND_SCROLL then return end
-    pending = { skillBefore = SK.GetComprehension().rank, at = GetTime() }
+    if unit ~= "player" or not IsDecipherSpell(spellID) then return end
+    if pending then return end
+    pending = { at = GetTime(), skillBefore = SK.GetComprehension().rank }
+    C_Timer.After(WAIT_SECONDS, function() if pending then Finish() end end)
 end)
 
+-- Which tier was read: the untranslated scroll that left the bags.
 SK.Listen("BAGS_CHANGED", function(now, before)
-    if not pending then return end
-    if GetTime() - pending.at > 5 then pending = nil return end
-
-    -- Which untranslated scroll was used up?
-    local usedTier
+    if not pending or pending.tier then return end
     local stillThere = {}
     for _, scroll in ipairs(now.untranslated) do
         stillThere[scroll.bag .. ":" .. scroll.slot] = true
     end
     for _, scroll in ipairs(before.untranslated) do
         if not stillThere[scroll.bag .. ":" .. scroll.slot] then
-            usedTier = scroll.needs
+            pending.tier = scroll.needs
             break
         end
     end
-    if not usedTier then return end   -- bags changed for another reason; keep waiting
+    if pending.tier and pending.result then Finish() end
+end)
 
-    -- What appeared?
-    local gained = {}
-    for itemID, count in pairs(now.counts) do
-        local extra = count - (before.counts[itemID] or 0)
-        if extra > 0 then table.insert(gained, now.names[itemID] or ("item " .. itemID)) end
-    end
-    table.sort(gained)
-
-    local db = SK.db
-    db.deciphered = (db.deciphered or 0) + 1
-    db.results[usedTier] = db.results[usedTier] or {}
-    for _, name in ipairs(gained) do
-        db.results[usedTier][name] = (db.results[usedTier][name] or 0) + 1
-    end
-
-    if db.announce then
-        local skillNow = SK.GetComprehension().rank
-        local skillText = ""
-        if skillNow > pending.skillBefore then
-            skillText = (" |cff40ff40(skill %d > %d)|r"):format(pending.skillBefore, skillNow)
-        end
-        local what = #gained > 0 and table.concat(gained, ", ") or "nothing new in your bags"
-        SK.Print("deciphered: " .. what .. skillText)
-    end
-
-    pending = nil
-    SK.Send("LOG_CHANGED")
+-- What it became: the item in the "You receive item" chat message.
+SK.On("CHAT_MSG_LOOT", function(message)
+    if not pending or pending.result or type(message) ~= "string" then return end
+    local name = message:match("|h%[(.-)%]|h")
+    if name then pending.result = name end
+    if pending.tier and pending.result then Finish() end
 end)
 
 -- Print the luck log to chat.

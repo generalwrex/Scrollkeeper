@@ -68,3 +68,7 @@ Settings = {
   RegisterAddOnCategory = function() end, OpenToCategory = function(id) print("open settings", id) end,
 }
 math.ceil = math.ceil
+
+TIMERS = {}
+C_Timer = { After = function(sec, fn) TIMERS[#TIMERS+1] = fn end }
+function runTimers() local t = TIMERS; TIMERS = {}; for _, f in ipairs(t) do f() end end

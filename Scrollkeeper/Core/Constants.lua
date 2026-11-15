@@ -5,7 +5,8 @@ local _, SK = ...
 
 SK.SKILL_LINE_COMPREHENSION = 3012
 
-SK.SPELL_COMPREHEND_SCROLL = 1296017   -- instant, 5 yard range, targets a scroll in your bags
+SK.SPELL_COMPREHEND_SCROLL = 1296017   -- the spellbook spell: instant, 5 yard range, targets a scroll in your bags
+SK.SPELL_COMPREHEND_CAST = 1309973     -- the 4 second cast it starts; when this finishes, the scroll is read
 SK.SPELL_STUDY = 1302508               -- 6 second cast, needs a library, makes a Bundle of Scrolls
 
 SK.ITEM_LIGHT_FEATHER = 17056          -- Study uses one

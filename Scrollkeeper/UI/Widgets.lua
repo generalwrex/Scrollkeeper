@@ -34,6 +34,9 @@ function SK.UI.CreateBar(parent, width, height)
 
     local label = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     label:SetPoint("CENTER", 0, 0)
+    -- Outline the text so it stays readable over the coloured fill.
+    local font, size = label:GetFont()
+    if font then label:SetFont(font, size, "OUTLINE") end
     bar.label = label
 
     function bar:SetProgress(value, max)
@@ -56,7 +59,7 @@ function SK.UI.CreateBar(parent, width, height)
                 local mark = self.marks[shown]
                 if not mark then
                     mark = self:CreateTexture(nil, "ARTWORK")
-                    mark:SetColorTexture(1, 1, 1, 0.55)
+                    mark:SetColorTexture(1, 0.82, 0, 0.8)
                     mark:SetSize(1, height)
                     self.marks[shown] = mark
                 end

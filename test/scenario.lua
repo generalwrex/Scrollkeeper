@@ -12,9 +12,21 @@ if SK.isMage then
   print("button", b._text, b._attrs.type, b._attrs.spell, b._attrs["target-bag"], b._attrs["target-slot"])
   for _, n in ipairs({ "skill", "tier", "scrolls", "study", "warning", "log" }) do end
   -- decipher the first scroll: it becomes a Scroll of Frog Familiar
+  -- real order seen in game
   fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1296017)
-  BAGS[0][7] = nil; BAGS[1][5].count = 2; MOCK_RANK = 58
+  fire("UNIT_SPELLCAST_START", "player", "guid", 1309973)
+  fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1309973)
+  fire("CHAT_MSG_LOOT", "You receive item: |cnIQ1:|Hitem:277483::::::::20:1482:::::::::|h[Scroll of Frog Familiar]|h|r")
+  BAGS[0][7] = nil; MOCK_RANK = 58
   fire("BAG_UPDATE_DELAYED")
+  BAGS[1][5].count = 2
+  fire("BAG_UPDATE_DELAYED")
+  runTimers()
+  -- second decipher where the loot message never comes: logged as unknown after the wait
+  fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1309973)
+  BAGS[0][8] = nil
+  fire("BAG_UPDATE_DELAYED")
+  runTimers()
   print("after decipher: total", ScrollkeeperDB.deciphered, "button", b._text, b._attrs["target-slot"])
   -- study
   fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1302508)
