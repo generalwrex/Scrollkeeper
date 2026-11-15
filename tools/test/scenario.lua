@@ -167,3 +167,30 @@ else
   print("alt mages", #SK.MyOtherMages(), "readers of 50:", #SK.MyMagesFor(50), "of 175:", #SK.MyMagesFor(175))
 end
 print("errors:", #ScrollkeeperDB.errors); for _, e in ipairs(ScrollkeeperDB.errors) do print("  ERR", e.where, e.error) end
+
+-- EXPORT
+if SK.isMage then
+  SK.db.resultsByID = { [1] = { [213564] = 3, [277483] = 1 } }
+  SK.db.itemNames = { [213564] = "Scroll of Minor Evocation", [277483] = "Scroll of Frog Familiar" }
+  SK.db.skillups = { ["1 orange"] = { ups = 2, tries = 3 } }
+  SK.db.errors = { { at = 0, where = "test", error = "boom" } }
+  local text, n = SK.ExportText(); print("EXPORT records", n); print(text)
+  print(SK.BugReportText())
+  SlashCmdList.SCROLLKEEPER("export"); SlashCmdList.SCROLLKEEPER("bug")
+  print("errors after:", #ScrollkeeperDB.errors)
+end
+
+-- WHYNOT
+print("WHY", SK.UI.WhyNotUsable({ usable = false, levelOK = true, fits = false, name = "Scroll of Imbue Spark", imbueFor = "sword" }))
+print("WHY", SK.UI.WhyNotUsable({ usable = false, levelOK = false, level = 30, name = "Scroll of Cat Familiar" }))
+print("WHY", SK.UI.WhyNotUsable({ usable = true }))
+
+-- SWAPHINT
+local realInfo = C_Container.GetContainerItemInfo
+C_Container.GetContainerItemInfo = function(b, s) if b == 0 and s == 1 then return { itemID = 9001, hyperlink = "|cff|Hitem:9001|h[Blade of Testing]|h|r" } end return realInfo and realInfo(b, s) end
+local realInstant = C_Item.GetItemInfoInstant
+C_Item.GetItemInfoInstant = function(id) if id == 9001 then return 9001, "Weapon", "Swords", "", "", 2, 7 end return realInstant and realInstant(id) end
+SK.bags.translated = { { category = "imbues", name = "Scroll of Imbue Spark", imbueFor = "sword", level = 1, itemID = 1 } }
+local scroll, weapon = SK.ImbueSwapHint(); print("SWAP", scroll and scroll.name, weapon)
+print("WHY", SK.UI.WhyNotUsable({ usable = false, levelOK = true, fits = false, name = "Scroll of Imbue Spark", imbueFor = "sword" }))
+SK.RefreshPanel(); print("errors:", #ScrollkeeperDB.errors)

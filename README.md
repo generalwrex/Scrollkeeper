@@ -36,13 +36,28 @@ Nothing is automatic: every cast is one click from the player.
 
 | Command | What it does |
 | --- | --- |
-| `/sk` | show or hide the panel |
+| `/sk` | show or hide the panel (on alts: your mages' window) |
+| `/sk simple` / `/sk advanced` | switch the panel view |
 | `/sk options` | open the settings page |
 | `/sk net` | the Network window |
 | `/sk demo` | try the network features with made-up players |
 | `/sk log` | what your deciphers have produced |
+| `/sk export` | copy your scroll data to share |
+| `/sk bug` | copy a bug report |
 | `/sk reset` | move the panel to the middle and reset its size |
 | `/sk scan` | developer: dump game data to the saved file |
+
+## Help improve Scrollkeeper
+
+- **Found a bug?** Type `/sk bug` in game, copy the report, and open a
+  [bug report](https://github.com/generalwrex/scrollkeeper/issues/new?template=bug_report.yml).
+- **Share your data.** Type `/sk export`, copy it, and paste it in a
+  [data issue](https://github.com/generalwrex/scrollkeeper/issues/new?template=share_data.yml).
+  It's scroll data only, with no character or account names. Everyone's exports are combined
+  (`tools/community/merge.py`) into real odds, skill-up rates and drop spots
+  that ship with future releases.
+- **Have an idea?** Open a
+  [feature idea](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
 
 ## Releasing
 
@@ -50,7 +65,7 @@ Tag a version and push it; GitHub Actions packages it and uploads it to
 CurseForge. Tags with `alpha` or `beta` in them upload as Alpha or Beta files.
 
 ```
-git tag v0.5.0-alpha1
+git tag v0.6.0-beta1
 git push --tags
 ```
 
@@ -70,12 +85,13 @@ This repo is the addon folder itself: clone it straight into
 Scrollkeeper.toc      load order
 Commands.lua          slash commands
 Core/                 shared helpers and game IDs
-Data/                 scroll tiers, skill-up colours, weapon upgrades
+Data/                 scroll tiers, skill-up colors, weapon upgrades
 Modules/              one feature per file, no drawing
 Network/              talking to other players' Scrollkeeper (protocol notes in each file)
 Map/                  world map pins
 UI/                   everything you can see, plus optional links to other addons
 Dev/                  /sk scan data collection tool
+tools/community/      merges /sk export data from players (not loaded by the game)
 tools/test/           runs the addon in a fake WoW (not loaded by the game)
                       cd tools/test, npm install, npm test
 ```

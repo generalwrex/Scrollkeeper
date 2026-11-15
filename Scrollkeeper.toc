@@ -46,6 +46,7 @@ UI\Widgets.lua
 UI\Panel.lua
 UI\Network.lua
 UI\Alts.lua
+UI\Export.lua
 UI\Integrations.lua
 UI\Options.lua
 

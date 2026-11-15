@@ -1,5 +1,16 @@
 # Scrollkeeper
 
+## 0.5.2
+
+- **`/sk export`:** copy your scroll data to share. No character or account names.
+- **`/sk bug`:** copy a bug report with versions, settings and caught errors.
+- GitHub issue forms for bug reports, sharing data and ideas.
+- Clicking a scroll you can't use (wrong weapon, level too low) no longer
+  uses it. It tells you why instead.
+- Imbue button: if a weapon in your bags fits one of your imbues, it says
+  "swap weapon", and the tooltip names the weapon to equip.
+- US English spelling throughout.
+
 ## 0.5.0 – first public release
 
 - **One click for everything:** Decipher, Study, Open bundle, and Familiar and
@@ -32,7 +43,7 @@
 
 ## 0.3.0
 
-- Skill-up colours on every scroll; the decipher button reads skill-up scrolls first.
+- Skill-up colors on every scroll; the decipher button reads skill-up scrolls first.
 - Window matches the game's own character window. Library detection.
 
 ## 0.1.0 – 0.2.1

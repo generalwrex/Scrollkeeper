@@ -29,6 +29,12 @@ local WEAPON_WORDS = {
     [4] = "a mace", [5] = "a mace", [0] = "an axe", [1] = "an axe", [19] = "a wand",
 }
 
+-- "sword" -> "a sword", "axe" -> "an axe"
+function SK.WeaponWithArticle(word)
+    if not word or word == "" then return "a different weapon" end
+    return (word:match("^[aeiouAEIOU]") and "an " or "a ") .. word
+end
+
 -- The main-hand weapon's subclass ID and a short description ("a staff"), or nil.
 function SK.MainHandWeapon()
     local itemID = GetInventoryItemID and GetInventoryItemID("player", 16)
@@ -47,6 +53,38 @@ function SK.ImbueFits(scroll)
     return subClassID ~= nil and kinds[subClassID] == true
 end
 
+
+-- A weapon in your bags that this imbue would fit: its name, or nil.
+-- (Equipping it is up to you; Scrollkeeper only points it out.)
+function SK.WeaponInBagsFor(scroll)
+    local kinds = scroll and scroll.imbueFor and WEAPON_KINDS[scroll.imbueFor]
+    if not kinds or not (C_Container and C_Item) then return nil end
+    for bag = 0, 4 do
+        for slot = 1, C_Container.GetContainerNumSlots(bag) or 0 do
+            local info = C_Container.GetContainerItemInfo(bag, slot)
+            if info and info.itemID then
+                local _, _, _, _, _, classID, subClassID = SK.Try(C_Item.GetItemInfoInstant, info.itemID)
+                if classID == 2 and kinds[subClassID] then
+                    return (info.hyperlink and info.hyperlink:match("%[(.-)%]"))
+                        or SK.Try(C_Item.GetItemNameByID, info.itemID) or "a weapon"
+                end
+            end
+        end
+    end
+    return nil
+end
+
+-- When none of your imbues fit the weapon you hold: the first imbue you
+-- could use by swapping to a weapon in your bags, as scroll, weaponName.
+function SK.ImbueSwapHint()
+    for _, scroll in ipairs(SK.bags.translated or {}) do
+        if scroll.category == "imbues" and (scroll.level or 0) <= (UnitLevel("player") or 0) then
+            local weapon = SK.WeaponInBagsFor(scroll)
+            if weapon then return scroll, weapon end
+        end
+    end
+    return nil
+end
 
 -- Returns a list of { key, label, scrolls = { ... } } for the categories
 -- you have scrolls in, in display order. Each scroll gets .usable and .best.

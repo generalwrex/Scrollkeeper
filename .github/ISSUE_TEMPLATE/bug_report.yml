@@ -1,0 +1,35 @@
+name: Bug report
+description: Something in Scrollkeeper isn't working right.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping fix Scrollkeeper!
+        In game, type **`/sk bug`**, press **Ctrl+C** to copy the report, and paste it below.
+  - type: textarea
+    id: report
+    attributes:
+      label: Bug report from /sk bug
+      description: Paste what /sk bug gave you. It has your versions, settings and any errors Scrollkeeper caught.
+      render: text
+      placeholder: |
+        Scrollkeeper bug report
+        Scrollkeeper: 0.5.1
+        ...
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: "I clicked Decipher next scroll in the library, and..."
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot (optional)
+      description: Drag an image here if it helps show the problem.

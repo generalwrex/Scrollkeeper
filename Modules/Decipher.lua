@@ -74,7 +74,7 @@ local function Finish()
         db.itemNames[entry.resultID] = result
     end
 
-    -- Remember whether it raised the skill, by tier and colour, so the
+    -- Remember whether it raised the skill, by tier and color, so the
     -- skill-up guesses can be checked against what really happens.
     local skillNow = SK.GetComprehension().rank
     local rose = skillNow > entry.skillBefore
@@ -145,7 +145,7 @@ end)
 local function PrintSkillUps()
     local seen = SK.db.skillups
     if not seen or not next(seen) then return end
-    print("  |cffffd100Skill-ups seen|r (tier, colour: raised / read)")
+    print("  |cffffd100Skill-ups seen|r (tier, color: raised / read)")
     local keys = {}
     for key in pairs(seen) do keys[#keys + 1] = key end
     table.sort(keys, function(a, b)

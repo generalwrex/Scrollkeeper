@@ -406,7 +406,36 @@ local function Build()
             else
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetText(title)
-                GameTooltip:AddLine("You don't have a usable scroll for this yet.", 1, 1, 1, true)
+                local hint, weapon = categoryKey == "imbues" and SK.ImbueSwapHint()
+                if hint then
+                    local _, holding = SK.MainHandWeapon()
+                    GameTooltip:AddLine(("None of your imbues fit %s."):format(holding or "what you're holding"), 1, 1, 1, true)
+                    GameTooltip:AddLine(("%s can be put on your %s (in your bags). Equip it, then click here."):format(
+                        hint.name:gsub("^Scroll of ", ""), weapon), 0.25, 1, 0.25, true)
+                else
+                    -- List what you do have, and what each one needs.
+                    local have = {}
+                    for _, group in ipairs(SK.ScrollGroups()) do
+                        if group.key == categoryKey then have = group.scrolls end
+                    end
+                    if #have == 0 then
+                        GameTooltip:AddLine(("You don't have any %s scrolls yet."):format(title:lower()), 1, 1, 1, true)
+                    else
+                        if categoryKey == "imbues" then
+                            local _, holding = SK.MainHandWeapon()
+                            GameTooltip:AddLine(("You're holding %s. Your imbues:"):format(holding or "no weapon"), 1, 1, 1, true)
+                        else
+                            GameTooltip:AddLine("Your scrolls:", 1, 1, 1)
+                        end
+                        for _, scroll in ipairs(have) do
+                            local needs = {}
+                            if scroll.imbueFor then needs[#needs + 1] = "for " .. SK.WeaponWithArticle(scroll.imbueFor) end
+                            if scroll.levelOK == false then needs[#needs + 1] = "level " .. (scroll.level or "?") end
+                            GameTooltip:AddDoubleLine("  " .. scroll.name:gsub("^Scroll of ", ""),
+                                table.concat(needs, ", "), 1, 0.82, 0, 1, 0.4, 0.4)
+                        end
+                    end
+                end
                 GameTooltip:Show()
             end
         end)
@@ -670,7 +699,8 @@ local function Layout()
             button:SetAttribute("type", nil)
             button:SetDisplay(nil, button.emptyIcon)
             button:SetUsable(false)
-            button.detail:SetText("|cff808080none|r")
+            local hint = button.categoryKey == "imbues" and SK.ImbueSwapHint()
+            button.detail:SetText(hint and "|cff40ff40swap weapon|r" or "|cff808080none|r")
         end
     end
 
@@ -702,8 +732,10 @@ local function Layout()
                 button:ClearAllPoints()
                 button:SetPoint("TOPLEFT", parts.scrollsArea, "TOPLEFT",
                     ICON_PAD + startX + column * (ICON_SIZE + ICON_GAP), top - line * (ICON_SIZE + ICON_GAP))
-                button:SetAttribute("type", "item")
-                button:SetAttribute("item", "item:" .. scroll.itemID)
+                -- Only scrolls you can use do anything when clicked. The rest
+                -- say why instead (wrong weapon, level too low).
+                button:SetAttribute("type", scroll.usable and "item" or nil)
+                button:SetAttribute("item", scroll.usable and ("item:" .. scroll.itemID) or nil)
                 button:SetDisplay(scroll.itemID, scroll.icon, scroll.count)
                 button:SetBest(scroll.best)
                 button:SetUsable(scroll.usable)

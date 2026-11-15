@@ -129,3 +129,5 @@ local origInstant = C_Item.GetItemInfoInstant
 C_Item.GetItemInfoInstant = function(id) if id == 99999 then return id, "Weapon", "Staves", "", 1, 2, 10 end return origInstant(id) end
 
 function GetRealmName() return "Forever" end
+function GetLocale() return "enUS" end
+date = date or os.date

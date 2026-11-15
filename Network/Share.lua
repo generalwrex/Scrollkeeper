@@ -2,7 +2,7 @@
 -- Sharing what you've learned, and adding up what others share.
 --
 --   T|tier#part|itemID:count,...     what your deciphers of that tier became
---   U|tier#part|colour:ups/tries,... your skill-ups by colour at that tier
+--   U|tier#part|color:ups/tries,... your skill-ups by color at that tier
 --   L|mapID|x|y|name                 a library you've used Study in
 --   P|mapID#part|cell:count,...      where you've looted untranslated scrolls
 --   K|mapID#part|cell:count,...      where you've looted books for the librarians
@@ -22,7 +22,7 @@ local KEEP_DAYS = 30            -- forget players not heard from in a month
 ------------------------------------------------------------------------
 -- Storage of what others sent
 --   community[sender] = { at, results = {[tier] = {[itemID] = n}},
---                          skillups = {[tier] = {[colour] = {ups, tries}}},
+--                          skillups = {[tier] = {[color] = {ups, tries}}},
 --                          drops = {[mapID] = {[cell] = n}} }
 ------------------------------------------------------------------------
 
@@ -65,9 +65,9 @@ Net.Handle("U", function(sender, f)
     local tier, part = Head(f[1])
     if not (tier and part and SK.TIER_RESULTS[tier]) then return end
     local list = Target(Entry(sender).skillups, tier, part)
-    for colour, ups, tries in (f[2] or ""):gmatch("(%a+):(%d+)/(%d+)") do
+    for color, ups, tries in (f[2] or ""):gmatch("(%a+):(%d+)/(%d+)") do
         ups, tries = tonumber(ups), tonumber(tries)
-        if tries > 0 and tries <= MAX_COUNT and ups <= tries then list[colour] = { ups, tries } end
+        if tries > 0 and tries <= MAX_COUNT and ups <= tries then list[color] = { ups, tries } end
     end
 end)
 
@@ -239,10 +239,10 @@ function SK.SendMyData()
     end
     local byTier = {}
     for key, seen in pairs(db.skillups or {}) do
-        local tier, colour = key:match("^(%d+) (%a+)$")
+        local tier, color = key:match("^(%d+) (%a+)$")
         if tier then
             byTier[tier] = byTier[tier] or {}
-            table.insert(byTier[tier], ("%s:%d/%d"):format(colour, seen.ups, seen.tries))
+            table.insert(byTier[tier], ("%s:%d/%d"):format(color, seen.ups, seen.tries))
         end
     end
     for tier, items in pairs(byTier) do Net.SendList("U", tier, items) end

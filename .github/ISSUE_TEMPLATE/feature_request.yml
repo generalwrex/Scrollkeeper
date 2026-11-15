@@ -1,0 +1,17 @@
+name: Feature idea
+description: Suggest something new for Scrollkeeper.
+title: "[Idea] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Scrollkeeper to do?
+      placeholder: "It would be great if the panel..."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: How would it help you?
+      description: What are you doing in game when you'd use it?

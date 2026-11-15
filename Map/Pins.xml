@@ -1,5 +1,5 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
-    <!-- One Scrollkeeper map pin. Behaviour is in Map/Pins.lua. -->
+    <!-- One Scrollkeeper map pin. Behavior is in Map/Pins.lua. -->
     <Frame name="ScrollkeeperMapPinTemplate" mixin="ScrollkeeperMapPinMixin" virtual="true" enableMouse="true">
         <Size x="20" y="20"/>
         <Layers>
