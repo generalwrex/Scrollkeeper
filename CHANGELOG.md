@@ -1,19 +1,27 @@
 # Scrollkeeper
 
-## 0.5.0 (alpha)
+## 0.5.0 – first public release
 
-- **Your Scrolls in categories:** Imbues, Familiars, Combat, Utility and Upgrades,
-  with a star on the best imbue and familiar you can use. Scrolls you're too low
-  level for are dimmed.
+- **One click for everything:** Decipher, Study, Open bundle, and Familiar and
+  Imbue buttons that use your best scroll (a tick shows when it's already up).
+- **Simple and Advanced views:** Advanced is a wider window with the network,
+  community odds and Your Stats built in. The map-style arrow button switches.
+- **Your Scrolls in categories:** Imbues, Familiars, Combat, Utility and Upgrades.
+  The best imbue for the weapon you're holding is outlined in gold; scrolls you
+  can't use yet are dimmed with the reason.
+- **Libraries:** detected by standing near the librarian (Undercity, Stormwind),
+  both pinned on the map.
+- **Books for the librarians:** learned when you hand one in, shared with other
+  users, and where they're found goes on the map.
+- **Alts:** every character knows your mages. Scroll tooltips say which of your
+  mages can read it, and non-mages get a small window with each mage's skill
+  and Study timer.
 - **Reminders:** no weapon imbue, no familiar out, a Scroll of Comprehension that
-  would unlock more scrolls right now, and weapon upgrades that are ready.
-- **Weapon Upgrades section:** Coldflame Saber, Narpas Sword and Wit's Edge: what
-  you have and what's missing, and where the weapon drops.
-- **Info bars:** a Scrollkeeper entry for Titan Panel and other LibDataBroker displays.
-- **Addon menu:** Scrollkeeper in the game's addon list by the minimap.
-- **Auctionator:** non-mages see whether an untranslated scroll is worth listing.
-- **Map:** click a library pin for a waypoint (uses TomTom if installed).
-- **Network window:** both lists scroll.
+  would unlock more, weapon upgrades that are ready.
+- **Extras:** Titan Panel / LibDataBroker entry, addon menu entry, Auctionator
+  prices for non-mages, TomTom waypoints from map pins.
+- **Fixes:** Study timer per character, Study button wakes up when ready,
+  scrollbars only when needed, window stays above the action bars.
 
 ## 0.4.0
 
