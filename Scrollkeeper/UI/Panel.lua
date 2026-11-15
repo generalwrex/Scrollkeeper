@@ -4,7 +4,8 @@
 
 local _, SK = ...
 
-local WIDTH, PADDING, LINE_HEIGHT = 230, 10, 15
+local WIDTH, PADDING = 230, 10
+local BASE_HEIGHT = 144   -- window height with no warning showing
 
 local panel, button
 local lines = {}          -- text rows, top to bottom
@@ -24,7 +25,7 @@ end
 
 local function Build()
     panel = CreateFrame("Frame", "ScrollkeeperPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(WIDTH, 150)
+    panel:SetSize(WIDTH, BASE_HEIGHT)
     panel:SetFrameStrata("MEDIUM")
     panel:SetClampedToScreen(true)
     panel:SetBackdrop({
@@ -56,24 +57,26 @@ local function Build()
         panel:SetPoint("CENTER", UIParent, "CENTER", 320, -40)
     end
 
-    -- Rows
-    local title = AddLine("title", "GameFontNormal")
-    title:SetPoint("TOPLEFT", PADDING, -PADDING)
-    title:SetText("|cff69ccf0Scrollkeeper|r")
-
-    local previous = title
-    for _, name in ipairs({ "skill", "tier", "scrolls" }) do
-        local row = AddLine(name)
-        row:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -4)
-        previous = row
+    -- Rows. Everything is placed at a fixed distance from the top of the
+    -- window, because the game does not allow a secure button to be
+    -- attached to a piece of text.
+    local function PlaceRow(name, y, font)
+        local row = AddLine(name, font)
+        row:SetPoint("TOPLEFT", panel, "TOPLEFT", PADDING, y)
+        return row
     end
+
+    PlaceRow("title", -10, "GameFontNormal"):SetText("|cff69ccf0Scrollkeeper|r")
+    PlaceRow("skill", -30)
+    PlaceRow("tier", -45)
+    PlaceRow("scrolls", -60)
 
     -- Decipher button: a secure button, so one click from you casts
     -- Comprehend Scroll on the chosen scroll. Nothing is automatic.
     button = CreateFrame("Button", "ScrollkeeperDecipherButton", panel,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
     button:SetSize(WIDTH - PADDING * 2, 22)
-    button:SetPoint("TOPLEFT", previous, "BOTTOMLEFT", 0, -6)
+    button:SetPoint("TOPLEFT", panel, "TOPLEFT", PADDING, -78)
     button:RegisterForClicks("AnyUp", "AnyDown")
     button:SetText("Decipher next scroll")
     button:SetScript("OnEnter", function(self)
@@ -92,12 +95,9 @@ local function Build()
     end)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    local study = AddLine("study")
-    study:SetPoint("TOPLEFT", button, "BOTTOMLEFT", 0, -8)
-    local warning = AddLine("warning")
-    warning:SetPoint("TOPLEFT", study, "BOTTOMLEFT", 0, -4)
-    local log = AddLine("log")
-    log:SetPoint("TOPLEFT", warning, "BOTTOMLEFT", 0, -4)
+    PlaceRow("study", -108)
+    PlaceRow("log", -123)
+    PlaceRow("warning", -140)   -- last, because it can wrap onto two lines
 
     -- Close button (top right)
     local close = CreateFrame("Button", nil, panel, "UIPanelCloseButton")
@@ -187,13 +187,12 @@ local function UpdateText()
 
     lines.log:SetText(("Deciphered so far: %d  |cff888888(/sk log)|r"):format(SK.db.deciphered or 0))
 
-    -- Fit the window to its content.
-    local height = PADDING * 2 + 22 + 16
-    for _, row in pairs(lines) do
-        local text = row:GetText()
-        if text and text ~= "" then height = height + row:GetStringHeight() + 5 end
+    -- Fit the window to its content: taller when a warning is showing.
+    if not SK.InCombat() then
+        local warningText = lines.warning:GetText()
+        local extra = (warningText and warningText ~= "") and (lines.warning:GetStringHeight() + 8) or 0
+        panel:SetHeight(BASE_HEIGHT + extra)
     end
-    if not SK.InCombat() then panel:SetHeight(height) end
 end
 
 local function Update()
