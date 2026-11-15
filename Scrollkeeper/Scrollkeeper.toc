@@ -1,0 +1,30 @@
+## Interface: 16001
+## Title: Scrollkeeper
+## Notes: Mage scrolls made easy: what you can decipher, one-button deciphering, Study timer, and tooltips for every class.
+## Author: generalwrex
+## Version: 0.1.0
+## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
+## Category: Class
+
+# Core: shared helpers every other file uses. Load these first.
+Core\Init.lua
+Core\Constants.lua
+
+# Data: plain tables of game facts. Edit these when Blizzard changes scrolls.
+Data\Scrolls.lua
+
+# Modules: one feature per file. None of them draw anything.
+Modules\Skill.lua
+Modules\Bags.lua
+Modules\Study.lua
+Modules\Decipher.lua
+Modules\Tooltip.lua
+
+# UI: everything you can see.
+UI\Panel.lua
+
+# Slash commands.
+Commands.lua
+
+# Dev: data collection tool used while building the addon (/sk scan).
+Dev\Scan.lua
