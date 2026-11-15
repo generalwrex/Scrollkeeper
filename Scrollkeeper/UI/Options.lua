@@ -35,13 +35,13 @@ SK.Listen("READY", function()
 
         AddCheckbox("showPanel", "Show the panel",
             "The window with your Comprehension, scrolls and Study timer. Mages only.", true)
-        AddCheckbox("locked", "Lock the panel in place",
+        AddCheckbox("locked", "Lock position",
             "Stops the panel from being dragged.", false)
-        AddCheckbox("showScrollBar", "Show my usable scrolls as buttons",
+        AddCheckbox("showScrollBar", "Scroll buttons",
             "Adds a button to the panel for each kind of translated scroll in your bags. Click one to use it.", true)
-        AddCheckbox("showTooltips", "Add a line to scroll tooltips",
+        AddCheckbox("showTooltips", "Tooltip lines",
             "Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll.", true)
-        AddCheckbox("announce", "Say what each decipher produced",
+        AddCheckbox("announce", "Decipher messages",
             "Prints a chat line such as \"deciphered: Scroll of Frog Familiar\".", true)
 
         SK.Safely("settings slider", AddScaleSlider)

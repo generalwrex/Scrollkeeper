@@ -18,7 +18,7 @@ SK.UI.COLORS = {
 
 ------------------------------------------------------------------------
 -- Progress bar with a label on it
---   bar:SetProgress(value, max)   bar:SetLabel("text")   bar:SetBarColor({r,g,b})
+--   bar:SetProgress(value, max)   bar:SetLabel("left text", "right text")   bar:SetBarColor({r,g,b})
 ------------------------------------------------------------------------
 
 function SK.UI.CreateBar(parent, width, height)
@@ -32,22 +32,31 @@ function SK.UI.CreateBar(parent, width, height)
     background:SetAllPoints()
     background:SetColorTexture(0, 0, 0, 0.6)
 
-    local label = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    label:SetPoint("CENTER", 0, 0)
-    -- Outline the text so it stays readable over the coloured fill.
-    local font, size = label:GetFont()
-    if font then label:SetFont(font, size, "OUTLINE") end
-    bar.label = label
+    -- Two labels, one at each end, so the tier marks in the middle never
+    -- cut through the words. Outlined so they stay readable on the fill.
+    local function MakeLabel(point, x, justify)
+        local label = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        label:SetPoint(point, x, 0)
+        label:SetJustifyH(justify)
+        local font, size = label:GetFont()
+        if font then label:SetFont(font, size, "OUTLINE") end
+        return label
+    end
+    bar.leftLabel = MakeLabel("LEFT", 4, "LEFT")
+    bar.rightLabel = MakeLabel("RIGHT", -4, "RIGHT")
 
     function bar:SetProgress(value, max)
         if not max or max <= 0 then max, value = 1, 0 end
         self:SetMinMaxValues(0, max)
         self:SetValue(math.max(0, math.min(value, max)))
     end
-    function bar:SetLabel(text) self.label:SetText(text) end
+    function bar:SetLabel(left, right)
+        self.leftLabel:SetText(left or "")
+        self.rightLabel:SetText(right or "")
+    end
     function bar:SetBarColor(color) self:SetStatusBarColor(color[1], color[2], color[3]) end
 
-    -- Thin vertical marks, used to show where the scroll tiers are.
+    -- Short ticks along the bottom edge, used to show where the scroll tiers are.
     bar.marks = {}
     function bar:SetMarks(positions, max)
         for _, mark in ipairs(self.marks) do mark:Hide() end
@@ -59,12 +68,12 @@ function SK.UI.CreateBar(parent, width, height)
                 local mark = self.marks[shown]
                 if not mark then
                     mark = self:CreateTexture(nil, "ARTWORK")
-                    mark:SetColorTexture(1, 0.82, 0, 0.8)
-                    mark:SetSize(1, height)
+                    mark:SetColorTexture(1, 0.82, 0, 0.9)
+                    mark:SetSize(2, 5)
                     self.marks[shown] = mark
                 end
                 mark:ClearAllPoints()
-                mark:SetPoint("LEFT", self, "LEFT", width * position / max, 0)
+                mark:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", width * position / max - 1, 0)
                 mark:Show()
             end
         end

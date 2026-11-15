@@ -35,25 +35,41 @@ local function Text(font)
     return text
 end
 
-local function SmallButton(label, tooltip, onClick)
+-- A small square button in the title bar, drawn with one of the game's
+-- own button icons.
+local HEADER_BUTTON_SIZE = 18
+
+local function HeaderButton(texture, tooltip, onClick)
     local button = CreateFrame("Button", nil, panel)
-    button:SetSize(16, 16)
-    local text = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text:SetPoint("CENTER", 0, 0)
-    text:SetText(label)
-    button.text = text
+    button:SetSize(HEADER_BUTTON_SIZE, HEADER_BUTTON_SIZE)
+    button:SetNormalTexture(texture)
+    button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
     button:SetScript("OnEnter", function(self)
-        self.text:SetTextColor(1, 1, 1)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText(tooltip)
+        GameTooltip:SetText(type(tooltip) == "function" and tooltip() or tooltip)
         GameTooltip:Show()
     end)
-    button:SetScript("OnLeave", function(self)
-        self.text:SetTextColor(1, 0.82, 0)
-        GameTooltip:Hide()
+    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    button:SetScript("OnClick", function(self, ...)
+        onClick(self, ...)
+        if GameTooltip:IsOwned(self) then self:GetScript("OnEnter")(self) end
     end)
-    button:SetScript("OnClick", onClick)
     return button
+end
+
+local ICON_CLOSE    = "Interface\\Buttons\\UI-StopButton"
+local ICON_SHRINK   = "Interface\\Buttons\\UI-MinusButton-Up"
+local ICON_EXPAND   = "Interface\\Buttons\\UI-PlusButton-Up"
+local ICON_SETTINGS = "Interface\\Buttons\\UI-OptionsButton"
+
+-- Keep the window's top-left corner still when its height changes, so
+-- shrinking it doesn't make it jump. Positions are saved the same way.
+local function AnchorTopLeft()
+    local left, top = panel:GetLeft(), panel:GetTop()
+    if not left or not top then return end
+    panel:ClearAllPoints()
+    panel:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    SK.db.panelPoint = { "TOPLEFT", "BOTTOMLEFT", left, top }
 end
 
 local function Build()
@@ -82,8 +98,7 @@ local function Build()
     end)
     panel:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        local point, _, relativePoint, x, y = self:GetPoint()
-        SK.db.panelPoint = { point, relativePoint, x, y }
+        AnchorTopLeft()
     end)
 
     local saved = SK.db.panelPoint
@@ -93,6 +108,7 @@ local function Build()
         panel:SetPoint("CENTER", UIParent, "CENTER", 320, -40)
     end
     panel:SetScale(SK.db.scale or 1)
+    AnchorTopLeft()
 
     -- Title bar
     local headerBackground = panel:CreateTexture(nil, "BORDER")
@@ -109,28 +125,33 @@ local function Build()
 
     parts.title = Text("GameFontNormal")
     parts.title:SetPoint("TOPLEFT", PADDING + 18, -7)
-    parts.title:SetWidth(INNER - 60)
 
-    parts.close = SmallButton("x", "Hide (type /sk to show it again)", function()
+    parts.close = HeaderButton(ICON_CLOSE, "Hide (type /sk to show it again)", function()
         if SK.InCombat() then SK.Print("the panel can't be hidden in combat.") return end
         SK.db.showPanel = false
         panel:Hide()
         SK.Print("panel hidden. Type /sk to show it again.")
     end)
-    parts.close:SetPoint("TOPRIGHT", -6, -5)
+    parts.close:SetPoint("TOPRIGHT", -5, -4)
 
-    parts.collapse = SmallButton("-", "Shrink or expand", function()
-        if SK.InCombat() then SK.Print("the panel can't change size in combat.") return end
-        SK.db.collapsed = not SK.db.collapsed
-        SK.RefreshPanel()
-    end)
-    parts.collapse:SetPoint("RIGHT", parts.close, "LEFT", -2, 0)
+    parts.collapse = HeaderButton(ICON_SHRINK,
+        function() return SK.db.collapsed and "Expand" or "Shrink to the title bar" end,
+        function()
+            if SK.InCombat() then SK.Print("the panel can't change size in combat.") return end
+            SK.db.collapsed = not SK.db.collapsed
+            SK.RefreshPanel()
+        end)
+    parts.collapse:SetPoint("RIGHT", parts.close, "LEFT", -3, 0)
 
-    parts.gear = SmallButton("*", "Settings", function() SK.OpenOptions() end)
-    parts.gear:SetPoint("RIGHT", parts.collapse, "LEFT", -2, 0)
+    parts.gear = HeaderButton(ICON_SETTINGS, "Settings", function() SK.OpenOptions() end)
+    parts.gear:SetPoint("RIGHT", parts.collapse, "LEFT", -3, 0)
+
+    -- Title text stops before the buttons and never wraps.
+    parts.title:SetPoint("RIGHT", parts.gear, "LEFT", -4, 0)
+    parts.title:SetWordWrap(false)
 
     -- Skill
-    parts.skillBar = SK.UI.CreateBar(panel, INNER, 14)
+    parts.skillBar = SK.UI.CreateBar(panel, INNER, 16)
     parts.skillBar:SetBarColor(accent)
     parts.tier = Text()
 
@@ -165,7 +186,7 @@ local function Build()
     end
 
     -- Study
-    parts.studyBar = SK.UI.CreateBar(panel, INNER, 14)
+    parts.studyBar = SK.UI.CreateBar(panel, INNER, 16)
     parts.warning = Text()
 end
 
@@ -186,7 +207,7 @@ local function Layout()
     layoutWaiting = false
 
     local collapsed = SK.db.collapsed
-    parts.collapse.text:SetText(collapsed and "+" or "-")
+    parts.collapse:SetNormalTexture(collapsed and ICON_EXPAND or ICON_SHRINK)
 
     local body = { parts.skillBar, parts.tier, parts.waiting, parts.decipher, parts.scrollsLabel, parts.studyBar, parts.warning }
     for _, region in ipairs(body) do region:SetShown(not collapsed) end
@@ -199,7 +220,7 @@ local function Layout()
 
     local y = -(HEADER_HEIGHT + 6)
 
-    Place(parts.skillBar, y);  y = y - 18
+    Place(parts.skillBar, y);  y = y - 20
     Place(parts.tier, y);      y = y - 18
 
     Place(parts.waiting, y);   y = y - 16
@@ -233,7 +254,7 @@ local function Layout()
         y = y - rows * (ICON_SIZE + ICON_GAP) - 4
     end
 
-    Place(parts.studyBar, y);  y = y - 18
+    Place(parts.studyBar, y);  y = y - 20
 
     local warning = parts.warning:GetText()
     if warning and warning ~= "" then
@@ -272,8 +293,8 @@ local function UpdateText()
 
     -- Title: when shrunk, the title carries the important numbers.
     if SK.db.collapsed then
-        local study = knowsStudy and ("  Study " .. SK.FormatStudyTime(studyLeft)) or ""
-        parts.title:SetText(("|cff69ccf0Scrollkeeper|r  |cffffffff%d ready|r%s"):format(readable, study))
+        local study = knowsStudy and ("  |cff8c8c8cStudy|r " .. SK.FormatStudyTime(studyLeft)) or ""
+        parts.title:SetText(("|cffffffff%d|r |cff8c8c8cready|r%s"):format(readable, study))
     else
         parts.title:SetText("|cff69ccf0Scrollkeeper|r")
     end
@@ -282,7 +303,7 @@ local function UpdateText()
     local bonus = skill.bonus > 0 and (" |cff40ff40+%d|r"):format(skill.bonus) or ""
     parts.skillBar:SetProgress(skill.rank, skill.max)
     parts.skillBar:SetMarks(SK.TIERS, skill.max)
-    parts.skillBar:SetLabel(("Comprehension %d%s / %d"):format(skill.rank, bonus, skill.max))
+    parts.skillBar:SetLabel("Comprehension", ("%d%s / %d"):format(skill.rank, bonus, skill.max))
 
     local nextTier = SK.NextTierAfter(skill.effective)
     if not nextTier then
@@ -320,11 +341,11 @@ local function UpdateText()
     elseif studyLeft == 0 then
         parts.studyBar:SetProgress(1, 1)
         parts.studyBar:SetBarColor(colors.good)
-        parts.studyBar:SetLabel("Study ready   |cffffffff" .. feathers .. "|r")
+        parts.studyBar:SetLabel("Study ready", feathers)
     else
         parts.studyBar:SetProgress(SK.STUDY_COOLDOWN_SECONDS - studyLeft, SK.STUDY_COOLDOWN_SECONDS)
         parts.studyBar:SetBarColor(colors.wait)
-        parts.studyBar:SetLabel(("Study in %s   |cffffffff%s|r"):format(SK.FormatStudyTime(studyLeft), feathers))
+        parts.studyBar:SetLabel("Study in " .. SK.FormatStudyTime(studyLeft), feathers)
     end
 
     -- Warning
@@ -362,7 +383,17 @@ end
 -- Apply the saved settings to the window (called from the settings page).
 function SK.ApplyPanelSettings()
     if not panel or SK.InCombat() then return end
-    panel:SetScale(SK.db.scale or 1)
+    -- Changing the scale also scales the saved position, so convert the
+    -- corner to screen pixels first and back again afterwards.
+    local newScale = SK.db.scale or 1
+    local oldScale = panel:GetScale()
+    local left, top = panel:GetLeft(), panel:GetTop()
+    panel:SetScale(newScale)
+    if left and top and oldScale ~= newScale then
+        panel:ClearAllPoints()
+        panel:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left * oldScale / newScale, top * oldScale / newScale)
+    end
+    AnchorTopLeft()
     panel:SetShown(SK.db.showPanel)
     SK.RefreshPanel()
 end

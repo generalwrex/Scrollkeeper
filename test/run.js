@@ -1,4 +1,4 @@
-const fengari = require('/home/claude/sandbox/exporter/tools/test/node_modules/fengari');
+const fengari = require('fengari');
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 const fs = require('fs'), path = require('path');
 const root = process.argv[2];
