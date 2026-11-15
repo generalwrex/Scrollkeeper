@@ -1,11 +1,12 @@
 ## Interface: 16001
 ## Title: Scrollkeeper
-## Notes: Mage scrolls made easy: what you can decipher, one-button deciphering, Study timer, and tooltips for every class.
+## Notes: Mage scrolls made easy: one-click Decipher, Study, Familiar and Imbue, skill-up chances, library and book spots on the map, and help from your alts.
 ## Author: generalwrex
 ## Version: @project-version@
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
 ## Category: Class
 ## X-License: MIT
+## X-Curse-Project-ID: 1808722
 ## X-Website: https://github.com/generalwrex/Scrollkeeper
 ## IconTexture: Interface\Icons\INV_Scroll_03
 ## AddonCompartmentFunc: Scrollkeeper_OnCompartmentClick
