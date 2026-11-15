@@ -46,10 +46,26 @@ function SK.RequirementFromLines(lines)
     return nil
 end
 
--- Comprehension needed for the scroll in one bag slot, or nil.
-local function RequirementForSlot(bag, slot)
+-- True if the tooltip has a "Classes: Mage" line.
+local function IsMageOnly(lines)
+    local template = ITEM_CLASSES_ALLOWED or "Classes: %s"
+    local prefix = template:match("^(.-)%%s") or "Classes: "
+    local mage = (LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE.MAGE) or "Mage"
+    for _, line in ipairs(lines) do
+        local text = type(line) == "table" and line.leftText or line
+        if type(text) == "string" and text:sub(1, #prefix) == prefix and text:find(mage, 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+-- Reads one bag slot's tooltip. Returns the Comprehension needed (or nil)
+-- and whether the item is for mages only.
+local function ReadSlotTooltip(bag, slot)
     local data = C_TooltipInfo and SK.Try(C_TooltipInfo.GetBagItem, bag, slot)
-    return type(data) == "table" and SK.RequirementFromLines(data.lines) or nil
+    if type(data) ~= "table" or type(data.lines) ~= "table" then return nil, false end
+    return SK.RequirementFromLines(data.lines), IsMageOnly(data.lines)
 end
 
 ------------------------------------------------------------------------
@@ -64,13 +80,15 @@ end
 
 -- Returns a table describing what is in the bags right now:
 --   untranslated  list of { bag, slot, itemID, name, needs }   (needs = Comprehension required)
+--   translated    list of { itemID, name, count, icon }, one entry per kind of usable mage scroll
 --   feathers      number of Light Feathers
 --   bundles       number of unopened Bundles of Scrolls
 --   counts        [itemID] = how many, for every item (used by the luck log)
 --   names         [itemID] = item name
 function SK.ScanBags()
-    local found = { untranslated = {}, feathers = 0, bundles = 0, counts = {}, names = {} }
+    local found = { untranslated = {}, translated = {}, feathers = 0, bundles = 0, counts = {}, names = {} }
     if not C_Container then return found end
+    local translatedByID = {}
 
     for bag = FIRST_BAG, LAST_BAG do
         local slots = SK.Try(C_Container.GetContainerNumSlots, bag) or 0
@@ -87,11 +105,22 @@ function SK.ScanBags()
                 elseif name == "Bundle of Scrolls" then
                     found.bundles = found.bundles + count
                 elseif IsScrollItem(id) then
-                    local needs = RequirementForSlot(bag, slot)
+                    local needs, mageOnly = ReadSlotTooltip(bag, slot)
                     if needs then
                         table.insert(found.untranslated, {
                             bag = bag, slot = slot, itemID = id, name = name, needs = needs,
                         })
+                    elseif mageOnly then
+                        local entry = translatedByID[id]
+                        if not entry then
+                            entry = {
+                                itemID = id, name = name, count = 0,
+                                icon = item.iconFileID or (C_Item and SK.Try(C_Item.GetItemIconByID, id)),
+                            }
+                            translatedByID[id] = entry
+                            table.insert(found.translated, entry)
+                        end
+                        entry.count = entry.count + count
                     end
                 end
             end
@@ -104,11 +133,12 @@ function SK.ScanBags()
         if a.bag ~= b.bag then return a.bag < b.bag end
         return a.slot < b.slot
     end)
+    table.sort(found.translated, function(a, b) return a.name < b.name end)
     return found
 end
 
 -- The most recent scan. Other files read SK.bags instead of rescanning.
-SK.bags = { untranslated = {}, feathers = 0, bundles = 0, counts = {}, names = {} }
+SK.bags = { untranslated = {}, translated = {}, feathers = 0, bundles = 0, counts = {}, names = {} }
 
 local function Refresh()
     local previous = SK.bags

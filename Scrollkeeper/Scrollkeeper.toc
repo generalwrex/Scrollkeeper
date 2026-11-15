@@ -2,7 +2,7 @@
 ## Title: Scrollkeeper
 ## Notes: Mage scrolls made easy: what you can decipher, one-button deciphering, Study timer, and tooltips for every class.
 ## Author: generalwrex
-## Version: 0.1.0
+## Version: 0.2.0
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
 ## Category: Class
 
@@ -21,7 +21,9 @@ Modules\Decipher.lua
 Modules\Tooltip.lua
 
 # UI: everything you can see.
+UI\Widgets.lua
 UI\Panel.lua
+UI\Options.lua
 
 # Slash commands.
 Commands.lua

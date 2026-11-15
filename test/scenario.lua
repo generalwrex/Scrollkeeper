@@ -23,6 +23,10 @@ if SK.isMage then
   BAGS[3][1] = { id = 999, name = "Bundle of Scrolls", count = 1, tip = { "Bundle of Scrolls" } }
   fire("BAG_UPDATE_DELAYED")
   ScrollkeeperPanel._scripts.OnUpdate(ScrollkeeperPanel, 1.5)
+  print("translated:", #SK.bags.translated, SK.bags.translated[1] and SK.bags.translated[1].name, SK.bags.translated[1] and SK.bags.translated[1].count)
+  local sb = ScrollkeeperScrollButton1; print("scroll button", sb._shown, sb._attrs.type, sb._attrs.item)
+  SK.db.collapsed = true; SK.RefreshPanel(); print("collapsed button shown", sb._shown)
+  SK.db.collapsed = false; SK.RefreshPanel(); SETTING_CB(); SlashCmdList.SCROLLKEEPER("options")
   SlashCmdList.SCROLLKEEPER("log")
   SlashCmdList.SCROLLKEEPER("")
   SlashCmdList.SCROLLKEEPER("")

@@ -4,6 +4,7 @@
 -- /sk tooltips   turn the tooltip lines on or off
 -- /sk announce   turn the "deciphered: ..." chat line on or off
 -- /sk reset      move the panel back to the middle of the screen
+-- /sk options    open the settings page
 -- /sk scan       developer data dump (see Dev/Scan.lua)
 
 local _, SK = ...
@@ -35,15 +36,20 @@ end
 commands.reset = function()
     if SK.InCombat() then SK.Print("not in combat.") return end
     SK.db.panelPoint = nil
+    SK.db.scale = 1
     if ScrollkeeperPanel then
         ScrollkeeperPanel:ClearAllPoints()
         ScrollkeeperPanel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        ScrollkeeperPanel:SetScale(1)
     end
     SK.Print("panel moved to the middle of the screen.")
 end
 
+commands.options = function() SK.OpenOptions() end
+commands.config = commands.options
+
 commands.help = function()
-    SK.Print("commands: /sk, /sk log, /sk tooltips, /sk announce, /sk reset")
+    SK.Print("commands: /sk, /sk options, /sk log, /sk reset")
 end
 
 -- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.

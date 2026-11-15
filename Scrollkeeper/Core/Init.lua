@@ -5,7 +5,7 @@
 local ADDON_NAME, SK = ...
 
 SK.name = ADDON_NAME
-SK.version = "0.1.0"
+SK.version = "0.2.0"
 
 ------------------------------------------------------------------------
 -- Chat output
@@ -105,6 +105,10 @@ local DEFAULTS = {
     showPanel = true,        -- show the panel on mages
     showTooltips = true,     -- add a line to scroll tooltips
     announce = true,         -- print what each decipher produced
+    showScrollBar = true,    -- show your usable scrolls as buttons in the panel
+    locked = false,          -- stop the panel from being dragged
+    collapsed = false,       -- panel shrunk to its title bar
+    scale = 1,               -- panel size
     panelPoint = nil,        -- saved panel position
     studyReadyAt = 0,        -- clock time when Study comes off cooldown
     results = {},            -- luck log: results[tier][scroll name] = count

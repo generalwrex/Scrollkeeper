@@ -10,7 +10,7 @@ local function newObj()
     if k == "GetAttribute" then return function(self, a) return self._attrs[a] end end
     if k == "SetText" then return function(self, v) self._text = v end end
     if k == "GetText" then return function(self) return self._text end end
-    if k == "CreateFontString" then return function() return newObj() end end
+    if k == "CreateFontString" or k == "CreateTexture" then return function() return newObj() end end
     if k == "IsShown" then return function(self) return self._shown end end
     if k == "SetShown" then return function(self, v) self._shown = v and true or false end end
     if k == "Show" then return function(self) self._shown = true end end
@@ -59,3 +59,12 @@ C_TooltipInfo = { GetBagItem = function(b, s) local i = BAGS[b] and BAGS[b][s]; 
 TOOLTIP_CALLS = {}
 TooltipDataProcessor = { AddTooltipPostCall = function(kind, fn) TOOLTIP_CALLS[#TOOLTIP_CALLS+1] = fn end }
 function GetBuildInfo() return "1.60.1", "70938", "Nov 12 2026", 16001 end
+
+C_Item.GetItemIconByID = function(id) return 134939 end
+Settings = {
+  RegisterVerticalLayoutCategory = function(n) return { GetID = function() return 1 end } end,
+  RegisterAddOnSetting = function() return { SetValueChangedCallback = function(self, f) SETTING_CB = f end } end,
+  CreateCheckbox = function() end, CreateSliderOptions = function() return {} end, CreateSlider = function() end,
+  RegisterAddOnCategory = function() end, OpenToCategory = function(id) print("open settings", id) end,
+}
+math.ceil = math.ceil
