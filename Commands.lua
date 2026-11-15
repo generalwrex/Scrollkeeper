@@ -5,6 +5,8 @@
 -- /sk announce   turn the "deciphered: ..." chat line on or off
 -- /sk reset      move the panel back to the middle of the screen
 -- /sk options    open the settings page
+-- /sk simple     simple panel: buttons, bars and your scrolls
+-- /sk advanced   advanced panel: everything
 -- /sk net        the Network window: other Scrollkeeper users and community odds
 -- /sk demo       fill the Network window, map and tooltips with made-up players
 -- /sk scan       developer data dump (see Dev/Scan.lua)
@@ -18,8 +20,10 @@ local commands = {}
 commands[""] = function()
     if SK.isMage then
         SK.TogglePanel()
+    elseif #SK.MyOtherMages() > 0 then
+        SK.ToggleAltPanel()
     else
-        SK.Print("the panel is for mages. On other classes Scrollkeeper adds tooltips to mage scrolls.")
+        SK.Print("log in on a mage once, and this character will show your mages' skill and Study timers.")
     end
 end
 
@@ -48,6 +52,8 @@ commands.reset = function()
 end
 
 commands.options = function() SK.OpenOptions() end
+commands.simple = function() SK.db.viewMode = "compact"; SK.ApplyPanelSettings() end
+commands.advanced = function() SK.db.viewMode = "full"; SK.ApplyPanelSettings() end
 commands.net = function() SK.ToggleNetwork() end
 commands.network = commands.net
 commands.demo = function() SK.ToggleDemo() end

@@ -116,10 +116,38 @@ function SK.UI.CreateItemButton(parent, name, size)
     frame:SetPoint("TOPLEFT", -size * 0.35, size * 0.35)
     frame:SetPoint("BOTTOMRIGHT", size * 0.35, -size * 0.35)
 
+    -- A thin gold outline marks the best one in its category.
+    local star = CreateFrame("Frame", nil, button, "BackdropTemplate")
+    star:SetPoint("TOPLEFT", -2, 2)
+    star:SetPoint("BOTTOMRIGHT", 2, -2)
+    star:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 2 })
+    star:SetBackdropBorderColor(1, 0.82, 0, 1)
+    star:SetFrameLevel(button:GetFrameLevel() + 2)
+    star:Hide()
+    button.star = star
+
+    function button:SetBest(best) self.best = best; self.star:SetShown(best and true or false) end
+    -- Scrolls you're not high enough level for are shown dimmed.
+    function button:SetUsable(usable)
+        self.usable = usable
+        self.icon:SetDesaturated(not usable)
+        self.icon:SetAlpha(usable and 1 or 0.5)
+    end
+
     button:SetScript("OnEnter", function(self)
         if not self.itemID then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         if GameTooltip.SetItemByID then GameTooltip:SetItemByID(self.itemID) end
+        local scroll = self.scroll
+        if self.best then
+            GameTooltip:AddLine(("|cffffd100Best %s you can use.|r"):format((self.categoryLabel or ""):lower()))
+        elseif scroll and scroll.levelOK == false then
+            GameTooltip:AddLine("|cffff6666You're not high enough level for this yet.|r")
+        elseif scroll and scroll.fits == false then
+            local _, weapon = SK.MainHandWeapon()
+            GameTooltip:AddLine(("|cffff6666Only for a %s. You're holding %s.|r"):format(
+                scroll.imbueFor or "different weapon", weapon or "no weapon"), 1, 1, 1, true)
+        end
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)

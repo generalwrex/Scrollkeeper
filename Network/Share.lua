@@ -5,6 +5,9 @@
 --   U|tier#part|colour:ups/tries,... your skill-ups by colour at that tier
 --   L|mapID|x|y|name                 a library you've used Study in
 --   P|mapID#part|cell:count,...      where you've looted untranslated scrolls
+--   K|mapID#part|cell:count,...      where you've looted books for the librarians
+--   I|0#part|itemID,...              item IDs you've learned are books
+--   W|instance|x|y|name              a library spot as a world position
 --
 -- Each player's totals REPLACE their previous ones, so hearing the same
 -- player twice never counts twice, and one player can't flood the
@@ -27,9 +30,10 @@ local function Entry(sender)
     SK.db.community = SK.db.community or {}
     local entry = SK.db.community[sender]
     if not entry then
-        entry = { results = {}, skillups = {}, drops = {} }
+        entry = { results = {}, skillups = {}, drops = {}, books = {} }
         SK.db.community[sender] = entry
     end
+    entry.books = entry.books or {}
     entry.at = time()
     return entry
 end
@@ -78,6 +82,32 @@ Net.Handle("P", function(sender, f)
     SK.Send("DROPS_CHANGED")
 end)
 
+Net.Handle("K", function(sender, f)
+    local mapID, part = Head(f[1])
+    if not (mapID and part) then return end
+    local cells = Target(Entry(sender).books, mapID, part)
+    for cell, count in (f[2] or ""):gmatch("(%d+%.%d+):(%d+)") do
+        count = tonumber(count)
+        if count > 0 and count <= MAX_COUNT and SK.CellCenter(cell) then cells[cell] = count end
+    end
+    SK.Send("DROPS_CHANGED")
+end)
+
+-- Books others have learned: learn them too (a few hundred at most).
+Net.Handle("I", function(sender, f)
+    SK.db.bookIDs = SK.db.bookIDs or {}
+    local known = 0
+    for _ in pairs(SK.db.bookIDs) do known = known + 1 end
+    for id in (f[2] or ""):gmatch("(%d+)") do
+        id = tonumber(id)
+        if known >= 500 then break end
+        if id and id > 0 and not SK.db.bookIDs[id] then
+            SK.db.bookIDs[id] = true
+            known = known + 1
+        end
+    end
+end)
+
 Net.Handle("L", function(sender, f)
     local mapID, x, y, name = tonumber(f[1]), tonumber(f[2]), tonumber(f[3]), f[4]
     if not (mapID and x and y and name and name ~= "") then return end
@@ -85,6 +115,19 @@ Net.Handle("L", function(sender, f)
     SK.db.sharedLibraries = SK.db.sharedLibraries or {}
     local key = mapID .. " / " .. name
     local entry = SK.db.sharedLibraries[key] or { mapID = mapID, x = x, y = y, name = name, from = {} }
+    entry.from[sender] = true
+    SK.db.sharedLibraries[key] = entry
+    SK.Send("DROPS_CHANGED")
+end)
+
+-- W: a library spot as a world position (instance, x, y in yards, name).
+Net.Handle("W", function(sender, f)
+    local inst, x, y, name = tonumber(f[1]), tonumber(f[2]), tonumber(f[3]), f[4]
+    if not (inst and x and y and name and name ~= "") then return end
+    if math.abs(x) > 100000 or math.abs(y) > 100000 then return end
+    SK.db.sharedLibraries = SK.db.sharedLibraries or {}
+    local key = ("%d_%d_%d"):format(inst, math.floor(x / 10), math.floor(y / 10))
+    local entry = SK.db.sharedLibraries[key] or { inst = inst, x = x, y = y, name = name, from = {} }
     entry.from[sender] = true
     SK.db.sharedLibraries[key] = entry
     SK.Send("DROPS_CHANGED")
@@ -126,9 +169,12 @@ function SK.CommunityOdds(tier)
 end
 
 -- Drop cells for a map, yours and everyone's: cells[cell] = { mine, others }.
-function SK.DropCells(mapID)
+-- kind "books" gives book spots instead of scroll spots.
+function SK.DropCells(mapID, kind)
+    local field = kind == "books" and "books" or "drops"
+    local myTable = kind == "books" and SK.db.bookDrops or SK.db.drops
     local cells = {}
-    for cell, count in pairs(SK.db.drops and SK.db.drops[mapID] or {}) do
+    for cell, count in pairs(myTable and myTable[mapID] or {}) do
         cells[cell] = { mine = count, others = 0 }
     end
     local function AddOthers(drops)
@@ -137,23 +183,45 @@ function SK.DropCells(mapID)
             cells[cell].others = cells[cell].others + count
         end
     end
-    for _, entry in pairs(SK.db.community or {}) do AddOthers(entry.drops) end
-    for _, peer in pairs(SK.demoCommunity or {}) do AddOthers(peer.drops) end
+    for _, entry in pairs(SK.db.community or {}) do AddOthers(entry[field]) end
+    for _, peer in pairs(SK.demoCommunity or {}) do AddOthers(peer[field]) end
     return cells
 end
 
--- Libraries to pin on a map: list of { x, y, name, mine = true/false, count }
+-- Libraries to pin on a map: list of { x, y, name, mine, known, count }.
+-- Library spots are kept as world positions and placed on whichever
+-- map is open (city, zone or continent).
 function SK.LibraryPins(mapID)
-    local pins = {}
+    local pins, seen = {}, {}
+    local function Add(entry, x, y)
+        if not x then return end
+        -- One pin per spot, even if it's known, yours and shared.
+        local key = ("%.2f:%.2f"):format(x, y)
+        if seen[key] then
+            local pin = seen[key]
+            pin.mine = pin.mine or entry.mine
+            pin.count = (pin.count or 0) + (entry.count or 0)
+            return
+        end
+        entry.x, entry.y = x, y
+        seen[key] = entry
+        pins[#pins + 1] = entry
+    end
+    local function Place(pin)
+        if pin.inst then return SK.WorldToMap(pin.inst, pin.x, pin.y, mapID) end
+        if pin.mapID == mapID then return pin.x, pin.y end   -- older saved format
+    end
+
+    for _, library in ipairs(SK.KnownLibraries and SK.KnownLibraries() or {}) do
+        Add({ name = library.name, known = true }, Place(library))
+    end
     for _, pin in pairs(SK.db.libraryPins or {}) do
-        if pin.mapID == mapID then pins[#pins + 1] = { x = pin.x, y = pin.y, name = pin.name, mine = true } end
+        Add({ name = pin.name, mine = true }, Place(pin))
     end
     for _, pin in pairs(SK.db.sharedLibraries or {}) do
-        if pin.mapID == mapID then
-            local count = 0
-            for _ in pairs(pin.from) do count = count + 1 end
-            pins[#pins + 1] = { x = pin.x, y = pin.y, name = pin.name, mine = false, count = count }
-        end
+        local count = 0
+        for _ in pairs(pin.from or {}) do count = count + 1 end
+        Add({ name = pin.name, count = count }, Place(pin))
     end
     return pins
 end
@@ -183,8 +251,20 @@ function SK.SendMyData()
         for cell, count in pairs(cells) do items[#items + 1] = cell .. ":" .. count end
         if #items > 0 then Net.SendList("P", mapID, items) end
     end
+    for mapID, cells in pairs(db.bookDrops or {}) do
+        local items = {}
+        for cell, count in pairs(cells) do items[#items + 1] = cell .. ":" .. count end
+        if #items > 0 then Net.SendList("K", mapID, items) end
+    end
+    local bookIDs = {}
+    for id in pairs(db.bookIDs or {}) do bookIDs[#bookIDs + 1] = tostring(id) end
+    if #bookIDs > 0 then Net.SendList("I", 0, bookIDs) end
     for _, pin in pairs(db.libraryPins or {}) do
-        Net.Send("L", pin.mapID, ("%.3f"):format(pin.x), ("%.3f"):format(pin.y), pin.name)
+        if pin.inst then
+            Net.Send("W", pin.inst, ("%.1f"):format(pin.x), ("%.1f"):format(pin.y), pin.name)
+        elseif pin.mapID then
+            Net.Send("L", pin.mapID, ("%.3f"):format(pin.x), ("%.3f"):format(pin.y), pin.name)
+        end
     end
 end
 

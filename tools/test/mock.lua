@@ -16,6 +16,9 @@ local function newObj()
     if k == "Show" then return function(self) self._shown = true end end
     if k == "Hide" then return function(self) self._shown = false end end
     if k == "GetStringHeight" then return function() return 12 end end
+    if k == "SetScrollChild" then return function(self, c) self._child = c end end
+    if k == "GetFrameLevel" then return function() return 1 end end
+    if k == "GetVerticalScroll" or k == "GetVerticalScrollRange" then return function() return 0 end end
     if k == "GetScale" then return function() return 1 end end
     if k == "GetFont" then return function() return "font", 10 end end
     if k == "GetScript" then return function(self, n) return self._scripts[n] end end
@@ -51,6 +54,13 @@ BAGS = { [0] = {}, {}, {}, {}, {}, {} }
 local function U(name, needs) return { id = 211786, name = "Scroll: " .. name, count = 1, tip = { "Scroll: " .. name, "Classes: Mage", "Requires Comprehension (" .. needs .. ")" } } end
 BAGS[0][7] = U("CHAP BALK WELLES", 1); BAGS[0][8] = U("CHAP BALK WELLES", 1); BAGS[0][9] = U("WUBBA WUBBA", 15); BAGS[1][1] = U("DOST OREM", 175)
 BAGS[1][5] = { id = 277483, name = "Scroll of Frog Familiar", count = 1, tip = { "Scroll of Frog Familiar", "Classes: Mage", "Requires Level 16" } }
+BAGS[2][6] = { id = 213564, name = "Scroll of Minor Evocation", count = 3, tip = { "Scroll of Minor Evocation", "Classes: Mage" } }
+BAGS[2][7] = { id = 277400, name = "Scroll of Cat Familiar", count = 1, tip = { "Scroll of Cat Familiar", "Classes: Mage", "Requires Level 25" } }
+BAGS[2][8] = { id = 277401, name = "Scroll of Rat Familiar", count = 2, tip = { "Scroll of Rat Familiar", "Classes: Mage", "Requires Level 6" } }
+BAGS[2][9] = { id = 277402, name = "Scroll of Imbue Lesser Flame", count = 1, tip = { "Scroll of Imbue Lesser Flame", "Use: Imbue a staff with magic for 1 hour.", "Classes: Mage", "Requires Level 6" } }
+BAGS[2][10] = { id = 277403, name = "Scroll of Imbue Frost", count = 1, tip = { "Scroll of Imbue Frost", "Use: Imbue a sword with magic for 1 hour.", "Classes: Mage", "Requires Level 16" } }
+BAGS[2][11] = { id = 277404, name = "Scroll of the Saber", count = 1, tip = { "Scroll of the Saber", "Classes: Mage" } }
+BAGS[2][12] = { id = 277405, name = "Scroll of Comprehension", count = 1, tip = { "Scroll of Comprehension", "Classes: Mage", "Requires Level 6" } }
 BAGS[2][4] = { id = 17056, name = "Light Feather", count = 3, tip = { "Light Feather" } }
 BAGS[2][5] = { id = 6948, name = "Hearthstone", count = 1, tip = { "Hearthstone" } }
 C_Container = {
@@ -59,7 +69,7 @@ C_Container = {
 }
 C_Item = {
   GetItemNameByID = function(id) return "item" .. id end,
-  GetItemInfoInstant = function(id) if id == 211786 or id == 277483 or id == 277400 then return id, "Consumable", "Scrolls", "", 1, 0, 4 end return id, "Misc", "Junk", "", 1, 15, 0 end,
+  GetItemInfoInstant = function(id) if id == 211786 or (id >= 213564 and id <= 277600) then return id, "Consumable", "Scrolls", "", 1, 0, 4 end return id, "Misc", "Junk", "", 1, 15, 0 end,
 }
 C_TooltipInfo = { GetBagItem = function(b, s) local i = BAGS[b] and BAGS[b][s]; if not i then return nil end local l = {}; for _, t in ipairs(i.tip) do l[#l+1] = { leftText = t } end return { lines = l } end }
 TOOLTIP_CALLS = {}
@@ -70,7 +80,8 @@ C_Item.GetItemIconByID = function(id) return 134939 end
 Settings = {
   RegisterVerticalLayoutCategory = function(n) return { GetID = function() return 1 end } end,
   RegisterAddOnSetting = function() return { SetValueChangedCallback = function(self, f) SETTING_CB = f end } end,
-  CreateCheckbox = function() end, CreateSliderOptions = function() return {} end, CreateSlider = function() end,
+  CreateCheckbox = function() end, CreateDropdown = function() end,
+  CreateControlTextContainer = function() return { Add = function() end, GetData = function() return {} end } end, CreateSliderOptions = function() return {} end, CreateSlider = function() end,
   RegisterAddOnCategory = function() end, OpenToCategory = function(id) print("open settings", id) end,
 }
 math.ceil = math.ceil
@@ -107,3 +118,14 @@ UISpecialFrames = {}
 tinsert = table.insert
 
 function UnitGUID() return "Player-1-ABC" end
+
+function GetWeaponEnchantInfo() return MOCK_IMBUED or false end
+C_UnitAuras = { GetAuraDataByIndex = function(u, i) return nil end }
+function GetInventoryItemLink(u, slot) if slot == 16 then return "|cff|Hitem:1|h[Blade of Silverlaine]|h|r" end end
+ITEM_MIN_LEVEL = "Requires Level %d"
+
+function GetInventoryItemID(u, slot) if slot == 16 then return 99999 end end
+local origInstant = C_Item.GetItemInfoInstant
+C_Item.GetItemInfoInstant = function(id) if id == 99999 then return id, "Weapon", "Staves", "", 1, 2, 10 end return origInstant(id) end
+
+function GetRealmName() return "Forever" end

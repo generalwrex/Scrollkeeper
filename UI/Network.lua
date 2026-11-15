@@ -1,27 +1,28 @@
 -- Scrollkeeper: UI/Network.lua
--- The Network window (/sk net): other Scrollkeeper users you can hear,
--- the community's odds for each scroll tier, and who holds a weapon
--- upgrade scroll. /sk demo fills it with made-up players to try it out.
+-- The network pane: other Scrollkeeper users you can hear, and the
+-- community's odds for each scroll tier. It is built twice:
+--   * inside the panel's right-hand column in the Advanced view
+--   * as its own window (/sk net, or the book button)
+-- /sk demo fills it with made-up players to try it out.
 
 local _, SK = ...
+SK.UI = SK.UI or {}
 
-local WIDTH, HEIGHT = 300, 500
-local LEFT = 12
-local INNER = WIDTH - LEFT * 2
 local ROW_HEIGHT = 16
+local CLASS_COLOR = "|cff69ccf0"
 
+local panes = {}      -- every pane built, so one refresh updates them all
 local window
-local tierButtons = {}
-local selectedTier = 1
 
 ------------------------------------------------------------------------
--- Building
+-- Pieces
 ------------------------------------------------------------------------
 
-local function Header(text, y)
-    local ok, header = pcall(CreateFrame, "Frame", nil, window, "CharacterStatFrameCategoryTemplate")
+-- A bronze plate like "General" on the character window.
+function SK.UI.CreateHeader(host, text, width)
+    local ok, header = pcall(CreateFrame, "Frame", nil, host, "CharacterStatFrameCategoryTemplate")
     if not (ok and header and type(header.Title) == "table") then
-        header = CreateFrame("Frame", nil, window)
+        header = CreateFrame("Frame", nil, host)
         local background = header:CreateTexture(nil, "BACKGROUND")
         background:SetAllPoints()
         background:SetColorTexture(0.35, 0.22, 0.08, 0.85)
@@ -29,35 +30,41 @@ local function Header(text, y)
         header.Title:SetPoint("CENTER")
     end
     header.Title:SetText(text)
-    header:SetSize(INNER, 22)
-    header:SetPoint("TOPLEFT", LEFT, y)
+    header:SetSize(width, 22)
     return header
 end
 
 -- A scrolling list: a fixed-height box with a scrollbar, holding as many
--- label/value rows as needed. list:SetRows(data, fill) redraws it, where
--- fill(row, item) sets row.label and row.value. list.empty is shown when
--- there is nothing to list.
-local function ScrollList(y, visibleRows)
+-- label/value rows as needed. list:SetRows(items, fill, emptyText)
+-- redraws it, where fill(row, item) sets row.label and row.value.
+function SK.UI.CreateScrollList(host, width, visibleRows)
     local height = visibleRows * ROW_HEIGHT
-    local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", LEFT, y)
-    scroll:SetSize(INNER - 22, height)   -- room for the scrollbar on the right
+    local listWidth = width - 22          -- room for the scrollbar on the right
+    local scroll = CreateFrame("ScrollFrame", nil, host, "UIPanelScrollFrameTemplate")
+    scroll:SetSize(listWidth, height)
 
     local content = CreateFrame("Frame", nil, scroll)
-    content:SetSize(INNER - 22, height)
+    content:SetSize(listWidth, height)
     scroll:SetScrollChild(content)
 
-    local list = { scroll = scroll, content = content, rows = {} }
+    local list = { scroll = scroll, content = content, rows = {}, height = height }
+
+    -- The template shows its scrollbar whenever the content changes; only
+    -- show it when there are more rows than fit.
+    local bar = scroll.ScrollBar
+    if type(bar) ~= "table" then bar = nil end
+    scroll:SetScript("OnScrollRangeChanged", function(self)
+        if bar then bar:SetShown(self.needsBar and true or false) end
+    end)
 
     list.empty = content:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     list.empty:SetPoint("TOPLEFT", 6, -2)
-    list.empty:SetWidth(INNER - 34)
+    list.empty:SetWidth(listWidth - 12)
     list.empty:SetJustifyH("LEFT")
 
     local function MakeRow(i)
         local row = CreateFrame("Frame", nil, content)
-        row:SetSize(INNER - 22, ROW_HEIGHT)
+        row:SetSize(listWidth, ROW_HEIGHT)
         row:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_HEIGHT)
         if i % 2 == 1 then
             local stripe = row:CreateTexture(nil, "BACKGROUND")
@@ -66,7 +73,7 @@ local function ScrollList(y, visibleRows)
         end
         row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         row.label:SetPoint("LEFT", 6, 0)
-        row.label:SetWidth((INNER - 22) * 0.5)
+        row.label:SetWidth(listWidth * 0.66)
         row.label:SetJustifyH("LEFT")
         row.label:SetWordWrap(false)
         row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -75,6 +82,8 @@ local function ScrollList(y, visibleRows)
         return row
     end
 
+    function list:SetPoint(...) scroll:SetPoint(...) end
+
     function list:SetRows(items, fill, emptyText)
         for i, item in ipairs(items) do
             self.rows[i] = self.rows[i] or MakeRow(i)
@@ -82,13 +91,113 @@ local function ScrollList(y, visibleRows)
             self.rows[i]:Show()
         end
         for i = #items + 1, #self.rows do self.rows[i]:Hide() end
-        self.empty:SetText(#items == 0 and emptyText or "")
+        self.empty:SetText(#items == 0 and (emptyText or "") or "")
         content:SetHeight(math.max(height, #items * ROW_HEIGHT))
-        if #items <= visibleRows then self.scroll:SetVerticalScroll(0) end
+        scroll.needsBar = #items > visibleRows
+        if bar then bar:SetShown(scroll.needsBar) end
+        if not scroll.needsBar then scroll:SetVerticalScroll(0) end
     end
 
     return list
 end
+
+------------------------------------------------------------------------
+-- The pane: Users, then Community Odds with a button per tier
+------------------------------------------------------------------------
+
+-- Builds the pane inside host, starting at (left, top). Returns the pane
+-- and how tall it is.
+function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
+    local pane = { selectedTier = 1, tierButtons = {}, regions = {} }
+    local function Keep(region) table.insert(pane.regions, region) return region end
+    local y = top
+
+    local users = Keep(SK.UI.CreateHeader(host, "Scrollkeeper Users", width))
+    users:SetPoint("TOPLEFT", left, y)
+    y = y - 26
+    pane.users = SK.UI.CreateScrollList(host, width, userRows)
+    pane.users:SetPoint("TOPLEFT", left, y)
+    Keep(pane.users.scroll)
+    y = y - userRows * ROW_HEIGHT - 10
+
+    local odds = Keep(SK.UI.CreateHeader(host, "Community Odds", width))
+    odds:SetPoint("TOPLEFT", left, y)
+    y = y - 28
+    local buttonWidth = (width - 6) / #SK.TIERS
+    for i, tier in ipairs(SK.TIERS) do
+        local button = Keep(CreateFrame("Button", nil, host, "UIPanelButtonTemplate"))
+        button:SetSize(buttonWidth, 20)
+        button:SetPoint("TOPLEFT", left + (i - 1) * (buttonWidth + 2), y)
+        button:SetText("Tier " .. tier)
+        button:SetScript("OnClick", function()
+            pane.selectedTier = tier
+            pane:Refresh()
+        end)
+        pane.tierButtons[tier] = button
+    end
+    y = y - 26
+    pane.odds = SK.UI.CreateScrollList(host, width, oddsRows)
+    pane.odds:SetPoint("TOPLEFT", left, y)
+    Keep(pane.odds.scroll)
+    y = y - oddsRows * ROW_HEIGHT - 4
+
+    pane.oddsNote = Keep(host:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall"))
+    pane.oddsNote:SetPoint("TOPLEFT", left + 6, y - 2)
+    pane.oddsNote:SetWidth(width - 12)
+    pane.oddsNote:SetJustifyH("LEFT")
+    y = y - 30
+
+    function pane:SetShown(shown)
+        for _, region in ipairs(self.regions) do region:SetShown(shown) end
+        if shown then self:Refresh() end
+    end
+
+    function pane:Refresh()
+        if not self.regions[1]:IsVisible() then return end
+        local peers = SK.PeerList()
+
+        self.users:SetRows(peers, function(row, entry)
+            local peer = entry.peer
+            if peer.class == "MAGE" then
+                local tiers = {}
+                for _, tier in ipairs(SK.TIERS) do
+                    if peer.tiers[tier] then tiers[#tiers + 1] = tier end
+                end
+                local needs = #tiers > 0 and ("needs " .. table.concat(tiers, ", ")) or "|cff808080needs none|r"
+                local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
+                row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
+                row.value:SetText(needs .. upgrade)
+            else
+                row.label:SetText(entry.name)
+                row.value:SetText("|cff808080not a mage|r")
+            end
+        end, "No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in.")
+
+        for tier, button in pairs(self.tierButtons) do
+            if tier == self.selectedTier then button:LockHighlight() else button:UnlockHighlight() end
+        end
+        local odds, total, players = SK.CommunityOdds(self.selectedTier)
+        self.odds:SetRows(odds, function(row, entry)
+            row.label:SetText((entry.name:gsub("^Scroll of ", "")))
+            row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
+        end, "")
+        if total == 0 then
+            self.oddsNote:SetText(("No tier %d scrolls deciphered yet."):format(self.selectedTier))
+        else
+            self.oddsNote:SetText(("%d deciphered by %d |4player:players;. More players, better odds."):format(total, players))
+        end
+    end
+
+    table.insert(panes, pane)
+    return pane, top - y
+end
+
+------------------------------------------------------------------------
+-- The separate window (/sk net)
+------------------------------------------------------------------------
+
+local WIDTH, HEIGHT = 300, 470
+local LEFT = 12
 
 local function Build()
     local ok, frame = pcall(CreateFrame, "Frame", "ScrollkeeperNetworkFrame", UIParent, "PortraitFrameTemplate")
@@ -122,32 +231,7 @@ local function Build()
     window.summary:SetPoint("RIGHT", window, "RIGHT", -12, 0)
     window.summary:SetJustifyH("CENTER")
 
-    local y = -62
-    Header("Scrollkeeper Users", y)
-    y = y - 26
-    window.users = ScrollList(y, 8)
-    y = y - 8 * ROW_HEIGHT - 10
-
-    Header("Community Odds", y)
-    y = y - 28
-    for i, tier in ipairs(SK.TIERS) do
-        local button = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
-        button:SetSize((INNER - 6) / #SK.TIERS, 20)
-        button:SetPoint("TOPLEFT", LEFT + (i - 1) * ((INNER - 6) / #SK.TIERS + 2), y)
-        button:SetText("Tier " .. tier)
-        button:SetScript("OnClick", function()
-            selectedTier = tier
-            SK.RefreshNetwork()
-        end)
-        tierButtons[tier] = button
-    end
-    y = y - 26
-    window.odds = ScrollList(y, 8)
-    y = y - 8 * ROW_HEIGHT - 4
-    window.oddsNote = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    window.oddsNote:SetPoint("TOPLEFT", LEFT + 6, y - 2)
-    window.oddsNote:SetWidth(INNER - 12)
-    window.oddsNote:SetJustifyH("LEFT")
+    window.pane = SK.UI.CreateNetworkPane(window, LEFT, -62, WIDTH - LEFT * 2, 8, 8)
 
     window.footer = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     window.footer:SetPoint("BOTTOMLEFT", LEFT + 6, 12)
@@ -162,50 +246,19 @@ end
 -- Filling it in
 ------------------------------------------------------------------------
 
-local CLASS_COLOR = "|cff69ccf0"
+function SK.NetworkFooter()
+    local sharing = SK.db.share and "|cff40ff40on|r" or "|cffff6666off|r"
+    local demo = SK.demoCommunity and "  |cffff8040demo|r" or ""
+    return "Sharing " .. sharing .. "  ·  scroll data only" .. demo
+end
 
 function SK.RefreshNetwork()
-    if not (window and window:IsShown()) then return end
-    local peers = SK.PeerList()
-
-    local demo = SK.demoCommunity and " |cffff8040(demo)|r" or ""
-    window.summary:SetText(("|cffffffff%d|r heard from%s"):format(#peers, demo))
-
-    -- Users
-    window.users:SetRows(peers, function(row, entry)
-        local peer = entry.peer
-        if peer.class == "MAGE" then
-            local tiers = {}
-            for _, tier in ipairs(SK.TIERS) do
-                if peer.tiers[tier] then tiers[#tiers + 1] = tier end
-            end
-            local needs = #tiers > 0 and ("needs " .. table.concat(tiers, ", ")) or "|cff808080needs none|r"
-            local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
-            row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
-            row.value:SetText(needs .. upgrade)
-        else
-            row.label:SetText(entry.name)
-            row.value:SetText("|cff808080not a mage|r")
-        end
-    end, "No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in.")
-
-    -- Odds
-    for tier, button in pairs(tierButtons) do
-        if tier == selectedTier then button:LockHighlight() else button:UnlockHighlight() end
+    for _, pane in ipairs(panes) do pane:Refresh() end
+    if window and window:IsShown() then
+        local demo = SK.demoCommunity and " |cffff8040(demo)|r" or ""
+        window.summary:SetText(("|cffffffff%d|r heard from%s"):format(#SK.PeerList(), demo))
+        window.footer:SetText(SK.NetworkFooter() .. "  ·  /sk options")
     end
-    local odds, total, players = SK.CommunityOdds(selectedTier)
-    window.odds:SetRows(odds, function(row, entry)
-        row.label:SetText(entry.name)
-        row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
-    end, "")
-    if total == 0 then
-        window.oddsNote:SetText(("No tier %d scrolls deciphered yet."):format(selectedTier))
-    else
-        window.oddsNote:SetText(("%d deciphered by %d |4player:players;. More players, better odds."):format(total, players))
-    end
-
-    local sharing = SK.db.share and "|cff40ff40on|r" or "|cffff6666off|r"
-    window.footer:SetText("Sharing " .. sharing .. "  ·  scroll data only  ·  /sk options")
 end
 
 function SK.ToggleNetwork()

@@ -5,7 +5,14 @@
 local ADDON_NAME, SK = ...
 
 SK.name = ADDON_NAME
-SK.version = "0.4.0"
+-- The packager fills in the real version from the git tag. A copy run
+-- straight from the repo has no tag, so it reports the version below.
+SK.version = "0.5.0"
+do
+    local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    local tagged = getMetadata and getMetadata(ADDON_NAME, "Version")
+    if tagged and tagged:match("^v?%d") then SK.version = tagged:gsub("^v", "") end
+end
 
 ------------------------------------------------------------------------
 -- Chat output
@@ -110,10 +117,10 @@ local DEFAULTS = {
     shareChannel = false,    -- also use the public Scrollkeeper channel (experimental)
     mapPins = true,          -- show libraries and scroll drop spots on the world map
     locked = false,          -- stop the panel from being dragged
-    collapsed = false,       -- panel shrunk to its title bar
+    viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
     scale = 1,               -- panel size
     panelPoint = nil,        -- saved panel position
-    studyReadyAt = 0,        -- clock time when Study comes off cooldown
+    mages = {},              -- your mages across the account (Modules/Alts.lua), incl. Study timers
     results = {},            -- luck log: results[tier][scroll name] = count
     deciphered = 0,          -- total scrolls deciphered
     errors = {},

@@ -60,12 +60,43 @@ local function IsMageOnly(lines)
     return false
 end
 
--- Reads one bag slot's tooltip. Returns the Comprehension needed (or nil)
--- and whether the item is for mages only.
+-- "Requires Level 16" -> 16, from the game's own text so it works in any language.
+local levelPattern
+local function LevelFromLines(lines)
+    if not levelPattern then
+        local template = ITEM_MIN_LEVEL or "Requires Level %d"
+        levelPattern = "^" .. template:gsub("([%(%)%.%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%d", "(%%d+)") .. "$"
+    end
+    for _, line in ipairs(lines) do
+        local text = type(line) == "table" and line.leftText or line
+        if type(text) == "string" then
+            local level = text:match(levelPattern)
+            if level then return tonumber(level) end
+        end
+    end
+    return 0
+end
+
+-- "Use: Imbue a sword with magic..." -> "sword". English text for now.
+local function ImbueWeaponFromLines(lines)
+    for _, line in ipairs(lines) do
+        local text = type(line) == "table" and line.leftText or line
+        if type(text) == "string" then
+            local word = text:match("[Ii]mbue an? (%a+)")
+            if word then return word:lower() end
+        end
+    end
+    return nil
+end
+
+-- Reads one bag slot's tooltip. Returns the Comprehension needed (or nil),
+-- whether the item is for mages only, the level needed to use it, and for
+-- imbues, the weapon type it works on ("sword", "staff", ...).
 local function ReadSlotTooltip(bag, slot)
     local data = C_TooltipInfo and SK.Try(C_TooltipInfo.GetBagItem, bag, slot)
-    if type(data) ~= "table" or type(data.lines) ~= "table" then return nil, false end
-    return SK.RequirementFromLines(data.lines), IsMageOnly(data.lines)
+    if type(data) ~= "table" or type(data.lines) ~= "table" then return nil, false, 0 end
+    return SK.RequirementFromLines(data.lines), IsMageOnly(data.lines), LevelFromLines(data.lines),
+        ImbueWeaponFromLines(data.lines)
 end
 
 ------------------------------------------------------------------------
@@ -80,7 +111,7 @@ end
 
 -- Returns a table describing what is in the bags right now:
 --   untranslated  list of { bag, slot, itemID, name, needs }   (needs = Comprehension required)
---   translated    list of { itemID, name, count, icon }, one entry per kind of usable mage scroll
+--   translated    list of { itemID, name, count, icon, level, category }, one per kind of usable mage scroll
 --   feathers      number of Light Feathers
 --   bundles       number of unopened Bundles of Scrolls
 --   counts        [itemID] = how many, for every item (used by the luck log)
@@ -106,7 +137,7 @@ function SK.ScanBags()
                     found.bundles = found.bundles + count
                     found.bundleBag, found.bundleSlot = bag, slot
                 elseif IsScrollItem(id) then
-                    local needs, mageOnly = ReadSlotTooltip(bag, slot)
+                    local needs, mageOnly, level, imbueFor = ReadSlotTooltip(bag, slot)
                     if needs then
                         table.insert(found.untranslated, {
                             bag = bag, slot = slot, itemID = id, name = name, needs = needs,
@@ -115,7 +146,8 @@ function SK.ScanBags()
                         local entry = translatedByID[id]
                         if not entry then
                             entry = {
-                                itemID = id, name = name, count = 0,
+                                itemID = id, name = name, count = 0, level = level, imbueFor = imbueFor,
+                                category = SK.CategoryFor(name),
                                 icon = item.iconFileID or (C_Item and SK.Try(C_Item.GetItemIconByID, id)),
                             }
                             translatedByID[id] = entry

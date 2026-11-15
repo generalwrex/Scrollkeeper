@@ -20,6 +20,14 @@ Mage scroll helper for WoW Forever.
 - **World map pins:** libraries where Study worked, and spots where
   untranslated scrolls dropped (yours and shared).
 - **Study and Open bundle buttons** on the panel, no bags needed.
+- **Your scrolls by category** (Imbues, Familiars, Combat, Utility, Upgrades),
+  with a star on the best imbue and familiar you can use.
+- **Reminders:** no weapon imbue, no familiar out, when a Scroll of Comprehension
+  would unlock more scrolls, and when a weapon upgrade is ready.
+- **Weapon upgrades:** Coldflame Saber, Narpas Sword, Wit's Edge: what you have,
+  what's missing, and where it drops.
+- **Works with** Titan Panel and other info bars, the game's addon menu,
+  Auctionator (sell-or-mail advice for non-mages) and TomTom (library waypoints).
 - **Settings:** Options > AddOns > Scrollkeeper, or `/sk options`.
 
 Nothing is automatic: every cast is one click from the player.
@@ -36,6 +44,23 @@ Nothing is automatic: every cast is one click from the player.
 | `/sk reset` | move the panel to the middle and reset its size |
 | `/sk scan` | developer: dump game data to the saved file |
 
+## Releasing
+
+Tag a version and push it; GitHub Actions packages it and uploads it to
+CurseForge. Tags with `alpha` or `beta` in them upload as Alpha or Beta files.
+
+```
+git tag v0.5.0-alpha1
+git push --tags
+```
+
+Needs the CurseForge project ID in `Scrollkeeper.toc` (`## X-Curse-Project-ID`)
+and a `CF_API_KEY` secret in the GitHub repo settings.
+
+## License
+
+MIT, see `LICENSE`.
+
 ## Layout
 
 This repo is the addon folder itself: clone it straight into
@@ -49,7 +74,7 @@ Data/                 scroll tiers, skill-up colours, weapon upgrades
 Modules/              one feature per file, no drawing
 Network/              talking to other players' Scrollkeeper (protocol notes in each file)
 Map/                  world map pins
-UI/                   everything you can see
+UI/                   everything you can see, plus optional links to other addons
 Dev/                  /sk scan data collection tool
 tools/test/           runs the addon in a fake WoW (not loaded by the game)
                       cd tools/test, npm install, npm test

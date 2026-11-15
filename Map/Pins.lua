@@ -1,7 +1,9 @@
 -- Scrollkeeper: Map/Pins.lua
 -- Pins on the world map:
---   book icon     a library where Study worked (yours, or shared by others)
+--   book icon     a library: the two known ones, plus any where Study
+--                 worked for you or for other Scrollkeeper users
 --   scroll icon   a spot where untranslated scrolls dropped, with the count
+--   red book      a spot where books for the librarians were found
 --
 -- Uses the world map's own pin system, so pins zoom and scale like the
 -- game's own. Turn them off in the settings.
@@ -11,6 +13,7 @@ local _, SK = ...
 local TEMPLATE = "ScrollkeeperMapPinTemplate"
 local ICON_LIBRARY = "Interface\\Icons\\INV_Misc_Book_09"
 local ICON_SCROLL = "Interface\\Icons\\INV_Scroll_03"
+local ICON_BOOK = "Interface\\Icons\\INV_Misc_Book_11"
 
 ------------------------------------------------------------------------
 -- One pin (the frame comes from Map/Pins.xml)
@@ -35,7 +38,7 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
     else
         local total = data.mine + data.others
         local size = math.min(24, 12 + total * 2)
-        self.Icon:SetTexture(ICON_SCROLL)
+        self.Icon:SetTexture(data.kind == "book" and ICON_BOOK or ICON_SCROLL)
         self:SetSize(size, size)
         self.Count:SetText(total > 1 and total or "")
         -- Spots only others reported are a little faded.
@@ -50,11 +53,20 @@ function ScrollkeeperMapPinMixin:OnMouseEnter()
     if data.kind == "library" then
         GameTooltip:SetText(data.name)
         GameTooltip:AddLine("Library: Study works here.", 1, 1, 1)
+        GameTooltip:AddLine("Click for a waypoint.", 0.6, 0.6, 0.6)
         if data.mine then
             GameTooltip:AddLine("You've used Study here.", 0.25, 1, 0.25)
-        else
-            GameTooltip:AddLine(("Shared by %d |4player:players;."):format(data.count or 1), 0.7, 0.7, 0.7)
         end
+        if (data.count or 0) > 0 then
+            GameTooltip:AddLine(("Shared by %d |4player:players;."):format(data.count), 0.7, 0.7, 0.7)
+        elseif data.known and not data.mine then
+            GameTooltip:AddLine("Known library. Stand near the librarian.", 0.7, 0.7, 0.7)
+        end
+    elseif data.kind == "book" then
+        GameTooltip:SetText(data.name or "Books")
+        GameTooltip:AddLine("Book for the librarians.", 1, 1, 1)
+        if data.mine > 0 then GameTooltip:AddLine(("You found %d here."):format(data.mine), 1, 1, 1) end
+        if data.others > 0 then GameTooltip:AddLine(("Others found %d here."):format(data.others), 0.7, 0.7, 0.7) end
     else
         GameTooltip:SetText("Untranslated scrolls")
         if data.mine > 0 then GameTooltip:AddLine(("You looted %d here."):format(data.mine), 1, 1, 1) end
@@ -66,6 +78,21 @@ end
 
 function ScrollkeeperMapPinMixin:OnMouseLeave()
     GameTooltip:Hide()
+end
+
+-- Click a library pin: set a waypoint there (TomTom if you have it,
+-- otherwise the game's own map pin).
+function ScrollkeeperMapPinMixin:OnMouseUp(button)
+    local data = self.data
+    if button ~= "LeftButton" or not data or data.kind ~= "library" then return end
+    local mapID = self:GetMap():GetMapID()
+    if _G.TomTom and TomTom.AddWaypoint then
+        TomTom:AddWaypoint(mapID, data.x, data.y, { title = data.name, from = "Scrollkeeper" })
+    elseif C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(mapID) and UiMapPoint then
+        C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, data.x, data.y))
+        if C_SuperTrack then C_SuperTrack.SetSuperTrackedUserWaypoint(true) end
+    end
+    SK.Print("waypoint set: " .. data.name)
 end
 
 ------------------------------------------------------------------------
@@ -92,6 +119,15 @@ local function CreateProvider()
             if x then
                 self:GetMap():AcquirePin(TEMPLATE, {
                     kind = "drop", x = x, y = y, mine = counts.mine, others = counts.others,
+                })
+            end
+        end
+        for cell, counts in pairs(SK.DropCells(mapID, "books")) do
+            local x, y = SK.CellCenter(cell)
+            if x then
+                local name = SK.db.bookNames and SK.db.bookNames[mapID .. ":" .. cell]
+                self:GetMap():AcquirePin(TEMPLATE, {
+                    kind = "book", x = x, y = y, mine = counts.mine, others = counts.others, name = name,
                 })
             end
         end

@@ -1,6 +1,13 @@
 package-as: Scrollkeeper
 
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
 ignore:
   - tools
+  - .github
   - README.md
+  - CHANGELOG.md
   - .gitignore
+  - .gitattributes

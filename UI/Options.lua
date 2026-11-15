@@ -55,6 +55,20 @@ SK.Listen("READY", function()
         AddCheckbox("mapPins", "Map pins",
             "Show libraries and the spots where untranslated scrolls dropped on the world map.", true)
 
+        SK.Safely("settings view", function()
+            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_viewMode", "viewMode", SK.db,
+                "string", "Panel view", "compact")
+            setting:SetValueChangedCallback(function() SK.ApplyPanelSettings() end)
+            local function Options()
+                local container = Settings.CreateControlTextContainer()
+                container:Add("compact", "Simple", "Buttons, bars and your scrolls.")
+                container:Add("full", "Advanced", "Everything: all the numbers, sections and weapon upgrades.")
+                container:Add("mini", "Title only", "Just the title bar.")
+                return container:GetData()
+            end
+            Settings.CreateDropdown(category, setting, Options, "How much the panel shows. The - button on the panel cycles through these too.")
+        end)
+
         SK.Safely("settings slider", AddScaleSlider)
 
         Settings.RegisterAddOnCategory(category)

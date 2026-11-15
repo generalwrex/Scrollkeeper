@@ -20,6 +20,7 @@
             <OnLoad method="OnLoad"/>
             <OnEnter method="OnMouseEnter"/>
             <OnLeave method="OnMouseLeave"/>
+            <OnMouseUp method="OnMouseUp"/>
         </Scripts>
     </Frame>
 </Ui>

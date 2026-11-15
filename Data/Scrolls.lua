@@ -107,3 +107,25 @@ function SK.ColoredChance(chance)
     if not chance then return "" end
     return "|cff" .. chance.color .. chance.label .. "|r"
 end
+
+------------------------------------------------------------------------
+-- Categories for usable (translated) scrolls on the panel.
+-- A scroll goes in the first category whose words appear in its name.
+------------------------------------------------------------------------
+
+SK.SCROLL_CATEGORIES = {
+    { key = "upgrades",  label = "Upgrades",  words = { "of the Saber", "of the Blade", "of Wit" } },
+    { key = "imbues",    label = "Imbues",    words = { "Imbue" } },
+    { key = "familiars", label = "Familiars", words = { "Familiar" } },
+    { key = "combat",    label = "Combat",    words = { "Cryoblast", "Polymorph", "Confuse Beast", "Rebuke" } },
+    { key = "utility",   label = "Utility",   words = { "" } },   -- everything else
+}
+
+function SK.CategoryFor(name)
+    for _, category in ipairs(SK.SCROLL_CATEGORIES) do
+        for _, word in ipairs(category.words) do
+            if word == "" or name:find(word, 1, true) then return category.key end
+        end
+    end
+    return "utility"
+end

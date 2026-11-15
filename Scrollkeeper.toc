@@ -2,9 +2,15 @@
 ## Title: Scrollkeeper
 ## Notes: Mage scrolls made easy: what you can decipher, one-button deciphering, Study timer, and tooltips for every class.
 ## Author: generalwrex
-## Version: 0.4.0
+## Version: @project-version@
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
 ## Category: Class
+## X-License: MIT
+## X-Website: https://github.com/generalwrex/Scrollkeeper
+## IconTexture: Interface\Icons\INV_Scroll_03
+## AddonCompartmentFunc: Scrollkeeper_OnCompartmentClick
+## AddonCompartmentFuncOnEnter: Scrollkeeper_OnCompartmentEnter
+## AddonCompartmentFuncOnLeave: Scrollkeeper_OnCompartmentLeave
 
 # Core: shared helpers every other file uses. Load these first.
 Core\Init.lua
@@ -18,7 +24,11 @@ Modules\Skill.lua
 Modules\Bags.lua
 Modules\Study.lua
 Modules\Decipher.lua
+Modules\Scrolls.lua
+Modules\Weapon.lua
+Modules\Alts.lua
 Modules\Drops.lua
+Modules\Books.lua
 Modules\Tooltip.lua
 
 # Network: talking to other players' Scrollkeeper.
@@ -34,6 +44,8 @@ Map\Pins.xml
 UI\Widgets.lua
 UI\Panel.lua
 UI\Network.lua
+UI\Alts.lua
+UI\Integrations.lua
 UI\Options.lua
 
 # Slash commands.
