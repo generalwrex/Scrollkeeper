@@ -24,7 +24,9 @@ local function newObj()
     return function() end
   end })
 end
-function CreateFrame(kind, name) local f = newObj(); frames[#frames+1] = f; if name then _G[name] = f end; return f end
+function CreateFrame(kind, name, parent, template)
+  if template == "CharacterStatFrameCategoryTemplate" then error("no template") end
+  local f = newObj(); frames[#frames+1] = f; if name then _G[name] = f end; return f end
 UIParent = newObj(); GameTooltip = newObj()
 function fire(ev, ...) for _, f in ipairs(frames) do if f._events[ev] and f._scripts.OnEvent then f._scripts.OnEvent(f, ev, ...) end end end
 local now = 1000

@@ -30,13 +30,13 @@ function SK.UI.CreateBar(parent, width, height)
 
     local background = bar:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
-    background:SetColorTexture(0, 0, 0, 0.5)
+    background:SetColorTexture(0.12, 0.12, 0.14, 1)
 
-    -- The classic skill-bar frame from the character sheet's Skills tab.
-    local border = bar:CreateTexture(nil, "OVERLAY")
-    border:SetTexture("Interface\\PaperDollInfoFrame\\UI-Character-Skills-BarBorder")
-    border:SetPoint("TOPLEFT", -5, 6)
-    border:SetPoint("BOTTOMRIGHT", 5, -6)
+    -- Thin dark edge, like the bars on the character window.
+    local edge = bar:CreateTexture(nil, "BORDER")
+    edge:SetPoint("TOPLEFT", -1, 1)
+    edge:SetPoint("BOTTOMRIGHT", 1, -1)
+    edge:SetColorTexture(0, 0, 0, 0.9)
 
     -- Two labels, one at each end, so the tier marks in the middle never
     -- cut through the words. Outlined so they stay readable on the fill.

@@ -1,47 +1,43 @@
 -- Scrollkeeper: UI/Panel.lua
--- The window mages see. From top to bottom:
+-- The window mages see, built like the game's own character window:
 --
---   title bar        drag to move, [-] to shrink, [x] to hide
---   skill bar        Comprehension, with marks where the scroll tiers are
---   decipher         how many scrolls are waiting, and the button
---   your scrolls     a button for each kind of usable scroll in your bags
---   study bar        the one-hour Study cooldown and your Light Feathers
---   warning          only when something needs attention
+--   portrait + title        drag to move; shrink, settings and close buttons
+--   skill bar               Comprehension, with ticks where the tiers are
+--   [Decipher]              ready / skill-ups / too hard / next tier, and the button
+--   [Your Scrolls]          a button for each kind of usable scroll in your bags
+--   [Study]                 cooldown, Light Feathers, library, warnings
 --
 -- Secure buttons (decipher, scroll buttons) can only be moved, shown or
 -- re-pointed out of combat, so layout changes wait until combat ends.
 
 local _, SK = ...
 
-local WIDTH, PADDING = 250, 16
-local INNER = WIDTH - PADDING * 2
-local ICON_SIZE, ICON_GAP, ICONS_PER_ROW = 30, 4, 6
+local WIDTH = 250
+local LEFT, RIGHT = 12, 12             -- inner padding of the window
+local INNER = WIDTH - LEFT - RIGHT
+local TOP = 62                          -- where the content starts, below the portrait
+local ROW_HEIGHT = 16
+local ICON_SIZE, ICON_GAP, ICONS_PER_ROW = 30, 6, 6
 local MAX_SCROLL_BUTTONS = 12
-local HEADER_HEIGHT = 22
+local COLLAPSED_HEIGHT = 58
+local PORTRAIT = "Interface\\Icons\\INV_Scroll_03"
 
 local panel
-local parts = {}           -- named pieces of the window
+local parts = {}            -- named pieces of the window
+local sections = {}         -- section header plates
+local rows = {}             -- label/value rows, by name
 local scrollButtons = {}
-local layoutWaiting        -- a layout change is waiting for combat to end
+local layoutWaiting         -- a layout change is waiting for combat to end
+local usingGameFrame        -- true when the game's own window template was available
 
 ------------------------------------------------------------------------
--- Building the window (runs once)
+-- Small builders
 ------------------------------------------------------------------------
 
-local function Text(font)
-    local text = panel:CreateFontString(nil, "OVERLAY", font or "GameFontHighlightSmall")
-    text:SetJustifyH("LEFT")
-    text:SetWidth(INNER)
-    return text
-end
-
--- A small square button in the title bar, drawn with one of the game's
--- own button icons.
-local HEADER_BUTTON_SIZE = 22
-
-local function HeaderButton(texture, tooltip, onClick)
+-- A small square button drawn with one of the game's button icons.
+local function IconButton(texture, size, tooltip, onClick)
     local button = CreateFrame("Button", nil, panel)
-    button:SetSize(HEADER_BUTTON_SIZE, HEADER_BUTTON_SIZE)
+    button:SetSize(size, size)
     button:SetNormalTexture(texture)
     button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
     button:SetScript("OnEnter", function(self)
@@ -57,9 +53,87 @@ local function HeaderButton(texture, tooltip, onClick)
     return button
 end
 
-local ICON_SHRINK   = "Interface\\Buttons\\UI-MinusButton-Up"
-local ICON_EXPAND   = "Interface\\Buttons\\UI-PlusButton-Up"
-local ICON_SETTINGS = "Interface\\Buttons\\UI-OptionsButton"
+-- A bronze section plate like "General" on the character window.
+-- Uses the character window's own template when the game has it.
+local function SectionHeader(text)
+    local ok, header = pcall(CreateFrame, "Frame", nil, panel, "CharacterStatFrameCategoryTemplate")
+    if ok and header and type(header.Title) == "table" then
+        header.Title:SetText(text)
+    else
+        header = CreateFrame("Frame", nil, panel)
+        local background = header:CreateTexture(nil, "BACKGROUND")
+        background:SetAllPoints()
+        background:SetColorTexture(0.35, 0.22, 0.08, 0.85)
+        local title = header:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        title:SetPoint("CENTER", 0, 0)
+        title:SetText(text)
+        header.Title = title
+    end
+    header:SetSize(INNER, 22)
+    table.insert(sections, header)
+    return header
+end
+
+-- A "Label ........ value" row with a faint stripe, like the stat rows.
+local function Row(name, label, striped)
+    local row = CreateFrame("Frame", nil, panel)
+    row:SetSize(INNER, ROW_HEIGHT)
+    if striped then
+        local stripe = row:CreateTexture(nil, "BACKGROUND")
+        stripe:SetAllPoints()
+        stripe:SetColorTexture(0.45, 0.32, 0.12, 0.18)
+    end
+    row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    row.label:SetPoint("LEFT", 6, 0)
+    row.label:SetText(label)
+    row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.value:SetPoint("RIGHT", -6, 0)
+    row.value:SetJustifyH("RIGHT")
+    rows[name] = row
+    return row
+end
+
+------------------------------------------------------------------------
+-- Building the window (runs once)
+------------------------------------------------------------------------
+
+local function CreateWindow()
+    -- The game's own window: portrait, gold border, title bar, close button.
+    local ok, frame = pcall(CreateFrame, "Frame", "ScrollkeeperPanel", UIParent, "PortraitFrameTemplate")
+    if ok and frame and type(frame.SetTitle) == "function" then
+        usingGameFrame = true
+        frame:SetTitle("Scrollkeeper")
+        if type(frame.SetPortraitToAsset) == "function" then
+            frame:SetPortraitToAsset(PORTRAIT)
+        elseif type(frame.SetPortraitTextureRaw) == "function" then
+            frame:SetPortraitTextureRaw(PORTRAIT)
+        end
+        -- Opaque background, like the character window.
+        local background = frame:CreateTexture(nil, "BACKGROUND", nil, -7)
+        background:SetPoint("TOPLEFT", 2, -2)
+        background:SetPoint("BOTTOMRIGHT", -2, 2)
+        background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+        return frame
+    end
+
+    -- Fallback if the template is missing: a plain dialog window.
+    usingGameFrame = false
+    frame = CreateFrame("Frame", "ScrollkeeperPanel", UIParent, "BackdropTemplate")
+    frame:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true, tileSize = 32, edgeSize = 24,
+        insets = { left = 6, right = 6, top = 6, bottom = 6 },
+    })
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    title:SetPoint("TOP", 0, -10)
+    title:SetText("Scrollkeeper")
+    local portrait = frame:CreateTexture(nil, "ARTWORK")
+    portrait:SetSize(36, 36)
+    portrait:SetPoint("TOPLEFT", 10, -10)
+    portrait:SetTexture(PORTRAIT)
+    return frame
+end
 
 -- Keep the window's top-left corner still when its height changes, so
 -- shrinking it doesn't make it jump. Positions are saved the same way.
@@ -72,19 +146,17 @@ local function AnchorTopLeft()
 end
 
 local function Build()
-    local accent = SK.UI.COLORS.accent
-
-    panel = CreateFrame("Frame", "ScrollkeeperPanel", UIParent, "BackdropTemplate")
-    panel:SetSize(WIDTH, 150)
+    panel = CreateWindow()
+    panel:SetSize(WIDTH, 300)
     panel:SetFrameStrata("MEDIUM")
     panel:SetClampedToScreen(true)
-    -- The classic dialog look: dark stone background, gold-trimmed border.
-    panel:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true, tileSize = 32, edgeSize = 24,
-        insets = { left = 6, right = 6, top = 6, bottom = 6 },
-    })
+    panel:SetToplevel(true)
+
+    -- We save the position ourselves (top-left corner), so tell the game
+    -- not to. Otherwise it restores its own copy, anchored to whichever
+    -- corner is closest, and the window jumps when its height changes.
+    if panel.SetDontSavePosition then panel:SetDontSavePosition(true) end
+    if panel.SetUserPlaced then pcall(panel.SetUserPlaced, panel, false) end
 
     -- Dragging
     panel:SetMovable(true)
@@ -96,6 +168,7 @@ local function Build()
     end)
     panel:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
+        if self.SetUserPlaced then pcall(self.SetUserPlaced, self, false) end
         AnchorTopLeft()
     end)
 
@@ -103,52 +176,52 @@ local function Build()
     if saved then
         panel:SetPoint(saved[1], UIParent, saved[2], saved[3], saved[4])
     else
-        panel:SetPoint("CENTER", UIParent, "CENTER", 320, -40)
+        panel:SetPoint("CENTER", UIParent, "CENTER", 320, 0)
     end
     panel:SetScale(SK.db.scale or 1)
     AnchorTopLeft()
 
-    -- Title plate: the gold banner that sits on top of classic dialogs.
-    local plate = panel:CreateTexture(nil, "ARTWORK")
-    plate:SetTexture("Interface\\DialogFrame\\UI-DialogBox-Header")
-    plate:SetSize(220, 56)
-    plate:SetPoint("TOP", 0, 14)
-
-    parts.title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    parts.title:SetPoint("TOP", plate, "TOP", 0, -14)
-    parts.title:SetWordWrap(false)
-
-    -- Classic close button (the red X in the corner).
-    parts.close = CreateFrame("Button", nil, panel, "UIPanelCloseButton")
-    parts.close:SetSize(26, 26)
-    parts.close:SetPoint("TOPRIGHT", 1, 1)
-    parts.close:SetScript("OnClick", function()
+    -- Close: the template's red X, or our own.
+    local close = usingGameFrame and type(panel.CloseButton) == "table" and panel.CloseButton
+        or CreateFrame("Button", nil, panel, "UIPanelCloseButton")
+    if not usingGameFrame then close:SetPoint("TOPRIGHT", 1, 1) end
+    close:SetScript("OnClick", function()
         if SK.InCombat() then SK.Print("the panel can't be hidden in combat.") return end
         SK.db.showPanel = false
         panel:Hide()
         SK.Print("panel hidden. Type /sk to show it again.")
     end)
 
-    -- Shrink and settings: the classic small round buttons, top left.
-    parts.collapse = HeaderButton(ICON_SHRINK,
+    -- Summary line beside the portrait, like "Level 20 Mage".
+    parts.summary = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    parts.summary:SetPoint("TOPLEFT", 62, -32)
+    parts.summary:SetPoint("RIGHT", panel, "RIGHT", -52, 0)
+    parts.summary:SetJustifyH("CENTER")
+    parts.summary:SetWordWrap(false)
+
+    -- Shrink and settings, at the right of the summary line.
+    parts.gear = IconButton("Interface\\Buttons\\UI-OptionsButton", 18, "Settings", function() SK.OpenOptions() end)
+    parts.gear:SetPoint("TOPRIGHT", -12, -30)
+    parts.collapse = IconButton("Interface\\Buttons\\UI-MinusButton-Up", 18,
         function() return SK.db.collapsed and "Expand" or "Shrink" end,
         function()
             if SK.InCombat() then SK.Print("the panel can't change size in combat.") return end
             SK.db.collapsed = not SK.db.collapsed
             SK.RefreshPanel()
         end)
-    parts.collapse:SetPoint("TOPLEFT", 8, -7)
+    parts.collapse:SetPoint("RIGHT", parts.gear, "LEFT", -4, 0)
 
-    parts.gear = HeaderButton(ICON_SETTINGS, "Settings", function() SK.OpenOptions() end)
-    parts.gear:SetPoint("LEFT", parts.collapse, "RIGHT", 2, 0)
-
-    -- Skill
+    -- Comprehension bar
     parts.skillBar = SK.UI.CreateBar(panel, INNER, 16)
-    parts.skillBar:SetBarColor(accent)
-    parts.tier = Text()
+    parts.skillBar:SetBarColor(SK.UI.COLORS.accent)
 
-    -- Decipher
-    parts.waiting = Text()
+    -- Decipher section
+    parts.decipherHeader = SectionHeader("Decipher")
+    Row("ready", "Ready", true)
+    Row("skillups", "Skill-ups", false)
+    Row("tooHard", "Too hard", true)
+    Row("nextTier", "Next tier", false)
+
     parts.decipher = CreateFrame("Button", "ScrollkeeperDecipherButton", panel,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
     parts.decipher:SetSize(INNER, 24)
@@ -171,26 +244,32 @@ local function Build()
     end)
     parts.decipher:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    -- Your scrolls
-    parts.scrollsLabel = Text("GameFontNormalSmall")
-    parts.scrollsLabel:SetText("Your scrolls")
+    -- Your scrolls section
+    parts.scrollsHeader = SectionHeader("Your Scrolls")
     for i = 1, MAX_SCROLL_BUTTONS do
         scrollButtons[i] = SK.UI.CreateItemButton(panel, "ScrollkeeperScrollButton" .. i, ICON_SIZE)
         scrollButtons[i]:Hide()
     end
 
-    -- Study
+    -- Study section
+    parts.studyHeader = SectionHeader("Study")
     parts.studyBar = SK.UI.CreateBar(panel, INNER, 16)
-    parts.warning = Text()
+    Row("feathers", "Light Feathers", true)
+    Row("library", "Library", false)
+
+    parts.warning = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    parts.warning:SetWidth(INNER)
+    parts.warning:SetJustifyH("LEFT")
 end
 
 ------------------------------------------------------------------------
 -- Layout: where each piece sits. Only runs out of combat.
 ------------------------------------------------------------------------
 
-local function Place(region, y)
+local function Place(region, y, height)
     region:ClearAllPoints()
-    region:SetPoint("TOPLEFT", panel, "TOPLEFT", PADDING, y)
+    region:SetPoint("TOPLEFT", panel, "TOPLEFT", LEFT, y)
+    return y - height
 end
 
 local function Layout()
@@ -201,39 +280,48 @@ local function Layout()
     layoutWaiting = false
 
     local collapsed = SK.db.collapsed
-    parts.collapse:SetNormalTexture(collapsed and ICON_EXPAND or ICON_SHRINK)
+    parts.collapse:SetNormalTexture(collapsed and "Interface\\Buttons\\UI-PlusButton-Up"
+        or "Interface\\Buttons\\UI-MinusButton-Up")
 
-    local body = { parts.skillBar, parts.tier, parts.waiting, parts.decipher, parts.scrollsLabel, parts.studyBar, parts.warning }
+    local body = {
+        parts.skillBar, parts.decipherHeader, parts.decipher, parts.scrollsHeader,
+        parts.studyHeader, parts.studyBar, parts.warning,
+    }
     for _, region in ipairs(body) do region:SetShown(not collapsed) end
+    for _, row in pairs(rows) do row:SetShown(not collapsed) end
+
+    AnchorTopLeft()   -- pin the top edge before the height changes
 
     if collapsed then
         for _, button in ipairs(scrollButtons) do button:Hide() end
-        panel:SetHeight(HEADER_HEIGHT + 14)
+        panel:SetHeight(COLLAPSED_HEIGHT)
         return
     end
 
-    local y = -(HEADER_HEIGHT + 6)
+    local y = -TOP
+    y = Place(parts.skillBar, y, 16) - 10
 
-    Place(parts.skillBar, y);  y = y - 20
-    Place(parts.tier, y);      y = y - 18
+    -- Decipher
+    y = Place(parts.decipherHeader, y, 22) - 2
+    for _, name in ipairs({ "ready", "skillups", "tooHard", "nextTier" }) do
+        y = Place(rows[name], y, ROW_HEIGHT)
+    end
+    y = Place(parts.decipher, y - 6, 24) - 10
 
-    Place(parts.waiting, y);   y = y - 16
-    Place(parts.decipher, y);  y = y - 30
-
-    -- Scroll buttons: one per kind of usable scroll, six to a row.
+    -- Your scrolls (only when there are some)
     local scrolls = SK.db.showScrollBar and SK.bags.translated or {}
     local shown = math.min(#scrolls, MAX_SCROLL_BUTTONS)
-    parts.scrollsLabel:SetShown(shown > 0)
+    parts.scrollsHeader:SetShown(shown > 0)
     if shown > 0 then
-        Place(parts.scrollsLabel, y); y = y - 14
+        y = Place(parts.scrollsHeader, y, 22) - 8
     end
     for i, button in ipairs(scrollButtons) do
         local scroll = scrolls[i]
         if scroll and i <= shown then
-            local column, row = (i - 1) % ICONS_PER_ROW, math.floor((i - 1) / ICONS_PER_ROW)
+            local column, line = (i - 1) % ICONS_PER_ROW, math.floor((i - 1) / ICONS_PER_ROW)
             button:ClearAllPoints()
             button:SetPoint("TOPLEFT", panel, "TOPLEFT",
-                PADDING + column * (ICON_SIZE + ICON_GAP), y - row * (ICON_SIZE + ICON_GAP))
+                LEFT + 6 + column * (ICON_SIZE + ICON_GAP), y - line * (ICON_SIZE + ICON_GAP))
             button:SetAttribute("type", "item")
             button:SetAttribute("item", "item:" .. scroll.itemID)
             button:SetDisplay(scroll.itemID, scroll.icon, scroll.count)
@@ -244,21 +332,23 @@ local function Layout()
         end
     end
     if shown > 0 then
-        local rows = math.ceil(shown / ICONS_PER_ROW)
-        y = y - rows * (ICON_SIZE + ICON_GAP) - 4
+        y = y - math.ceil(shown / ICONS_PER_ROW) * (ICON_SIZE + ICON_GAP) - 4
     end
 
-    Place(parts.studyBar, y);  y = y - 20
+    -- Study
+    y = Place(parts.studyHeader, y, 22) - 6
+    y = Place(parts.studyBar, y, 16) - 6
+    y = Place(rows.feathers, y, ROW_HEIGHT)
+    y = Place(rows.library, y, ROW_HEIGHT)
 
     local warning = parts.warning:GetText()
     if warning and warning ~= "" then
-        Place(parts.warning, y - 2)
-        y = y - parts.warning:GetStringHeight() - 6
+        y = Place(parts.warning, y - 6, parts.warning:GetStringHeight())
     end
 
     panel:SetHeight(-y + 12)
 
-    -- Point the decipher button at the next readable scroll.
+    -- Point the decipher button at the next scroll.
     local nextScroll, readable = SK.NextDecipherable()
     if nextScroll then
         parts.decipher:SetAttribute("type", "spell")
@@ -280,53 +370,42 @@ end
 -- Text and bars: what each piece says. Safe to run in combat.
 ------------------------------------------------------------------------
 
+local GREEN, RED, GRAY, ORANGE = "|cff40ff40", "|cffff6666", "|cff8c8c8c", "|cffff8040"
+
 local function UpdateText()
     local colors = SK.UI.COLORS
     local skill = SK.GetComprehension()
-    local nextScroll, readable, tooHard, skillUps = SK.NextDecipherable()
+    local _, readable, tooHard, skillUps = SK.NextDecipherable()
     local studyLeft = SK.StudySecondsLeft()
     local knowsStudy = SK.KnowsStudy()
+    local inLibrary, place = SK.InLibrary()
 
-    -- Title: when shrunk, the title carries the important numbers.
+    -- Summary line beside the portrait.
     if SK.db.collapsed then
-        parts.title:SetText(("Scrollkeeper |cffffffff%d|r"):format(readable))
+        parts.summary:SetText(("|cffffffff%d|r ready"):format(readable))
     else
-        parts.title:SetText("Scrollkeeper")
+        parts.summary:SetText(("Comprehension |cffffffff%d|r"):format(skill.rank))
     end
 
     -- Skill bar
-    local bonus = skill.bonus > 0 and (" |cff40ff40+%d|r"):format(skill.bonus) or ""
+    local bonus = skill.bonus > 0 and (" " .. GREEN .. "+%d|r"):format(skill.bonus) or ""
     parts.skillBar:SetProgress(skill.rank, skill.max)
     parts.skillBar:SetMarks(SK.TIERS, skill.max)
-    parts.skillBar:SetLabel("Comprehension", ("%d%s / %d"):format(skill.rank, bonus, skill.max))
+    parts.skillBar:SetLabel("Skill", ("%d%s / %d"):format(skill.rank, bonus, skill.max))
+
+    -- Decipher rows
+    rows.ready.value:SetText(readable > 0 and (GREEN .. readable .. "|r") or (GRAY .. "0|r"))
+    rows.skillups.value:SetText(skillUps > 0 and (ORANGE .. skillUps .. "|r") or (GRAY .. "none|r"))
+    rows.tooHard.value:SetText(tooHard > 0 and (RED .. tooHard .. "|r") or (GRAY .. "0|r"))
 
     local nextTier = SK.NextTierAfter(skill.effective)
     if not nextTier then
-        parts.tier:SetText("|cff40ff40You can read every scroll tier.|r")
+        rows.nextTier.value:SetText(GREEN .. "all unlocked|r")
     elseif nextTier > skill.max then
-        -- The cap rises with character level, so say when it becomes reachable.
-        local levelNeeded = math.ceil(nextTier / SK.SKILL_CAP_PER_LEVEL)
-        parts.tier:SetText(("Next tier at |cffffffff%d|r (reachable at level %d)"):format(nextTier, levelNeeded))
+        rows.nextTier.value:SetText(("%d %s(level %d)|r"):format(nextTier, GRAY,
+            math.ceil(nextTier / SK.SKILL_CAP_PER_LEVEL)))
     else
-        parts.tier:SetText(("Next tier at |cffffffff%d|r (%d to go)"):format(nextTier, nextTier - skill.effective))
-    end
-
-    -- Scrolls waiting, and how many can still raise the skill.
-    if readable + tooHard == 0 then
-        parts.waiting:SetText("|cff8c8c8cNo untranslated scrolls in your bags.|r")
-    else
-        local text = ("|cff40ff40%d ready|r"):format(readable)
-        if readable > 0 then
-            if skillUps > 0 then
-                text = text .. (", |cffff8040%d skill-up|r"):format(skillUps)
-            else
-                text = text .. ", |cff808080no skill-ups|r"
-            end
-        end
-        if tooHard > 0 then
-            text = text .. (", |cffff6666%d too hard|r"):format(tooHard)
-        end
-        parts.waiting:SetText(text)
+        rows.nextTier.value:SetText(("%d %s(%d to go)|r"):format(nextTier, GRAY, nextTier - skill.effective))
     end
 
     -- Scroll counts (the icons themselves only change out of combat)
@@ -338,28 +417,28 @@ local function UpdateText()
     end
 
     -- Study bar: fills up as the cooldown runs down.
-    local feathers = ("Feathers %d"):format(SK.bags.feathers)
     if not knowsStudy then
         parts.studyBar:SetProgress(0, 1)
-        parts.studyBar:SetLabel("|cff8c8c8cStudy not learned yet|r")
+        parts.studyBar:SetLabel(GRAY .. "Not learned yet|r")
     elseif studyLeft == 0 then
         parts.studyBar:SetProgress(1, 1)
         parts.studyBar:SetBarColor(colors.good)
-        parts.studyBar:SetLabel("Study ready", feathers)
+        parts.studyBar:SetLabel("Ready")
     else
         parts.studyBar:SetProgress(SK.STUDY_COOLDOWN_SECONDS - studyLeft, SK.STUDY_COOLDOWN_SECONDS)
         parts.studyBar:SetBarColor(colors.wait)
-        parts.studyBar:SetLabel("Study in " .. SK.FormatStudyTime(studyLeft), feathers)
+        parts.studyBar:SetLabel("Cooldown", SK.FormatStudyTime(studyLeft))
     end
+    rows.feathers.value:SetText(SK.bags.feathers > 0 and SK.bags.feathers or (RED .. "0|r"))
+    rows.library.value:SetText(inLibrary and (GREEN .. "you're in one|r") or (GRAY .. "not here|r"))
 
     -- Warning (most important first)
-    local inLibrary = SK.InLibrary()
     if SK.bags.bundles > 0 then
         parts.warning:SetText("|cffffd100Open your Bundle of Scrolls before the next Study.|r")
     elseif knowsStudy and SK.bags.feathers == 0 then
-        parts.warning:SetText("|cffff6666No Light Feathers. Study needs one.|r")
+        parts.warning:SetText(RED .. "No Light Feathers. Study needs one.|r")
     elseif knowsStudy and studyLeft == 0 and inLibrary then
-        parts.warning:SetText("|cff40ff40You're in a library. Study is ready.|r")
+        parts.warning:SetText(GREEN .. "Study is ready and you're in a library.|r")
     else
         parts.warning:SetText("")
     end
