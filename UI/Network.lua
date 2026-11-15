@@ -9,10 +9,8 @@ local WIDTH, HEIGHT = 300, 500
 local LEFT = 12
 local INNER = WIDTH - LEFT * 2
 local ROW_HEIGHT = 16
-local MAX_ROWS = 8
 
 local window
-local mageRows, oddsRows = {}, {}
 local tierButtons = {}
 local selectedTier = 1
 
@@ -36,24 +34,60 @@ local function Header(text, y)
     return header
 end
 
-local function Row(y, striped)
-    local row = CreateFrame("Frame", nil, window)
-    row:SetSize(INNER, ROW_HEIGHT)
-    row:SetPoint("TOPLEFT", LEFT, y)
-    if striped then
-        local stripe = row:CreateTexture(nil, "BACKGROUND")
-        stripe:SetAllPoints()
-        stripe:SetColorTexture(0.45, 0.32, 0.12, 0.18)
+-- A scrolling list: a fixed-height box with a scrollbar, holding as many
+-- label/value rows as needed. list:SetRows(data, fill) redraws it, where
+-- fill(row, item) sets row.label and row.value. list.empty is shown when
+-- there is nothing to list.
+local function ScrollList(y, visibleRows)
+    local height = visibleRows * ROW_HEIGHT
+    local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", LEFT, y)
+    scroll:SetSize(INNER - 22, height)   -- room for the scrollbar on the right
+
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetSize(INNER - 22, height)
+    scroll:SetScrollChild(content)
+
+    local list = { scroll = scroll, content = content, rows = {} }
+
+    list.empty = content:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    list.empty:SetPoint("TOPLEFT", 6, -2)
+    list.empty:SetWidth(INNER - 34)
+    list.empty:SetJustifyH("LEFT")
+
+    local function MakeRow(i)
+        local row = CreateFrame("Frame", nil, content)
+        row:SetSize(INNER - 22, ROW_HEIGHT)
+        row:SetPoint("TOPLEFT", 0, -(i - 1) * ROW_HEIGHT)
+        if i % 2 == 1 then
+            local stripe = row:CreateTexture(nil, "BACKGROUND")
+            stripe:SetAllPoints()
+            stripe:SetColorTexture(0.45, 0.32, 0.12, 0.18)
+        end
+        row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        row.label:SetPoint("LEFT", 6, 0)
+        row.label:SetWidth((INNER - 22) * 0.5)
+        row.label:SetJustifyH("LEFT")
+        row.label:SetWordWrap(false)
+        row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        row.value:SetPoint("RIGHT", -6, 0)
+        row.value:SetJustifyH("RIGHT")
+        return row
     end
-    row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    row.label:SetPoint("LEFT", 6, 0)
-    row.label:SetWidth(INNER * 0.5)
-    row.label:SetJustifyH("LEFT")
-    row.label:SetWordWrap(false)
-    row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    row.value:SetPoint("RIGHT", -6, 0)
-    row.value:SetJustifyH("RIGHT")
-    return row
+
+    function list:SetRows(items, fill, emptyText)
+        for i, item in ipairs(items) do
+            self.rows[i] = self.rows[i] or MakeRow(i)
+            fill(self.rows[i], item)
+            self.rows[i]:Show()
+        end
+        for i = #items + 1, #self.rows do self.rows[i]:Hide() end
+        self.empty:SetText(#items == 0 and emptyText or "")
+        content:SetHeight(math.max(height, #items * ROW_HEIGHT))
+        if #items <= visibleRows then self.scroll:SetVerticalScroll(0) end
+    end
+
+    return list
 end
 
 local function Build()
@@ -90,14 +124,9 @@ local function Build()
 
     local y = -62
     Header("Scrollkeeper Users", y)
-    y = y - 24
-    for i = 1, MAX_ROWS do
-        mageRows[i] = Row(y, i % 2 == 1)
-        y = y - ROW_HEIGHT
-    end
-    window.more = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    window.more:SetPoint("TOPLEFT", LEFT + 6, y - 2)
-    y = y - 20
+    y = y - 26
+    window.users = ScrollList(y, 8)
+    y = y - 8 * ROW_HEIGHT - 10
 
     Header("Community Odds", y)
     y = y - 28
@@ -113,10 +142,8 @@ local function Build()
         tierButtons[tier] = button
     end
     y = y - 26
-    for i = 1, MAX_ROWS do
-        oddsRows[i] = Row(y, i % 2 == 1)
-        y = y - ROW_HEIGHT
-    end
+    window.odds = ScrollList(y, 8)
+    y = y - 8 * ROW_HEIGHT - 4
     window.oddsNote = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     window.oddsNote:SetPoint("TOPLEFT", LEFT + 6, y - 2)
     window.oddsNote:SetWidth(INNER - 12)
@@ -145,51 +172,32 @@ function SK.RefreshNetwork()
     window.summary:SetText(("|cffffffff%d|r heard from%s"):format(#peers, demo))
 
     -- Users
-    for i, row in ipairs(mageRows) do
-        local entry = peers[i]
-        if entry then
-            local peer = entry.peer
-            if peer.class == "MAGE" then
-                local tiers = {}
-                for _, tier in ipairs(SK.TIERS) do
-                    if peer.tiers[tier] then tiers[#tiers + 1] = tier end
-                end
-                local needs = #tiers > 0 and ("needs " .. table.concat(tiers, ", ")) or "|cff808080needs none|r"
-                local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
-                row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
-                row.value:SetText(needs .. upgrade)
-            else
-                row.label:SetText(entry.name)
-                row.value:SetText("|cff808080not a mage|r")
+    window.users:SetRows(peers, function(row, entry)
+        local peer = entry.peer
+        if peer.class == "MAGE" then
+            local tiers = {}
+            for _, tier in ipairs(SK.TIERS) do
+                if peer.tiers[tier] then tiers[#tiers + 1] = tier end
             end
-            row:Show()
+            local needs = #tiers > 0 and ("needs " .. table.concat(tiers, ", ")) or "|cff808080needs none|r"
+            local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
+            row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
+            row.value:SetText(needs .. upgrade)
         else
-            row:Hide()
+            row.label:SetText(entry.name)
+            row.value:SetText("|cff808080not a mage|r")
         end
-    end
-    if #peers == 0 then
-        window.more:SetText("No one yet. Others in your guild or group with Scrollkeeper appear here.")
-    elseif #peers > MAX_ROWS then
-        window.more:SetText(("and %d more"):format(#peers - MAX_ROWS))
-    else
-        window.more:SetText("")
-    end
+    end, "No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in.")
 
     -- Odds
     for tier, button in pairs(tierButtons) do
         if tier == selectedTier then button:LockHighlight() else button:UnlockHighlight() end
     end
     local odds, total, players = SK.CommunityOdds(selectedTier)
-    for i, row in ipairs(oddsRows) do
-        local entry = odds[i]
-        if entry then
-            row.label:SetText(entry.name)
-            row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
-            row:Show()
-        else
-            row:Hide()
-        end
-    end
+    window.odds:SetRows(odds, function(row, entry)
+        row.label:SetText(entry.name)
+        row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
+    end, "")
     if total == 0 then
         window.oddsNote:SetText(("No tier %d scrolls deciphered yet."):format(selectedTier))
     else
