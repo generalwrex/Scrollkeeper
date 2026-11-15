@@ -48,8 +48,8 @@ function SK.UI.CreateBar(parent, width, height)
         if font then label:SetFont(font, size, "OUTLINE") end
         return label
     end
-    bar.leftLabel = MakeLabel("LEFT", 4, "LEFT")
-    bar.rightLabel = MakeLabel("RIGHT", -4, "RIGHT")
+    bar.leftLabel = MakeLabel("LEFT", 6, "LEFT")
+    bar.rightLabel = MakeLabel("RIGHT", -8, "RIGHT")
 
     function bar:SetProgress(value, max)
         if not max or max <= 0 then max, value = 1, 0 end

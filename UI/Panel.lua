@@ -37,7 +37,7 @@ end
 
 -- A small square button in the title bar, drawn with one of the game's
 -- own button icons.
-local HEADER_BUTTON_SIZE = 16
+local HEADER_BUTTON_SIZE = 22
 
 local function HeaderButton(texture, tooltip, onClick)
     local button = CreateFrame("Button", nil, panel)
@@ -137,7 +137,7 @@ local function Build()
             SK.db.collapsed = not SK.db.collapsed
             SK.RefreshPanel()
         end)
-    parts.collapse:SetPoint("TOPLEFT", 9, -9)
+    parts.collapse:SetPoint("TOPLEFT", 8, -7)
 
     parts.gear = HeaderButton(ICON_SETTINGS, "Settings", function() SK.OpenOptions() end)
     parts.gear:SetPoint("LEFT", parts.collapse, "RIGHT", 2, 0)
