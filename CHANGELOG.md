@@ -9,6 +9,8 @@
   uses it. It tells you why instead.
 - Imbue button: if a weapon in your bags fits one of your imbues, it says
   "swap weapon", and the tooltip names the weapon to equip.
+- Imbue and Familiar tooltips list the scrolls you have and what each needs
+  ("Imbue Spark: for a sword", "Cat Familiar: level 30").
 - US English spelling throughout.
 
 ## 0.5.0 – first public release
