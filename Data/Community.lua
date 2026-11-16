@@ -5,23 +5,4 @@
 local _, SK = ...
 
 SK.COMMUNITY_DATA = {
-    ["862ee863"] = {
-        results = {
-            [1] = { [213564] = 1, [275067] = 1, [275069] = 1, [954] = 1 },
-        },
-        skillups = {
-            ["1 gray"] = { ups = 0, tries = 4 },
-        },
-        drops = {
-        },
-        books = {
-        },
-        bookIDs = {  },
-        names = {
-            [954] = "Scroll of Strength",
-            [213564] = "Scroll of Minor Evocation",
-            [275067] = "Scroll of Imbue Chillknife",
-            [275069] = "Scroll of Rat Familiar",
-        },
-    },
 }

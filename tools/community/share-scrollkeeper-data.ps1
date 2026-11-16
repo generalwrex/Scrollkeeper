@@ -1,5 +1,6 @@
 # Opens a ready-to-send "Share your data" issue for Scrollkeeper.
 #
+#   Double-click share-scrollkeeper-data.bat, or:
 #   powershell -ExecutionPolicy Bypass -File share-scrollkeeper-data.ps1
 #
 # Reads your latest /sk export from Scrollkeeper's saved data (saved when
@@ -9,9 +10,18 @@
 #
 # Optional: -WowFolder "D:\Games\World of Warcraft\_forever_"
 param(
-    [string]$WowFolder = "L:\Games\World of Warcraft\_forever_"
+    [string]$WowFolder = ""
 )
 $ErrorActionPreference = "Stop"
+
+# Inside the addon (...\_forever_\Interface\AddOns\Scrollkeeper\tools\community)
+# the game folder is five levels up.
+if (-not $WowFolder) {
+    $guess = $PSScriptRoot
+    for ($i = 0; $i -lt 5 -and $guess; $i++) { $guess = Split-Path $guess -Parent }
+    if ($guess -and (Test-Path (Join-Path $guess "WTF"))) { $WowFolder = $guess }
+    else { $WowFolder = "L:\Games\World of Warcraft\_forever_" }
+}
 
 # --- Find the saved data (newest if you have several accounts) ------------
 $accounts = Join-Path $WowFolder "WTF\Account"

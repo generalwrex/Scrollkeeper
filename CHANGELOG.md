@@ -10,7 +10,7 @@
 - The settings page isn't one giant list anymore. It's split into sections (Panel, Tooltips and chat, Sharing, Mailbox/guild bank/AH, Map), stuff that depends on something else greys out when it's off, and there's a "Move to middle" button if you lose the panel off screen.
 - Fixed a bunch of German/Spanish/French text that was still showing in English on the panel.
 - The About page says I'm Natop on CurseForge now too.
-- Sharing your data is way easier now. Scrollkeeper keeps your latest export when you log out, so there's a little script (`tools/community/share-scrollkeeper-data.ps1`) that opens the GitHub "Share your data" page with everything already filled in. You just hit Create.
+- Sharing your data is way easier now. Scrollkeeper keeps your latest export when you log out, so there's a little script (`tools/community/share-scrollkeeper-data.bat`, just double-click it) that opens the GitHub "Share your data" page with everything already filled in. You just hit Create.
 
 ## 1.1.1
 

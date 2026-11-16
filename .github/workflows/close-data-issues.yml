@@ -1,0 +1,34 @@
+# When a release goes out, close the [Data] issues whose exports made it in.
+# An issue counts as added once tools/community/exports/issue-N.txt is in the
+# release (update-community-data saves it there). Anything shared after the
+# last update stays open for the next one.
+name: Close shared data issues
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  close:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Close the issues that were added
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh issue list --repo "$GITHUB_REPOSITORY" --label data --state open --limit 500 \
+            --json number --jq '.[].number' | while read -r number; do
+            if [ -f "tools/community/exports/issue-$number.txt" ]; then
+              gh issue close "$number" --repo "$GITHUB_REPOSITORY" \
+                --comment "Added in Scrollkeeper ${TAG#v}, thanks for sharing!"
+              echo "Closed #$number"
+            else
+              echo "Left #$number open (not added yet)"
+            fi
+          done
