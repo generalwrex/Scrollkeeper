@@ -72,7 +72,7 @@ local function AddScrollLines(tooltip, needs, itemID)
             tooltip:AddLine(("What it became, %d read by %d |4player:players;:"):format(total, players), 1, 0.82, 0)
             for i = 1, math.min(#odds, 8) do
                 local row = odds[i]
-                tooltip:AddDoubleLine("  " .. row.name, ("%.1f%%"):format(row.share * 100), 0.9, 0.9, 0.9, 1, 1, 1)
+                tooltip:AddDoubleLine("  " .. SK.ScrollLink(row.itemID, row.name), ("%.1f%%"):format(row.share * 100), 0.9, 0.9, 0.9, 1, 1, 1)
             end
         elseif results then
             tooltip:AddLine("Can become: " .. table.concat(results, ", "), 0.7, 0.7, 0.7, true)

@@ -120,12 +120,12 @@ function SK.Reminders()
 
     local imbue = Has("imbues")
     if imbue and not state.imbued then
-        lines[#lines + 1] = ("|cffffd100No weapon imbue. Best you have: %s.|r"):format(imbue.name:gsub("^Scroll of ", ""))
+        lines[#lines + 1] = ("|cffffd100No weapon imbue. Best you have:|r %s"):format(SK.ScrollLink(imbue.itemID, imbue.name))
     end
 
     local familiar = Has("familiars")
     if familiar and not state.familiar then
-        lines[#lines + 1] = ("|cffffd100No familiar out. Best you have: %s.|r"):format(familiar.name:gsub("^Scroll of ", ""))
+        lines[#lines + 1] = ("|cffffd100No familiar out. Best you have:|r %s"):format(SK.ScrollLink(familiar.itemID, familiar.name))
     end
 
     -- Would a Scroll of Comprehension (+15 for an hour) unlock more?

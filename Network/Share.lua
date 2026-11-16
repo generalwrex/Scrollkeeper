@@ -138,6 +138,16 @@ end)
 ------------------------------------------------------------------------
 
 -- Community results for a tier: list of { itemID, name, count, share } and the total.
+-- Shipped community data (Data/Community.lua), minus your own export:
+-- your own numbers already count as yours.
+function SK.ShippedCommunity()
+    local list = {}
+    for exportID, entry in pairs(SK.COMMUNITY_DATA or {}) do
+        if exportID ~= SK.db.exportID then list[#list + 1] = entry end
+    end
+    return list
+end
+
 function SK.CommunityOdds(tier)
     local totals, total, players = {}, 0, 0
     local function Add(results)
@@ -157,10 +167,20 @@ function SK.CommunityOdds(tier)
     for _, peer in pairs(SK.demoCommunity or {}) do
         if peer.results[tier] then Add(peer.results[tier]) players = players + 1 end
     end
+    for _, entry in ipairs(SK.ShippedCommunity()) do
+        if entry.results and entry.results[tier] and next(entry.results[tier]) then
+            Add(entry.results[tier])
+            players = players + 1
+        end
+    end
 
     local list = {}
     for id, count in pairs(totals) do
-        local name = (SK.db.itemNames and SK.db.itemNames[id]) or (SK.demoNames and SK.demoNames[id])
+        local shippedName
+        for _, entry in ipairs(SK.ShippedCommunity()) do
+            shippedName = shippedName or (entry.names and entry.names[id])
+        end
+        local name = (SK.db.itemNames and SK.db.itemNames[id]) or (SK.demoNames and SK.demoNames[id]) or shippedName
             or (C_Item and SK.Try(C_Item.GetItemNameByID, id)) or ("item " .. id)
         list[#list + 1] = { itemID = id, name = name, count = count, share = count / total }
     end
@@ -185,6 +205,7 @@ function SK.DropCells(mapID, kind)
     end
     for _, entry in pairs(SK.db.community or {}) do AddOthers(entry[field]) end
     for _, peer in pairs(SK.demoCommunity or {}) do AddOthers(peer[field]) end
+    for _, entry in ipairs(SK.ShippedCommunity()) do AddOthers(entry[field]) end
     return cells
 end
 

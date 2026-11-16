@@ -79,6 +79,7 @@ function GetBuildInfo() return "1.60.1", "70938", "Nov 12 2026", 16001 end
 C_Item.GetItemIconByID = function(id) return 134939 end
 Settings = {
   RegisterVerticalLayoutCategory = function(n) return { GetID = function() return 1 end } end,
+  RegisterCanvasLayoutSubcategory = function(parent, frame, name) _G.SK_ABOUT_PAGE = name; return {} end,
   RegisterAddOnSetting = function() return { SetValueChangedCallback = function(self, f) SETTING_CB = f end } end,
   CreateCheckbox = function() end, CreateDropdown = function() end,
   CreateControlTextContainer = function() return { Add = function() end, GetData = function() return {} end } end, CreateSliderOptions = function() return {} end, CreateSlider = function() end,

@@ -6,6 +6,7 @@ manual-changelog:
 
 ignore:
   - tools
+  - Dev
   - .github
   - README.md
   - CHANGELOG.md

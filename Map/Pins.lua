@@ -16,7 +16,8 @@ local ICON_SCROLL = "Interface\\Icons\\INV_Scroll_03"
 local ICON_BOOK = "Interface\\Icons\\INV_Misc_Book_11"
 
 ------------------------------------------------------------------------
--- One pin (the frame comes from Map/Pins.xml)
+-- One pin (the frame comes from Map/Pins.xml). The world map calls these
+-- methods itself: OnLoad, OnAcquired, OnMouseEnter, OnMouseLeave, OnClick.
 ------------------------------------------------------------------------
 
 ScrollkeeperMapPinMixin = (CreateFromMixins and MapCanvasPinMixin)
@@ -82,7 +83,7 @@ end
 
 -- Click a library pin: set a waypoint there (TomTom if you have it,
 -- otherwise the game's own map pin).
-function ScrollkeeperMapPinMixin:OnMouseUp(button)
+function ScrollkeeperMapPinMixin:OnClick(button)
     local data = self.data
     if button ~= "LeftButton" or not data or data.kind ~= "library" then return end
     local mapID = self:GetMap():GetMapID()
@@ -109,6 +110,16 @@ local function CreateProvider()
     end
 
     function provider:RefreshAllData()
+        -- The map asks for pins inside its own protected update. In combat,
+        -- wait until it's over; and never let a pin problem break the map.
+        if InCombatLockdown and InCombatLockdown() then
+            self.redrawAfterCombat = true
+            return
+        end
+        SK.Quietly("map pins", function() self:DrawPins() end)
+    end
+
+    function provider:DrawPins()
         self:RemoveAllData()
         if not SK.db.mapPins then return end
         local mapID = self:GetMap():GetMapID()
@@ -153,6 +164,14 @@ SK.Listen("READY", function()
 end)
 SK.On("ADDON_LOADED", function(name)
     if name == "Blizzard_WorldMap" then Attach() end
+end)
+
+-- Draw the pins skipped during combat.
+SK.On("PLAYER_REGEN_ENABLED", function()
+    if provider and provider.redrawAfterCombat then
+        provider.redrawAfterCombat = nil
+        if WorldMapFrame and WorldMapFrame:IsShown() then provider:RefreshAllData() end
+    end
 end)
 
 -- Redraw when the data or the setting changes.

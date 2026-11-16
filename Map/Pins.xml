@@ -16,11 +16,8 @@
                 </FontString>
             </Layer>
         </Layers>
-        <Scripts>
-            <OnLoad method="OnLoad"/>
-            <OnEnter method="OnMouseEnter"/>
-            <OnLeave method="OnMouseLeave"/>
-            <OnMouseUp method="OnMouseUp"/>
-        </Scripts>
+        <!-- No scripts here: the world map calls the mixin's OnLoad,
+             OnMouseEnter, OnMouseLeave and OnMouseUp itself, and refuses
+             pins that set their own OnEnter/OnLeave. -->
     </Frame>
 </Ui>

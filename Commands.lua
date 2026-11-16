@@ -10,6 +10,7 @@
 -- /sk net        the Network window: other Scrollkeeper users and community odds
 -- /sk demo       fill the Network window, map and tooltips with made-up players
 -- /sk export     copy your scroll data to share (GitHub issue "Share your data")
+-- /sk about      version and links
 -- /sk bug        copy a bug report (GitHub issue "Bug report")
 -- /sk scan       developer data dump (see Dev/Scan.lua)
 
@@ -60,11 +61,17 @@ commands.net = function() SK.ToggleNetwork() end
 commands.network = commands.net
 commands.demo = function() SK.ToggleDemo() end
 commands.export = function() SK.ShowExport() end
+commands.about = function()
+    SK.Print(("version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."):format(SK.version))
+    for _, link in ipairs(SK.LINKS or {}) do
+        print(("  |cffffd100%s|r  %s"):format(link[1], link[2]))
+    end
+end
 commands.bug = function() SK.ShowBugReport() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print("commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk demo, /sk reset")
+    SK.Print("commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk about, /sk demo, /sk reset")
 end
 
 -- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.

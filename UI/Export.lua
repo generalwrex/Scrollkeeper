@@ -7,8 +7,8 @@
 --   /sk bug      a bug report: versions, settings and the errors
 --                Scrollkeeper caught.
 --
--- Both open a window with the text selected: press Ctrl+C to copy, then
--- paste it into a GitHub issue (the issue forms say where).
+-- Both open a window with a ready-made issue title and the text: copy each
+-- (Ctrl+C) into a GitHub issue (the issue forms say where).
 --
 -- Export format (one record per line, same fields as the network messages):
 --   Scrollkeeper export 1
@@ -39,7 +39,7 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(460, 380)
+    window:SetSize(460, 400)
     window:SetPoint("CENTER")
     window:SetFrameStrata("DIALOG")
     window:SetToplevel(true)
@@ -63,8 +63,28 @@ local function Build()
     window.hint:SetPoint("RIGHT", window, "RIGHT", -16, 0)
     window.hint:SetJustifyH("CENTER")
 
+    -- A ready-made title for the GitHub issue, also copyable.
+    local titleLabel = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    titleLabel:SetPoint("TOPLEFT", 18, -64)
+    titleLabel:SetText("Title:")
+    local titleBox = CreateFrame("EditBox", nil, window, "InputBoxTemplate")
+    titleBox:SetPoint("LEFT", titleLabel, "RIGHT", 10, 0)
+    titleBox:SetPoint("RIGHT", window, "RIGHT", -20, 0)
+    titleBox:SetHeight(20)
+    titleBox:SetAutoFocus(false)
+    titleBox:SetScript("OnEscapePressed", function() window:Hide() end)
+    titleBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
+    titleBox:SetScript("OnMouseUp", function(self) self:SetFocus() self:HighlightText() end)
+    titleBox:SetScript("OnTextChanged", function(self, userInput)
+        if userInput and window.title then
+            self:SetText(window.title)
+            self:HighlightText()
+        end
+    end)
+    window.titleBox = titleBox
+
     local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 16, -62)
+    scroll:SetPoint("TOPLEFT", 16, -90)
     scroll:SetPoint("BOTTOMRIGHT", -36, 44)
 
     local box = CreateFrame("EditBox", nil, scroll)
@@ -98,11 +118,14 @@ local function Build()
     end)
 end
 
-local function Show(title, hint, text, note)
+local function Show(title, hint, text, note, issueTitle)
     if not window then Build() end
     window:SetTitle(title)
     window.hint:SetText(hint)
     window.note:SetText(note or "")
+    window.title = issueTitle or ""
+    window.titleBox:SetText(window.title)
+    window.titleBox:SetCursorPosition(0)
     window.text = text
     window.box:SetText(text)
     window:Show()
@@ -248,11 +271,17 @@ function SK.ShowExport()
         SK.Print("nothing to export yet. Decipher some scrolls first.")
         return
     end
-    Show("Scrollkeeper Export", "Ctrl+C to copy, then paste it in a GitHub issue", text,
-        "Scroll data only. No character or account names.")
+    local skill = SK.GetComprehension()
+    local issueTitle = ("[Data] Skill %d/%d, %d deciphered"):format(skill.rank, skill.max, SK.db.deciphered or 0)
+    Show("Scrollkeeper Export", "Copy the title and the text into a GitHub issue", text,
+        "Scroll data only. No character or account names.", issueTitle)
 end
 
 function SK.ShowBugReport()
-    Show("Scrollkeeper Bug Report", "Ctrl+C to copy, then paste it in a GitHub issue", SK.BugReportText(),
-        "Please also say what you were doing when it went wrong.")
+    local errors = SK.db.errors or {}
+    local last = errors[#errors]
+    local issueTitle = last and ("[Bug] " .. tostring(last.where) .. ": " .. tostring(last.error):gsub("^.-:%d+: ", ""):sub(1, 70))
+        or "[Bug] "
+    Show("Scrollkeeper Bug Report", "Copy the title and the text into a GitHub issue", SK.BugReportText(),
+        "Please also say what you were doing when it went wrong.", issueTitle)
 end

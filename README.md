@@ -44,6 +44,7 @@ Nothing is automatic: every cast is one click from the player.
 | `/sk log` | what your deciphers have produced |
 | `/sk export` | copy your scroll data to share |
 | `/sk bug` | copy a bug report |
+| `/sk about` | version and links |
 | `/sk reset` | move the panel to the middle and reset its size |
 | `/sk scan` | developer: dump game data to the saved file |
 

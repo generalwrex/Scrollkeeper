@@ -28,7 +28,7 @@ local COMPACT_ICONS_PER_ROW = 7   -- compact view: icons per row, no labels
 local MAX_SCROLL_BUTTONS = 40
 local QUICK_ICON = 30             -- Familiar / Imbue icon buttons
 local ICON_PAD = 3                -- room inside the scroll box for the gold outline and counts
-local COLLAPSED_HEIGHT = 78        -- tall enough for the portrait and the bottom border
+local COLLAPSED_HEIGHT = 92        -- title bar, portrait, the skill bar, and the bottom border
 local SIDE_WIDTH = 250            -- Advanced view: the extra right-hand column
 local SIDE_INNER = SIDE_WIDTH - RIGHT - 4
 local PORTRAIT = "Interface\\Icons\\INV_Scroll_03"
@@ -261,7 +261,11 @@ local function Build()
     panel:EnableMouse(true)
     panel:RegisterForDrag("LeftButton")
     panel:SetScript("OnDragStart", function(self)
-        if SK.db.locked or SK.InCombat() then return end
+        if SK.db.locked then return end
+        if SK.InCombat() then
+            SK.Print("the panel can be moved after combat.")
+            return
+        end
         self:StartMoving()
     end)
     panel:SetScript("OnDragStop", function(self)
@@ -373,7 +377,7 @@ local function Build()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local nextScroll = SK.NextDecipherable()
         if nextScroll then
-            GameTooltip:SetText("Decipher " .. nextScroll.name)
+            GameTooltip:SetText("Decipher " .. SK.ScrollLink(nextScroll.itemID, nextScroll.name))
             GameTooltip:AddLine(("Needs %d Comprehension."):format(nextScroll.needs), 1, 1, 1)
             local chance = SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
             if chance then GameTooltip:AddLine(SK.ColoredChance(chance)) end
@@ -427,7 +431,7 @@ local function Build()
                     local _, holding = SK.MainHandWeapon()
                     GameTooltip:AddLine(("None of your imbues fit %s."):format(holding or "what you're holding"), 1, 1, 1, true)
                     GameTooltip:AddLine(("%s can be put on your %s (in your bags). Equip it, then click here."):format(
-                        hint.name:gsub("^Scroll of ", ""), weapon), 0.25, 1, 0.25, true)
+                        SK.ScrollLink(hint.itemID, hint.name), weapon), 0.25, 1, 0.25, true)
                 else
                     -- List what you do have, and what each one needs.
                     local have = {}
@@ -447,7 +451,7 @@ local function Build()
                             local needs = {}
                             if scroll.imbueFor then needs[#needs + 1] = "for " .. SK.WeaponWithArticle(scroll.imbueFor) end
                             if scroll.levelOK == false then needs[#needs + 1] = "level " .. (scroll.level or "?") end
-                            GameTooltip:AddDoubleLine("  " .. scroll.name:gsub("^Scroll of ", ""),
+                            GameTooltip:AddDoubleLine("  " .. SK.ScrollLink(scroll.itemID, scroll.name),
                                 table.concat(needs, ", "), 1, 0.82, 0, 1, 0.4, 0.4)
                         end
                     end
@@ -561,7 +565,7 @@ local function Build()
     local statRows = {
         { "deciphered", "Deciphered" },
         { "skillups", "Skill-ups from scrolls" },
-        { "common", "Most common result" },
+        { "common", "Most common" },
         { "drops", "Scroll drops logged" },
         { "books", "Books found" },
         { "sharing", "Sharing" },
@@ -581,8 +585,13 @@ local function Build()
         row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.value:SetPoint("RIGHT", -6, 0)
         row.value:SetJustifyH("RIGHT")
-        row.value:SetWidth(SIDE_INNER * 0.45)
+        row.value:SetWidth(SIDE_INNER * 0.6)
         row.value:SetWordWrap(false)
+        -- Item links in the value: tooltip on hover, Shift-click links it.
+        if row.SetHyperlinksEnabled then
+            row:SetHyperlinksEnabled(true)
+            SK.UI.EnableItemLinks(row)
+        end
         side.rows[entry[1]] = row
         y = y - ROW_HEIGHT
     end
@@ -614,7 +623,7 @@ local function UpdateStats()
             if count > bestCount then bestName, bestCount = name, count end
         end
     end
-    side.rows.common.value:SetText(bestName and (bestName:gsub("^Scroll of ", "") .. " |cff808080x" .. bestCount .. "|r")
+    side.rows.common.value:SetText(bestName and (SK.ScrollLink(nil, bestName, true) .. " |cff808080x" .. bestCount .. "|r")
         or "|cff808080none yet|r")
 
     local drops = 0
@@ -663,6 +672,7 @@ local function Layout()
         parts.familiar.label, parts.familiar.detail, parts.imbue.label, parts.imbue.detail,
     }
     for _, region in ipairs(body) do region:SetShown(not collapsed) end
+    parts.skillBar:Show()   -- every view shows the skill bar, Title only too
     for _, row in pairs(rows) do row:SetShown(not collapsed and not compact) end
     -- Compact view: no section plates.
     for _, header in ipairs(sections) do
@@ -679,6 +689,7 @@ local function Layout()
     FitBorder(collapsed)
     if collapsed then
         for _, button in ipairs(scrollButtons) do button:Hide() end
+        Place(parts.skillBar, -TOP, 16)
         panel:SetHeight(COLLAPSED_HEIGHT)
         return
     end

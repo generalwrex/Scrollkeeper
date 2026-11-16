@@ -23,6 +23,11 @@ local BOOK_WORDS = { "Journal", "Volume", "Tome", "Codex", "Diary", "Book of", "
 -- Learned book item IDs: SK.db.bookIDs[itemID] = name.
 function SK.IsBook(itemID, name)
     if itemID and SK.db.bookIDs and SK.db.bookIDs[itemID] then return true end
+    for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
+        for _, id in ipairs(entry.bookIDs or {}) do
+            if id == itemID then return true end
+        end
+    end
     if type(name) ~= "string" then return false end
     for _, word in ipairs(BOOK_WORDS) do
         if name:find(word, 1, true) then return true end

@@ -208,3 +208,45 @@ if SK.isMage then
   print("combat hiding ok, errors:", #ScrollkeeperDB.errors)
 end
 
+
+-- TITLES
+if SK.isMage then
+  SlashCmdList.SCROLLKEEPER("export"); print("TITLE", ScrollkeeperExportFrame and ScrollkeeperExportFrame.title)
+  SK.db.errors = { { at = 0, where = "map pins", error = "...Blizzard_MapCanvas.lua:309: assertion failed!" } }
+  SlashCmdList.SCROLLKEEPER("bug"); print("TITLE", ScrollkeeperExportFrame and ScrollkeeperExportFrame.title)
+  SK.db.errors = {}
+end
+
+-- SHIPPED DATA
+if SK.isMage then
+  SK.db.exportID = "someone-else"
+  local list, total, players = SK.CommunityOdds(1)
+  print("SHIPPED", total, players, list[1] and list[1].name)
+  SK.db.exportID = "862ee863"
+  local _, total2, players2 = SK.CommunityOdds(1)
+  print("OWN SKIPPED", total2, players2)
+end
+
+-- ITEM LABELS
+print("LABEL", SK.UI.ItemLabel(213564, "Minor Evocation"))
+SK.ToggleNetwork(); SK.RefreshNetwork()
+print("item labels ok, errors:", #ScrollkeeperDB.errors)
+
+-- SCROLL LINKS
+print("LINK id", SK.ScrollLink(213564))
+print("LINK name", SK.ScrollLink(nil, "Scroll of Rat Familiar"))
+print("LINK unknown", SK.ScrollLink(nil, "Scroll of Nothing"))
+SK.PrintLog()
+print("scroll links ok, errors:", #ScrollkeeperDB.errors)
+
+-- ABOUT
+SlashCmdList.SCROLLKEEPER("about")
+print("about ok, errors:", #ScrollkeeperDB.errors)
+print("ABOUT PAGE", SK_ABOUT_PAGE)
+
+-- TITLE ONLY SKILL BAR
+SK.db.viewMode = "mini"; SK.RefreshPanel()
+local p = ScrollkeeperPanel
+print("MINI", p and p:GetHeight())
+SK.db.viewMode = nil; SK.RefreshPanel()
+print("mini bar ok, errors:", #ScrollkeeperDB.errors)

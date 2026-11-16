@@ -98,11 +98,11 @@ end
 function SK.UI.WhyNotUsable(scroll)
     if not scroll or scroll.usable ~= false then return nil end
     if scroll.levelOK == false then
-        return ("You need level %d for %s."):format(scroll.level or 0, scroll.name or "this scroll")
+        return ("You need level %d for %s."):format(scroll.level or 0, SK.ScrollLink(scroll.itemID, scroll.name))
     end
     if scroll.fits == false then
         local _, weapon = SK.MainHandWeapon()
-        local text = ("%s is only for %s. You're holding %s."):format((scroll.name or "This"):gsub("^Scroll of ", ""),
+        local text = ("%s is only for %s. You're holding %s."):format(SK.ScrollLink(scroll.itemID, scroll.name),
             SK.WeaponWithArticle and SK.WeaponWithArticle(scroll.imbueFor) or ("a " .. (scroll.imbueFor or "different weapon")),
             weapon or "no weapon")
         local inBags = SK.WeaponInBagsFor and SK.WeaponInBagsFor(scroll)
@@ -185,4 +185,19 @@ function SK.UI.CreateItemButton(parent, name, size)
     end
 
     return button
+end
+
+-- Make item links shown in a frame's text act like links elsewhere:
+-- hover for the tooltip, click to open it, Shift-click to put it in chat.
+-- (The frame needs SetHyperlinksEnabled(true).)
+function SK.UI.EnableItemLinks(frame)
+    frame:SetScript("OnHyperlinkEnter", function(self, link)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetHyperlink(link)
+        GameTooltip:Show()
+    end)
+    frame:SetScript("OnHyperlinkLeave", function() GameTooltip:Hide() end)
+    frame:SetScript("OnHyperlinkClick", function(_, link, text, button)
+        if SetItemRef then SetItemRef(link, text, button) end
+    end)
 end

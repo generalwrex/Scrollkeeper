@@ -79,6 +79,26 @@ function SK.UI.CreateScrollList(host, width, visibleRows)
         row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.value:SetPoint("RIGHT", -6, 0)
         row.value:SetJustifyH("RIGHT")
+
+        -- Rows that show an item (row.itemID): its tooltip on hover, and
+        -- Shift-click puts its link in chat, like any item link.
+        row:EnableMouse(true)
+        local highlight = row:CreateTexture(nil, "HIGHLIGHT")
+        highlight:SetAllPoints()
+        highlight:SetColorTexture(1, 0.82, 0, 0.12)
+        row:SetScript("OnEnter", function(self)
+            if not self.itemID then return end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetItemByID(self.itemID)
+            GameTooltip:AddLine("Shift-click to link it in chat.", 0.6, 0.6, 0.6)
+            GameTooltip:Show()
+        end)
+        row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        row:SetScript("OnMouseUp", function(self)
+            if not (self.itemID and IsModifiedClick and IsModifiedClick("CHATLINK")) then return end
+            local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, self.itemID))
+            if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
+        end)
         return row
     end
 
@@ -100,6 +120,29 @@ function SK.UI.CreateScrollList(host, width, visibleRows)
 
     return list
 end
+
+-- "|T icon |t Minor Evocation" in the item's quality color. Falls back to
+-- plain text until the game has the item's info, then the list refreshes.
+local waitingForItems = {}
+function SK.UI.ItemLabel(itemID, text)
+    if not (itemID and C_Item) then return text end
+    local icon = SK.Try(C_Item.GetItemIconByID, itemID)
+    local quality = SK.Try(C_Item.GetItemQualityByID, itemID)
+    if not quality then
+        waitingForItems[itemID] = true
+        if C_Item.RequestLoadItemDataByID then SK.Try(C_Item.RequestLoadItemDataByID, itemID) end
+    end
+    local color = quality and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+    local colored = color and color.hex and (color.hex .. text .. "|r") or text
+    return icon and ("|T" .. icon .. ":14:14:0:0|t " .. colored) or colored
+end
+
+SK.On("GET_ITEM_INFO_RECEIVED", function(itemID)
+    if itemID and waitingForItems[itemID] then
+        waitingForItems[itemID] = nil
+        if SK.RefreshNetwork then SK.RefreshNetwork() end
+    end
+end)
 
 ------------------------------------------------------------------------
 -- The pane: Users, then Community Odds with a button per tier
@@ -157,6 +200,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         local peers = SK.PeerList()
 
         self.users:SetRows(peers, function(row, entry)
+            row.itemID = nil
             local peer = entry.peer
             if peer.class == "MAGE" then
                 local tiers = {}
@@ -178,7 +222,8 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         end
         local odds, total, players = SK.CommunityOdds(self.selectedTier)
         self.odds:SetRows(odds, function(row, entry)
-            row.label:SetText((entry.name:gsub("^Scroll of ", "")))
+            row.itemID = entry.itemID
+            row.label:SetText(SK.UI.ItemLabel(entry.itemID, (entry.name:gsub("^Scroll of ", ""))))
             row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
         end, "")
         if total == 0 then

@@ -96,7 +96,7 @@ local function Finish()
         else
             skillText = " |cff808080(no skill-up)|r"
         end
-        SK.Print("deciphered: " .. result .. skillText)
+        SK.Print("deciphered: " .. SK.ScrollLink(entry.resultID, result) .. skillText)
     end
     SK.Send("LOG_CHANGED")
     SK.Send("MY_DATA_CHANGED")
@@ -178,7 +178,8 @@ function SK.PrintLog()
             table.sort(rows, function(a, b) return a.count > b.count end)
             print(("  |cffffd100Comprehension %d scrolls|r"):format(tier))
             for _, row in ipairs(rows) do
-                print(("    %s: %d (%d%%)"):format(row.name, row.count, math.floor(row.count / total * 100 + 0.5)))
+                print(("    %s: %d (%d%%)"):format(SK.ScrollLink(nil, row.name), row.count,
+                    math.floor(row.count / total * 100 + 0.5)))
             end
         end
     end

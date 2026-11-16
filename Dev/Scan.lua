@@ -366,12 +366,15 @@ end
 
 frame:SetScript("OnEvent", function(_, event, ...)
     if event == "PLAYER_LOGIN" then
-        setLogging(ScrollkeeperScan.logging)
+        -- The recorder never stays on between sessions: /sk eventlog
+        -- turns it on for this session only.
+        setLogging(false)
         return
     end
     if not ScrollkeeperScan.logging then return end
     if event:find("^UNIT_SPELLCAST") then
         local unit, _, spellID = ...
+        if issecretvalue and ((unit ~= nil and issecretvalue(unit)) or (spellID ~= nil and issecretvalue(spellID))) then return end
         if unit ~= "player" then return end
         local name = C_Spell and try(C_Spell.GetSpellName, spellID) or nil
         addLog({ e = event, id = clean(spellID), name = clean(name) })
@@ -392,8 +395,12 @@ frame:SetScript("OnEvent", function(_, event, ...)
         local cds = {}
         for _, n in ipairs(WATCH_SPELLS) do
             local e = spellEntry(n)
-            if e.id and e.cdDuration and e.cdDuration > 2 then
-                cds[#cds + 1] = { name = e.name, id = e.id, duration = e.cdDuration }
+            -- In combat the game hides cooldowns from addons ("secret"
+            -- values that can't be compared): skip those.
+            local duration = e.cdDuration
+            if issecretvalue and duration ~= nil and issecretvalue(duration) then duration = nil end
+            if e.id and duration and duration > 2 then
+                cds[#cds + 1] = { name = e.name, id = e.id, duration = duration }
             end
         end
         if #cds > 0 then addLog({ e = event, cds = cds }) end
@@ -403,6 +410,11 @@ frame:SetScript("OnEvent", function(_, event, ...)
         addLog({ e = event })
     else
         local a, b = ...
+        -- Hidden ("secret") values can't be read or searched: drop them.
+        if issecretvalue then
+            if a ~= nil and issecretvalue(a) then a = nil end
+            if b ~= nil and issecretvalue(b) then b = nil end
+        end
         local msg = type(a) == "string" and a or (type(b) == "string" and b or nil)
         if event == "CHAT_MSG_SYSTEM" and msg and not interesting(msg) and not msg:lower():find("skill") then
             return

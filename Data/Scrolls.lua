@@ -129,3 +129,59 @@ function SK.CategoryFor(name)
     end
     return "utility"
 end
+
+------------------------------------------------------------------------
+-- Item links for scroll names
+------------------------------------------------------------------------
+
+-- The item ID for a scroll name we've seen (bags, deciphers, shared data).
+function SK.ItemIDByName(name)
+    if not name then return nil end
+    for id, known in pairs(SK.db and SK.db.itemNames or {}) do
+        if known == name then return id end
+    end
+    for _, scroll in ipairs(SK.bags and SK.bags.translated or {}) do
+        if scroll.name == name then return scroll.itemID end
+    end
+    for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
+        for id, known in pairs(entry.names or {}) do
+            if known == name then return id end
+        end
+    end
+    return nil
+end
+
+-- A scroll as a real item link (clickable in chat, hoverable in
+-- Scrollkeeper's windows). Give an item ID, a name, or both.
+-- short = true drops "Scroll of " and the brackets, for tight spaces.
+-- Works before the game has the item's info: the link is built from the
+-- item ID, and the quality color is filled in once it's known.
+function SK.ScrollLink(itemID, name, short)
+    itemID = itemID or SK.ItemIDByName(name)
+    local link, quality
+    if itemID and C_Item then
+        if C_Item.GetItemInfo then
+            local ok, itemName, itemLink, itemQuality = pcall(C_Item.GetItemInfo, itemID)
+            if ok then
+                name = name or itemName
+                link, quality = itemLink, itemQuality
+            end
+        end
+        if not link and C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, itemID) end
+        name = name or (SK.db and SK.db.itemNames and SK.db.itemNames[itemID])
+        if not name and C_Item.GetItemNameByID then
+            local ok, byID = pcall(C_Item.GetItemNameByID, itemID)
+            name = ok and byID or nil
+        end
+    end
+    name = name or "a scroll"
+    if not itemID then
+        return "|cffffd100" .. (short and name:gsub("^Scroll of ", "") or ("[" .. name .. "]")) .. "|r"
+    end
+    if link and not short then return link end
+    local color = "ffffd100"
+    local qualityColor = quality and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+    if qualityColor and qualityColor.hex then color = qualityColor.hex:gsub("^|c", "") end
+    local text = short and (name:gsub("^Scroll of ", "")) or ("[" .. name .. "]")
+    return ("|c%s|Hitem:%d|h%s|h|r"):format(color, itemID, text)
+end

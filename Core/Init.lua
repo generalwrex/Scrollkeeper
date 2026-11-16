@@ -7,7 +7,7 @@ local ADDON_NAME, SK = ...
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "0.5.0"
+SK.version = "1.0.0"
 do
     local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
     local tagged = getMetadata and getMetadata(ADDON_NAME, "Version")
@@ -39,6 +39,20 @@ end
 -- Run one of our own functions. If it breaks, remember the error (so it
 -- can be read from the saved file) and tell the player once.
 local shownErrors = {}
+-- Like SK.Safely, but only records the error (for /sk bug), with nothing
+-- in chat. For things that should never bother the player, like map pins.
+function SK.Quietly(label, fn, ...)
+    local ok, err = pcall(fn, ...)
+    if ok then return true end
+    if ScrollkeeperDB then
+        ScrollkeeperDB.errors = ScrollkeeperDB.errors or {}
+        local list = ScrollkeeperDB.errors
+        list[#list + 1] = { at = time(), where = label, error = tostring(err) }
+        while #list > 30 do table.remove(list, 1) end
+    end
+    return false
+end
+
 function SK.Safely(label, fn, ...)
     local ok, err = pcall(fn, ...)
     if ok then return true end
@@ -112,7 +126,7 @@ local DEFAULTS = {
     showPanel = true,        -- show the panel on mages
     showTooltips = true,     -- add a line to scroll tooltips
     announce = true,         -- print what each decipher produced
-    hideInCombat = false,    -- hide the panel while in combat, show it again after
+    hideInCombat = true,     -- hide the panel while in combat, show it again after
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
     shareChannel = false,    -- also use the public Scrollkeeper channel (experimental)
@@ -136,6 +150,13 @@ SK.On("ADDON_LOADED", function(loaded)
         end
     end
     SK.db = ScrollkeeperDB
+
+    -- Hide in combat became the default in 1.0.0; switch it on once for
+    -- everyone (after that, your own choice in the settings sticks).
+    if not ScrollkeeperDB.hideInCombatDefaulted then
+        ScrollkeeperDB.hideInCombat = true
+        ScrollkeeperDB.hideInCombatDefaulted = true
+    end
 
     -- Errors from an older version are no longer useful.
     if ScrollkeeperDB.version ~= SK.version then
