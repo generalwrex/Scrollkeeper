@@ -58,9 +58,18 @@ end
 
 local talking, before
 
-local function StartTalking()
+-- Are you talking to a librarian? Sometimes the game hides NPC names from
+-- addons (a "secret value" you can't compare or look up). Then fall back
+-- to whether you're standing by a librarian, which Study already knows.
+local function TalkingToLibrarian()
     local npc = UnitName("npc")
-    if not (npc and LIBRARIANS[npc]) then return end
+    local hidden = npc ~= nil and issecretvalue and issecretvalue(npc)
+    if npc and not hidden then return LIBRARIANS[npc] == true end
+    return SK.InLibrary and SK.InLibrary() and true or false
+end
+
+local function StartTalking()
+    if not TalkingToLibrarian() then return end
     talking = true
     before = before or BagCounts()
 end

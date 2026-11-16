@@ -173,7 +173,6 @@ if SK.isMage then
   SK.db.resultsByID = { [1] = { [213564] = 3, [277483] = 1 } }
   SK.db.itemNames = { [213564] = "Scroll of Minor Evocation", [277483] = "Scroll of Frog Familiar" }
   SK.db.skillups = { ["1 orange"] = { ups = 2, tries = 3 } }
-  SK.db.errors = { { at = 0, where = "test", error = "boom" } }
   local text, n = SK.ExportText(); print("EXPORT records", n); print(text)
   print(SK.BugReportText())
   SlashCmdList.SCROLLKEEPER("export"); SlashCmdList.SCROLLKEEPER("bug")
@@ -194,3 +193,18 @@ SK.bags.translated = { { category = "imbues", name = "Scroll of Imbue Spark", im
 local scroll, weapon = SK.ImbueSwapHint(); print("SWAP", scroll and scroll.name, weapon)
 print("WHY", SK.UI.WhyNotUsable({ usable = false, levelOK = true, fits = false, name = "Scroll of Imbue Spark", imbueFor = "sword" }))
 SK.RefreshPanel(); print("errors:", #ScrollkeeperDB.errors)
+
+-- SECRET NAMES
+issecretvalue = function(v) return v == "SECRET" end
+local realUnitName = UnitName
+UnitName = function(unit) if unit == "npc" then return "SECRET" end return realUnitName(unit) end
+fire("QUEST_COMPLETE")
+UnitName = realUnitName
+print("secret npc ok, errors:", #ScrollkeeperDB.errors)
+
+-- COMBAT HIDING
+if SK.isMage then
+  SK.db.hideInCombat = true; SK.UpdateCombatHiding(); fire("PLAYER_REGEN_ENABLED")
+  print("combat hiding ok, errors:", #ScrollkeeperDB.errors)
+end
+

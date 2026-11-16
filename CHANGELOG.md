@@ -1,5 +1,12 @@
 # Scrollkeeper
 
+## 0.5.3
+
+- The panel's X now works in combat.
+- New setting: **Hide the panel in combat**. It comes back when combat ends.
+- Fixed an error when turning in quests while the game hides the NPC's name
+  (books are still learned at the librarians).
+
 ## 0.5.2
 
 - **`/sk export`:** copy your scroll data to share. No character or account names.

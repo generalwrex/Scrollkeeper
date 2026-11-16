@@ -112,6 +112,7 @@ local DEFAULTS = {
     showPanel = true,        -- show the panel on mages
     showTooltips = true,     -- add a line to scroll tooltips
     announce = true,         -- print what each decipher produced
+    hideInCombat = false,    -- hide the panel while in combat, show it again after
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
     shareChannel = false,    -- also use the public Scrollkeeper channel (experimental)

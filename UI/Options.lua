@@ -12,6 +12,7 @@ local function AddCheckbox(key, label, tooltip, default)
         "boolean", label, default)
     setting:SetValueChangedCallback(function()
         if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
+        if key == "hideInCombat" and SK.UpdateCombatHiding then SK.UpdateCombatHiding() end
         if SK.Net and (key == "share" or key == "shareChannel") then SK.Net.UpdateChannel() end
         SK.Send("DROPS_CHANGED")
     end)
@@ -39,6 +40,8 @@ SK.Listen("READY", function()
 
         AddCheckbox("showPanel", "Show the panel",
             "The window with your Comprehension, scrolls and Study timer. Mages only.", true)
+        AddCheckbox("hideInCombat", "Hide the panel in combat",
+            "The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)", false)
         AddCheckbox("locked", "Lock position",
             "Stops the panel from being dragged.", false)
         AddCheckbox("showScrollBar", "Scroll buttons",

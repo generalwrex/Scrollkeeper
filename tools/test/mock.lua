@@ -131,3 +131,5 @@ C_Item.GetItemInfoInstant = function(id) if id == 99999 then return id, "Weapon"
 function GetRealmName() return "Forever" end
 function GetLocale() return "enUS" end
 date = date or os.date
+
+function RegisterStateDriver() end

@@ -283,6 +283,22 @@ local function Build()
     local close = usingGameFrame and type(panel.CloseButton) == "table" and panel.CloseButton
         or CreateFrame("Button", nil, panel, "UIPanelCloseButton")
     if not usingGameFrame then close:SetPoint("TOPRIGHT", 1, 1) end
+    -- The panel holds protected buttons (Decipher, Study, scrolls), so the
+    -- game won't let addon code hide it in combat. A secure button laid over
+    -- the X can: its click runs in the game's own restricted environment.
+    do
+        local secureClose = CreateFrame("Button", "ScrollkeeperSecureClose", panel, "SecureHandlerClickTemplate")
+        secureClose:SetAllPoints(close)
+        secureClose:SetFrameLevel(close:GetFrameLevel() + 2)
+        secureClose:SetFrameRef("panel", panel)
+        secureClose:SetAttribute("_onclick", [[ self:GetFrameRef("panel"):Hide() ]])
+        secureClose:HookScript("OnClick", function()
+            SK.db.showPanel = false
+            SK.Print("panel hidden. Type /sk to show it again" .. (SK.InCombat() and " (after combat)." or "."))
+        end)
+        secureClose:SetScript("OnEnter", function() close:LockHighlight() end)
+        secureClose:SetScript("OnLeave", function() close:UnlockHighlight() end)
+    end
     close:SetScript("OnClick", function()
         if SK.InCombat() then SK.Print("the panel can't be hidden in combat.") return end
         SK.db.showPanel = false
@@ -955,7 +971,8 @@ end
 function SK.TogglePanel()
     if not panel then return end
     if SK.InCombat() then
-        SK.Print("the panel can't be shown or hidden in combat.")
+        SK.Print(panel:IsShown() and "in combat, close the panel with its X button."
+            or "the panel can be shown again after combat.")
         return
     end
     SK.db.showPanel = not panel:IsShown()
@@ -981,10 +998,56 @@ function SK.ApplyPanelSettings()
     SK.RefreshPanel()
 end
 
+------------------------------------------------------------------------
+-- Hide in combat (optional)
+------------------------------------------------------------------------
+
+-- The game's own combat switch hides and shows the panel: addon code can't
+-- do that in combat because the panel holds protected buttons, but a
+-- secure state driver can. It only brings the panel back if combat hid it.
+local combatDriver
+
+local function BuildCombatDriver()
+    combatDriver = CreateFrame("Frame", nil, UIParent, "SecureHandlerStateTemplate")
+    combatDriver:SetFrameRef("panel", panel)
+    combatDriver:SetAttribute("_onstate-combat", [[
+        local panel = self:GetFrameRef("panel")
+        if newstate == "1" then
+            if self:GetAttribute("hideInCombat") and panel:IsShown() then
+                self:SetAttribute("hidByCombat", true)
+                panel:Hide()
+            end
+        elseif self:GetAttribute("hidByCombat") then
+            self:SetAttribute("hidByCombat", nil)
+            panel:Show()
+        end
+    ]])
+    if RegisterStateDriver then RegisterStateDriver(combatDriver, "combat", "[combat] 1; 0") end
+end
+
+-- Apply the setting (it can only change out of combat; in combat it waits).
+function SK.UpdateCombatHiding()
+    if not combatDriver then return end
+    if SK.InCombat() then
+        SK.afterCombat = SK.afterCombat or {}
+        SK.afterCombat.combatHiding = SK.UpdateCombatHiding
+        return
+    end
+    combatDriver:SetAttribute("hideInCombat", SK.db.hideInCombat and true or nil)
+end
+
+SK.On("PLAYER_REGEN_ENABLED", function()
+    local queued = SK.afterCombat
+    SK.afterCombat = nil
+    for _, run in pairs(queued or {}) do SK.Safely("after combat", run) end
+end)
+
 SK.Listen("READY", function()
     if not SK.isMage then return end   -- other classes only get tooltips
     Build()
     panel:SetShown(SK.db.showPanel)
+    BuildCombatDriver()
+    SK.UpdateCombatHiding()
 
     SK.Listen("BAGS_CHANGED", SK.RefreshPanel)
     SK.Listen("SKILL_CHANGED", SK.RefreshPanel)
