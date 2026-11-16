@@ -343,7 +343,7 @@ print("new features ok, errors:", #ScrollkeeperDB.errors)
 for _, e in ipairs(ScrollkeeperDB.errors) do print("ERR", e.where, e.error) end
 
 -- SURNAMES
-do
+if SK.isMage then
   local realName = UnitName
   SK.db.mages["Surnamey-Forever"] = { name = "Surnamey", skill = 5, studyReadyAt = 12345 }
   UnitName = function(unit) if unit == "player" then return "Surnamey", "Sheep" end return realName(unit) end
@@ -351,3 +351,14 @@ do
   print("SURNAME", SK.CharKey(), entry.name, entry.studyReadyAt, SK.db.mages["Surnamey-Forever"])
   UnitName = realName
 end
+
+-- SCROLL ICON
+if SK.isMage then
+  SK.db.scrollIcon = true; SK.RefreshIcon()
+  print("ICON", ScrollkeeperIcon and ScrollkeeperIcon:IsShown(), ScrollkeeperIcon and ScrollkeeperIcon.count:GetText())
+  ScrollkeeperIcon:GetScript("OnClick")(ScrollkeeperIcon)
+  ScrollkeeperIcon:GetScript("OnEnter")(ScrollkeeperIcon)
+  SK.db.scrollIcon = false; SK.RefreshIcon()
+  print("ICON off", ScrollkeeperIcon:IsShown())
+end
+print("icon ok, errors:", #ScrollkeeperDB.errors)

@@ -1034,6 +1034,7 @@ end
 
 -- Apply the saved settings to the window (called from the settings page).
 function SK.ApplyPanelSettings()
+    if SK.RefreshIcon then SK.RefreshIcon() end
     if not panel or SK.InCombat() then return end
     -- Changing the scale also scales the saved position, so convert the
     -- corner to screen pixels first and back again afterwards.

@@ -7,7 +7,7 @@ local ADDON_NAME, SK = ...
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.1.0"
+SK.version = "1.1.1"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -137,11 +137,12 @@ local DEFAULTS = {
     showPanel = true,        -- show the panel on mages
     showTooltips = true,     -- add a line to scroll tooltips
     announce = true,         -- print what each decipher produced
-    hideInCombat = true,
+    hideInCombat = true,     -- hide the panel while in combat, show it again after
     mailHelper = true,       -- at the mailbox: who could use your scrolls
     guildBankMarks = true,   -- dots on guild bank scrolls someone levels from
     ahScanButton = true,     -- "Scan scrolls" button on the auction house
-    chatHelper = true,       -- "who needs this? [scroll]" notes in chat     -- hide the panel while in combat, show it again after
+    chatHelper = true,       -- "who needs this? [scroll]" notes in chat
+    scrollIcon = false,      -- small icon with the number of scrolls ready
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
     shareChannel = true,     -- also use the public Scrollkeeper channel

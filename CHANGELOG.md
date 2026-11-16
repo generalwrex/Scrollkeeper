@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.1.1
+
+- **Scroll icon** (thanks Curnil for the idea!). Turn it on in the settings and you get a little icon you can put anywhere, with the number of scrolls you can decipher right now (green when some still give skill-ups, and it glows when Study is ready). Click it to open or close the panel in whatever view you picked, so you can keep Advanced but only see it when you want.
+
 ## 1.1.0
 
 Big one for alts and guilds!
