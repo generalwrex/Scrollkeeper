@@ -95,7 +95,7 @@ local function Finish()
         if rose then
             skillText = L[" |cff40ff40(skill %d > %d)|r"]:format(entry.skillBefore, skillNow)
         else
-            skillText = " |cff808080(no skill-up)|r"
+            skillText = L[" |cff808080(no skill-up)|r"]
         end
         SK.Print(L["deciphered: "] .. SK.ScrollLink(entry.resultID, result) .. skillText)
     end

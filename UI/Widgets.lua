@@ -104,8 +104,8 @@ function SK.UI.WhyNotUsable(scroll)
     if scroll.fits == false then
         local _, weapon = SK.MainHandWeapon()
         local text = L["%s is only for %s. You're holding %s."]:format(SK.ScrollLink(scroll.itemID, scroll.name),
-            SK.WeaponWithArticle and SK.WeaponWithArticle(scroll.imbueFor) or ("a " .. (scroll.imbueFor or "different weapon")),
-            weapon or "no weapon")
+            SK.WeaponWithArticle and SK.WeaponWithArticle(scroll.imbueFor) or L["a different weapon"],
+            weapon or L["no weapon"])
         local inBags = SK.WeaponInBagsFor and SK.WeaponInBagsFor(scroll)
         if inBags then text = text .. L[" Equip your %s to use it."]:format(inBags) end
         return text

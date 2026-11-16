@@ -16,14 +16,38 @@ local function AddCheckbox(key, label, tooltip, default)
         if key == "hideInCombat" and SK.UpdateCombatHiding then SK.UpdateCombatHiding() end
         if SK.Net and (key == "share" or key == "shareChannel") then SK.Net.UpdateChannel() end
         if key == "scrollIcon" and SK.RefreshIcon then SK.RefreshIcon() end
+        if key == "minimapButton" and SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
         SK.Send("DROPS_CHANGED")
     end)
-    Settings.CreateCheckbox(category, setting, tooltip)
+    return Settings.CreateCheckbox(category, setting, tooltip)
+end
+
+local layout
+
+-- A section title, like the game's own settings pages have.
+local function AddHeader(text)
+    if layout and CreateSettingsListSectionHeaderInitializer then
+        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(text))
+    end
+end
+
+-- Grey out a setting unless another one is on.
+local function DependsOn(child, parent, key)
+    if child and parent and child.SetParentInitializer then
+        child:SetParentInitializer(parent, function() return SK.db[key] and true or false end)
+    end
 end
 
 ------------------------------------------------------------------------
 -- About page (Options > AddOns > Scrollkeeper > About)
 ------------------------------------------------------------------------
+
+SK.AUTHOR_CHARACTER = "Archmage Naage"
+
+-- People who helped: { name, what they did }. Shown on the About page.
+SK.CREDITS = {
+    { "Curnil", "the scroll icon idea" },
+}
 
 SK.LINKS = {
     { "CurseForge", "https://www.curseforge.com/wow/addons/scrollkeeper" },
@@ -63,7 +87,11 @@ local function AddAboutPage()
 
     local version = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     version:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
-    version:SetText(L["Version %s  ·  by generalwrex"]:format(SK.version))
+    version:SetText(L["Version %s  ·  by Natop (generalwrex)"]:format(SK.version))
+
+    local ingame = page:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    ingame:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -3)
+    ingame:SetText(L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER))
 
     local blurb = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     blurb:SetPoint("TOPLEFT", icon, "BOTTOMLEFT", 0, -16)
@@ -86,7 +114,7 @@ local function AddAboutPage()
     for _, link in ipairs(SK.LINKS) do
         local label = page:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         label:SetPoint("TOPLEFT", 24, y - 3)
-        label:SetText(link[1])
+        label:SetText(L[link[1]])
         local box = CopyBox(page, link[2])
         box:SetPoint("TOPLEFT", 150, y)
         y = y - 28
@@ -106,7 +134,22 @@ local function AddAboutPage()
         .. L["|cffffd100/sk bug|r  copy a bug report if something goes wrong.\n"]
         .. L["Paste either one on the GitHub page above (Report a bug)."])
 
-    Settings.RegisterCanvasLayoutSubcategory(category, page, "About")
+    local thanks = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    thanks:SetPoint("TOPLEFT", helpText, "BOTTOMLEFT", -8, -18)
+    thanks:SetText(L["Thanks"])
+    local thanksText = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    thanksText:SetPoint("TOPLEFT", thanks, "BOTTOMLEFT", 8, -8)
+    thanksText:SetWidth(560)
+    thanksText:SetJustifyH("LEFT")
+    thanksText:SetSpacing(3)
+    local lines = {}
+    for _, credit in ipairs(SK.CREDITS) do
+        lines[#lines + 1] = ("|cffffd100%s|r  %s"):format(credit[1], L[credit[2]])
+    end
+    lines[#lines + 1] = L["Everyone who shares their scroll data or reports a bug."]
+    thanksText:SetText(table.concat(lines, "\n"))
+
+    Settings.RegisterCanvasLayoutSubcategory(category, page, L["About"])
 end
 
 local function AddScaleSlider()
@@ -126,38 +169,12 @@ SK.Listen("READY", function()
     if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then return end
 
     SK.Safely("settings page", function()
-        category = Settings.RegisterVerticalLayoutCategory("Scrollkeeper")
+        category, layout = Settings.RegisterVerticalLayoutCategory("Scrollkeeper")
 
-        AddCheckbox("showPanel", L["Show the panel"],
+        -- Panel ------------------------------------------------------------
+        AddHeader(L["Panel"])
+        local showPanel = AddCheckbox("showPanel", L["Show the panel"],
             L["The window with your Comprehension, scrolls and Study timer. Mages only."], true)
-        AddCheckbox("scrollIcon", L["Scroll icon"],
-            L["A small icon you can keep on screen with how many scrolls you can decipher. Click it to open or close the panel in the view you picked below."], false)
-        AddCheckbox("hideInCombat", L["Hide the panel in combat"],
-            L["The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)"], true)
-        AddCheckbox("locked", L["Lock position"],
-            L["Stops the panel from being dragged."], false)
-        AddCheckbox("showScrollBar", L["Scroll buttons"],
-            L["Adds a button to the panel for each kind of translated scroll in your bags. Click one to use it."], true)
-        AddCheckbox("showTooltips", L["Tooltip lines"],
-            L["Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll."], true)
-        AddCheckbox("announce", L["Decipher messages"],
-            L["Prints a chat line such as \"deciphered: Scroll of Frog Familiar\"."], true)
-
-        AddCheckbox("share", L["Share with other players"],
-            L["Talk to other Scrollkeeper users in your guild and group: what scrolls became, where they drop, which libraries work, and which mages need which scrolls. Only scroll data is sent."], true)
-        AddCheckbox("shareChannel", L["Share with everyone"],
-            L["Also share through a hidden Scrollkeeper channel, so odds, drop spots and libraries come from every Scrollkeeper user online, not just your guild and group."], true)
-        AddCheckbox("mailHelper", L["Mailbox helper"],
-            L["At the mailbox, list your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail."], true)
-        AddCheckbox("guildBankMarks", L["Guild bank marks"],
-            L["Put a colored dot on guild bank scrolls that you, your mages or a guildie would get a skill-up from."], true)
-        AddCheckbox("ahScanButton", L["Auction house scan button"],
-            L["Show a Scan scrolls button on the auction house. Prices you see are saved for tooltips either way."], true)
-        AddCheckbox("chatHelper", L["Chat notes"],
-            L["When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages."], true)
-        AddCheckbox("mapPins", L["Map pins"],
-            L["Show libraries and the spots where untranslated scrolls dropped on the world map."], true)
-
         SK.Safely("settings view", function()
             local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_viewMode", "viewMode", SK.db,
                 "string", L["Panel view"], "compact")
@@ -171,8 +188,73 @@ SK.Listen("READY", function()
             end
             Settings.CreateDropdown(category, setting, Options, L["How much the panel shows. The size button on the panel switches between these too."])
         end)
-
         SK.Safely("settings slider", AddScaleSlider)
+        AddCheckbox("minimapButton", L["Minimap button"],
+            L["The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around."], true)
+        AddCheckbox("scrollIcon", L["Scroll icon"],
+            L["A small icon you can keep on screen with how many scrolls you can decipher. Click it to open or close the panel in the view you picked above."], false)
+        AddCheckbox("hideInCombat", L["Hide the panel in combat"],
+            L["The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)"], true)
+        AddCheckbox("locked", L["Lock position"],
+            L["Stops the panel (and the scroll icon) from being dragged."], false)
+        local buttons = AddCheckbox("showScrollBar", L["Scroll buttons"],
+            L["Adds a button to the panel for each kind of translated scroll in your bags. Click one to use it."], true)
+        DependsOn(buttons, showPanel, "showPanel")
+        if CreateSettingsButtonInitializer and layout then
+            layout:AddInitializer(CreateSettingsButtonInitializer(L["Panel position"], L["Move to middle"],
+                function() if SlashCmdList.SCROLLKEEPER then SlashCmdList.SCROLLKEEPER("reset") end end,
+                L["Lost the panel off screen? This puts it back in the middle at normal size."], true))
+        end
+
+        -- Tooltips and chat -------------------------------------------------
+        AddHeader(L["Tooltips and chat"])
+        AddCheckbox("showTooltips", L["Tooltip lines"],
+            L["Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll."], true)
+        AddCheckbox("announce", L["Decipher messages"],
+            L["Prints a chat line such as \"deciphered: Scroll of Frog Familiar\"."], true)
+        AddCheckbox("chatHelper", L["Chat notes"],
+            L["When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages."], true)
+
+        -- Sharing ------------------------------------------------------------
+        AddHeader(L["Sharing"])
+        local share = AddCheckbox("share", L["Share with other players"],
+            L["Talk to other Scrollkeeper users in your guild and group: what scrolls became, where they drop, which libraries work, and which mages need which scrolls. Only scroll data is sent."], true)
+        local everyone = AddCheckbox("shareChannel", L["Share with everyone"],
+            L["Also share through a hidden Scrollkeeper channel, so odds, drop spots and libraries come from every Scrollkeeper user online, not just your guild and group."], true)
+        DependsOn(everyone, share, "share")
+
+        -- Helpers ------------------------------------------------------------
+        AddHeader(L["Mailbox, guild bank and auction house"])
+        AddCheckbox("mailHelper", L["Mailbox helper"],
+            L["At the mailbox, list your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail."], true)
+        AddCheckbox("guildBankMarks", L["Guild bank marks"],
+            L["Put a colored dot on guild bank scrolls that you, your mages or a guildie would get a skill-up from."], true)
+        AddCheckbox("ahScanButton", L["Auction house scan button"],
+            L["Show a Scan scrolls button on the auction house. Prices you see are saved for tooltips either way."], true)
+
+        -- Language -------------------------------------------------------------
+        AddHeader(L["Language"])
+        SK.Safely("settings language", function()
+            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_language", "language", SK.db,
+                "string", L["Language"], "auto")
+            setting:SetValueChangedCallback(function()
+                SK.Print(L["language changed. Type /reload to switch."])
+            end)
+            local function Options()
+                local container = Settings.CreateControlTextContainer()
+                for _, language in ipairs(SK.LANGUAGES or {}) do
+                    container:Add(language[1], language[1] == "auto" and L["Auto (game language)"] or language[2])
+                end
+                return container:GetData()
+            end
+            Settings.CreateDropdown(category, setting, Options,
+                L["Scrollkeeper's language. Spanish, French and German were translated with AI, so fixes are welcome on GitHub. Takes effect after /reload."])
+        end)
+
+        -- Map ------------------------------------------------------------------
+        AddHeader(L["Map"])
+        AddCheckbox("mapPins", L["Map pins"],
+            L["Show libraries and the spots where untranslated scrolls dropped on the world map."], true)
 
         SK.Safely("settings about", AddAboutPage)
 

@@ -105,7 +105,7 @@ end
 -- "|cffff8040skill-up|r"
 function SK.ColoredChance(chance)
     if not chance then return "" end
-    return "|cff" .. chance.color .. chance.label .. "|r"
+    return "|cff" .. chance.color .. SK.L[chance.label] .. "|r"
 end
 
 ------------------------------------------------------------------------

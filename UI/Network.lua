@@ -208,7 +208,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 for _, tier in ipairs(SK.TIERS) do
                     if peer.tiers[tier] then tiers[#tiers + 1] = tier end
                 end
-                local needs = #tiers > 0 and ("needs " .. table.concat(tiers, ", ")) or "|cff808080needs none|r"
+                local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or ("|cff808080" .. L["needs none"] .. "|r")
                 local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
                 row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
                 row.value:SetText(needs .. upgrade)
@@ -216,7 +216,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 row.label:SetText(entry.name)
                 row.value:SetText(L["|cff808080not a mage|r"])
             end
-        end, "No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in.")
+        end, L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])
 
         for tier, button in pairs(self.tierButtons) do
             if tier == self.selectedTier then button:LockHighlight() else button:UnlockHighlight() end

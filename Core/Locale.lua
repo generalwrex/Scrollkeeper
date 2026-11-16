@@ -14,3 +14,26 @@ local _, SK = ...
 -- SK.L itself is created in Core/Init.lua (the first file), so it exists
 -- even before this file loads.
 SK.locale = SK.locale or (GetLocale and GetLocale()) or "enUS"
+
+-- The languages you can pick in the settings ("auto" follows the game).
+SK.LANGUAGES = {
+    { "auto", "Auto (game language)" },
+    { "enUS", "English" },
+    { "deDE", "Deutsch" },
+    { "esES", "Español" },
+    { "frFR", "Français" },
+}
+
+-- Fill SK.L with the chosen language. Called once your settings load;
+-- changing the setting takes effect after a /reload.
+function SK.ApplyLanguage()
+    local choice = SK.db and SK.db.language or "auto"
+    local code = choice ~= "auto" and choice or SK.locale
+    if code == "esMX" then code = "esES" end
+    SK.languageInUse = code
+    local translation = SK.TRANSLATIONS and SK.TRANSLATIONS[code]
+    if not translation then return end
+    for key, value in pairs(translation) do
+        if value ~= "" then rawset(SK.L, key, value) end
+    end
+end

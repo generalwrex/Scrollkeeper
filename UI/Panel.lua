@@ -319,7 +319,7 @@ local function Build()
     parts.summary:SetWordWrap(false)
 
     -- Shrink and settings, at the right of the summary line.
-    parts.gear = IconButton("Interface\\Buttons\\UI-OptionsButton", 18, "Settings", function() SK.OpenOptions() end)
+    parts.gear = IconButton("Interface\\Buttons\\UI-OptionsButton", 18, L["Settings"], function() SK.OpenOptions() end)
     parts.gear:SetPoint("TOPRIGHT", -12, -30)
     -- Size button, the world map's resize arrows.
     --   left-click:  smaller (Advanced -> Simple -> Title only, then back to Advanced)
@@ -358,16 +358,30 @@ local function Build()
         function() SK.ToggleNetwork() end)
     parts.network:SetPoint("RIGHT", parts.collapse, "LEFT", -4, 0)
 
+    -- Turn the scroll icon (UI/Icon.lua) on and off. Greyed out while it's off.
+    parts.iconToggle = IconButton("Interface\\Icons\\INV_Scroll_03", 18,
+        function()
+            return (SK.db.scrollIcon and L["Scroll icon: |cff40ff40on|r"] or L["Scroll icon: |cff808080off|r"])
+                .. "\n" .. L["|cffffffffClick to turn it on or off.|r"]
+        end,
+        function(self)
+            SK.db.scrollIcon = not SK.db.scrollIcon
+            if SK.RefreshIcon then SK.RefreshIcon() end
+        end)
+    parts.iconToggle:SetPoint("RIGHT", parts.network, "LEFT", -4, 0)
+    panel.iconToggle = parts.iconToggle
+    if SK.RefreshIcon then SK.RefreshIcon() end
+
     -- Comprehension bar
     parts.skillBar = SK.UI.CreateBar(panel, INNER, 16)
     parts.skillBar:SetBarColor(SK.UI.COLORS.accent)
 
     -- Decipher section
-    parts.decipherHeader = SectionHeader("Decipher")
-    Row("ready", "Ready", true)
-    Row("skillups", "Skill-ups", false)
-    Row("tooHard", "Too hard", true)
-    Row("nextTier", "Next tier", false)
+    parts.decipherHeader = SectionHeader(L["Decipher"])
+    Row("ready", L["Ready"], true)
+    Row("skillups", L["Skill-ups"], false)
+    Row("tooHard", L["Too hard"], true)
+    Row("nextTier", L["Next tier"], false)
 
     parts.decipher = CreateFrame("Button", "ScrollkeeperDecipherButton", panel,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
@@ -463,13 +477,13 @@ local function Build()
         end)
         return button
     end
-    parts.familiar = QuickButton("ScrollkeeperFamiliarButton", "familiars", "Familiar",
+    parts.familiar = QuickButton("ScrollkeeperFamiliarButton", "familiars", L["Familiar"],
         "Interface\\Icons\\INV_Box_PetCarrier_01")
-    parts.imbue = QuickButton("ScrollkeeperImbueButton", "imbues", "Imbue",
+    parts.imbue = QuickButton("ScrollkeeperImbueButton", "imbues", L["Imbue"],
         "Interface\\Icons\\Spell_Fire_FlameTounge")
 
     -- Your scrolls section
-    parts.scrollsHeader = SectionHeader("Your Scrolls")
+    parts.scrollsHeader = SectionHeader(L["Your Scrolls"])
 
     -- The icons sit in a scrolling box, so any number of scrolls fits.
     -- The scrollbar appears only when there are more rows than fit.
@@ -503,23 +517,23 @@ local function Build()
         local label = parts.scrollsArea:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         label:SetWidth(CATEGORY_LABEL_WIDTH)
         label:SetJustifyH("LEFT")
-        label:SetText(category.label)
+        label:SetText(L[category.label])
         label:Hide()
         parts.categoryLabels[category.key] = label
     end
 
     -- Weapon upgrades you have part of.
-    parts.upgradesHeader = SectionHeader("Weapon Upgrades")
+    parts.upgradesHeader = SectionHeader(L["Weapon Upgrades"])
     parts.upgrades = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     parts.upgrades:SetWidth(INNER - 12)
     parts.upgrades:SetJustifyH("LEFT")
     parts.upgrades:SetSpacing(3)
 
     -- Study section
-    parts.studyHeader = SectionHeader("Study")
+    parts.studyHeader = SectionHeader(L["Study"])
     parts.studyBar = SK.UI.CreateBar(panel, INNER, 16)
-    Row("feathers", "Light Feathers", true)
-    Row("library", "Library", false)
+    Row("feathers", L["Light Feathers"], true)
+    Row("library", L["Library"], false)
 
     -- Study and Open bundle: secure buttons, one click each, no bags needed.
     local half = (INNER - 6) / 2
@@ -1023,8 +1037,8 @@ end
 function SK.TogglePanel()
     if not panel then return end
     if SK.InCombat() then
-        SK.Print(panel:IsShown() and "in combat, close the panel with its X button."
-            or "the panel can be shown again after combat.")
+        SK.Print(panel:IsShown() and L["in combat, close the panel with its X button."]
+            or L["the panel can be shown again after combat."])
         return
     end
     SK.db.showPanel = not panel:IsShown()

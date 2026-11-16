@@ -20,7 +20,7 @@ local CHANNELS = {
 }
 -- Words that make it a question about who wants it (any of them).
 local ASKING = { "need", "who", "want", "anyone", "anybody", "free", "?", "wts", "selling" }
-local REPLY_TEXT = "I'd use that one if it's still free!"
+local REPLY_TEXT = "I'd use that one if it's still free!"   -- translated when sent
 
 local lastNote = {}
 
@@ -56,8 +56,8 @@ local function Note(event, text, sender, channelNumber)
                 if skill.effective >= needs then
                     local chance = SK.SkillUpChance(needs, skill.rank)
                     mine = chance and chance.gives
-                    parts[#parts + 1] = mine and ("skill-up for you (" .. SK.ColoredChance(chance) .. ")")
-                        or "you can read it, no skill-up"
+                    parts[#parts + 1] = mine and (L["skill-up for you ("] .. SK.ColoredChance(chance) .. ")")
+                        or L["you can read it, no skill-up"]
                 else
                     parts[#parts + 1] = L["you need %d Comprehension"]:format(needs)
                 end
@@ -97,11 +97,11 @@ local function OnLink(link)
     local channel, target = link:match("^addon:scrollkeeper:reply:([^:]+):?(.*)$")
     if not channel then return end
     if channel == "WHISPER" then
-        SendChatMessage(REPLY_TEXT, "WHISPER", nil, target)
+        SendChatMessage(L[REPLY_TEXT], "WHISPER", nil, target)
     elseif channel == "CHANNEL" then
-        SendChatMessage(REPLY_TEXT, "CHANNEL", nil, tonumber(target))
+        SendChatMessage(L[REPLY_TEXT], "CHANNEL", nil, tonumber(target))
     else
-        SendChatMessage(REPLY_TEXT, channel)
+        SendChatMessage(L[REPLY_TEXT], channel)
     end
 end
 

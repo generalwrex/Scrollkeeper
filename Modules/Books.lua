@@ -13,18 +13,20 @@ local _, SK = ...
 local L = SK.L
 
 -- The librarians who take books.
--- (Names go through translations too, for clients in other languages.)
-local LIBRARIANS = {}
-for _, name in ipairs({ "Owen Thadd", "Garion Wendell" }) do   -- Undercity, Stormwind
-    LIBRARIANS[name] = true
-    LIBRARIANS[L[name]] = true
-end
-
--- Name words that usually mean a book, used until books are learned.
-local BOOK_WORDS = {}
-for _, word in ipairs({ "Journal", "Volume", "Tome", "Codex", "Diary", "Book of", "Treatise" }) do
-    BOOK_WORDS[#BOOK_WORDS + 1] = word
-    if L[word] ~= word then BOOK_WORDS[#BOOK_WORDS + 1] = L[word] end
+-- (Names go through translations too, for clients in other languages.
+-- Built on first use, after your language is applied.)
+local LIBRARIANS, BOOK_WORDS
+local function Lists()
+    if LIBRARIANS then return end
+    LIBRARIANS, BOOK_WORDS = {}, {}
+    for _, name in ipairs({ "Owen Thadd", "Garion Wendell" }) do   -- Undercity, Stormwind
+        LIBRARIANS[name] = true
+        LIBRARIANS[L[name]] = true
+    end
+    for _, word in ipairs({ "Journal", "Volume", "Tome", "Codex", "Diary", "Book of", "Treatise" }) do
+        BOOK_WORDS[#BOOK_WORDS + 1] = word
+        if L[word] ~= word then BOOK_WORDS[#BOOK_WORDS + 1] = L[word] end
+    end
 end
 
 -- Learned book item IDs: SK.db.bookIDs[itemID] = name.
@@ -36,6 +38,7 @@ function SK.IsBook(itemID, name)
         end
     end
     if type(name) ~= "string" then return false end
+    Lists()
     for _, word in ipairs(BOOK_WORDS) do
         if name:find(word, 1, true) then return true end
     end
@@ -76,6 +79,7 @@ local talking, before
 local function TalkingToLibrarian()
     local npc = UnitName("npc")
     local hidden = npc ~= nil and issecretvalue and issecretvalue(npc)
+    Lists()
     if npc and not hidden then return LIBRARIANS[npc] == true end
     return SK.InLibrary and SK.InLibrary() and true or false
 end

@@ -74,7 +74,7 @@ end
 
 -- The plan: a table, or nil and a reason.
 function SK.FarmPlan()
-    if not SK.isMage then return nil, "only mages have a Comprehension skill" end
+    if not SK.isMage then return nil, L["only mages have a Comprehension skill"] end
     local skill = SK.GetComprehension()
     local goal
     for _, tier in ipairs(SK.TIERS) do
@@ -98,7 +98,7 @@ function SK.FarmPlan()
             end
         end
     end
-    if not best then return nil, "none of the tiers you can read give skill-ups any more" end
+    if not best then return nil, L["none of the tiers you can read give skill-ups any more"] end
 
     local plan = {
         goal = goal, unlocks = goal ~= skill.max, needed = needed,
@@ -117,7 +117,7 @@ end
 -- The plan in a few lines of text (chat, tooltips).
 function SK.FarmPlanLines()
     local plan, reason = SK.FarmPlan()
-    if not plan then return { "Farming plan: " .. reason } end
+    if not plan then return { L["Farming plan: "] .. reason } end
     local lines = {}
     lines[#lines + 1] = plan.unlocks
         and L["Next goal: %d Comprehension (unlocks tier %d scrolls), %d |4skill-up:skill-ups; to go."]:format(plan.goal, plan.goal, plan.needed)

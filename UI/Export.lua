@@ -328,8 +328,8 @@ function SK.ShowExport()
     local _, _, heard = SK.ExportText()
     local issueTitle = ("[Data] Skill %d/%d, %d deciphered"):format(skill.rank, skill.max, SK.db.deciphered or 0)
         .. (heard > 0 and (", +%d players heard"):format(heard) or "")
-    Show("Scrollkeeper Export", "Copy the title and the text into a GitHub issue", text,
-        "Scroll data only. No character or account names.", issueTitle)
+    Show(L["Scrollkeeper Export"], L["Copy the title and the text into a GitHub issue"], text,
+        L["Scroll data only. No character or account names."], issueTitle)
 end
 
 function SK.ShowBugReport()
@@ -337,6 +337,21 @@ function SK.ShowBugReport()
     local last = errors[#errors]
     local issueTitle = last and ("[Bug] " .. tostring(last.where) .. ": " .. tostring(last.error):gsub("^.-:%d+: ", ""):sub(1, 70))
         or "[Bug] "
-    Show("Scrollkeeper Bug Report", "Copy the title and the text into a GitHub issue", SK.BugReportText(),
-        "Please also say what you were doing when it went wrong.", issueTitle)
+    Show(L["Scrollkeeper Bug Report"], L["Copy the title and the text into a GitHub issue"], SK.BugReportText(),
+        L["Please also say what you were doing when it went wrong."], issueTitle)
 end
+
+-- Keep your latest export in the saved data, so the share script
+-- (share-scrollkeeper-data.ps1) can open a ready-to-send GitHub issue
+-- without you copying anything. Saved when you log out or reload.
+SK.On("PLAYER_LOGOUT", function()
+    if not SK.db then return end
+    local ok, text = pcall(SK.ExportText)
+    if not ok or type(text) ~= "string" then return end
+    local skill = SK.GetComprehension and SK.GetComprehension()
+    local _, _, heard = SK.ExportText()
+    SK.db.lastExport = text
+    SK.db.lastExportTitle = ("[Data] Skill %d/%d, %d deciphered"):format(skill and skill.rank or 0,
+        skill and skill.max or 0, SK.db.deciphered or 0) .. ((heard or 0) > 0 and (", +%d players heard"):format(heard) or "")
+    SK.db.lastExportAt = time()
+end)

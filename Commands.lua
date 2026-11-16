@@ -78,6 +78,7 @@ commands.mail = function()
     end
 end
 commands.swap = function() SK.ToggleSwap() end
+commands.setup = function() SK.ShowSetup() end
 commands.scan = function() SK.ScanAuctionScrolls() end
 commands.plan = function()
     for i, line in ipairs(SK.FarmPlanLines()) do
@@ -86,6 +87,7 @@ commands.plan = function()
 end
 commands.about = function()
     SK.Print(L["version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."]:format(SK.version))
+    print("  " .. L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER or "Archmage Naage"))
     for _, link in ipairs(SK.LINKS or {}) do
         print(("  |cffffd100%s|r  %s"):format(link[1], link[2]))
     end
@@ -94,7 +96,7 @@ commands.bug = function() SK.ShowBugReport() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk mail, /sk swap, /sk scan, /sk plan, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk mail, /sk swap, /sk scan, /sk plan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 -- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.

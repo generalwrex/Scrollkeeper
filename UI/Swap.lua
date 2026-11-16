@@ -73,7 +73,8 @@ Net.Handle("S", function(sender, f)
 end)
 
 local function KindLabel(kind)
-    return ({ group = "group", guild = "guild", friend = "friend", public = "Scrollkeeper user" })[kind] or ""
+    local text = ({ group = "group", guild = "guild", friend = "friend", public = "Scrollkeeper user" })[kind]
+    return text and L[text] or ""
 end
 
 -- People with spares I'd level from: list of { name, short, tiers = {tier = n}, total, kind }.
@@ -210,7 +211,7 @@ function SK.RefreshSwap()
         Clickable(row, person, false)
         row.label:SetText(person.short .. "  |cff808080" .. KindLabel(person.kind) .. "|r")
         row.value:SetText(TiersText(person.tiers))
-    end, "No mage online would level from your spare scrolls right now.")
+    end, L["No mage online would level from your spare scrolls right now."])
 end
 
 function SK.ToggleSwap()

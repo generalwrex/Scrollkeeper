@@ -362,3 +362,46 @@ if SK.isMage then
   print("ICON off", ScrollkeeperIcon:IsShown())
 end
 print("icon ok, errors:", #ScrollkeeperDB.errors)
+fire("PLAYER_LOGOUT")
+print("LASTEXPORT", SK.db.lastExportTitle, SK.db.lastExport and #SK.db.lastExport)
+
+print("SETTINGS sections", MOCK_HEADERS)
+if SK.isMage and ScrollkeeperPanel and ScrollkeeperPanel.iconToggle then
+  ScrollkeeperPanel.iconToggle:GetScript("OnClick")(ScrollkeeperPanel.iconToggle)
+  print("TOGGLE", SK.db.scrollIcon, ScrollkeeperIcon and ScrollkeeperIcon:IsShown())
+  ScrollkeeperPanel.iconToggle:GetScript("OnClick")(ScrollkeeperPanel.iconToggle)
+  print("TOGGLE", SK.db.scrollIcon, ScrollkeeperIcon and ScrollkeeperIcon:IsShown())
+end
+-- LANGUAGE PICK
+print("LANG in use", SK.languageInUse, SK.L["Ready"])
+SK.db.language = "deDE"; SK.ApplyLanguage(); print("LANG override", SK.languageInUse, SK.L["Ready"])
+-- MINIMAP BUTTON
+if SK.isMage then
+  SK.RefreshMinimapButton()
+  local b = ScrollkeeperMinimapButton
+  print("MINIMAP", b and b:IsShown(), b and b.count:GetText())
+  b:GetScript("OnEnter")(b); b:GetScript("OnClick")(b, "LeftButton"); b:GetScript("OnDragStart")(b); b:GetScript("OnDragStop")(b)
+  SK.db.minimapButton = false; SK.RefreshMinimapButton(); print("MINIMAP off", b:IsShown())
+end
+-- SETUP (one question per page)
+do
+  for _, t in ipairs(TIMERS) do pcall(t) end
+  print("SETUP shown", ScrollkeeperSetupFrame and ScrollkeeperSetupFrame:IsShown())
+  SlashCmdList.SCROLLKEEPER("setup")
+  local f = ScrollkeeperSetupFrame
+  local function pick(i) f.options[i]:GetScript("OnClick")(f.options[i]) end
+  local function nextPage() f.next:GetScript("OnClick")(f.next) end
+  if SK.isMage then
+    pick(2) nextPage()      -- Advanced
+    pick(2) nextPage()      -- turn on the scroll icon
+    nextPage()              -- combat: keep
+    pick(2) nextPage()      -- share: guild and group
+  else
+    pick(2) nextPage()      -- tooltips: no
+    nextPage()              -- mailbox: keep
+    pick(2) nextPage()      -- share: guild and group
+  end
+  print("SETUP last page", f.next._text)
+  nextPage()                -- language: keep, Done
+  print("SETUP result", SK.db.viewMode, SK.db.scrollIcon, SK.db.showTooltips, SK.db.share, SK.db.shareChannel, SK.db.setupDone, SK.db.setupDoneOther, f:IsShown(), "panel", ScrollkeeperPanel and ScrollkeeperPanel:IsShown())
+end

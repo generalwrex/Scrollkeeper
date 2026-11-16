@@ -7,7 +7,7 @@ local ADDON_NAME, SK = ...
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.1.1"
+SK.version = "1.1.2"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -143,6 +143,8 @@ local DEFAULTS = {
     ahScanButton = true,     -- "Scan scrolls" button on the auction house
     chatHelper = true,       -- "who needs this? [scroll]" notes in chat
     scrollIcon = false,      -- small icon with the number of scrolls ready
+    minimapButton = true,    -- the round button on the minimap's edge
+    language = "auto",       -- "auto" (the game's language) or enUS, deDE, esES, frFR
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
     shareChannel = true,     -- also use the public Scrollkeeper channel
@@ -166,6 +168,7 @@ SK.On("ADDON_LOADED", function(loaded)
         end
     end
     SK.db = ScrollkeeperDB
+    if SK.ApplyLanguage then SK.ApplyLanguage() end
 
     -- Hide in combat became the default in 1.0.0; switch it on once for
     -- everyone (after that, your own choice in the settings sticks).

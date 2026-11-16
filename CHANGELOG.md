@@ -1,5 +1,17 @@
 # Scrollkeeper
 
+## 1.1.2
+
+- **First-time setup.** The first time you log in with Scrollkeeper a little setup window walks you through a few quick questions, one page at a time. On a mage: which panel view, minimap button and/or scroll icon, hide in combat, how much to share, and language. On other classes: tooltip lines, the mailbox helper, sharing and language. Run it again any time with `/sk setup`.
+- **Minimap button** (finally lol). The usual round button on the minimap edge with your scroll count. Left-click opens the panel, right-click opens settings, drag it around the minimap. Don't want it? Turn it off in the settings.
+- **Pick your language** in the settings (Auto, English, Deutsch, Español, Français). Needs a /reload to switch.
+- The About page says where to find me in game (Archmage Naage, PvE) and thanks the people who helped. Thanks Curnil!
+- New little scroll button on the panel's title bar (next to the book) that turns the scroll icon on and off. It's greyed out when the icon is off.
+- The settings page isn't one giant list anymore. It's split into sections (Panel, Tooltips and chat, Sharing, Mailbox/guild bank/AH, Map), stuff that depends on something else greys out when it's off, and there's a "Move to middle" button if you lose the panel off screen.
+- Fixed a bunch of German/Spanish/French text that was still showing in English on the panel.
+- The About page says I'm Natop on CurseForge now too.
+- Sharing your data is way easier now. Scrollkeeper keeps your latest export when you log out, so there's a little script (`tools/community/share-scrollkeeper-data.ps1`) that opens the GitHub "Share your data" page with everything already filled in. You just hit Create.
+
 ## 1.1.1
 
 - **Scroll icon** (thanks Curnil for the idea!). Turn it on in the settings and you get a little icon you can put anywhere, with the number of scrolls you can decipher right now (green when some still give skill-ups, and it glows when Study is ready). Click it to open or close the panel in whatever view you picked, so you can keep Advanced but only see it when you want.

@@ -9,6 +9,8 @@ local function newObj()
     if k == "SetAttribute" then return function(self, a, v) self._attrs[a] = v end end
     if k == "GetAttribute" then return function(self, a) return self._attrs[a] end end
     if k == "SetText" then return function(self, v) self._text = v end end
+    if k == "SetChecked" then return function(self, v) self._checked = v and true or false end end
+    if k == "GetChecked" then return function(self) return self._checked end end
     if k == "GetText" then return function(self) return self._text end end
     if k == "CreateFontString" or k == "CreateTexture" then return function() return newObj() end end
     if k == "IsShown" then return function(self) return self._shown end end
@@ -78,7 +80,7 @@ function GetBuildInfo() return "1.60.1", "70938", "Nov 12 2026", 16001 end
 
 C_Item.GetItemIconByID = function(id) return 134939 end
 Settings = {
-  RegisterVerticalLayoutCategory = function(n) return { GetID = function() return 1 end } end,
+  RegisterVerticalLayoutCategory = function(n) MOCK_HEADERS = 0; return { GetID = function() return 1 end }, { AddInitializer = function() MOCK_HEADERS = MOCK_HEADERS + 1 end } end,
   RegisterCanvasLayoutSubcategory = function(parent, frame, name) _G.SK_ABOUT_PAGE = name; return {} end,
   RegisterAddOnSetting = function() return { SetValueChangedCallback = function(self, f) SETTING_CB = f end } end,
   CreateCheckbox = function() end, CreateDropdown = function() end,
@@ -134,3 +136,8 @@ function GetLocale() return MOCK_LOCALE or "enUS" end
 date = date or os.date
 
 function RegisterStateDriver() end
+
+function CreateSettingsListSectionHeaderInitializer(t) return { text = t } end
+function CreateSettingsButtonInitializer(...) return {} end
+Minimap = CreateFrame("Frame", "Minimap")
+function GetCursorPosition() return 100, 100 end

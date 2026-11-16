@@ -17,13 +17,12 @@ local MAX_ROWS = 8
 local ROW_HEIGHT = 34
 local WIDTH = 250
 
-local KIND_LABEL = {
-    mine = "|cff69ccf0your mage|r",
-    guild = "|cff40ff40guild|r",
-    friend = "|cff82c5ffriend|r",
-    group = "|cffaad372group|r",
-    public = "|cff9d9d9dScrollkeeper user|r",
-}
+local KIND_COLOR = { mine = "69ccf0", guild = "40ff40", friend = "82c5ff", group = "aad372", public = "9d9d9d" }
+local KIND_TEXT = { mine = "your mage", guild = "guild", friend = "friend", group = "group", public = "Scrollkeeper user" }
+local function KindLabel(kind)
+    if not KIND_TEXT[kind] then return "" end
+    return "|cff" .. KIND_COLOR[kind] .. L[KIND_TEXT[kind]] .. "|r"
+end
 local KIND_ORDER = { mine = 1, group = 2, guild = 3, friend = 4, public = 5 }
 
 ------------------------------------------------------------------------
@@ -171,8 +170,8 @@ local function FillMail(person)
         SK.Print(L["attached %d |4scroll:scrolls; for %s. Check it, then click Send."]:format(added, person.name)
             .. (left > 0 and L[" %d more won't fit, click their name again after sending."]:format(left) or ""))
     else
-        SK.Print(full and "the mail is full. Send it, then click their name again."
-            or "couldn't find those scrolls in your bags (already on the mail, or moved). Try /reload.")
+        SK.Print(full and L["the mail is full. Send it, then click their name again."]
+            or L["couldn't find those scrolls in your bags (already on the mail, or moved). Try /reload."])
     end
 end
 
@@ -253,7 +252,7 @@ local function Refresh()
         row.person = person
         if person then
             row.name:SetText(person.name)
-            row.kind:SetText(KIND_LABEL[person.kind] or "")
+            row.kind:SetText(KindLabel(person.kind))
             local parts = {}
             if person.ups > 0 then parts[#parts + 1] = L["|cff40ff40%d skill-up|r"]:format(person.ups) end
             if person.reads > 0 then parts[#parts + 1] = L["%d they can read"]:format(person.reads) end

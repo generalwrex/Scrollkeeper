@@ -102,7 +102,7 @@ local function Refresh()
             row.label:SetText(("|cff69ccf0%s|r  %d/%d"):format(mage.name, mage.skill, mage.max))
             if mage.knowsStudy then
                 local left = mage.studyLeft
-                row.value:SetText(left == 0 and "|cff40ff40Study ready|r" or ("Study " .. SK.FormatStudyTime(left)))
+                row.value:SetText(left == 0 and ("|cff40ff40" .. L["Study ready"] .. "|r") or (L["Study"] .. " " .. SK.FormatStudyTime(left)))
             else
                 row.value:SetText("")
             end

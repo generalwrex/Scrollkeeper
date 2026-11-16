@@ -60,6 +60,8 @@ UI\Export.lua
 UI\Mail.lua
 UI\Swap.lua
 UI\Icon.lua
+UI\Minimap.lua
+UI\Setup.lua
 UI\Integrations.lua
 UI\Options.lua
 

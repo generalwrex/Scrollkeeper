@@ -26,8 +26,8 @@ local WEAPON_KINDS = {
 
 -- "a staff", "a sword" ... for messages, by subclass ID.
 local WEAPON_WORDS = {
-    [7] = L["a sword"], [8] = L["a sword"], [10] = L["a staff"], [15] = L["a dagger"],
-    [4] = L["a mace"], [5] = L["a mace"], [0] = L["an axe"], [1] = L["an axe"], [19] = L["a wand"],
+    [7] = "a sword", [8] = "a sword", [10] = "a staff", [15] = "a dagger",
+    [4] = "a mace", [5] = "a mace", [0] = "an axe", [1] = "an axe", [19] = "a wand",
 }
 
 -- "sword" -> "a sword", "axe" -> "an axe"
@@ -42,7 +42,8 @@ function SK.MainHandWeapon()
     if not itemID or not C_Item then return nil end
     local _, _, subType, _, _, classID, subClassID = SK.Try(C_Item.GetItemInfoInstant, itemID)
     if classID ~= 2 then return nil end
-    return subClassID, WEAPON_WORDS[subClassID] or (subType and subType:lower())
+    local word = WEAPON_WORDS[subClassID]
+    return subClassID, word and L[word] or (subType and subType:lower())
 end
 
 -- Does this imbue fit the main-hand weapon? (true if we can't tell)

@@ -93,6 +93,9 @@ local function Build()
 end
 
 function SK.RefreshIcon()
+    local toggle = ScrollkeeperPanel and ScrollkeeperPanel.iconToggle
+    local texture = toggle and toggle.GetNormalTexture and toggle:GetNormalTexture()
+    if texture and texture.SetDesaturated then texture:SetDesaturated(not (SK.db and SK.db.scrollIcon)) end
     local wanted = SK.isMage and SK.db and SK.db.scrollIcon
     if not wanted then
         if icon then icon:Hide() end
