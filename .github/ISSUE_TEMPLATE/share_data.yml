@@ -10,7 +10,8 @@ body:
         skill-up rates by color, where scrolls and books drop, and which books the librarians take.
         Combined data ships in future releases, so new players see it from day one.
 
-        In game, type **`/sk export`**, press **Ctrl+C**, and paste it below.
+        In game, type **`/sk export`**. Copy its **Title** line into the title above,
+        then click the big box, press **Ctrl+C**, and paste it below.
         It contains scroll data only: no character or account names.
         Sending again later is fine: your newest export replaces your older one.
   - type: textarea

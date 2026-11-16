@@ -7,7 +7,8 @@ body:
     attributes:
       value: |
         Thanks for helping fix Scrollkeeper!
-        In game, type **`/sk bug`**, press **Ctrl+C** to copy the report, and paste it below.
+        In game, type **`/sk bug`**. Copy its **Title** line into the title above,
+        then copy the report (click the big box, **Ctrl+C**) and paste it below.
   - type: textarea
     id: report
     attributes:
