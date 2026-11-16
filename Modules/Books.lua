@@ -10,15 +10,22 @@
 -- bookDrops[mapID][cell] = count (same grid as scroll drops).
 
 local _, SK = ...
+local L = SK.L
 
 -- The librarians who take books.
-local LIBRARIANS = {
-    ["Owen Thadd"] = true,       -- Undercity, Magic Quarter
-    ["Garion Wendell"] = true,   -- Stormwind, Wizard's Sanctum
-}
+-- (Names go through translations too, for clients in other languages.)
+local LIBRARIANS = {}
+for _, name in ipairs({ "Owen Thadd", "Garion Wendell" }) do   -- Undercity, Stormwind
+    LIBRARIANS[name] = true
+    LIBRARIANS[L[name]] = true
+end
 
 -- Name words that usually mean a book, used until books are learned.
-local BOOK_WORDS = { "Journal", "Volume", "Tome", "Codex", "Diary", "Book of", "Treatise" }
+local BOOK_WORDS = {}
+for _, word in ipairs({ "Journal", "Volume", "Tome", "Codex", "Diary", "Book of", "Treatise" }) do
+    BOOK_WORDS[#BOOK_WORDS + 1] = word
+    if L[word] ~= word then BOOK_WORDS[#BOOK_WORDS + 1] = L[word] end
+end
 
 -- Learned book item IDs: SK.db.bookIDs[itemID] = name.
 function SK.IsBook(itemID, name)
@@ -101,7 +108,7 @@ SK.On("BAG_UPDATE_DELAYED", function()
         if (now[itemID] or 0) < count and itemID ~= SK.ITEM_LIGHT_FEATHER then
             local name = C_Item and SK.Try(C_Item.GetItemNameByID, itemID)
             SK.LearnBook(itemID, name)
-            SK.Print("learned a book: " .. (name or ("item " .. itemID)))
+            SK.Print(L["learned a book: "] .. (name or ("item " .. itemID)))
         end
     end
     before = now

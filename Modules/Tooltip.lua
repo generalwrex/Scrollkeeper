@@ -7,6 +7,7 @@
 --   Everyone:               which of your own mages can read it
 
 local _, SK = ...
+local L = SK.L
 
 local TITLE = "|cff69ccf0Scrollkeeper|r"
 
@@ -16,20 +17,22 @@ local function AddScrollLines(tooltip, needs, itemID)
         if skill.effective >= needs then
             local chance = SK.SkillUpChance(needs, skill.rank)
             local skillUp = chance and (" " .. SK.ColoredChance(chance) .. ".") or ""
-            tooltip:AddLine(TITLE .. ": |cff40ff40you can decipher this,|r" .. skillUp)
+            tooltip:AddLine(TITLE .. L[": |cff40ff40you can decipher this,|r"] .. skillUp)
         else
-            tooltip:AddLine((TITLE .. ": needs %d Comprehension. You have %d."):format(needs, skill.effective), 1, 0.4, 0.4)
+            tooltip:AddLine((TITLE .. L[": needs %d Comprehension. You have %d."]):format(needs, skill.effective), 1, 0.4, 0.4)
         end
     else
-        tooltip:AddLine(TITLE .. ": mage scroll. Mail it to a mage or sell it.", 1, 0.82, 0)
-        tooltip:AddLine("Only mages can decipher it. It does not stack.", 0.7, 0.7, 0.7)
-        -- With Auctionator: is the auction house worth it?
-        local auction, vendor = itemID and SK.ScrollPrices and SK.ScrollPrices(itemID)
-        if auction and vendor and GetMoneyString then
+        tooltip:AddLine(TITLE .. L[": mage scroll. Mail it to a mage or sell it."], 1, 0.82, 0)
+        tooltip:AddLine(L["Only mages can decipher it. It does not stack."], 0.7, 0.7, 0.7)
+        -- With Auctionator (and no price of our own): is the auction house worth it?
+        local own = itemID and SK.AuctionPrice and SK.AuctionPrice(itemID)
+        local auction, vendor
+        if itemID and SK.ScrollPrices then auction, vendor = SK.ScrollPrices(itemID) end
+        if not own and auction and vendor and GetMoneyString then
             if auction > vendor * 2 then
-                tooltip:AddLine("Sells for about " .. GetMoneyString(auction) .. " on the auction house.", 0.25, 1, 0.25)
+                tooltip:AddLine(L["Sells for about "] .. GetMoneyString(auction) .. L[" on the auction house."], 0.25, 1, 0.25)
             else
-                tooltip:AddLine("Not worth much on the auction house; a mage friend will thank you.", 0.7, 0.7, 0.7)
+                tooltip:AddLine(L["Not worth much on the auction house; a mage friend will thank you."], 0.7, 0.7, 0.7)
             end
         end
     end
@@ -42,7 +45,7 @@ local function AddScrollLines(tooltip, needs, itemID)
             local mage = mine[i]
             names[i] = mage.name .. (mage.chance and mage.chance.gives and (" " .. SK.ColoredChance(mage.chance)) or "")
         end
-        tooltip:AddLine("Your mages: |cffffffff" .. table.concat(names, ", ") .. "|r", 0.41, 0.8, 0.94, true)
+        tooltip:AddLine(L["Your mages: |cffffffff"] .. table.concat(names, ", ") .. "|r", 0.41, 0.8, 0.94, true)
     end
 
     -- Other Scrollkeeper mages (group first, then guild) who'd get a
@@ -52,13 +55,13 @@ local function AddScrollLines(tooltip, needs, itemID)
         local names = {}
         for i = 1, math.min(#mages, 3) do
             local mage = mages[i]
-            names[i] = mage.name .. (mage.group and " |cff40ff40(group)|r" or "")
+            names[i] = mage.name .. (mage.group and L[" |cff40ff40(group)|r"] or "")
         end
-        if #mages > 3 then names[#names + 1] = ("+%d more"):format(#mages - 3) end
-        local label = "Mail it to: "
+        if #mages > 3 then names[#names + 1] = L["+%d more"]:format(#mages - 3) end
+        local label = L["Mail it to: "]
         if SK.isMage then
             local mine = SK.SkillUpChance(needs, SK.GetComprehension().rank)
-            label = (mine and mine.gives) and "Also a skill-up for: " or "Skill-up for: "
+            label = (mine and mine.gives) and L["Also a skill-up for: "] or L["Skill-up for: "]
         end
         tooltip:AddLine(label .. "|cffffffff" .. table.concat(names, ", ") .. "|r", 1, 0.82, 0, true)
     end
@@ -69,16 +72,16 @@ local function AddScrollLines(tooltip, needs, itemID)
         local odds, total, players = {}, 0, 0
         if SK.CommunityOdds then odds, total, players = SK.CommunityOdds(needs) end
         if total > 0 then
-            tooltip:AddLine(("What it became, %d read by %d |4player:players;:"):format(total, players), 1, 0.82, 0)
+            tooltip:AddLine(L["What it became, %d read by %d |4player:players;:"]:format(total, players), 1, 0.82, 0)
             for i = 1, math.min(#odds, 8) do
                 local row = odds[i]
                 tooltip:AddDoubleLine("  " .. SK.ScrollLink(row.itemID, row.name), ("%.1f%%"):format(row.share * 100), 0.9, 0.9, 0.9, 1, 1, 1)
             end
         elseif results then
-            tooltip:AddLine("Can become: " .. table.concat(results, ", "), 0.7, 0.7, 0.7, true)
+            tooltip:AddLine(L["Can become: "] .. table.concat(results, ", "), 0.7, 0.7, 0.7, true)
         end
     elseif results then
-        tooltip:AddLine("Hold Shift to see what it can become.", 0.5, 0.5, 0.5)
+        tooltip:AddLine(L["Hold Shift to see what it can become."], 0.5, 0.5, 0.5)
     end
 end
 
@@ -87,6 +90,13 @@ local function OnItemTooltip(tooltip, data)
     if type(data) ~= "table" or not tooltip or not tooltip.AddLine then return end
     local needs = SK.RequirementFromLines(data.lines)
     if needs then AddScrollLines(tooltip, needs, data.id) end
+    -- Any scroll Scrollkeeper saw on the auction house.
+    local price, at
+    if data.id and SK.AuctionPrice then price, at = SK.AuctionPrice(data.id) end
+    if price and GetMoneyString then
+        tooltip:AddDoubleLine(TITLE .. L[" auction house:"], GetMoneyString(price) .. " |cff808080(" .. SK.TimeAgo(at) .. ")|r",
+            1, 0.82, 0, 1, 1, 1)
+    end
 end
 
 SK.Listen("READY", function()

@@ -9,6 +9,7 @@
 -- with the X; /sk brings it back.
 
 local _, SK = ...
+local L = SK.L
 
 local WIDTH = 240
 local LEFT = 16
@@ -39,7 +40,7 @@ local function Build()
     end)
     if window.SetDontSavePosition then window:SetDontSavePosition(true) end
     if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Scroll_03") end
-    window:SetTitle("Scrollkeeper")
+    window:SetTitle(L["Scrollkeeper"])
 
     local point = SK.db.altPoint
     if point then
@@ -57,7 +58,7 @@ local function Build()
         window.CloseButton:SetScript("OnClick", function()
             SK.db.showAltPanel = false
             window:Hide()
-            SK.Print("hidden. Type /sk to show it again.")
+            SK.Print(L["hidden. Type /sk to show it again."])
         end)
     end
 
@@ -66,7 +67,7 @@ local function Build()
     window.summary:SetPoint("RIGHT", window, "RIGHT", -14, 0)
     window.summary:SetJustifyH("CENTER")
 
-    window.header = SK.UI.CreateHeader(window, "Your Mages", INNER)
+    window.header = SK.UI.CreateHeader(window, L["Your Mages"], INNER)
     window.header:SetPoint("TOPLEFT", LEFT, -62)
 
     for i = 1, MAX_ROWS do
@@ -125,13 +126,13 @@ local function Refresh()
     window.bags:ClearAllPoints()
     window.bags:SetPoint("TOPLEFT", LEFT + 4, y)
     if carried == 0 then
-        window.bags:SetText("|cff808080No untranslated scrolls on this character.|r")
+        window.bags:SetText(L["|cff808080No untranslated scrolls on this character.|r"])
     else
-        local text = ("In your bags: |cffffffff%d|r |4scroll:scrolls;"):format(carried)
+        local text = L["In your bags: |cffffffff%d|r |4scroll:scrolls;"]:format(carried)
         if readable > 0 then
-            text = text .. ("\n|cff40ff40%d|r your mages can read"):format(readable)
+            text = text .. L["\n|cff40ff40%d|r your mages can read"]:format(readable)
             if skillUps > 0 then text = text .. (", |cffff8040%d|r |4skill-up:skill-ups;"):format(skillUps) end
-            text = text .. ". Mail them over."
+            text = text .. L[". Mail them over."]
         end
         window.bags:SetText(text)
     end

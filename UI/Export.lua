@@ -18,13 +18,19 @@
 --   P|mapID|cell:count,...           untranslated scroll drops
 --   K|mapID|cell:count,...           book drops
 --   I|itemID,...                     items learned as books
+--   B|tier:backfires/tries,...       how often Comprehend Scroll backfired
 --   N|itemID|name                    names of the item IDs above
 --   W|instance|x|y|name              library spots (world position)
 --   L|mapID|x|y|name                 library spots (older map position)
 -- The export id is a random code made once per account, so the same
 -- player's exports aren't counted twice. It says nothing about who you are.
+--
+-- After your own block come blocks for other Scrollkeeper users you heard
+-- from (each starts with its own header and "meta|heard|...|their id"),
+-- so one export carries everyone you've met. Names are never included.
 
 local _, SK = ...
+local L = SK.L
 
 local window
 
@@ -66,7 +72,7 @@ local function Build()
     -- A ready-made title for the GitHub issue, also copyable.
     local titleLabel = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     titleLabel:SetPoint("TOPLEFT", 18, -64)
-    titleLabel:SetText("Title:")
+    titleLabel:SetText(L["Title:"])
     local titleBox = CreateFrame("EditBox", nil, window, "InputBoxTemplate")
     titleBox:SetPoint("LEFT", titleLabel, "RIGHT", 10, 0)
     titleBox:SetPoint("RIGHT", window, "RIGHT", -20, 0)
@@ -111,7 +117,7 @@ local function Build()
     local select = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
     select:SetSize(96, 22)
     select:SetPoint("BOTTOMRIGHT", -16, 14)
-    select:SetText("Select all")
+    select:SetText(L["Select all"])
     select:SetScript("OnClick", function()
         box:SetFocus()
         box:HighlightText()
@@ -137,12 +143,7 @@ end
 -- What goes in
 ------------------------------------------------------------------------
 
-local function ExportID()
-    if not SK.db.exportID then
-        SK.db.exportID = ("%04x%04x"):format(math.random(0, 0xffff), math.random(0, 0xffff))
-    end
-    return SK.db.exportID
-end
+local function ExportID() return SK.ExportID() end
 
 -- "k1:v1,k2:v2" from a table, sorted so exports are easy to compare.
 local function Pairs(list)
@@ -188,6 +189,16 @@ function SK.ExportText()
     end
     for tier, colors in pairs(byTier) do Add("U", tier, Pairs(colors)) end
 
+    local function Backfires(list)
+        local out = {}
+        for tier, seen in pairs(list or {}) do
+            if (seen.t or 0) > 0 then out[tier] = (seen.b or 0) .. "/" .. seen.t end
+        end
+        return next(out) and Pairs(out)
+    end
+    local mine = Backfires(db.backfires)
+    if mine then Add("B", mine) end
+
     for mapID, cells in pairs(db.drops or {}) do
         if next(cells) then Add("P", mapID, Pairs(cells)) end
     end
@@ -215,7 +226,49 @@ function SK.ExportText()
         end
     end
 
-    return table.concat(lines, "\n"), #lines - 2
+    -- What other Scrollkeeper users shared with you, one block per player,
+    -- under their own random export id (never their name). The merge tool
+    -- prefers a player's own export over a heard copy.
+    local heard = 0
+    for _, entry in pairs(db.community or {}) do
+        local id = entry.exportID
+        if id and id ~= ExportID() then
+            local block = {}
+            local function Put(...) block[#block + 1] = table.concat({ ... }, "|") end
+            for tier, results in pairs(entry.results or {}) do
+                if next(results) then
+                    Put("T", tier, Pairs(results))
+                    for itemID in pairs(results) do names[itemID] = names[itemID] or (db.itemNames and db.itemNames[itemID]) end
+                end
+            end
+            for tier, colors in pairs(entry.skillups or {}) do
+                local out = {}
+                for color, seen in pairs(colors) do out[color] = (seen[1] or 0) .. "/" .. (seen[2] or 0) end
+                if next(out) then Put("U", tier, Pairs(out)) end
+            end
+            for mapID, cells in pairs(entry.drops or {}) do
+                if next(cells) then Put("P", mapID, Pairs(cells)) end
+            end
+            for mapID, cells in pairs(entry.books or {}) do
+                if next(cells) then Put("K", mapID, Pairs(cells)) end
+            end
+            local theirs = Backfires(entry.backfires)
+            if theirs then Put("B", theirs) end
+            if #block > 0 then
+                heard = heard + 1
+                lines[#lines + 1] = "Scrollkeeper export 1"
+                Add("meta", "heard", "?", "?", "MAGE", 0, 0, 0, Clean(id))
+                for _, line in ipairs(block) do lines[#lines + 1] = line end
+            end
+        end
+    end
+    if heard > 0 then
+        for id, name in pairs(names) do
+            if name then Add("N", id, Clean(name)) end
+        end
+    end
+
+    return table.concat(lines, "\n"), #lines - 2, heard
 end
 
 function SK.BugReportText()
@@ -268,11 +321,13 @@ end
 function SK.ShowExport()
     local text, records = SK.ExportText()
     if records == 0 then
-        SK.Print("nothing to export yet. Decipher some scrolls first.")
+        SK.Print(L["nothing to export yet. Decipher some scrolls first."])
         return
     end
     local skill = SK.GetComprehension()
+    local _, _, heard = SK.ExportText()
     local issueTitle = ("[Data] Skill %d/%d, %d deciphered"):format(skill.rank, skill.max, SK.db.deciphered or 0)
+        .. (heard > 0 and (", +%d players heard"):format(heard) or "")
     Show("Scrollkeeper Export", "Copy the title and the text into a GitHub issue", text,
         "Scroll data only. No character or account names.", issueTitle)
 end

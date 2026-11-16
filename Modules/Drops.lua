@@ -45,6 +45,7 @@ SK.On("CHAT_MSG_LOOT", function(message, _, _, _, looter)
     SK.db.drops[mapID] = SK.db.drops[mapID] or {}
     local cell = SK.CellFor(x, y)
     SK.db.drops[mapID][cell] = (SK.db.drops[mapID][cell] or 0) + count
+    SK.Send("SCROLL_LOOTED", count)
     SK.Send("DROPS_CHANGED")
     SK.Send("MY_DATA_CHANGED")
 end)

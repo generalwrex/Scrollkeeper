@@ -9,6 +9,7 @@
 -- answer is kept.
 
 local _, SK = ...
+local L = SK.L
 
 local state = { imbued = true, familiar = true }
 
@@ -114,18 +115,18 @@ function SK.Reminders()
 
     for _, entry in ipairs(SK.UpgradeStatus()) do
         if entry.ready then
-            lines[#lines + 1] = ("|cff40ff40Ready: use %s on your %s.|r"):format(entry.upgrade.scroll, entry.upgrade.weapon)
+            lines[#lines + 1] = L["|cff40ff40Ready: use %s on your %s.|r"]:format(entry.upgrade.scroll, entry.upgrade.weapon)
         end
     end
 
     local imbue = Has("imbues")
     if imbue and not state.imbued then
-        lines[#lines + 1] = ("|cffffd100No weapon imbue. Best you have:|r %s"):format(SK.ScrollLink(imbue.itemID, imbue.name))
+        lines[#lines + 1] = L["|cffffd100No weapon imbue. Best you have:|r %s"]:format(SK.ScrollLink(imbue.itemID, imbue.name))
     end
 
     local familiar = Has("familiars")
     if familiar and not state.familiar then
-        lines[#lines + 1] = ("|cffffd100No familiar out. Best you have:|r %s"):format(SK.ScrollLink(familiar.itemID, familiar.name))
+        lines[#lines + 1] = L["|cffffd100No familiar out. Best you have:|r %s"]:format(SK.ScrollLink(familiar.itemID, familiar.name))
     end
 
     -- Would a Scroll of Comprehension (+15 for an hour) unlock more?
@@ -142,7 +143,7 @@ function SK.Reminders()
             end
         end
         if unlocked > 0 then
-            lines[#lines + 1] = ("|cff69ccf0A Scroll of Comprehension would let you read %d more now.|r"):format(unlocked)
+            lines[#lines + 1] = L["|cff69ccf0A Scroll of Comprehension would let you read %d more now.|r"]:format(unlocked)
         end
     end
     return lines

@@ -35,6 +35,8 @@ local function Entry(sender)
     end
     entry.books = entry.books or {}
     entry.at = time()
+    local peer = SK.peers and SK.peers[sender]
+    if peer and peer.exportID then entry.exportID = peer.exportID end
     return entry
 end
 
@@ -91,6 +93,16 @@ Net.Handle("K", function(sender, f)
         if count > 0 and count <= MAX_COUNT and SK.CellCenter(cell) then cells[cell] = count end
     end
     SK.Send("DROPS_CHANGED")
+end)
+
+-- How often their Comprehend Scroll backfired, by tier.
+Net.Handle("B", function(sender, f)
+    local entry = Entry(sender)
+    entry.backfires = {}
+    for tier, b, t in (f[2] or ""):gmatch("(%d+):(%d+)/(%d+)") do
+        tier, b, t = tonumber(tier), tonumber(b), tonumber(t)
+        if SK.TIER_RESULTS[tier] and t > 0 and t <= MAX_COUNT and b <= t then entry.backfires[tier] = { b = b, t = t } end
+    end
 end)
 
 -- Books others have learned: learn them too (a few hundred at most).
@@ -277,6 +289,11 @@ function SK.SendMyData()
         for cell, count in pairs(cells) do items[#items + 1] = cell .. ":" .. count end
         if #items > 0 then Net.SendList("K", mapID, items) end
     end
+    local backfires = {}
+    for tier, seen in pairs(db.backfires or {}) do
+        if (seen.t or 0) > 0 then backfires[#backfires + 1] = ("%d:%d/%d"):format(tier, seen.b or 0, seen.t) end
+    end
+    if #backfires > 0 then Net.Send("B", "0", table.concat(backfires, ",")) end
     local bookIDs = {}
     for id in pairs(db.bookIDs or {}) do bookIDs[#bookIDs + 1] = tostring(id) end
     if #bookIDs > 0 then Net.SendList("I", 0, bookIDs) end

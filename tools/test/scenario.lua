@@ -250,3 +250,104 @@ local p = ScrollkeeperPanel
 print("MINI", p and p:GetHeight())
 SK.db.viewMode = nil; SK.RefreshPanel()
 print("mini bar ok, errors:", #ScrollkeeperDB.errors)
+
+-- MAIL / GUILD BANK / AUCTION
+SK.db.mages = SK.db.mages or {}
+SK.db.mages["Newbie-Forever"] = { name = "Newbie", skill = 0, max = 0, level = 1, realm = "Forever" }
+SK.db.mages["Lowmage-Forever"] = { name = "Lowmage", skill = 20, max = 75, level = 20, realm = "Forever", faction = UnitFactionGroup and UnitFactionGroup("player") }
+SK.db.mages["Farmage-Other"] = { name = "Farmage", skill = 60, max = 75, level = 30, realm = "Other" }
+SK.bags.untranslated = {
+  { bag = 0, slot = 1, itemID = 213601, name = "Scroll: ONE", needs = 1 },
+  { bag = 0, slot = 2, itemID = 213602, name = "Scroll: FIFTEEN", needs = 15 },
+  { bag = 0, slot = 3, itemID = 213603, name = "Scroll: FIFTY", needs = 50 },
+}
+for _, p in ipairs(SK.MailPlan()) do
+  print("MAILPLAN", p.name, p.kind, "ups", p.ups, "reads", p.reads, "scrolls", #p.scrolls)
+end
+print("SKILLUPS 15", SK.SkillUpsFor(15))
+-- fake mailbox
+SendMailFrame = CreateFrame("Frame"); MailFrame = CreateFrame("Frame"); SendMailFrame:Show()
+local attached = {}
+SendMailNameEditBox = CreateFrame("EditBox"); SendMailSubjectEditBox = CreateFrame("EditBox")
+function HasSendMailItem(i) return attached[i] ~= nil end
+function ClickSendMailItemButton(i) attached[i] = true end
+function ClearCursor() end
+C_Container.PickupContainerItem = function() end
+local origInfo = C_Container.GetContainerItemInfo
+C_Container.GetContainerItemInfo = function(bag, slot)
+  for _, s in ipairs(SK.bags.untranslated) do if s.bag == bag and s.slot == slot then return { itemID = s.itemID } end end
+  return origInfo(bag, slot)
+end
+fire("MAIL_SHOW"); for _, f in ipairs(TIMERS) do pcall(f) end
+local row1 = ScrollkeeperMailFrame and ScrollkeeperMailFrame:IsShown()
+print("MAIL FRAME shown", row1)
+local plan = SK.MailPlan()
+if plan[1] then
+  -- click the first row's handler through the plan
+  local n = 0
+  for _, child in ipairs({ ScrollkeeperMailFrame:GetChildren() }) do
+    if child.person and n == 0 then n = 1; child:GetScript("OnClick")(child) end
+  end
+  print("MAIL to", SendMailNameEditBox:GetText(), "attached", #attached)
+end
+-- auction house, classic style
+GetNumAuctionItems = function() return 2 end
+GetAuctionItemInfo = function(_, i)
+  if i == 1 then return "Scroll: ONE", 0, 1, 1, true, 1, "", 0, 0, 5000, 0, nil, nil, nil, nil, 0, 213601 end
+  return "Linen Cloth", 0, 20, 1, true, 1, "", 0, 0, 2000, 0, nil, nil, nil, nil, 0, 2589
+end
+local nameByID = C_Item.GetItemNameByID
+C_Item.GetItemNameByID = function(id) if id == 213601 then return "Scroll: ONE" elseif id == 2589 then return "Linen Cloth" end return nameByID and nameByID(id) end
+local inst = C_Item.GetItemInfoInstant
+C_Item.GetItemInfoInstant = function(id) if id == 213601 then return id, "Consumable", "Scrolls", "", 1, 0, 4 end return id, "Trade", "Cloth", "", 1, 7, 5 end
+fire("AUCTION_ITEM_LIST_UPDATE")
+C_Item.GetItemInfoInstant = inst
+print("AH PRICE", SK.AuctionPrice(213601), SK.AuctionPrice(2589))
+print("mail/bank/ah ok, errors:", #ScrollkeeperDB.errors)
+for _, e in ipairs(ScrollkeeperDB.errors) do print("ERR", e.where, e.error) end
+SlashCmdList.SCROLLKEEPER("mail")
+fire("CHAT_MSG_GUILD", "who needs this? |cff1eff00|Hitem:213602::::::::|h[Scroll: FIFTEEN]|h|r", "Bob-Forever")
+print("chat ok, errors:", #ScrollkeeperDB.errors)
+
+-- HEARD DATA IN EXPORT
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.1.0|MAGE|30|60|120|50||guid|abcd1234", "GUILD", "Heardy-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "T|50#1|277483:3,275067:2", "GUILD", "Heardy-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "P|1458#1|12.30:2", "GUILD", "Heardy-Realm")
+local text, _, heard = SK.ExportText()
+print("HEARD", heard)
+for line in text:gmatch("[^\n]+") do if line:find("heard") or line:find("export 1") then print("EXP", line) end end
+print("export ok, errors:", #ScrollkeeperDB.errors)
+
+-- BACKFIRE / PLAN / SWAP
+if SK.isMage then
+  -- a normal read counts a try
+  SK.Send("DECIPHERED", 15)
+  -- a backfire: cast finishes, then a polymorph aura
+  C_UnitAuras = C_UnitAuras or {}
+  local sheep = false
+  C_UnitAuras.GetAuraDataByIndex = function(unit, i, filter) if sheep and i == 1 then return { icon = 136071, name = "Polymorph" } end end
+  fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1309973)
+  sheep = true
+  fire("UNIT_AURA", "player")
+  local mine = SK.BackfireStats()
+  print("BACKFIRES", mine.b, mine.t)
+  SK.db.farm = { seconds = 7200, looted = 20 }
+  for _, line in ipairs(SK.FarmPlanLines()) do print("PLAN", line) end
+end
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "S|1:3,15:2,50:1", "GUILD", "Kaelith-Realm")
+print("COULD GET", #SK.ScrollsICouldGet(), "WANT MINE", #SK.WhoWantsMine())
+SlashCmdList.SCROLLKEEPER("swap"); SlashCmdList.SCROLLKEEPER("plan")
+local text = SK.ExportText()
+for line in text:gmatch("[^\n]+") do if line:sub(1, 2) == "B|" then print("EXPB", line) end end
+print("new features ok, errors:", #ScrollkeeperDB.errors)
+for _, e in ipairs(ScrollkeeperDB.errors) do print("ERR", e.where, e.error) end
+
+-- SURNAMES
+do
+  local realName = UnitName
+  SK.db.mages["Surnamey-Forever"] = { name = "Surnamey", skill = 5, studyReadyAt = 12345 }
+  UnitName = function(unit) if unit == "player" then return "Surnamey", "Sheep" end return realName(unit) end
+  local entry = SK.MyMage()
+  print("SURNAME", SK.CharKey(), entry.name, entry.studyReadyAt, SK.db.mages["Surnamey-Forever"])
+  UnitName = realName
+end

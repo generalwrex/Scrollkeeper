@@ -96,3 +96,11 @@ tools/community/      merges /sk export data from players (not loaded by the gam
 tools/test/           runs the addon in a fake WoW (not loaded by the game)
                       cd tools/test, npm install, npm test
 ```
+
+## Translations
+
+Scrollkeeper is in English, Spanish, French and German. The Spanish, French and German were
+translated with AI, so they need fixes from native speakers. The files are in `Locales/`
+(one line per piece of text: `L["English"] = "your translation"`). Keep the `%d` / `%s`
+codes, `|c...|r` colors and `|4one:many;` plurals as they are. Pull requests and issues
+welcome!

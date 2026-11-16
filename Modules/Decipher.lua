@@ -5,6 +5,7 @@
 -- is a normal "secure" button: one click from you, one cast.
 
 local _, SK = ...
+local L = SK.L
 
 ------------------------------------------------------------------------
 -- Which scroll is next
@@ -92,12 +93,13 @@ local function Finish()
     if db.announce then
         local skillText
         if rose then
-            skillText = (" |cff40ff40(skill %d > %d)|r"):format(entry.skillBefore, skillNow)
+            skillText = L[" |cff40ff40(skill %d > %d)|r"]:format(entry.skillBefore, skillNow)
         else
             skillText = " |cff808080(no skill-up)|r"
         end
-        SK.Print("deciphered: " .. SK.ScrollLink(entry.resultID, result) .. skillText)
+        SK.Print(L["deciphered: "] .. SK.ScrollLink(entry.resultID, result) .. skillText)
     end
+    SK.Send("DECIPHERED", entry.tier, entry.resultID)
     SK.Send("LOG_CHANGED")
     SK.Send("MY_DATA_CHANGED")
 end
@@ -145,7 +147,7 @@ end)
 local function PrintSkillUps()
     local seen = SK.db.skillups
     if not seen or not next(seen) then return end
-    print("  |cffffd100Skill-ups seen|r (tier, color: raised / read)")
+    print(L["  |cffffd100Skill-ups seen|r (tier, color: raised / read)"])
     local keys = {}
     for key in pairs(seen) do keys[#keys + 1] = key end
     table.sort(keys, function(a, b)
@@ -163,10 +165,10 @@ end
 function SK.PrintLog()
     local db = SK.db
     if (db.deciphered or 0) == 0 then
-        SK.Print("no scrolls deciphered yet.")
+        SK.Print(L["no scrolls deciphered yet."])
         return
     end
-    SK.Print(("%d scrolls deciphered so far:"):format(db.deciphered))
+    SK.Print(L["%d scrolls deciphered so far:"]:format(db.deciphered))
     for _, tier in ipairs(SK.TIERS) do
         local results = db.results[tier]
         if results then
@@ -176,7 +178,7 @@ function SK.PrintLog()
                 table.insert(rows, { name = name, count = count })
             end
             table.sort(rows, function(a, b) return a.count > b.count end)
-            print(("  |cffffd100Comprehension %d scrolls|r"):format(tier))
+            print(L["  |cffffd100Comprehension %d scrolls|r"]:format(tier))
             for _, row in ipairs(rows) do
                 print(("    %s: %d (%d%%)"):format(SK.ScrollLink(nil, row.name), row.count,
                     math.floor(row.count / total * 100 + 0.5)))

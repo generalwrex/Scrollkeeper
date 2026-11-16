@@ -11,6 +11,7 @@
 -- your main hand.
 
 local _, SK = ...
+local L = SK.L
 
 -- Weapon subclass IDs (item class 2) for each word imbue tooltips use.
 local WEAPON_KINDS = {
@@ -25,13 +26,13 @@ local WEAPON_KINDS = {
 
 -- "a staff", "a sword" ... for messages, by subclass ID.
 local WEAPON_WORDS = {
-    [7] = "a sword", [8] = "a sword", [10] = "a staff", [15] = "a dagger",
-    [4] = "a mace", [5] = "a mace", [0] = "an axe", [1] = "an axe", [19] = "a wand",
+    [7] = L["a sword"], [8] = L["a sword"], [10] = L["a staff"], [15] = L["a dagger"],
+    [4] = L["a mace"], [5] = L["a mace"], [0] = L["an axe"], [1] = L["an axe"], [19] = L["a wand"],
 }
 
 -- "sword" -> "a sword", "axe" -> "an axe"
 function SK.WeaponWithArticle(word)
-    if not word or word == "" then return "a different weapon" end
+    if not word or word == "" then return L["a different weapon"] end
     return (word:match("^[aeiouAEIOU]") and "an " or "a ") .. word
 end
 

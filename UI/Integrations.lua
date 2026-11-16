@@ -7,6 +7,7 @@
 --   Auctionator  "worth more on the AH than at a vendor" on scroll tooltips
 
 local _, SK = ...
+local L = SK.L
 
 ------------------------------------------------------------------------
 -- Info bar entry: "Scrolls 5 · Study 42m"
@@ -16,26 +17,26 @@ local feed
 
 local function FeedText()
     local _, readable, _, skillUps = SK.NextDecipherable()
-    local text = ("Scrolls %d"):format(readable)
+    local text = L["Scrolls %d"]:format(readable)
     if skillUps and skillUps > 0 then text = text .. (" |cffff8040(+%d)|r"):format(skillUps) end
     if SK.isMage and SK.KnowsStudy() then
-        text = text .. "  Study " .. SK.FormatStudyTime(SK.StudySecondsLeft())
+        text = text .. L["  Study "] .. SK.FormatStudyTime(SK.StudySecondsLeft())
     end
     return text
 end
 
 local function TooltipLines(tooltip)
-    tooltip:AddLine("Scrollkeeper")
+    tooltip:AddLine(L["Scrollkeeper"])
     local skill = SK.GetComprehension()
     if skill.known then
-        tooltip:AddDoubleLine("Comprehension", ("%d / %d"):format(skill.rank, skill.max), 1, 0.82, 0, 1, 1, 1)
+        tooltip:AddDoubleLine(L["Comprehension"], ("%d / %d"):format(skill.rank, skill.max), 1, 0.82, 0, 1, 1, 1)
     end
     local _, readable, tooHard, skillUps = SK.NextDecipherable()
-    tooltip:AddDoubleLine("Ready to decipher", readable, 1, 0.82, 0, 1, 1, 1)
-    tooltip:AddDoubleLine("Skill-ups", skillUps or 0, 1, 0.82, 0, 1, 1, 1)
-    if tooHard > 0 then tooltip:AddDoubleLine("Too hard", tooHard, 1, 0.82, 0, 1, 1, 1) end
+    tooltip:AddDoubleLine(L["Ready to decipher"], readable, 1, 0.82, 0, 1, 1, 1)
+    tooltip:AddDoubleLine(L["Skill-ups"], skillUps or 0, 1, 0.82, 0, 1, 1, 1)
+    if tooHard > 0 then tooltip:AddDoubleLine(L["Too hard"], tooHard, 1, 0.82, 0, 1, 1, 1) end
     tooltip:AddLine(" ")
-    tooltip:AddLine("Click: panel   Right-click: network", 0.6, 0.6, 0.6)
+    tooltip:AddLine(L["Click: panel   Right-click: network"], 0.6, 0.6, 0.6)
 end
 
 local function OnClick(_, button)
@@ -48,7 +49,7 @@ SK.Listen("READY", function()
     if not ldb then return end
     feed = ldb:NewDataObject("Scrollkeeper", {
         type = "data source",
-        label = "Scrollkeeper",
+        label = L["Scrollkeeper"],
         icon = "Interface\\Icons\\INV_Scroll_03",
         text = "Scrollkeeper",
         OnClick = OnClick,

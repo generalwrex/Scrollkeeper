@@ -3,6 +3,7 @@
 -- somewhere Study works based on librarian world coordinates.
 
 local _, SK = ...
+local L = SK.L
 
 -- How close to a librarian counts as "in the library", in yards.
 -- (20 yards covers the library room.)
@@ -31,7 +32,7 @@ end
 
 -- "42m", "3m 10s", "Ready"
 function SK.FormatStudyTime(seconds)
-    if seconds <= 0 then return "Ready" end
+    if seconds <= 0 then return L["Ready"] end
     if seconds >= 60 then
         local minutes = math.floor(seconds / 60)
         if minutes >= 5 then return minutes .. "m" end
@@ -162,7 +163,7 @@ SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
             y = y,
             name = placeName,
         }
-        SK.Print("Learned new library spot: " .. placeName)
+        SK.Print(L["Learned new library spot: "] .. placeName)
         SK.Send("MY_DATA_CHANGED")
     end
 

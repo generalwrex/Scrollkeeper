@@ -7,6 +7,7 @@
 --        upgrades  weapon-upgrade scrolls held, e.g. "Saber"
 
 local _, SK = ...
+local L = SK.L
 local Net = SK.Net
 
 -- peers[name] = { version, class, level, skill, max, tiers = {[15]=true}, upgrades = {...},
@@ -46,19 +47,54 @@ local function MyUpgrades()
     return table.concat(held, ".")
 end
 
-function SK.SendHello()
+-- A random code made once per account; sent with your hello so other
+-- players' exports can include your data without your name. Says nothing
+-- about who you are.
+function SK.ExportID()
+    if not SK.db.exportID then
+        SK.db.exportID = ("%04x%04x"):format(math.random(0, 0xffff), math.random(0, 0xffff))
+    end
+    return SK.db.exportID
+end
+
+local function HelloFields()
     local _, class = UnitClass("player")
     local skill = SK.GetComprehension()
-    Net.Send("H", Net.PROTOCOL, SK.version, class, UnitLevel("player"),
+    return Net.PROTOCOL, SK.version, class, UnitLevel("player"),
         skill.rank, skill.max, SK.isMage and MyTiers() or "", SK.isMage and MyUpgrades() or "",
-        UnitGUID("player"))
+        UnitGUID("player"), SK.db.share and SK.ExportID() or ""
 end
+
+function SK.SendHello()
+    Net.Send("H", HelloFields())
+end
+
+-- Friends who aren't in your guild or group: ask each online friend
+-- directly. Only ones running Scrollkeeper answer.
+local function PingFriends()
+    if not (C_FriendList and C_FriendList.GetNumFriends and C_FriendList.GetFriendInfoByIndex) then return end
+    for i = 1, C_FriendList.GetNumFriends() or 0 do
+        local friend = C_FriendList.GetFriendInfoByIndex(i)
+        if friend and friend.connected and friend.name then Net.Whisper(friend.name, "Q") end
+    end
+end
+SK.PingFriends = PingFriends
+
+SK.Listen("READY", function()
+    C_Timer.After(20, PingFriends)
+    if C_Timer.NewTicker then C_Timer.NewTicker(10 * 60, PingFriends) end
+end)
 
 ------------------------------------------------------------------------
 -- Hearing about others
 ------------------------------------------------------------------------
 
-Net.Handle("Q", function()
+Net.Handle("Q", function(sender, _, source)
+    if source == "WHISPER" then
+        -- A friend asked us directly: answer them directly.
+        C_Timer.After(1 + math.random() * 2, function() Net.Whisper(sender, "H", HelloFields()) end)
+        return
+    end
     -- Answer after a short random wait so a whole guild doesn't reply at once.
     C_Timer.After(1 + math.random() * 4, SK.SendHello)
 end)
@@ -73,11 +109,16 @@ Net.Handle("H", function(sender, f, source)
     }
     for tier in (f[7] or ""):gmatch("%d+") do peer.tiers[tonumber(tier)] = true end
     for upgrade in (f[8] or ""):gmatch("[^.]+") do peer.upgrades[#peer.upgrades + 1] = upgrade end
+    local exportID = tostring(f[10] or ""):match("^%x%x%x%x%x%x%x%x$")
+    peer.exportID = exportID
     SK.peers[sender] = peer
+    if exportID and SK.db.community and SK.db.community[sender] then
+        SK.db.community[sender].exportID = exportID
+    end
 
     if not warnedNewer and VersionNumber(peer.version) > VersionNumber(SK.version) then
         warnedNewer = true
-        SK.Print(("a newer version (%s) is out. You have %s."):format(peer.version, SK.version))
+        SK.Print(L["a newer version (%s) is out. You have %s."]:format(peer.version, SK.version))
     end
     SK.Send("PEERS_CHANGED")
 end)
@@ -89,6 +130,30 @@ end)
 -- Is this peer someone we can still see? (heard from recently)
 local function Fresh(peer)
     return peer.demo or (time() - peer.seen) < STALE_SECONDS
+end
+
+-- Where we know a peer from, in words: "guild", "group", "friend" or "public".
+local function KindOf(name, peer)
+    local source = peer.source
+    if source == "PARTY" or source == "RAID" or source == "INSTANCE_CHAT"
+        or (UnitInParty and UnitInParty(Net.ShortName(name))) then return "group" end
+    if source == "GUILD" then return "guild" end
+    if source == "WHISPER" then return "friend" end
+    if peer.demo then return "guild" end
+    return "public"
+end
+
+-- Every mage running Scrollkeeper we've heard from recently:
+-- list of { name (to mail), short, skill, tiers, kind }.
+function SK.FreshMages()
+    local list = {}
+    for name, peer in pairs(SK.peers) do
+        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name) then
+            list[#list + 1] = { name = name, short = Net.ShortName(name), skill = peer.skill or 0,
+                tiers = peer.tiers or {}, kind = KindOf(name, peer) }
+        end
+    end
+    return list
 end
 
 -- Mages who get a skill-up from scrolls of this tier.

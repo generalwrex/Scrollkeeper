@@ -40,7 +40,7 @@ def read_exports(paths):
 
 
 def parse(lines):
-    data = {"id": None, "version": None, "T": {}, "U": {}, "P": {}, "K": {}, "I": set(), "N": {}, "W": []}
+    data = {"id": None, "version": None, "T": {}, "U": {}, "P": {}, "K": {}, "I": set(), "N": {}, "W": [], "B": {}}
     for line in lines:
         parts = line.split("|")
         kind = parts[0]
@@ -53,6 +53,10 @@ def parse(lines):
                     key, value = item.rsplit(":", 1)
                     entries[key] = value
                 data[kind][parts[1]] = entries
+            elif kind == "B":
+                for item in parts[1].split(","):
+                    tier, value = item.split(":")
+                    data["B"][tier] = value
             elif kind == "I":
                 data["I"].update(int(x) for x in parts[1].split(",") if x)
             elif kind == "N":
@@ -99,6 +103,11 @@ def write_lua(players, path):
                 pairs = ", ".join(f"[{lua_string(c)}] = {int(n)}" for c, n in sorted(cells.items()))
                 out.append(f"            [{int(map_id)}] = {{ {pairs} }},")
             out.append("        },")
+        out.append("        backfires = {")
+        for tier, value in sorted(data["B"].items(), key=lambda kv: int(kv[0])):
+            b, t = value.split("/")
+            out.append(f"            [{int(tier)}] = {{ b = {int(b)}, t = {int(t)} }},")
+        out.append("        },")
         books = ", ".join(str(b) for b in sorted(data["I"]))
         out.append(f"        bookIDs = {{ {books} }},")
         out.append("        names = {")
@@ -121,15 +130,28 @@ def main():
     target = Path(sys.argv[1])
     paths = sorted(target.glob("*.txt")) if target.is_dir() else [target]
 
+    def size(data):
+        return sum(int(c) for items in data["T"].values() for c in items.values())
+
     players = {}
     for lines in read_exports(paths):
         data = parse(lines)
-        players[data["id"] or f"unknown-{len(players)}"] = data   # later exports replace earlier
+        key = data["id"] or f"unknown-{len(players)}"
+        known = players.get(key)
+        heard = data["version"] == "heard"
+        if known is not None:
+            known_heard = known["version"] == "heard"
+            if heard and not known_heard:
+                continue                       # a player's own export beats a heard copy
+            if heard and known_heard and size(data) <= size(known):
+                continue                       # keep the more complete heard copy
+        players[key] = data                    # otherwise later exports replace earlier
 
     odds = defaultdict(lambda: defaultdict(int))
     skillups = defaultdict(lambda: defaultdict(lambda: [0, 0]))
     drops, book_drops = defaultdict(int), defaultdict(int)
     books, names, libraries = set(), {}, set()
+    backfires = defaultdict(lambda: [0, 0])
     for data in players.values():
         names.update(data["N"])
         books |= data["I"]
@@ -146,6 +168,10 @@ def main():
                 for cell, count in cells.items():
                     target_counts[(map_id, cell)] += int(count)
         libraries.update(data["W"])
+        for tier, value in data["B"].items():
+            b, t = (int(x) for x in value.split("/"))
+            backfires[int(tier)][0] += b
+            backfires[int(tier)][1] += t
 
     print(f"# Scrollkeeper community data: {len(players)} players\n")
     for tier in sorted(odds):
@@ -159,6 +185,12 @@ def main():
         for tier in sorted(skillups):
             for color, (ups, tries) in sorted(skillups[tier].items()):
                 print(f"  tier {tier:3d} {color:6s}  {ups}/{tries}  ({ups / tries:.0%})")
+        print()
+    if backfires:
+        print("## Sheep backfires")
+        for tier in sorted(backfires):
+            b, t = backfires[tier]
+            print(f"  tier {tier:3d}  {b}/{t}  ({b / t:.1%})")
         print()
     print(f"Scroll drop spots: {len(drops)} ({sum(drops.values())} scrolls)")
     print(f"Book drop spots:   {len(book_drops)} ({sum(book_drops.values())} books)")

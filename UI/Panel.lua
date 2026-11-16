@@ -15,6 +15,7 @@
 -- re-pointed out of combat, so layout changes wait until combat ends.
 
 local _, SK = ...
+local L = SK.L
 
 local WIDTH = 250
 local LEFT, RIGHT = 16, 18             -- inner padding, clear of the gold border
@@ -144,7 +145,7 @@ local function CreateWindow()
     local ok, frame = pcall(CreateFrame, "Frame", "ScrollkeeperPanel", UIParent, "PortraitFrameTemplate")
     if ok and frame and type(frame.SetTitle) == "function" then
         usingGameFrame = true
-        frame:SetTitle("Scrollkeeper")
+        frame:SetTitle(L["Scrollkeeper"])
         if type(frame.SetPortraitToAsset) == "function" then
             frame:SetPortraitToAsset(PORTRAIT)
         elseif type(frame.SetPortraitTextureRaw) == "function" then
@@ -169,7 +170,7 @@ local function CreateWindow()
     })
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", 0, -10)
-    title:SetText("Scrollkeeper")
+    title:SetText(L["Scrollkeeper"])
     local portrait = frame:CreateTexture(nil, "ARTWORK")
     portrait:SetSize(36, 36)
     portrait:SetPoint("TOPLEFT", 10, -10)
@@ -263,7 +264,7 @@ local function Build()
     panel:SetScript("OnDragStart", function(self)
         if SK.db.locked then return end
         if SK.InCombat() then
-            SK.Print("the panel can be moved after combat.")
+            SK.Print(L["the panel can be moved after combat."])
             return
         end
         self:StartMoving()
@@ -298,16 +299,16 @@ local function Build()
         secureClose:SetAttribute("_onclick", [[ self:GetFrameRef("panel"):Hide() ]])
         secureClose:HookScript("OnClick", function()
             SK.db.showPanel = false
-            SK.Print("panel hidden. Type /sk to show it again" .. (SK.InCombat() and " (after combat)." or "."))
+            SK.Print(L["panel hidden. Type /sk to show it again"] .. (SK.InCombat() and L[" (after combat)."] or "."))
         end)
         secureClose:SetScript("OnEnter", function() close:LockHighlight() end)
         secureClose:SetScript("OnLeave", function() close:UnlockHighlight() end)
     end
     close:SetScript("OnClick", function()
-        if SK.InCombat() then SK.Print("the panel can't be hidden in combat.") return end
+        if SK.InCombat() then SK.Print(L["the panel can't be hidden in combat."]) return end
         SK.db.showPanel = false
         panel:Hide()
-        SK.Print("panel hidden. Type /sk to show it again.")
+        SK.Print(L["panel hidden. Type /sk to show it again."])
     end)
 
     -- Summary line beside the portrait, like "Level 20 Mage".
@@ -324,20 +325,20 @@ local function Build()
     --   left-click:  smaller (Advanced -> Simple -> Title only, then back to Advanced)
     --   right-click: bigger
     -- The window moves so the button stays under your mouse.
-    local VIEW_NAMES = { full = "Advanced", compact = "Simple", mini = "Title only" }
+    local VIEW_NAMES = { full = L["Advanced"], compact = L["Simple"], mini = L["Title only"] }
     local SMALLER = { full = "compact", compact = "mini", mini = "full" }
     local BIGGER = { mini = "compact", compact = "full", full = "full" }
     parts.collapse = IconButton(SIZE_SMALLER, 24,
         function()
             local mode = SK.ViewMode()
-            local text = ("Size: |cffffffff%s|r\nLeft-click: %s"):format(VIEW_NAMES[mode], VIEW_NAMES[SMALLER[mode]])
+            local text = L["Size: |cffffffff%s|r\nLeft-click: %s"]:format(VIEW_NAMES[mode], VIEW_NAMES[SMALLER[mode]])
             if BIGGER[mode] ~= mode then
-                text = text .. ("\nRight-click: %s"):format(VIEW_NAMES[BIGGER[mode]])
+                text = text .. L["\nRight-click: %s"]:format(VIEW_NAMES[BIGGER[mode]])
             end
             return text
         end,
         function(self, mouseButton)
-            if SK.InCombat() then SK.Print("the panel can't change size in combat.") return end
+            if SK.InCombat() then SK.Print(L["the panel can't change size in combat."]) return end
             local mode = SK.ViewMode()
             local new = mouseButton == "RightButton" and BIGGER[mode] or SMALLER[mode]
             if new == mode then return end
@@ -352,7 +353,7 @@ local function Build()
     parts.network = IconButton("Interface\\Icons\\INV_Misc_Book_09", 18,
         function()
             local count = #SK.PeerList()
-            return ("Network: %d Scrollkeeper |4user:users; heard from"):format(count)
+            return L["Network: %d Scrollkeeper |4user:users; heard from"]:format(count)
         end,
         function() SK.ToggleNetwork() end)
     parts.network:SetPoint("RIGHT", parts.collapse, "LEFT", -4, 0)
@@ -372,19 +373,19 @@ local function Build()
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
     parts.decipher:SetSize(INNER, 24)
     parts.decipher:RegisterForClicks("AnyUp", "AnyDown")
-    parts.decipher:SetText("Decipher next scroll")
+    parts.decipher:SetText(L["Decipher next scroll"])
     parts.decipher:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local nextScroll = SK.NextDecipherable()
         if nextScroll then
-            GameTooltip:SetText("Decipher " .. SK.ScrollLink(nextScroll.itemID, nextScroll.name))
-            GameTooltip:AddLine(("Needs %d Comprehension."):format(nextScroll.needs), 1, 1, 1)
+            GameTooltip:SetText(L["Decipher "] .. SK.ScrollLink(nextScroll.itemID, nextScroll.name))
+            GameTooltip:AddLine(L["Needs %d Comprehension."]:format(nextScroll.needs), 1, 1, 1)
             local chance = SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
             if chance then GameTooltip:AddLine(SK.ColoredChance(chance)) end
-            GameTooltip:AddLine("One click deciphers one scroll. Scrolls that can raise your skill go first.", 0.7, 0.7, 0.7, true)
+            GameTooltip:AddLine(L["One click deciphers one scroll. Scrolls that can raise your skill go first."], 0.7, 0.7, 0.7, true)
         else
-            GameTooltip:SetText("Nothing to decipher")
-            GameTooltip:AddLine("Untranslated scrolls drop from enemies and chests everywhere.", 0.7, 0.7, 0.7, true)
+            GameTooltip:SetText(L["Nothing to decipher"])
+            GameTooltip:AddLine(L["Untranslated scrolls drop from enemies and chests everywhere."], 0.7, 0.7, 0.7, true)
         end
         GameTooltip:Show()
     end)
@@ -421,16 +422,17 @@ local function Build()
         button:SetScript("OnEnter", function(self)
             if self.itemID then
                 showItem(self)
-                GameTooltip:AddLine("|cff40ff40Click to use.|r")
+                GameTooltip:AddLine(L["|cff40ff40Click to use.|r"])
                 GameTooltip:Show()
             else
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetText(title)
-                local hint, weapon = categoryKey == "imbues" and SK.ImbueSwapHint()
+                local hint, weapon
+                if categoryKey == "imbues" then hint, weapon = SK.ImbueSwapHint() end
                 if hint then
                     local _, holding = SK.MainHandWeapon()
-                    GameTooltip:AddLine(("None of your imbues fit %s."):format(holding or "what you're holding"), 1, 1, 1, true)
-                    GameTooltip:AddLine(("%s can be put on your %s (in your bags). Equip it, then click here."):format(
+                    GameTooltip:AddLine(L["None of your imbues fit %s."]:format(holding or "what you're holding"), 1, 1, 1, true)
+                    GameTooltip:AddLine(L["%s can be put on your %s (in your bags). Equip it, then click here."]:format(
                         SK.ScrollLink(hint.itemID, hint.name), weapon), 0.25, 1, 0.25, true)
                 else
                     -- List what you do have, and what each one needs.
@@ -439,18 +441,18 @@ local function Build()
                         if group.key == categoryKey then have = group.scrolls end
                     end
                     if #have == 0 then
-                        GameTooltip:AddLine(("You don't have any %s scrolls yet."):format(title:lower()), 1, 1, 1, true)
+                        GameTooltip:AddLine(L["You don't have any %s scrolls yet."]:format(title:lower()), 1, 1, 1, true)
                     else
                         if categoryKey == "imbues" then
                             local _, holding = SK.MainHandWeapon()
-                            GameTooltip:AddLine(("You're holding %s. Your imbues:"):format(holding or "no weapon"), 1, 1, 1, true)
+                            GameTooltip:AddLine(L["You're holding %s. Your imbues:"]:format(holding or "no weapon"), 1, 1, 1, true)
                         else
-                            GameTooltip:AddLine("Your scrolls:", 1, 1, 1)
+                            GameTooltip:AddLine(L["Your scrolls:"], 1, 1, 1)
                         end
                         for _, scroll in ipairs(have) do
                             local needs = {}
-                            if scroll.imbueFor then needs[#needs + 1] = "for " .. SK.WeaponWithArticle(scroll.imbueFor) end
-                            if scroll.levelOK == false then needs[#needs + 1] = "level " .. (scroll.level or "?") end
+                            if scroll.imbueFor then needs[#needs + 1] = L["for "] .. SK.WeaponWithArticle(scroll.imbueFor) end
+                            if scroll.levelOK == false then needs[#needs + 1] = L["level "] .. (scroll.level or "?") end
                             GameTooltip:AddDoubleLine("  " .. SK.ScrollLink(scroll.itemID, scroll.name),
                                 table.concat(needs, ", "), 1, 0.82, 0, 1, 0.4, 0.4)
                         end
@@ -527,11 +529,11 @@ local function Build()
     parts.study:RegisterForClicks("AnyUp", "AnyDown")
     parts.study:SetAttribute("type", "spell")
     parts.study:SetAttribute("spell", SK.SPELL_STUDY)
-    parts.study:SetText("Study")
+    parts.study:SetText(L["Study"])
     parts.study:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Study")
-        GameTooltip:AddLine("Makes a Bundle of Scrolls. Needs a library and a Light Feather. One hour cooldown.", 1, 1, 1, true)
+        GameTooltip:SetText(L["Study"])
+        GameTooltip:AddLine(L["Makes a Bundle of Scrolls. Needs a library and a Light Feather. One hour cooldown."], 1, 1, 1, true)
         GameTooltip:Show()
     end)
     parts.study:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -540,7 +542,7 @@ local function Build()
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
     parts.bundle:SetSize(half, 22)
     parts.bundle:RegisterForClicks("AnyUp", "AnyDown")
-    parts.bundle:SetText("Open bundle")
+    parts.bundle:SetText(L["Open bundle"])
 
     parts.warning = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     parts.warning:SetWidth(INNER)
@@ -558,17 +560,20 @@ local function Build()
     side.network, paneHeight = SK.UI.CreateNetworkPane(panel, sideLeft, -TOP + 4, SIDE_INNER, 6, 7)
 
     local y = -TOP + 4 - paneHeight
-    side.statsHeader = SK.UI.CreateHeader(panel, "Your Stats", SIDE_INNER)
+    side.statsHeader = SK.UI.CreateHeader(panel, L["Your Stats"], SIDE_INNER)
     side.statsHeader:SetPoint("TOPLEFT", sideLeft, y)
     y = y - 26
     side.rows = {}
     local statRows = {
-        { "deciphered", "Deciphered" },
-        { "skillups", "Skill-ups from scrolls" },
-        { "common", "Most common" },
-        { "drops", "Scroll drops logged" },
-        { "books", "Books found" },
-        { "sharing", "Sharing" },
+        { "deciphered", L["Deciphered"] },
+        { "skillups", L["Skill-ups from scrolls"] },
+        { "common", L["Most common"] },
+        { "drops", L["Scroll drops logged"] },
+        { "books", L["Books found"] },
+        { "backfires", L["Sheep backfires"] },
+        { "goal", L["Next goal"] },
+        { "swap", L["Scroll swap"] },
+        { "sharing", L["Sharing"] },
     }
     for i, entry in ipairs(statRows) do
         local row = CreateFrame("Frame", nil, panel)
@@ -593,6 +598,34 @@ local function Build()
             SK.UI.EnableItemLinks(row)
         end
         side.rows[entry[1]] = row
+        if entry[1] == "goal" or entry[1] == "swap" or entry[1] == "backfires" then
+            row:EnableMouse(true)
+            local highlight = row:CreateTexture(nil, "HIGHLIGHT")
+            highlight:SetAllPoints()
+            highlight:SetColorTexture(1, 0.82, 0, 0.12)
+            row:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                if entry[1] == "goal" then
+                    GameTooltip:SetText(L["Farming plan"])
+                    for _, line in ipairs(SK.FarmPlanLines()) do GameTooltip:AddLine(line, 1, 1, 1, true) end
+                elseif entry[1] == "swap" then
+                    GameTooltip:SetText(L["Scroll swap"])
+                    GameTooltip:AddLine(L["Who has spare scrolls you'd level from, and who'd want yours. Click to open it."], 1, 1, 1, true)
+                else
+                    local mine, all = SK.BackfireStats()
+                    GameTooltip:SetText(L["Sheep backfires"])
+                    GameTooltip:AddLine(L["You: %d in %d reads."]:format(mine.b, mine.t), 1, 1, 1)
+                    if all.t > mine.t then
+                        GameTooltip:AddLine(L["Everyone: %d in %d (%.1f%%)."]:format(all.b, all.t, all.b / all.t * 100), 1, 1, 1)
+                    end
+                end
+                GameTooltip:Show()
+            end)
+            row:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            if entry[1] == "swap" then
+                row:SetScript("OnMouseUp", function() SK.ToggleSwap() end)
+            end
+        end
         y = y - ROW_HEIGHT
     end
     side.height = -y + 14
@@ -615,7 +648,7 @@ local function UpdateStats()
     for _, seen in pairs(db.skillups or {}) do
         ups, tries = ups + (seen.ups or 0), tries + (seen.tries or 0)
     end
-    side.rows.skillups.value:SetText(tries > 0 and ("%d of %d"):format(ups, tries) or "|cff808080none yet|r")
+    side.rows.skillups.value:SetText(tries > 0 and L["%d of %d"]:format(ups, tries) or "|cff808080none yet|r")
 
     local bestName, bestCount = nil, 0
     for _, results in pairs(db.results or {}) do
@@ -625,6 +658,14 @@ local function UpdateStats()
     end
     side.rows.common.value:SetText(bestName and (SK.ScrollLink(nil, bestName, true) .. " |cff808080x" .. bestCount .. "|r")
         or "|cff808080none yet|r")
+
+    local mine = SK.BackfireStats and SK.BackfireStats() or { b = 0, t = 0 }
+    side.rows.backfires.value:SetText(mine.t > 0 and L["%d of %d (%.0f%%)"]:format(mine.b, mine.t, mine.b / mine.t * 100)
+        or "|cff808080none yet|r")
+    local plan = SK.FarmPlan and SK.FarmPlan()
+    side.rows.goal.value:SetText(plan and L["%d, ~%d scrolls"]:format(plan.goal, plan.scrolls) or "|cff808080-|r")
+    local offers = (SK.ScrollsICouldGet and #SK.ScrollsICouldGet() or 0) + (SK.WhoWantsMine and #SK.WhoWantsMine() or 0)
+    side.rows.swap.value:SetText(offers > 0 and ("|cff40ff40%d |4match:matches;|r"):format(offers) or "|cff808080open|r")
 
     local drops = 0
     for _, cells in pairs(db.drops or {}) do
@@ -638,7 +679,7 @@ local function UpdateStats()
     end
     side.rows.books.value:SetText(tostring(books))
 
-    side.rows.sharing.value:SetText(SK.db.share and "|cff40ff40on|r" or "|cffff6666off|r")
+    side.rows.sharing.value:SetText(SK.db.share and L["|cff40ff40on|r"] or L["|cffff6666off|r"])
 end
 
 ------------------------------------------------------------------------
@@ -727,7 +768,7 @@ local function Layout()
             button:SetDisplay(nil, button.emptyIcon)
             button:SetUsable(false)
             local hint = button.categoryKey == "imbues" and SK.ImbueSwapHint()
-            button.detail:SetText(hint and "|cff40ff40swap weapon|r" or "|cff808080none|r")
+            button.detail:SetText(hint and L["|cff40ff40swap weapon|r"] or L["|cff808080none|r"])
         end
     end
 
@@ -857,11 +898,11 @@ local function Layout()
         parts.decipher:SetAttribute("target-slot", nextScroll.slot)
         local chance = SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
         local mark = (chance and chance.gives) and " |cffff8040+|r" or ""
-        parts.decipher:SetText(("Decipher next scroll (%d)%s"):format(readable, mark))
+        parts.decipher:SetText(L["Decipher next scroll (%d)%s"]:format(readable, mark))
         parts.decipher:Enable()
     else
         parts.decipher:SetAttribute("type", nil)
-        parts.decipher:SetText("Nothing to decipher")
+        parts.decipher:SetText(L["Nothing to decipher"])
         parts.decipher:Disable()
     end
 end
@@ -887,7 +928,7 @@ local function UpdateText()
     parts.imbue.tick:SetShown(weapon.imbued and true or false)
 
     -- (The skill bar already shows the skill, so this says what's ready.)
-    parts.summary:SetText(("|cffffffff%d|r ready"):format(readable))
+    parts.summary:SetText(L["|cffffffff%d|r ready"]:format(readable))
 
     -- Skill bar
     local bonus = skill.bonus > 0 and (" " .. GREEN .. "+%d|r"):format(skill.bonus) or ""
@@ -902,12 +943,12 @@ local function UpdateText()
 
     local nextTier = SK.NextTierAfter(skill.effective)
     if not nextTier then
-        rows.nextTier.value:SetText(GREEN .. "all unlocked|r")
+        rows.nextTier.value:SetText(GREEN .. L["all unlocked|r"])
     elseif nextTier > skill.max then
-        rows.nextTier.value:SetText(("%d %s(level %d)|r"):format(nextTier, GRAY,
+        rows.nextTier.value:SetText(L["%d %s(level %d)|r"]:format(nextTier, GRAY,
             math.ceil(nextTier / SK.SKILL_CAP_PER_LEVEL)))
     else
-        rows.nextTier.value:SetText(("%d %s(%d to go)|r"):format(nextTier, GRAY, nextTier - skill.effective))
+        rows.nextTier.value:SetText(L["%d %s(%d to go)|r"]:format(nextTier, GRAY, nextTier - skill.effective))
     end
 
     -- Scroll counts (the icons themselves only change out of combat)
@@ -924,11 +965,11 @@ local function UpdateText()
     for _, entry in ipairs(SK.UpgradeStatus()) do
         local u = entry.upgrade
         if entry.ready then
-            upgradeLines[#upgradeLines + 1] = ("|cff40ff40%s|r: ready, use the scroll on the weapon"):format(u.makes)
+            upgradeLines[#upgradeLines + 1] = L["|cff40ff40%s|r: ready, use the scroll on the weapon"]:format(u.makes)
         elseif entry.hasScroll then
-            upgradeLines[#upgradeLines + 1] = ("|cffa335ee%s|r: need %s |cff808080(%s)|r"):format(u.makes, u.weapon, u.from)
+            upgradeLines[#upgradeLines + 1] = L["|cffa335ee%s|r: need %s |cff808080(%s)|r"]:format(u.makes, u.weapon, u.from)
         else
-            upgradeLines[#upgradeLines + 1] = ("|cffa335ee%s|r: need %s"):format(u.makes, u.scroll)
+            upgradeLines[#upgradeLines + 1] = L["|cffa335ee%s|r: need %s"]:format(u.makes, u.scroll)
         end
     end
     parts.upgrades:SetText(table.concat(upgradeLines, "\n"))
@@ -936,7 +977,7 @@ local function UpdateText()
     -- Study bar: fills up as the cooldown runs down.
     if not knowsStudy then
         parts.studyBar:SetProgress(0, 1)
-        parts.studyBar:SetLabel(GRAY .. "Not learned yet|r")
+        parts.studyBar:SetLabel(GRAY .. L["Not learned yet|r"])
     elseif studyLeft == 0 then
         parts.studyBar:SetProgress(1, 1)
         parts.studyBar:SetBarColor(colors.good)
@@ -947,16 +988,16 @@ local function UpdateText()
         parts.studyBar:SetLabel("Cooldown", SK.FormatStudyTime(studyLeft))
     end
     rows.feathers.value:SetText(SK.bags.feathers > 0 and SK.bags.feathers or (RED .. "0|r"))
-    rows.library.value:SetText(inLibrary and (GREEN .. "you're in one|r") or (GRAY .. "not here|r"))
+    rows.library.value:SetText(inLibrary and (GREEN .. L["you're in one|r"]) or (GRAY .. L["not here|r"]))
 
     -- Reminders at the bottom, most important first (at most 4).
     local notes = {}
     if SK.bags.bundles > 0 then
-        notes[#notes + 1] = "|cffffd100Open your Bundle of Scrolls before the next Study.|r"
+        notes[#notes + 1] = L["|cffffd100Open your Bundle of Scrolls before the next Study.|r"]
     elseif knowsStudy and SK.bags.feathers == 0 then
-        notes[#notes + 1] = RED .. "No Light Feathers. Study needs one.|r"
+        notes[#notes + 1] = RED .. L["No Light Feathers. Study needs one.|r"]
     elseif knowsStudy and studyLeft == 0 and inLibrary then
-        notes[#notes + 1] = GREEN .. "Study is ready and you're in a library.|r"
+        notes[#notes + 1] = GREEN .. L["Study is ready and you're in a library.|r"]
     end
     for _, line in ipairs(SK.Reminders()) do notes[#notes + 1] = line end
     while #notes > 4 do table.remove(notes) end

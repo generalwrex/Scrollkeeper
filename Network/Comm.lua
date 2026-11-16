@@ -9,6 +9,7 @@
 -- Turn sharing off in the settings and nothing is sent at all.
 
 local _, SK = ...
+local L = SK.L
 
 SK.Net = {}
 local Net = SK.Net
@@ -127,7 +128,7 @@ function Net.Send(kind, ...)
     end
     local text = table.concat(parts, "|")
     if #text > MAX_LENGTH then
-        SK.Print("internal: message too long, not sent (" .. kind .. ")")
+        SK.Print(L["internal: message too long, not sent ("] .. kind .. ")")
         return
     end
     -- Replace an older queued message of the same kind and first field,
@@ -137,6 +138,19 @@ function Net.Send(kind, ...)
         if queued.key == key then queue[i] = { key = key, text = text } return end
     end
     queue[#queue + 1] = { key = key, text = text }
+end
+
+-- Send one message straight to one player (used to find friends who run
+-- Scrollkeeper). Goes out right away, not through the queue.
+function Net.Whisper(target, kind, ...)
+    if not (SK.db and SK.db.share and target and C_ChatInfo) or SK.InCombat() then return end
+    local parts = { kind }
+    for i = 1, select("#", ...) do
+        parts[#parts + 1] = tostring((select(i, ...)) or ""):gsub("|", "/")
+    end
+    local text = table.concat(parts, "|")
+    if #text > MAX_LENGTH then return end
+    pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, text, "WHISPER", target)
 end
 
 -- Send a list of "a:b" items as several messages that each fit.

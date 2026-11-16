@@ -133,7 +133,8 @@ function SK.ScanBags()
 
                 if id == SK.ITEM_LIGHT_FEATHER then
                     found.feathers = found.feathers + count
-                elseif name == "Bundle of Scrolls" then
+                elseif name == "Bundle of Scrolls" or (SK.db and id == SK.db.bundleID) then
+                    if SK.db and not SK.db.bundleID then SK.db.bundleID = id end
                     found.bundles = found.bundles + count
                     found.bundleBag, found.bundleSlot = bag, slot
                 elseif IsScrollItem(id) then
@@ -182,3 +183,21 @@ end
 SK.On("BAG_UPDATE_DELAYED", Refresh)
 SK.On("PLAYER_ENTERING_WORLD", Refresh)
 SK.Listen("SKILL_CHANGED", function() requirementPattern = nil end)
+
+-- Other languages: the bundle's name differs, so learn its item ID the
+-- first time Study makes one (the new item that shows up right after).
+local watchBundleUntil = 0
+SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
+    if unit == "player" and spellID == SK.SPELL_STUDY then watchBundleUntil = GetTime() + 5 end
+end)
+SK.Listen("BAGS_CHANGED", function(now, before)
+    if GetTime() > watchBundleUntil or (SK.db and SK.db.bundleID) then return end
+    for id, count in pairs(now.counts or {}) do
+        if count > ((before and before.counts and before.counts[id]) or 0) then
+            SK.db.bundleID = id
+            watchBundleUntil = 0
+            C_Timer.After(0.2, function() SK.bags = SK.ScanBags() SK.Send("BAGS_CHANGED", SK.bags, SK.bags) end)
+            return
+        end
+    end
+end)

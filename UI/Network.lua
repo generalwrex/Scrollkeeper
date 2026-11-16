@@ -6,6 +6,7 @@
 -- /sk demo fills it with made-up players to try it out.
 
 local _, SK = ...
+local L = SK.L
 SK.UI = SK.UI or {}
 
 local ROW_HEIGHT = 16
@@ -90,7 +91,7 @@ function SK.UI.CreateScrollList(host, width, visibleRows)
             if not self.itemID then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetItemByID(self.itemID)
-            GameTooltip:AddLine("Shift-click to link it in chat.", 0.6, 0.6, 0.6)
+            GameTooltip:AddLine(L["Shift-click to link it in chat."], 0.6, 0.6, 0.6)
             GameTooltip:Show()
         end)
         row:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -155,7 +156,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     local function Keep(region) table.insert(pane.regions, region) return region end
     local y = top
 
-    local users = Keep(SK.UI.CreateHeader(host, "Scrollkeeper Users", width))
+    local users = Keep(SK.UI.CreateHeader(host, L["Scrollkeeper Users"], width))
     users:SetPoint("TOPLEFT", left, y)
     y = y - 26
     pane.users = SK.UI.CreateScrollList(host, width, userRows)
@@ -163,7 +164,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     Keep(pane.users.scroll)
     y = y - userRows * ROW_HEIGHT - 10
 
-    local odds = Keep(SK.UI.CreateHeader(host, "Community Odds", width))
+    local odds = Keep(SK.UI.CreateHeader(host, L["Community Odds"], width))
     odds:SetPoint("TOPLEFT", left, y)
     y = y - 28
     local buttonWidth = (width - 6) / #SK.TIERS
@@ -171,7 +172,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         local button = Keep(CreateFrame("Button", nil, host, "UIPanelButtonTemplate"))
         button:SetSize(buttonWidth, 20)
         button:SetPoint("TOPLEFT", left + (i - 1) * (buttonWidth + 2), y)
-        button:SetText("Tier " .. tier)
+        button:SetText(L["Tier "] .. tier)
         button:SetScript("OnClick", function()
             pane.selectedTier = tier
             pane:Refresh()
@@ -213,7 +214,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 row.value:SetText(needs .. upgrade)
             else
                 row.label:SetText(entry.name)
-                row.value:SetText("|cff808080not a mage|r")
+                row.value:SetText(L["|cff808080not a mage|r"])
             end
         end, "No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in.")
 
@@ -227,9 +228,9 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
         end, "")
         if total == 0 then
-            self.oddsNote:SetText(("No tier %d scrolls deciphered yet."):format(self.selectedTier))
+            self.oddsNote:SetText(L["No tier %d scrolls deciphered yet."]:format(self.selectedTier))
         else
-            self.oddsNote:SetText(("%d deciphered by %d |4player:players;. More players, better odds."):format(total, players))
+            self.oddsNote:SetText(L["%d deciphered by %d |4player:players;. More players, better odds."]:format(total, players))
         end
     end
 
@@ -263,7 +264,7 @@ local function Build()
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
     if window.SetDontSavePosition then window:SetDontSavePosition(true) end
     if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Misc_Book_09") end
-    window:SetTitle("Scrollkeeper Network")
+    window:SetTitle(L["Scrollkeeper Network"])
     tinsert(UISpecialFrames, "ScrollkeeperNetworkFrame")   -- Escape closes it
 
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
@@ -292,17 +293,17 @@ end
 ------------------------------------------------------------------------
 
 function SK.NetworkFooter()
-    local sharing = SK.db.share and "|cff40ff40on|r" or "|cffff6666off|r"
-    local demo = SK.demoCommunity and "  |cffff8040demo|r" or ""
-    return "Sharing " .. sharing .. "  ·  scroll data only" .. demo
+    local sharing = SK.db.share and L["|cff40ff40on|r"] or L["|cffff6666off|r"]
+    local demo = SK.demoCommunity and L["  |cffff8040demo|r"] or ""
+    return L["Sharing "] .. sharing .. L["  ·  scroll data only"] .. demo
 end
 
 function SK.RefreshNetwork()
     for _, pane in ipairs(panes) do pane:Refresh() end
     if window and window:IsShown() then
-        local demo = SK.demoCommunity and " |cffff8040(demo)|r" or ""
-        window.summary:SetText(("|cffffffff%d|r heard from%s"):format(#SK.PeerList(), demo))
-        window.footer:SetText(SK.NetworkFooter() .. "  ·  /sk options")
+        local demo = SK.demoCommunity and L[" |cffff8040(demo)|r"] or ""
+        window.summary:SetText(L["|cffffffff%d|r heard from%s"]:format(#SK.PeerList(), demo))
+        window.footer:SetText(SK.NetworkFooter() .. L["  ·  /sk options"])
     end
 end
 
@@ -326,7 +327,7 @@ function SK.ToggleDemo()
         end
         SK.demoCommunity = nil
         SK.demoNames = nil
-        SK.Print("demo off.")
+        SK.Print(L["demo off."])
     else
         local function Peer(class, level, skill, tiers, upgrades)
             local set = {}
@@ -342,13 +343,13 @@ function SK.ToggleDemo()
 
         -- Made-up results. Real item IDs where we know them.
         SK.demoNames = {
-            [213564] = "Scroll of Minor Evocation", [277483] = "Scroll of Frog Familiar",
-            [-1] = "Scroll of Comprehension", [-2] = "Scroll of Imbue Lesser Flame",
-            [-3] = "Scroll of Rat Familiar", [-4] = "Scroll of Imbue Chillknife",
-            [-5] = "Scroll of Cryoblast", [-6] = "Scroll of Polymorph: Odd Melon",
-            [-7] = "Scroll of the Saber", [-8] = "Scroll of Imbue Frost",
-            [-9] = "Scroll of Cat Familiar", [-10] = "Scroll of Khadgar's Unlocking",
-            [-11] = "Scroll of the Blade",
+            [213564] = L["Scroll of Minor Evocation"], [277483] = L["Scroll of Frog Familiar"],
+            [-1] = L["Scroll of Comprehension"], [-2] = L["Scroll of Imbue Lesser Flame"],
+            [-3] = L["Scroll of Rat Familiar"], [-4] = L["Scroll of Imbue Chillknife"],
+            [-5] = L["Scroll of Cryoblast"], [-6] = L["Scroll of Polymorph: Odd Melon"],
+            [-7] = L["Scroll of the Saber"], [-8] = L["Scroll of Imbue Frost"],
+            [-9] = L["Scroll of Cat Familiar"], [-10] = L["Scroll of Khadgar's Unlocking"],
+            [-11] = L["Scroll of the Blade"],
         }
         local mapID, px, py = SK.PlayerMapPosition()
         local function Drops(n)
@@ -370,7 +371,7 @@ function SK.ToggleDemo()
                           [50] = { [-9] = 5, [-10] = 3, [-11] = 1 } }, drops = Drops(5) },
             { results = { [15] = { [277483] = 3, [-5] = 2, [-8] = 1 } }, drops = Drops(4) },
         }
-        SK.Print("demo on: made-up players and odds (never sent or saved). /sk demo again to turn it off.")
+        SK.Print(L["demo on: made-up players and odds (never sent or saved). /sk demo again to turn it off."])
     end
     SK.Send("PEERS_CHANGED")
     SK.Send("COMMUNITY_CHANGED")

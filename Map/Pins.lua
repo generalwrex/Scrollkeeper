@@ -9,6 +9,7 @@
 -- game's own. Turn them off in the settings.
 
 local _, SK = ...
+local L = SK.L
 
 local TEMPLATE = "ScrollkeeperMapPinTemplate"
 local ICON_LIBRARY = "Interface\\Icons\\INV_Misc_Book_09"
@@ -53,27 +54,27 @@ function ScrollkeeperMapPinMixin:OnMouseEnter()
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     if data.kind == "library" then
         GameTooltip:SetText(data.name)
-        GameTooltip:AddLine("Library: Study works here.", 1, 1, 1)
-        GameTooltip:AddLine("Click for a waypoint.", 0.6, 0.6, 0.6)
+        GameTooltip:AddLine(L["Library: Study works here."], 1, 1, 1)
+        GameTooltip:AddLine(L["Click for a waypoint."], 0.6, 0.6, 0.6)
         if data.mine then
-            GameTooltip:AddLine("You've used Study here.", 0.25, 1, 0.25)
+            GameTooltip:AddLine(L["You've used Study here."], 0.25, 1, 0.25)
         end
         if (data.count or 0) > 0 then
-            GameTooltip:AddLine(("Shared by %d |4player:players;."):format(data.count), 0.7, 0.7, 0.7)
+            GameTooltip:AddLine(L["Shared by %d |4player:players;."]:format(data.count), 0.7, 0.7, 0.7)
         elseif data.known and not data.mine then
-            GameTooltip:AddLine("Known library. Stand near the librarian.", 0.7, 0.7, 0.7)
+            GameTooltip:AddLine(L["Known library. Stand near the librarian."], 0.7, 0.7, 0.7)
         end
     elseif data.kind == "book" then
         GameTooltip:SetText(data.name or "Books")
-        GameTooltip:AddLine("Book for the librarians.", 1, 1, 1)
-        if data.mine > 0 then GameTooltip:AddLine(("You found %d here."):format(data.mine), 1, 1, 1) end
-        if data.others > 0 then GameTooltip:AddLine(("Others found %d here."):format(data.others), 0.7, 0.7, 0.7) end
+        GameTooltip:AddLine(L["Book for the librarians."], 1, 1, 1)
+        if data.mine > 0 then GameTooltip:AddLine(L["You found %d here."]:format(data.mine), 1, 1, 1) end
+        if data.others > 0 then GameTooltip:AddLine(L["Others found %d here."]:format(data.others), 0.7, 0.7, 0.7) end
     else
-        GameTooltip:SetText("Untranslated scrolls")
-        if data.mine > 0 then GameTooltip:AddLine(("You looted %d here."):format(data.mine), 1, 1, 1) end
-        if data.others > 0 then GameTooltip:AddLine(("Others looted %d here."):format(data.others), 0.7, 0.7, 0.7) end
+        GameTooltip:SetText(L["Untranslated scrolls"])
+        if data.mine > 0 then GameTooltip:AddLine(L["You looted %d here."]:format(data.mine), 1, 1, 1) end
+        if data.others > 0 then GameTooltip:AddLine(L["Others looted %d here."]:format(data.others), 0.7, 0.7, 0.7) end
     end
-    GameTooltip:AddLine("Scrollkeeper", 0.41, 0.8, 0.94)
+    GameTooltip:AddLine(L["Scrollkeeper"], 0.41, 0.8, 0.94)
     GameTooltip:Show()
 end
 
@@ -93,7 +94,7 @@ function ScrollkeeperMapPinMixin:OnClick(button)
         C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, data.x, data.y))
         if C_SuperTrack then C_SuperTrack.SetSuperTrackedUserWaypoint(true) end
     end
-    SK.Print("waypoint set: " .. data.name)
+    SK.Print(L["waypoint set: "] .. data.name)
 end
 
 ------------------------------------------------------------------------

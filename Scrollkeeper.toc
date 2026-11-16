@@ -15,6 +15,10 @@
 
 # Core: shared helpers every other file uses. Load these first.
 Core\Init.lua
+Core\Locale.lua
+Locales\deDE.lua
+Locales\esES.lua
+Locales\frFR.lua
 Core\Constants.lua
 
 # Data: plain tables of game facts. Edit these when Blizzard changes scrolls.
@@ -32,6 +36,11 @@ Modules\Alts.lua
 Modules\Drops.lua
 Modules\Books.lua
 Modules\Tooltip.lua
+Modules\GuildBank.lua
+Modules\Auction.lua
+Modules\Chat.lua
+Modules\Backfire.lua
+Modules\Farm.lua
 
 # Network: talking to other players' Scrollkeeper.
 Network\Comm.lua
@@ -48,6 +57,8 @@ UI\Panel.lua
 UI\Network.lua
 UI\Alts.lua
 UI\Export.lua
+UI\Mail.lua
+UI\Swap.lua
 UI\Integrations.lua
 UI\Options.lua
 

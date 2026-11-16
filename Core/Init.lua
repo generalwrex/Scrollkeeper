@@ -7,7 +7,18 @@ local ADDON_NAME, SK = ...
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.0.0"
+SK.version = "1.1.0"
+
+-- Translations (see Core/Locale.lua and the Locales folder). Set up here,
+-- in the first file, so every other file can use SK.L right away: any text
+-- without a translation is simply shown in English.
+SK.L = SK.L or setmetatable({}, {
+    __index = function(_, key) return key end,
+    __newindex = function(table, key, value)
+        if value ~= nil and value ~= "" then rawset(table, key, value) end
+    end,
+})
+SK.locale = SK.locale or (GetLocale and GetLocale()) or "enUS"
 do
     local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
     local tagged = getMetadata and getMetadata(ADDON_NAME, "Version")
@@ -126,10 +137,14 @@ local DEFAULTS = {
     showPanel = true,        -- show the panel on mages
     showTooltips = true,     -- add a line to scroll tooltips
     announce = true,         -- print what each decipher produced
-    hideInCombat = true,     -- hide the panel while in combat, show it again after
+    hideInCombat = true,
+    mailHelper = true,       -- at the mailbox: who could use your scrolls
+    guildBankMarks = true,   -- dots on guild bank scrolls someone levels from
+    ahScanButton = true,     -- "Scan scrolls" button on the auction house
+    chatHelper = true,       -- "who needs this? [scroll]" notes in chat     -- hide the panel while in combat, show it again after
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
-    shareChannel = false,    -- also use the public Scrollkeeper channel (experimental)
+    shareChannel = true,     -- also use the public Scrollkeeper channel
     mapPins = true,          -- show libraries and scroll drop spots on the world map
     locked = false,          -- stop the panel from being dragged
     viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
@@ -156,6 +171,18 @@ SK.On("ADDON_LOADED", function(loaded)
     if not ScrollkeeperDB.hideInCombatDefaulted then
         ScrollkeeperDB.hideInCombat = true
         ScrollkeeperDB.hideInCombatDefaulted = true
+    end
+
+    -- The public channel became the default in 1.1.0; switch it on once.
+    if not ScrollkeeperDB.shareChannelDefaulted then
+        ScrollkeeperDB.shareChannel = true
+        ScrollkeeperDB.shareChannelDefaulted = true
+    end
+
+    -- Early 1.1.0 test builds saved ordinary scroll prices too; start clean.
+    if (ScrollkeeperDB.ahPricesCleaned or 0) < 2 then
+        ScrollkeeperDB.ahPrices = nil
+        ScrollkeeperDB.ahPricesCleaned = 2
     end
 
     -- Errors from an older version are no longer useful.

@@ -15,8 +15,9 @@
 -- /sk scan       developer data dump (see Dev/Scan.lua)
 
 local _, SK = ...
+local L = SK.L
 
-local function OnOff(value) return value and "on" or "off" end
+local function OnOff(value) return value and L["on"] or L["off"] end
 
 local commands = {}
 
@@ -26,7 +27,7 @@ commands[""] = function()
     elseif #SK.MyOtherMages() > 0 then
         SK.ToggleAltPanel()
     else
-        SK.Print("log in on a mage once, and this character will show your mages' skill and Study timers.")
+        SK.Print(L["log in on a mage once, and this character will show your mages' skill and Study timers."])
     end
 end
 
@@ -34,16 +35,16 @@ commands.log = function() SK.PrintLog() end
 
 commands.tooltips = function()
     SK.db.showTooltips = not SK.db.showTooltips
-    SK.Print("tooltip lines " .. OnOff(SK.db.showTooltips))
+    SK.Print(L["tooltip lines "] .. OnOff(SK.db.showTooltips))
 end
 
 commands.announce = function()
     SK.db.announce = not SK.db.announce
-    SK.Print("decipher messages " .. OnOff(SK.db.announce))
+    SK.Print(L["decipher messages "] .. OnOff(SK.db.announce))
 end
 
 commands.reset = function()
-    if SK.InCombat() then SK.Print("not in combat.") return end
+    if SK.InCombat() then SK.Print(L["not in combat."]) return end
     SK.db.panelPoint = nil
     SK.db.scale = 1
     if ScrollkeeperPanel then
@@ -51,7 +52,7 @@ commands.reset = function()
         ScrollkeeperPanel:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
         ScrollkeeperPanel:SetScale(1)
     end
-    SK.Print("panel moved to the middle of the screen.")
+    SK.Print(L["panel moved to the middle of the screen."])
 end
 
 commands.options = function() SK.OpenOptions() end
@@ -61,8 +62,30 @@ commands.net = function() SK.ToggleNetwork() end
 commands.network = commands.net
 commands.demo = function() SK.ToggleDemo() end
 commands.export = function() SK.ShowExport() end
+-- /sk mail: who could use your spare scrolls (same list as the mailbox).
+commands.mail = function()
+    local plan = SK.MailPlan and SK.MailPlan() or {}
+    local spare = #(SK.bags.untranslated or {})
+    if #plan == 0 then
+        SK.Print(L["mail list is empty. You're carrying %d untranslated |4scroll:scrolls;; "]:format(spare)
+            .. L["nobody known (your other mages, or Scrollkeeper users online) can use the spare ones."])
+        return
+    end
+    SK.Print(L["who could use your scrolls:"])
+    for _, person in ipairs(plan) do
+        print(L["  %s (%s): %d skill-up, %d they can read, %d for later"]:format(person.name, person.kind,
+            person.ups, person.reads, person.later or 0))
+    end
+end
+commands.swap = function() SK.ToggleSwap() end
+commands.scan = function() SK.ScanAuctionScrolls() end
+commands.plan = function()
+    for i, line in ipairs(SK.FarmPlanLines()) do
+        if i == 1 then SK.Print(line) else print("  " .. line) end
+    end
+end
 commands.about = function()
-    SK.Print(("version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."):format(SK.version))
+    SK.Print(L["version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."]:format(SK.version))
     for _, link in ipairs(SK.LINKS or {}) do
         print(("  |cffffd100%s|r  %s"):format(link[1], link[2]))
     end
@@ -71,7 +94,7 @@ commands.bug = function() SK.ShowBugReport() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print("commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk about, /sk demo, /sk reset")
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk mail, /sk swap, /sk scan, /sk plan, /sk about, /sk demo, /sk reset"])
 end
 
 -- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.

@@ -9,10 +9,21 @@
 
 local _, SK = ...
 
--- "Naage-Forever": this character's key in SK.db.mages.
+-- This character's full name. Forever characters have a first name and a
+-- surname, and UnitName("player") gives them as two values ("Test", "Sheep").
+-- Elsewhere the second value is empty, so this is just the name.
+function SK.PlayerFullName()
+    local first, last = UnitName("player")
+    if type(last) == "string" and last ~= "" and last ~= (GetRealmName and GetRealmName()) then
+        return first .. " " .. last
+    end
+    return first
+end
+
+-- "Archmage Naage-Realm": this character's key in SK.db.mages.
 function SK.CharKey()
-    local name, realm = UnitName("player"), GetRealmName and GetRealmName() or ""
-    return (name or "?") .. "-" .. (realm or "")
+    local realm = GetRealmName and GetRealmName() or ""
+    return (SK.PlayerFullName() or "?") .. "-" .. (realm or "")
 end
 
 -- This character's saved entry, if it's a mage.
@@ -22,7 +33,12 @@ function SK.MyMage()
     local key = SK.CharKey()
     local entry = SK.db.mages[key]
     if not entry then
-        entry = { name = UnitName("player") }
+        -- Saved before surnames were read? Pick up that entry ("Test-Realm").
+        local first = (SK.PlayerFullName() or ""):match("^(%S+) ")
+        local oldKey = first and (first .. "-" .. (GetRealmName and GetRealmName() or ""))
+        entry = (oldKey and SK.db.mages[oldKey]) or { }
+        if oldKey then SK.db.mages[oldKey] = nil end
+        entry.name = SK.PlayerFullName()
         -- The Study timer used to be shared by the whole account. The
         -- first mage to log in after the update keeps it.
         if (SK.db.studyReadyAt or 0) > 0 then
@@ -39,12 +55,25 @@ local function Save()
     local entry = SK.MyMage()
     if not entry then return end
     local skill = SK.GetComprehension()
-    entry.name = UnitName("player")
+    entry.name = SK.PlayerFullName()
     entry.level = UnitLevel("player")
     entry.skill = skill.rank
     entry.max = skill.max
     entry.knowsStudy = SK.KnowsStudy() and true or false
+    entry.faction = UnitFactionGroup and UnitFactionGroup("player") or entry.faction
+    entry.realm = GetRealmName and GetRealmName() or entry.realm
     entry.seen = time()
+
+    -- Forever names have a first name and a surname ("Test Sheep"). Older
+    -- saves only had the first name; drop that leftover entry for this
+    -- character so it isn't listed twice (or mailed at the wrong name).
+    local full = entry.name or ""
+    local first = full:match("^(%S+) ")
+    if first then
+        local realm = GetRealmName and GetRealmName() or ""
+        local oldKey = first .. "-" .. realm
+        if oldKey ~= SK.CharKey() and SK.db.mages[oldKey] then SK.db.mages[oldKey] = nil end
+    end
 end
 
 SK.Listen("READY", Save)
@@ -85,5 +114,22 @@ function SK.MyMagesFor(needs)
         if ga ~= gb then return ga end
         return a.skill < b.skill
     end)
+    return list
+end
+
+-- Your other mages you can mail right now: same realm and faction as
+-- the character you're on.
+function SK.MailableMages()
+    local list = {}
+    local realm = GetRealmName and GetRealmName()
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    for _, mage in ipairs(SK.MyOtherMages()) do
+        local entry = SK.db.mages[mage.key] or {}
+        local entryRealm = entry.realm or mage.key:match("%-(.+)$")
+        if (not realm or not entryRealm or entryRealm == realm)
+            and (not faction or not entry.faction or entry.faction == faction) then
+            list[#list + 1] = mage
+        end
+    end
     return list
 end

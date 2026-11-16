@@ -3,6 +3,7 @@
 -- item button. Keeping them here keeps UI/Panel.lua about layout only.
 
 local _, SK = ...
+local L = SK.L
 
 SK.UI = {}
 
@@ -98,15 +99,15 @@ end
 function SK.UI.WhyNotUsable(scroll)
     if not scroll or scroll.usable ~= false then return nil end
     if scroll.levelOK == false then
-        return ("You need level %d for %s."):format(scroll.level or 0, SK.ScrollLink(scroll.itemID, scroll.name))
+        return L["You need level %d for %s."]:format(scroll.level or 0, SK.ScrollLink(scroll.itemID, scroll.name))
     end
     if scroll.fits == false then
         local _, weapon = SK.MainHandWeapon()
-        local text = ("%s is only for %s. You're holding %s."):format(SK.ScrollLink(scroll.itemID, scroll.name),
+        local text = L["%s is only for %s. You're holding %s."]:format(SK.ScrollLink(scroll.itemID, scroll.name),
             SK.WeaponWithArticle and SK.WeaponWithArticle(scroll.imbueFor) or ("a " .. (scroll.imbueFor or "different weapon")),
             weapon or "no weapon")
         local inBags = SK.WeaponInBagsFor and SK.WeaponInBagsFor(scroll)
-        if inBags then text = text .. (" Equip your %s to use it."):format(inBags) end
+        if inBags then text = text .. L[" Equip your %s to use it."]:format(inBags) end
         return text
     end
     return nil
@@ -158,7 +159,7 @@ function SK.UI.CreateItemButton(parent, name, size)
         if GameTooltip.SetItemByID then GameTooltip:SetItemByID(self.itemID) end
         local scroll = self.scroll
         if self.best then
-            GameTooltip:AddLine(("|cffffd100Best %s you can use.|r"):format((self.categoryLabel or ""):lower()))
+            GameTooltip:AddLine(L["|cffffd100Best %s you can use.|r"]:format((self.categoryLabel or ""):lower()))
         else
             local reason = SK.UI.WhyNotUsable(scroll)
             if reason then GameTooltip:AddLine("|cffff6666" .. reason .. "|r", 1, 1, 1, true) end
