@@ -27,7 +27,7 @@ def read_exports(paths):
     """Yield each export as a list of lines."""
     for path in paths:
         current = None
-        for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        for raw in path.read_text(encoding="utf-8-sig", errors="replace").splitlines():
             line = raw.strip()
             if line == HEADER:
                 if current:
@@ -146,6 +146,11 @@ def main():
             if heard and known_heard and size(data) <= size(known):
                 continue                       # keep the more complete heard copy
         players[key] = data                    # otherwise later exports replace earlier
+
+    # Never wipe the community data because nothing could be read.
+    if paths and not players and lua_out:
+        print(f"Found {len(paths)} export files but couldn't read any of them, so {lua_out} was left alone.")
+        sys.exit(1)
 
     odds = defaultdict(lambda: defaultdict(int))
     skillups = defaultdict(lambda: defaultdict(lambda: [0, 0]))

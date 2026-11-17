@@ -62,7 +62,7 @@ local function HelloFields()
     local skill = SK.GetComprehension()
     return Net.PROTOCOL, SK.version, class, UnitLevel("player"),
         skill.rank, skill.max, SK.isMage and MyTiers() or "", SK.isMage and MyUpgrades() or "",
-        UnitGUID("player"), SK.db.share and SK.ExportID() or ""
+        UnitGUID("player"), SK.db.share and SK.ExportID() or "", SK.db.anonymous and "1" or ""
 end
 
 function SK.SendHello()
@@ -112,7 +112,9 @@ Net.Handle("H", function(sender, f, source)
     local exportID = tostring(f[10] or ""):match("^%x%x%x%x%x%x%x%x$")
     peer.exportID = exportID
     SK.peers[sender] = peer
-    if exportID and SK.db.community and SK.db.community[sender] then
+    -- Anonymous players still count, but never show up by name.
+    peer.anonymous = f[11] == "1"
+    if SK.db.community and SK.db.community[sender] then
         SK.db.community[sender].exportID = exportID
     end
 
@@ -145,10 +147,12 @@ end
 
 -- Every mage running Scrollkeeper we've heard from recently:
 -- list of { name (to mail), short, skill, tiers, kind }.
-function SK.FreshMages()
+-- Anonymous players are left out unless includeAnonymous (for counts only).
+function SK.FreshMages(includeAnonymous)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name) then
+        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name)
+            and (includeAnonymous or not peer.anonymous) then
             list[#list + 1] = { name = name, short = Net.ShortName(name), skill = peer.skill or 0,
                 tiers = peer.tiers or {}, kind = KindOf(name, peer) }
         end
@@ -161,7 +165,7 @@ end
 function SK.MagesWhoNeed(tier)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] then
+        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous then
             local inGroup = peer.source == "PARTY" or peer.source == "RAID" or peer.source == "INSTANCE_CHAT"
                 or (UnitInParty and UnitInParty(Net.ShortName(name)))
             list[#list + 1] = { name = Net.ShortName(name), skill = peer.skill, group = inGroup and true or false }
@@ -174,11 +178,20 @@ function SK.MagesWhoNeed(tier)
     return list
 end
 
--- Everyone heard from recently, mages first.
+-- How many anonymous players we've heard from recently.
+function SK.AnonymousCount()
+    local count = 0
+    for name, peer in pairs(SK.peers) do
+        if Fresh(peer) and peer.anonymous and not Net.IsMe(name) then count = count + 1 end
+    end
+    return count
+end
+
+-- Everyone heard from recently, mages first (anonymous players aren't listed).
 function SK.PeerList()
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) then
+        if Fresh(peer) and not peer.anonymous then
             list[#list + 1] = { name = Net.ShortName(name), peer = peer }
         end
     end

@@ -4,10 +4,27 @@
 
 local ADDON_NAME, SK = ...
 
+-- How much to share, as one choice:
+--   full    everyone, with your name
+--   anon    everyone, but your name isn't shown in other players' lists
+--   simple  only your guild, group and friends
+--   none    the network is off
+-- It sets the older share / shareChannel / anonymous settings the rest of
+-- the addon reads.
+function SK.SetSharing(mode)
+    local db = SK.db or ScrollkeeperDB
+    if not db then return end
+    if mode ~= "full" and mode ~= "anon" and mode ~= "simple" and mode ~= "none" then mode = "full" end
+    db.sharing = mode
+    db.share = mode ~= "none"
+    db.shareChannel = mode == "full" or mode == "anon"
+    db.anonymous = mode == "anon"
+end
+
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.1.2"
+SK.version = "1.1.3"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -148,6 +165,7 @@ local DEFAULTS = {
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
     shareChannel = true,     -- also use the public Scrollkeeper channel
+    anonymous = false,       -- share without showing your name in other players' lists
     mapPins = true,          -- show libraries and scroll drop spots on the world map
     locked = false,          -- stop the panel from being dragged
     viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
@@ -182,6 +200,14 @@ SK.On("ADDON_LOADED", function(loaded)
         ScrollkeeperDB.shareChannel = true
         ScrollkeeperDB.shareChannelDefaulted = true
     end
+
+    -- 1.1.4: sharing is one choice now (full, anon, simple or none).
+    if ScrollkeeperDB.sharing == nil then
+        if ScrollkeeperDB.share == false then ScrollkeeperDB.sharing = "none"
+        elseif ScrollkeeperDB.shareChannel == false then ScrollkeeperDB.sharing = "simple"
+        else ScrollkeeperDB.sharing = "full" end
+    end
+    SK.SetSharing(ScrollkeeperDB.sharing)
 
     -- Early 1.1.0 test builds saved ordinary scroll prices too; start clean.
     if (ScrollkeeperDB.ahPricesCleaned or 0) < 2 then

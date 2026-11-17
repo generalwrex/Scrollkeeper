@@ -395,13 +395,42 @@ do
     pick(2) nextPage()      -- Advanced
     pick(2) nextPage()      -- turn on the scroll icon
     nextPage()              -- combat: keep
-    pick(2) nextPage()      -- share: guild and group
+    pick(2) nextPage()      -- share: anonymous
   else
     pick(2) nextPage()      -- tooltips: no
     nextPage()              -- mailbox: keep
-    pick(2) nextPage()      -- share: guild and group
+    pick(3) nextPage()      -- share: simple
   end
   print("SETUP last page", f.next._text)
   nextPage()                -- language: keep, Done
-  print("SETUP result", SK.db.viewMode, SK.db.scrollIcon, SK.db.showTooltips, SK.db.share, SK.db.shareChannel, SK.db.setupDone, SK.db.setupDoneOther, f:IsShown(), "panel", ScrollkeeperPanel and ScrollkeeperPanel:IsShown())
+  print("SETUP result", SK.db.viewMode, SK.db.scrollIcon, SK.db.showTooltips, SK.db.share, SK.db.shareChannel, SK.db.setupDone, SK.db.setupDoneOther, f:IsShown(), "sharing", SK.db.sharing, SK.db.anonymous, "panel", ScrollkeeperPanel and ScrollkeeperPanel:IsShown())
+  -- Already set up: nothing new, so nothing opens.
+  f:Hide()
+  SK.ShowSetup(true)
+  print("SETUP nothing new", f:IsShown())
+  -- A changed question (sharing v3) comes back alone.
+  local seenField = SK.isMage and "setupSeen" or "setupSeenOther"
+  SK.db[seenField].sharing = 1
+  SK.ShowSetup(true)
+  print("SETUP only new", f:IsShown(), f.question:GetText(), f.next._text)
+  f:Hide()
+  -- Someone who did setup in 1.1.2/1.1.3 (no seen list) gets the sharing page only.
+  SK.db[seenField] = nil
+  TIMERS = {}
+  SK.Send("READY")
+  for _, t in ipairs(TIMERS) do pcall(t) end
+  print("SETUP upgrade", f:IsShown(), f.question:GetText(), f.step:GetText())
+  f:Hide()
+  -- Skipping the full setup opens the panel.
+  if ScrollkeeperPanel then ScrollkeeperPanel:Hide() end
+  SK.db.showPanel = false
+  SK.ShowSetup()
+  f.skip:GetScript("OnClick")(f.skip)
+  -- An anonymous peer: counted, not named.
+  SK.peers["Hidden-Realm"] = { class = "MAGE", level = 30, skill = 50, max = 150, tiers = {}, upgrades = {}, seen = time(), anonymous = true }
+  local named = 0
+  for _, entry in ipairs(SK.PeerList()) do if entry.name == "Hidden" then named = named + 1 end end
+  print("ANON", SK.AnonymousCount(), "named", named, "mail", #SK.FreshMages(), "counted", #SK.FreshMages(true))
+  SK.peers["Hidden-Realm"] = nil
+  print("SETUP skip", f:IsShown(), "panel", ScrollkeeperPanel and ScrollkeeperPanel:IsShown())
 end

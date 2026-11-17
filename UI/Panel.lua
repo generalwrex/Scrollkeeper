@@ -693,7 +693,7 @@ local function UpdateStats()
     end
     side.rows.books.value:SetText(tostring(books))
 
-    side.rows.sharing.value:SetText(SK.db.share and L["|cff40ff40on|r"] or L["|cffff6666off|r"])
+    side.rows.sharing.value:SetText(SK.SharingLabel())
 end
 
 ------------------------------------------------------------------------

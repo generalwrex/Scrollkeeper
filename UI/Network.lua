@@ -199,11 +199,17 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     function pane:Refresh()
         if not self.regions[1]:IsVisible() then return end
         local peers = SK.PeerList()
+        -- Anonymous players aren't named, but show that they're there.
+        local anonymous = SK.AnonymousCount and SK.AnonymousCount() or 0
+        if anonymous > 0 then peers[#peers + 1] = { anonymous = anonymous } end
 
         self.users:SetRows(peers, function(row, entry)
             row.itemID = nil
             local peer = entry.peer
-            if peer.class == "MAGE" then
+            if entry.anonymous then
+                row.label:SetText("|cff808080" .. L["Anonymous"] .. "|r")
+                row.value:SetText("|cff808080" .. L["+%d |4player:players;"]:format(entry.anonymous) .. "|r")
+            elseif peer.class == "MAGE" then
                 local tiers = {}
                 for _, tier in ipairs(SK.TIERS) do
                     if peer.tiers[tier] then tiers[#tiers + 1] = tier end
@@ -292,8 +298,19 @@ end
 -- Filling it in
 ------------------------------------------------------------------------
 
+local SHARING_NAMES = { full = "Full", anon = "Anonymous", simple = "Simple" }
+
+-- Colored name of the current sharing mode ("Full", "Anonymous", "Simple"), or "off".
+function SK.SharingLabel()
+    local name = SK.db.share and SHARING_NAMES[SK.db.sharing]
+    if not name then
+        return SK.db.share and L["|cff40ff40on|r"] or L["|cffff6666off|r"]
+    end
+    return "|cff40ff40" .. L[name] .. "|r"
+end
+
 function SK.NetworkFooter()
-    local sharing = SK.db.share and L["|cff40ff40on|r"] or L["|cffff6666off|r"]
+    local sharing = SK.SharingLabel()
     local demo = SK.demoCommunity and L["  |cffff8040demo|r"] or ""
     return L["Sharing "] .. sharing .. L["  ·  scroll data only"] .. demo
 end

@@ -1,5 +1,21 @@
 # Scrollkeeper
 
+## 1.1.4
+
+- **Sharing is one dropdown now** (in setup and in the settings): Full, Anonymous, Simple or None.
+  - Full: everyone online, with your name. Same as before.
+  - Anonymous: your scroll data still counts for everyone's odds and drop spots, but you won't show up in anyone's network list, swap board or mailbox list (so nobody can mail you scrolls from them either).
+  - Simple: just your guild, group and friends.
+  - None: turns off the whole network.
+- The Network list shows how many anonymous players are around ("Anonymous +3 players"), so they still count even without names.
+- The panel and the Network window show which sharing mode you're on now, instead of just "on".
+- Community data is back. 1.1.3 went out with it empty by accident, sorry!
+
+## 1.1.3
+
+- The share data script has a .bat now, so you can just double-click it (`tools/community/share-scrollkeeper-data.bat`). It also finds your WoW folder on its own, so it works no matter where the game is installed.
+- When you share your data on GitHub, the issue gets closed automatically once your data is in a release, so you know it made it in.
+
 ## 1.1.2
 
 - **First-time setup.** The first time you log in with Scrollkeeper a little setup window walks you through a few quick questions, one page at a time. On a mage: which panel view, minimap button and/or scroll icon, hide in combat, how much to share, and language. On other classes: tooltip lines, the mailbox helper, sharing and language. Run it again any time with `/sk setup`.
@@ -10,7 +26,7 @@
 - The settings page isn't one giant list anymore. It's split into sections (Panel, Tooltips and chat, Sharing, Mailbox/guild bank/AH, Map), stuff that depends on something else greys out when it's off, and there's a "Move to middle" button if you lose the panel off screen.
 - Fixed a bunch of German/Spanish/French text that was still showing in English on the panel.
 - The About page says I'm Natop on CurseForge now too.
-- Sharing your data is way easier now. Scrollkeeper keeps your latest export when you log out, so there's a little script (`tools/community/share-scrollkeeper-data.bat`, just double-click it) that opens the GitHub "Share your data" page with everything already filled in. You just hit Create.
+- Sharing your data is way easier now. Scrollkeeper keeps your latest export when you log out, so there's a little script (`tools/community/share-scrollkeeper-data.ps1`) that opens the GitHub "Share your data" page with everything already filled in. You just hit Create.
 
 ## 1.1.1
 

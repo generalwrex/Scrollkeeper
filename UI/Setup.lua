@@ -11,8 +11,8 @@
 local _, SK = ...
 local L = SK.L
 
-local WIDTH, HEIGHT = 440, 424
-local OPTION_HEIGHT, OPTION_GAP = 46, 6
+local WIDTH, HEIGHT = 440, 464
+local OPTION_HEIGHT, OPTION_GAP = 54, 6
 local MAX_OPTIONS = 5
 local window
 local questions, page = {}, 1
@@ -20,7 +20,9 @@ local answers = {}
 
 ------------------------------------------------------------------------
 -- The questions
---   { key, question, multi, options = { { value, label, description, icon } } }
+--   { key, version, question, multi, options = { { value, label, description, icon } } }
+-- When a question is added (or changed enough to ask again, by raising its
+-- version), people who already did setup get just that page next login.
 --   multi = each option is its own on/off setting (pick any)
 ------------------------------------------------------------------------
 
@@ -34,7 +36,7 @@ local function BuildQuestions()
             { "full", L["Advanced"], L["Everything: all the numbers, sections and weapon upgrades."], ICON .. "INV_Misc_Book_09" },
             { "mini", L["Title only"], L["Just the title and your skill bar."], ICON .. "INV_Scroll_05" },
         } }
-        list[#list + 1] = { question = L["How do you want to open it?"], multi = true,
+        list[#list + 1] = { key = "open", question = L["How do you want to open it?"], multi = true,
             hint = L["Pick any, or none. The panel's X and /sk always work."], options = {
             { "minimapButton", L["Minimap button"], L["A round button on the minimap's edge with your scroll count."], ICON .. "INV_Misc_Map_01" },
             { "scrollIcon", L["Scroll icon"], L["A small icon you can put anywhere with your scroll count."], ICON .. "INV_Scroll_03" },
@@ -53,11 +55,12 @@ local function BuildQuestions()
             { false, L["No"], L["Just the normal mailbox."], ICON .. "INV_Misc_QuestionMark" },
         } }
     end
-    list[#list + 1] = { key = "sharing", question = L["Share scroll data with other Scrollkeeper users?"],
-        hint = L["Only scroll data is shared, never names."], options = {
-        { "everyone", L["Everyone"], L["Best odds and drop spots, from every Scrollkeeper user online."], ICON .. "Spell_Holy_PrayerOfHealing02" },
-        { "guild", L["Guild and group"], L["Only the people you play with."], ICON .. "INV_Shirt_GuildTabard_01" },
-        { "off", L["No"], L["Nothing is sent or received."], ICON .. "Ability_Rogue_Feint" },
+    list[#list + 1] = { key = "sharing", version = 2, question = L["How much should Scrollkeeper share?"],
+        hint = L["Sharing is what powers community odds, drop spots, the swap board and the mailbox list. Only scroll data is sent."], options = {
+        { "full", L["Full"], L["Share with every Scrollkeeper user online, with your name."], ICON .. "Spell_Holy_PrayerOfHealing02" },
+        { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
+        { "simple", L["Simple"], L["Only your guild, group and friends."], ICON .. "INV_Shirt_GuildTabard_01" },
+        { "none", L["None"], L["Turns off the whole network: no shared odds, swap board, or guildies at the mailbox."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
     for _, language in ipairs(SK.LANGUAGES or {}) do
@@ -73,8 +76,7 @@ end
 -- The current answer for a question, from your settings.
 local function Current(key)
     if key == "sharing" then
-        if not SK.db.share then return "off" end
-        return SK.db.shareChannel and "everyone" or "guild"
+        return SK.db.sharing or "full"
     elseif key == "viewMode" then
         return SK.ViewMode and SK.ViewMode() or "compact"
     end
@@ -90,24 +92,48 @@ local function Selected(question, value)
     return Current(question.key) == value
 end
 
+-- Which questions this character type has answered: { key = version }.
+local function Seen()
+    local field = SK.isMage and "setupSeen" or "setupSeenOther"
+    SK.db[field] = SK.db[field] or {}
+    return SK.db[field]
+end
+
+local function MarkSeen(list)
+    local seen = Seen()
+    for _, q in ipairs(list) do seen[q.key] = q.version or 1 end
+end
+
+local function Unseen(list)
+    local seen, out = Seen(), {}
+    for _, q in ipairs(list) do
+        if (seen[q.key] or 0) < (q.version or 1) then out[#out + 1] = q end
+    end
+    return out
+end
+
 local function Apply()
     local oldLanguage = SK.db.language
     for key, value in pairs(answers) do
         if key == "sharing" then
-            SK.db.share = value ~= "off"
-            SK.db.shareChannel = value == "everyone"
+            SK.SetSharing(value)
         else
             SK.db[key] = value
         end
     end
     SK.db[SK.isMage and "setupDone" or "setupDoneOther"] = true
+    MarkSeen(questions)
     -- Mages: open the panel in the view they just picked.
-    if SK.isMage then SK.db.showPanel = true end
+    -- (Only when this run asked about the view, not for a single new question.)
+    if SK.isMage and questions[1] and questions[1].key == "viewMode" then
+        SK.db.showPanel = true
+    end
     if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
     if SK.UpdateCombatHiding then SK.UpdateCombatHiding() end
     if SK.RefreshIcon then SK.RefreshIcon() end
     if SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
     if SK.Net and SK.Net.UpdateChannel then SK.Net.UpdateChannel() end
+    if SK.db.share and SK.SendHello then SK.SendHello() end
     return SK.db.language ~= oldLanguage
 end
 
@@ -148,7 +174,8 @@ local function MakeOption(i)
     option.description:SetPoint("TOPLEFT", option.label, "BOTTOMLEFT", 0, -3)
     option.description:SetPoint("RIGHT", option, "RIGHT", -34, 0)
     option.description:SetJustifyH("LEFT")
-    option.description:SetWordWrap(false)
+    option.description:SetWordWrap(true)   -- up to two lines
+    if option.description.SetMaxLines then option.description:SetMaxLines(2) end
 
     option.check = option:CreateTexture(nil, "OVERLAY")
     option.check:SetSize(22, 22)
@@ -250,9 +277,13 @@ local function Build()
     window.skip:SetText(L["Skip"])
     window.skip:SetScript("OnClick", function()
         SK.db[SK.isMage and "setupDone" or "setupDoneOther"] = true
-    -- Mages: open the panel in the view they just picked.
-    if SK.isMage then SK.db.showPanel = true end
+        MarkSeen(questions)
         window:Hide()
+        -- Skipping the full setup still opens the panel (with the defaults).
+        if SK.isMage and questions[1] and questions[1].key == "viewMode" and not SK.InCombat() then
+            SK.db.showPanel = true
+            if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
+        end
         SK.Print(L["setup skipped. Run it any time with /sk setup."])
     end)
 end
@@ -291,12 +322,15 @@ function SK.RefreshSetupPage()
     window.next:SetText(page < #questions and L["Next"] or L["Done"])
 end
 
-function SK.ShowSetup()
+-- onlyNew: just the questions this character hasn't answered yet.
+function SK.ShowSetup(onlyNew)
     if SK.InCombat() then
         SK.Print(L["the setup can be opened after combat."])
         return
     end
     questions = BuildQuestions()
+    if onlyNew then questions = Unseen(questions) end
+    if #questions == 0 then return end
     page, answers = 1, {}
     if not window then Build() end
     SK.RefreshSetupPage()
@@ -305,11 +339,20 @@ end
 
 -- The first time you log in with Scrollkeeper (any class): open it a few
 -- seconds after logging in. Mages and other classes are asked separately,
--- since they get different questions.
+-- since they get different questions. After that, only new questions are
+-- shown, once.
 SK.Listen("READY", function()
     local doneKey = SK.isMage and "setupDone" or "setupDoneOther"
-    if SK.db[doneKey] then return end
+    -- Did setup before questions were tracked (1.1.2/1.1.3): everything
+    -- that existed then counts as answered.
+    if SK.db[doneKey] and not SK.db[SK.isMage and "setupSeen" or "setupSeenOther"] then
+        local seen = Seen()
+        for _, q in ipairs(BuildQuestions()) do seen[q.key] = 1 end
+    end
+    if SK.db[doneKey] and #Unseen(BuildQuestions()) == 0 then return end
     C_Timer.After(4, function()
-        if not SK.db[doneKey] and not SK.InCombat() then SK.ShowSetup() end
+        if SK.InCombat() then return end
+        if not SK.db[doneKey] then SK.ShowSetup()
+        elseif #Unseen(BuildQuestions()) > 0 then SK.ShowSetup(true) end
     end)
 end)

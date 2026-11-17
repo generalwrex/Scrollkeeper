@@ -1,4 +1,4 @@
-﻿Scrollkeeper export 1
+Scrollkeeper export 1
 meta|1.1.2|1.60.1|16001|DRUID|14|0|0|862ee863
 T|1|213564:1,275067:1,275069:1,954:1
 U|1|gray:0/4

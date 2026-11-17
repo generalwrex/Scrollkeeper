@@ -61,7 +61,7 @@ function SK.SkillUpsFor(needs)
     for _, mage in ipairs(SK.MyOtherMages and SK.MyOtherMages() or {}) do
         if mage.skill >= needs then Consider(SK.SkillUpChance(needs, mage.skill)) end
     end
-    for _, mage in ipairs(SK.FreshMages and SK.FreshMages() or {}) do
+    for _, mage in ipairs(SK.FreshMages and SK.FreshMages(true) or {}) do
         if mage.kind == "guild" and mage.tiers[needs] then Consider(SK.SkillUpChance(needs, mage.skill)) end
     end
     return count, best

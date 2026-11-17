@@ -15,6 +15,7 @@ local function AddCheckbox(key, label, tooltip, default)
         if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
         if key == "hideInCombat" and SK.UpdateCombatHiding then SK.UpdateCombatHiding() end
         if SK.Net and (key == "share" or key == "shareChannel") then SK.Net.UpdateChannel() end
+        if key == "anonymous" and SK.SendHello then SK.SendHello() end
         if key == "scrollIcon" and SK.RefreshIcon then SK.RefreshIcon() end
         if key == "minimapButton" and SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
         SK.Send("DROPS_CHANGED")
@@ -217,11 +218,25 @@ SK.Listen("READY", function()
 
         -- Sharing ------------------------------------------------------------
         AddHeader(L["Sharing"])
-        local share = AddCheckbox("share", L["Share with other players"],
-            L["Talk to other Scrollkeeper users in your guild and group: what scrolls became, where they drop, which libraries work, and which mages need which scrolls. Only scroll data is sent."], true)
-        local everyone = AddCheckbox("shareChannel", L["Share with everyone"],
-            L["Also share through a hidden Scrollkeeper channel, so odds, drop spots and libraries come from every Scrollkeeper user online, not just your guild and group."], true)
-        DependsOn(everyone, share, "share")
+        SK.Safely("settings sharing", function()
+            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_sharing", "sharing", SK.db,
+                "string", L["Sharing"], "full")
+            setting:SetValueChangedCallback(function()
+                SK.SetSharing(SK.db.sharing)
+                if SK.Net and SK.Net.UpdateChannel then SK.Net.UpdateChannel() end
+                if SK.db.share and SK.SendHello then SK.SendHello() end
+            end)
+            local function Options()
+                local container = Settings.CreateControlTextContainer()
+                container:Add("full", L["Full"], L["Share with every Scrollkeeper user online, with your name."])
+                container:Add("anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."])
+                container:Add("simple", L["Simple"], L["Only your guild, group and friends."])
+                container:Add("none", L["None"], L["Turns off the whole network: no shared odds, swap board, or guildies at the mailbox."])
+                return container:GetData()
+            end
+            Settings.CreateDropdown(category, setting, Options,
+                L["What Scrollkeeper shares with other players: what scrolls became, where they drop, which libraries work and who needs which scrolls. Only scroll data is sent, never chat or gold."])
+        end)
 
         -- Helpers ------------------------------------------------------------
         AddHeader(L["Mailbox, guild bank and auction house"])
