@@ -90,13 +90,18 @@ local function OnItemTooltip(tooltip, data)
     if type(data) ~= "table" or not tooltip or not tooltip.AddLine then return end
     local needs = SK.RequirementFromLines(data.lines)
     if needs then AddScrollLines(tooltip, needs, data.id) end
-    -- Any scroll Scrollkeeper saw on the auction house.
-    local price, at
-    if data.id and SK.AuctionPrice then price, at = SK.AuctionPrice(data.id) end
-    if price and GetMoneyString then
-        tooltip:AddDoubleLine(TITLE .. L[" auction house:"], GetMoneyString(price) .. " |cff808080(" .. SK.TimeAgo(at) .. ")|r",
-            1, 0.82, 0, 1, 1, 1)
+    -- Any scroll Scrollkeeper saw on the auction house: the price the plan
+    -- goes by, which is Auctionator's or TSM's when installed, else our scan's.
+    if not (data.id and GetMoneyString and SK.AuctionPrice) then return end
+    local own, at = SK.AuctionPrice(data.id)
+    if not own then return end   -- only scrolls we've seen on the AH
+    local price, source = own, nil
+    if SK.AddonAuctionPrice then
+        local addonPrice, addonName = SK.AddonAuctionPrice(data.id)
+        if addonPrice then price, source = addonPrice, addonName end
     end
+    tooltip:AddDoubleLine(TITLE .. L[" auction house:"],
+        GetMoneyString(price) .. " |cff808080(" .. (source or SK.TimeAgo(at)) .. ")|r", 1, 0.82, 0, 1, 1, 1)
 end
 
 SK.Listen("READY", function()

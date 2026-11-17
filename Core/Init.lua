@@ -24,7 +24,7 @@ end
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.1.3"
+SK.version = "1.1.4"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -161,6 +161,7 @@ local DEFAULTS = {
     chatHelper = true,       -- "who needs this? [scroll]" notes in chat
     scrollIcon = false,      -- small icon with the number of scrolls ready
     minimapButton = true,    -- the round button on the minimap's edge
+    reminderToast = true,    -- pop-up when your imbue or familiar drops off (UI/Toast.lua)
     language = "auto",       -- "auto" (the game's language) or enUS, deDE, esES, frFR
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel
     share = true,            -- talk to other Scrollkeeper users in your guild and group
@@ -210,9 +211,13 @@ SK.On("ADDON_LOADED", function(loaded)
     SK.SetSharing(ScrollkeeperDB.sharing)
 
     -- Early 1.1.0 test builds saved ordinary scroll prices too; start clean.
-    if (ScrollkeeperDB.ahPricesCleaned or 0) < 2 then
+    -- 1.1.4 test builds counted bid-only auctions and got counts/averages
+    -- wrong; start clean again. The old auto-scan setting is gone too.
+    if (ScrollkeeperDB.ahPricesCleaned or 0) < 3 then
         ScrollkeeperDB.ahPrices = nil
-        ScrollkeeperDB.ahPricesCleaned = 2
+        ScrollkeeperDB.ahLastScan = nil
+        ScrollkeeperDB.ahAutoScan = nil
+        ScrollkeeperDB.ahPricesCleaned = 3
     end
 
     -- Errors from an older version are no longer useful.

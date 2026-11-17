@@ -80,11 +80,7 @@ end
 commands.swap = function() SK.ToggleSwap() end
 commands.setup = function() SK.ShowSetup() end
 commands.scan = function() SK.ScanAuctionScrolls() end
-commands.plan = function()
-    for i, line in ipairs(SK.FarmPlanLines()) do
-        if i == 1 then SK.Print(line) else print("  " .. line) end
-    end
-end
+commands.plan = function() SK.TogglePlan() end
 commands.about = function()
     SK.Print(L["version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."]:format(SK.version))
     print("  " .. L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER or "Archmage Naage"))

@@ -140,12 +140,17 @@ end
 -- Building the window (runs once)
 ------------------------------------------------------------------------
 
+local titleText   -- the "Scrollkeeper" title, lined up with the summary in Build
+
 local function CreateWindow()
     -- The game's own window: portrait, gold border, title bar, close button.
     local ok, frame = pcall(CreateFrame, "Frame", "ScrollkeeperPanel", UIParent, "PortraitFrameTemplate")
     if ok and frame and type(frame.SetTitle) == "function" then
         usingGameFrame = true
         frame:SetTitle(L["Scrollkeeper"])
+        local container = type(frame.TitleContainer) == "table" and frame.TitleContainer or nil
+        titleText = (container and type(container.TitleText) == "table" and container.TitleText)
+            or (type(frame.TitleText) == "table" and frame.TitleText) or nil
         if type(frame.SetPortraitToAsset) == "function" then
             frame:SetPortraitToAsset(PORTRAIT)
         elseif type(frame.SetPortraitTextureRaw) == "function" then
@@ -171,6 +176,7 @@ local function CreateWindow()
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("TOP", 0, -10)
     title:SetText(L["Scrollkeeper"])
+    titleText = title
     local portrait = frame:CreateTexture(nil, "ARTWORK")
     portrait:SetSize(36, 36)
     portrait:SetPoint("TOPLEFT", 10, -10)
@@ -316,6 +322,23 @@ local function Build()
     parts.summary:SetPoint("TOPLEFT", 62, -32)
     parts.summary:SetPoint("RIGHT", panel, "RIGHT", -80, 0)
     parts.summary:SetJustifyH("CENTER")
+    -- Line the title up with the summary under it. The game's title bar
+    -- centers its text between the portrait and the close button, which is
+    -- off to the right; slide it over by however far apart they are.
+    local function AlignTitle()
+        if not (titleText and titleText.GetCenter and titleText.GetNumPoints) then return end
+        local tx, sx = titleText:GetCenter(), parts.summary:GetCenter()
+        if not (tx and sx) or math.abs(sx - tx) < 0.5 then return end
+        local dx = sx - tx
+        local points = {}
+        for i = 1, titleText:GetNumPoints() do points[i] = { titleText:GetPoint(i) } end
+        titleText:ClearAllPoints()
+        for _, p in ipairs(points) do
+            titleText:SetPoint(p[1], p[2], p[3], (p[4] or 0) + dx, p[5] or 0)
+        end
+    end
+    panel:HookScript("OnShow", function() C_Timer.After(0, function() SK.Safely("title", AlignTitle) end) end)
+    C_Timer.After(0, function() SK.Safely("title", AlignTitle) end)
     parts.summary:SetWordWrap(false)
 
     -- Shrink and settings, at the right of the summary line.
@@ -350,12 +373,10 @@ local function Build()
     parts.collapse:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     parts.collapse:SetPoint("RIGHT", parts.gear, "LEFT", -1, 0)
 
-    parts.network = IconButton("Interface\\Icons\\INV_Misc_Book_09", 18,
-        function()
-            local count = #SK.PeerList()
-            return L["Network: %d Scrollkeeper |4user:users; heard from"]:format(count)
-        end,
-        function() SK.ToggleNetwork() end)
+    -- (The network list is on the Advanced panel itself, so this button opens the plan.)
+    parts.network = IconButton("Interface\\Icons\\INV_Misc_Note_01", 18,
+        L["Farming plan: your next goal, and the cheapest scrolls on the auction house."],
+        function() SK.TogglePlan() end)
     parts.network:SetPoint("RIGHT", parts.collapse, "LEFT", -4, 0)
 
     -- Turn the scroll icon (UI/Icon.lua) on and off. Greyed out while it's off.

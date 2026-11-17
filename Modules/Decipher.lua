@@ -50,13 +50,19 @@ end
 -- away) and the result comes from the loot message.
 ------------------------------------------------------------------------
 
-local WAIT_SECONDS = 4
-local pending   -- { at, tier, result, skillBefore } while a decipher is being recorded
+-- How long after the cast finishes to wait for the bag update and the loot
+-- message before saving anyway.
+local WAIT_SECONDS = 6
+local pending   -- { at, tier, guessTier, result, skillBefore } while a decipher is being recorded
 
 local function Finish()
     local entry = pending
     pending = nil
-    if not entry or not entry.tier then return end
+    if not entry then return end
+    -- The bag update didn't say which scroll went away in time: go by the
+    -- scroll the Decipher button was pointed at when the cast started.
+    entry.tier = entry.tier or entry.guessTier
+    if not entry.tier then return end
 
     local db = SK.db
     local result = entry.result or "unknown"
@@ -104,44 +110,102 @@ local function Finish()
     SK.Send("MY_DATA_CHANGED")
 end
 
-local function IsDecipherSpell(spellID)
-    return spellID == SK.SPELL_COMPREHEND_CAST or spellID == SK.SPELL_COMPREHEND_SCROLL
-end
-
--- The cast finished: start recording. The instant spellbook spell also
--- fires this event; starting twice is harmless.
+-- Clicking Decipher: the instant spellbook spell. Remember which scroll it
+-- was pointed at (the next one to decipher), in case the bag update is late.
+local aimedTier, skillAtClick
 SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
-    if unit ~= "player" or not IsDecipherSpell(spellID) then return end
+    if unit ~= "player" or spellID ~= SK.SPELL_COMPREHEND_SCROLL then return end
+    local scroll = SK.NextDecipherable()
+    aimedTier = scroll and scroll.needs or nil
+    skillAtClick = SK.GetComprehension().rank   -- before any skill-up from this one
+end)
+
+-- The 4 second cast finished: the scroll is read, start recording.
+-- (Not when the instant spell fires: then the wait ran out right as the
+-- cast finished, before the bag update, and the decipher was lost.)
+SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
+    if unit ~= "player" or spellID ~= SK.SPELL_COMPREHEND_CAST then return end
     if pending then return end
-    pending = { at = GetTime(), skillBefore = SK.GetComprehension().rank }
+    pending = { at = GetTime(), skillBefore = skillAtClick or SK.GetComprehension().rank, guessTier = aimedTier }
+    aimedTier, skillAtClick = nil, nil
     C_Timer.After(WAIT_SECONDS, function() if pending then Finish() end end)
 end)
 
--- Which tier was read: the untranslated scroll that left the bags.
-SK.Listen("BAGS_CHANGED", function(now, before)
-    if not pending or pending.tier then return end
+-- Without the spell events (Forever doesn't always send them to addons),
+-- a decipher still leaves two traces a moment apart:
+--   an untranslated scroll leaves your bags, and
+--   chat says "You receive item: [Scroll of ...]".
+-- Both together = a decipher. A scroll leaving with no loot message
+-- (mailed, traded, destroyed) is ignored.
+local PAIR_SECONDS = 4
+local recentLoot   -- { name, id, at }: a loot message with no decipher to go with yet
+local lastRank     -- your skill at the bag update before this one
+
+-- The untranslated scroll that left the bags, if one did.
+local function Vanished(now, before)
     local stillThere = {}
     for _, scroll in ipairs(now.untranslated) do
         stillThere[scroll.bag .. ":" .. scroll.slot] = true
     end
     for _, scroll in ipairs(before.untranslated) do
-        if not stillThere[scroll.bag .. ":" .. scroll.slot] then
-            pending.tier = scroll.needs
-            break
+        if not stillThere[scroll.bag .. ":" .. scroll.slot] then return scroll end
+    end
+end
+
+-- "You receive item: ..." / "You receive loot: ..." (yours, not a party member's).
+local function MyLootPrefixes()
+    local list = {}
+    -- (pairs, not ipairs: a missing one would stop ipairs early)
+    for _, template in pairs({ LOOT_ITEM_PUSHED_SELF, LOOT_ITEM_SELF, LOOT_ITEM_CREATED_SELF }) do
+        local prefix = type(template) == "string" and template:match("^(.-)%%s")
+        if prefix and prefix ~= "" then list[#list + 1] = prefix end
+    end
+    return list
+end
+
+SK.Listen("BAGS_CHANGED", function(now, before)
+    local rankNow = SK.GetComprehension().rank
+    local gone = Vanished(now, before)
+    if pending then
+        -- The spell events did fire: this tells which tier was read.
+        if not pending.tier and gone then pending.tier = gone.needs end
+        if pending.tier and pending.result then Finish() end
+    elseif gone and SK.isMage then
+        local skillBefore = lastRank or rankNow
+        if recentLoot and GetTime() - recentLoot.at <= PAIR_SECONDS then
+            pending = { at = GetTime(), tier = gone.needs, result = recentLoot.name, resultID = recentLoot.id,
+                        skillBefore = skillBefore }
+            recentLoot = nil
+            Finish()
+        else
+            -- Wait a moment for the loot message; none = it wasn't a decipher.
+            local mine = { at = GetTime(), tier = gone.needs, skillBefore = skillBefore, fromBags = true }
+            pending = mine
+            C_Timer.After(PAIR_SECONDS, function() if pending == mine and not mine.result then pending = nil end end)
         end
     end
-    if pending.tier and pending.result then Finish() end
+    lastRank = rankNow
 end)
 
 -- What it became: the item in the "You receive item" chat message.
 SK.On("CHAT_MSG_LOOT", function(message)
-    if not pending or pending.result or type(message) ~= "string" then return end
+    if type(message) ~= "string" then return end
     local name = message:match("|h%[(.-)%]|h")
-    if name then
-        pending.result = name
-        pending.resultID = tonumber(message:match("item:(%d+)"))
+    if not name then return end
+    local id = tonumber(message:match("item:(%d+)"))
+    if pending and not pending.result then
+        pending.result, pending.resultID = name, id
+        if pending.tier then Finish() end
+        return
     end
-    if pending.tier and pending.result then Finish() end
+    -- No decipher seen yet (the loot message can come before the bag
+    -- update): keep it for a few seconds, if it's your own loot.
+    for _, prefix in ipairs(MyLootPrefixes()) do
+        if message:sub(1, #prefix) == prefix then
+            recentLoot = { name = name, id = id, at = GetTime() }
+            return
+        end
+    end
 end)
 
 local function PrintSkillUps()

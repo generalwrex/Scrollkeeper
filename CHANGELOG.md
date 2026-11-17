@@ -9,6 +9,14 @@
   - None: turns off the whole network.
 - The Network list shows how many anonymous players are around ("Anonymous +3 players"), so they still count even without names.
 - The panel and the Network window show which sharing mode you're on now, instead of just "on".
+- New little pop-up when your weapon imbue or familiar falls off and you've got a scroll for it. Click it to open the panel. Never in combat, and it won't nag more than once every 5 min. You can turn it off in the settings (Panel > Imbue and familiar pop-up), or just shift-right-click the pop-up.
+- **Plan window.** The note button on the panel (where the network button was, the network list is on the Advanced panel anyway) or `/sk plan`. Your Comprehension at the top, then your next goal, about how many scrolls and how long, and **Where to farm**: the zones with the most scroll drops. Click a zone to open it on the map. Works out the scroll count one skill point at a time, since low tiers go gray as you level.
+- At the AH there's a **Plan** button on the Buy tab (with Scan scrolls). It opens the plan docked next to the AH, showing just AH stuff: the scrolls you'd still level from and their buyout price. Sort by price, tier or name (click again to flip it), and click a scroll to search for it. It never buys anything.
+- If you have **Auctionator or TSM**, Scrollkeeper just uses their prices and doesn't scan the AH itself. If you don't, hit Scan scrolls (the plan asks if you want to when you open it at the AH, say no and it leaves you alone).
+- AH prices: bid-only auctions don't count anymore (they made some scrolls look like they cost 5 copper). Old saved prices get cleared once so you start fresh.
+- The Scrollkeeper title lines up with the "ready" line under it now.
+- **Fixed deciphers not getting logged** (they never showed up in your odds or counts, a lot of the time with higher tier scrolls). It now goes by the scroll leaving your bags plus the "You receive item" message, so it doesn't miss them. Sorry about that!
+- `/sk swap` opens on the first try now (it used to need two).
 - Scroll links don't get chopped in half across two lines anymore (the "best you have" reminders on the panel, and the tooltips).
 - Community data is back. 1.1.3 went out with it empty by accident, sorry!
 

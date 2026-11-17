@@ -165,7 +165,7 @@ local function Build()
     window:RegisterForDrag("LeftButton")
     window:SetScript("OnDragStart", window.StartMoving)
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
-    window:SetTitle(L["Scroll Swap"])
+    window:SetTitle(L["Scrollkeeper: Scroll Swap"])
     if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Scroll_03") end
     tinsert(UISpecialFrames, "ScrollkeeperSwapFrame")
 
@@ -192,6 +192,7 @@ local function Build()
     note:SetText(L["Click a name to whisper them. Only Scrollkeeper users show up here."])
 
     window:SetScript("OnShow", function() SK.RefreshSwap() end)
+    window:Hide()   -- new frames start shown; the first /sk swap would hide it instead
 end
 
 local function Clickable(row, person, asking)

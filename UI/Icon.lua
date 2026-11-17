@@ -122,3 +122,152 @@ SK.Listen("READY", SK.RefreshIcon)
 SK.Listen("BAGS_CHANGED", SK.RefreshIcon)
 SK.Listen("SKILL_CHANGED", SK.RefreshIcon)
 SK.Listen("STUDY_CHANGED", SK.RefreshIcon)
+
+------------------------------------------------------------------------
+-- A small pop-up near the top of the screen when your weapon imbue or
+-- familiar drops off and you have a scroll for it. Mages only.
+--   Left-click: open the panel (the Imbue / Familiar buttons are there).
+--   Right-click: close it.
+-- Never in combat or while dead, and the same reminder waits at least
+-- five minutes before it can pop up again. Setting: reminderToast.
+------------------------------------------------------------------------
+
+do
+    local SHOW_SECONDS = 12
+    local FADE_SECONDS = 1.5
+    local REPEAT_SECONDS = 300
+
+    local toast
+    local lastShown = {}     -- kind -> GetTime() it was last shown
+
+    local function Build()
+        toast = CreateFrame("Button", "ScrollkeeperToast", UIParent, "BackdropTemplate")
+        toast:SetSize(300, 58)   -- height grows to fit the text (see Fit)
+        toast:SetPoint("TOP", UIParent, "TOP", 0, -150)
+        toast:SetFrameStrata("HIGH")
+        toast:SetClampedToScreen(true)
+        toast:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        if toast.SetBackdrop then
+            toast:SetBackdrop({
+                bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+                tile = true, tileSize = 16, edgeSize = 16,
+                insets = { left = 4, right = 4, top = 4, bottom = 4 },
+            })
+            toast:SetBackdropBorderColor(1, 0.82, 0, 1)
+        end
+
+        local icon = toast:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(38, 38)
+        icon:SetPoint("TOPLEFT", 10, -10)
+        icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        toast.icon = icon
+
+        local TEXT_WIDTH = 300 - 10 - 38 - 10 - 12
+        local title = toast:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, 0)
+        title:SetWidth(TEXT_WIDTH)
+        title:SetJustifyH("LEFT")
+        toast.title = title
+
+        local hint = toast:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        hint:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
+        hint:SetWidth(TEXT_WIDTH)
+        hint:SetJustifyH("LEFT")
+        toast.hint = hint
+
+        -- Long titles (German!) wrap to two lines; make room instead of overlapping.
+        function toast:Fit()
+            local textHeight = (self.title:GetStringHeight() or 12) + 4 + (self.hint:GetStringHeight() or 10)
+            self:SetHeight(math.max(58, textHeight + 20))
+        end
+
+        toast:SetScript("OnClick", function(self, button)
+            self:Hide()
+            -- Shift-right-click: turn these reminders off (same as the setting).
+            if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() then
+                SK.db.reminderToast = false
+                SK.Print(L["imbue and familiar pop-ups are off. Turn them back on in /sk options (Panel)."])
+                return
+            end
+            if button == "LeftButton" and SK.TogglePanel and not SK.InCombat()
+                and not (ScrollkeeperPanel and ScrollkeeperPanel:IsShown()) then
+                SK.TogglePanel()
+            end
+        end)
+
+        -- Fade out after a few seconds. (No pausing on mouse-over: the
+        -- cursor often just sits there while you play, so it'd never go.)
+        toast:SetScript("OnUpdate", function(self, elapsed)
+            self.age = (self.age or 0) + elapsed
+            if self.age > SHOW_SECONDS + FADE_SECONDS then
+                self:Hide()
+            elseif self.age > SHOW_SECONDS then
+                self:SetAlpha(1 - (self.age - SHOW_SECONDS) / FADE_SECONDS)
+            end
+        end)
+        toast:Hide()
+    end
+
+    -- Which reminders apply right now: { imbue = scroll or nil, familiar = scroll or nil }
+    local function Missing()
+        local state = SK.WeaponState and SK.WeaponState() or {}
+        local imbue = not state.imbued and SK.BestScroll and SK.BestScroll("imbues") or nil
+        local familiar = not state.familiar and SK.BestScroll and SK.BestScroll("familiars") or nil
+        return imbue, familiar
+    end
+
+    local function Update()
+        if not SK.isMage or not SK.db then return end
+        local imbue, familiar = Missing()
+
+        -- Fixed it? Then the pop-up goes away by itself.
+        if toast and toast:IsShown() and not imbue and not familiar then toast:Hide() end
+
+        if not SK.db.reminderToast or SK.InCombat() then return end
+        if UnitIsDeadOrGhost and UnitIsDeadOrGhost("player") then return end
+
+        local now = GetTime()
+        local function Due(kind, scroll)
+            return scroll and (not lastShown[kind] or now - lastShown[kind] >= REPEAT_SECONDS)
+        end
+        if not (Due("imbue", imbue) or Due("familiar", familiar)) then return end
+        if imbue then lastShown.imbue = now end
+        if familiar then lastShown.familiar = now end
+
+        if not toast then Build() end
+        local title
+        if imbue and familiar then
+            title = L["No weapon imbue and no familiar out"]
+        elseif imbue then
+            title = L["No weapon imbue"]
+        else
+            title = L["No familiar out"]
+        end
+        toast.title:SetText(title)
+        toast.hint:SetText(L["Scrollkeeper: click to open the panel, right-click to close."] .. "\n"
+            .. L["Shift-right-click: stop these reminders."])
+
+        local scroll = familiar or imbue
+        local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)
+        toast.icon:SetTexture(iconTexture or "Interface\\Icons\\INV_Scroll_03")
+        toast:Fit()
+
+        toast.age = 0
+        toast:SetAlpha(1)
+        toast:Show()
+    end
+
+    -- Bags and auras settle a moment after a change, so wait a little.
+    local pending
+    local function UpdateSoon()
+        if pending then return end
+        pending = true
+        C_Timer.After(2, function() pending = false; SK.Safely("reminder toast", Update) end)
+    end
+
+    SK.Listen("REMINDERS_CHANGED", UpdateSoon)
+    SK.On("PLAYER_REGEN_ENABLED", UpdateSoon)
+    SK.On("PLAYER_UNGHOST", UpdateSoon)
+    SK.On("PLAYER_ALIVE", UpdateSoon)
+end

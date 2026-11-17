@@ -28,6 +28,31 @@ if SK.isMage then
   BAGS[0][8] = nil
   fire("BAG_UPDATE_DELAYED")
   runTimers()
+  -- third: the bag update comes too late, it's still logged (by the scroll the button aimed at)
+  local before3, aimed = ScrollkeeperDB.deciphered, SK.NextDecipherable()
+  fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1296017)
+  fire("UNIT_SPELLCAST_SUCCEEDED", "player", "guid", 1309973)
+  fire("CHAT_MSG_LOOT", "You receive item: |cnIQ1:|Hitem:277401::::::::20:1482:::::::::|h[Scroll of Rat Familiar]|h|r")
+  runTimers()
+  print("LATEBAGS logged", ScrollkeeperDB.deciphered - before3, "aimed tier", aimed and aimed.needs)
+  -- No spell events at all (Forever): the bags + the loot message are enough.
+  local function Tier50(name) return { id = 211786, name = "Scroll: " .. name, count = 1, tip = { "Scroll: " .. name, "Classes: Mage", "Requires Comprehension (50)" } } end
+  BAGS[2][1], BAGS[2][2], BAGS[2][3] = Tier50("AAA"), Tier50("BBB"), Tier50("CCC")
+  fire("BAG_UPDATE_DELAYED"); runTimers()
+  local n0 = ScrollkeeperDB.deciphered
+  -- loot message first, then the bag update
+  fire("CHAT_MSG_LOOT", "You receive loot: |cff1eff00|Hitem:275067::::::::20:1482:::::::::|h[Scroll of Owl Familiar]|h|r.")
+  BAGS[2][1] = nil; fire("BAG_UPDATE_DELAYED"); runTimers()
+  local n1 = ScrollkeeperDB.deciphered
+  -- bag update first, then the loot message
+  BAGS[2][2] = nil; fire("BAG_UPDATE_DELAYED")
+  fire("CHAT_MSG_LOOT", "You receive item: |cff1eff00|Hitem:275069::::::::20:1482:::::::::|h[Scroll of Imbue Frost]|h|r.")
+  runTimers()
+  local n2 = ScrollkeeperDB.deciphered
+  -- mailed away (no loot message): not a decipher
+  BAGS[2][3] = nil; fire("BAG_UPDATE_DELAYED"); runTimers()
+  local t50 = 0; for _, c in pairs(ScrollkeeperDB.results[50] or {}) do t50 = t50 + c end
+  print("NOEVENTS loot-first", n1 - n0, "bags-first", n2 - n1, "mailed", ScrollkeeperDB.deciphered - n2, "tier50", t50)
   print("after decipher: total", ScrollkeeperDB.deciphered, "button", b._text, b._attrs["target-slot"])
   -- study
   print("in library (Tarren Mill)", SK.InLibrary())
@@ -434,3 +459,29 @@ do
   SK.peers["Hidden-Realm"] = nil
   print("SETUP skip", f:IsShown(), "panel", ScrollkeeperPanel and ScrollkeeperPanel:IsShown())
 end
+
+-- Links kept whole when text wraps
+print("KEEPWHOLE", SK.KeepLinksWhole("for |cff|Hitem:1|h[Scroll of Frog Familiar]|h|r now") == "for |cff|Hitem:1|h[Scroll\194\160of\194\160Frog\194\160Familiar]|h|r now")
+
+-- PLAN with auction house prices
+if SK.isMage then
+  local realTip = C_TooltipInfo.GetItemByID
+  C_TooltipInfo.GetItemByID = function(id) if id == 990050 or id == 990051 then return { lines = { { leftText = "Requires Comprehension (50)" } } } end return realTip and realTip(id) end
+  SK.db.ahPrices = {}
+  SK.db.ahLastScan = time() - 7300
+  SK.db.language = "enUS"
+  SK.db.ahPrices[990050] = { price = 4500, count = 3, at = time() - 7200 }
+  SK.db.ahPrices[990051] = { price = 12000, count = 4, total = 52000, at = time() - 7200 }
+  for _, line in ipairs(SK.FarmPlanLines()) do print("PLANAH", line) end
+  SK.TogglePlan(); print("PLANWIN", ScrollkeeperPlanFrame and ScrollkeeperPlanFrame:IsShown())
+  print("errors:", #ScrollkeeperDB.errors)
+end
+
+-- PLAN after a reload: tooltips not loaded, requirement saved with the price
+if SK.isMage then
+  SK.db.ahPrices = { [990060] = { price = 3000, count = 5, total = 16000, at = time(), needs = 50 } }
+  SK.db.ahLastScan = time() - 10
+  local found = SK.CheapestScrolls(5)
+  print("PLANRELOAD", #found, found[1] and found[1].itemID)
+end
+

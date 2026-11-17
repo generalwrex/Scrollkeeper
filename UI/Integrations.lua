@@ -100,3 +100,33 @@ function SK.ScrollPrices(itemID)
     end
     return auction, vendor
 end
+
+-- Is Auctionator or TradeSkillMaster installed? Then their prices are used
+-- and Scrollkeeper doesn't scan the auction house itself.
+function SK.HasAuctionAddon()
+    local api = _G.Auctionator and Auctionator.API and Auctionator.API.v1
+    return (api and api.GetAuctionPriceByItemID and true) or (_G.TSM_API and TSM_API.GetCustomPriceValue and true) or false
+end
+
+-- An auction price from another addon, if one is installed and has it:
+-- Auctionator first, then TradeSkillMaster. Copper each, or nil.
+function SK.AddonAuctionPrice(itemID)
+    local api = _G.Auctionator and Auctionator.API and Auctionator.API.v1
+    if api and api.GetAuctionPriceByItemID then
+        local price = SK.Try(api.GetAuctionPriceByItemID, CALLER, itemID)
+        if type(price) == "number" and price > 0 then return price, "Auctionator" end
+    end
+    if _G.TSM_API and TSM_API.GetCustomPriceValue then
+        local price = SK.Try(TSM_API.GetCustomPriceValue, "DBMinBuyout", "i:" .. itemID)
+        if type(price) == "number" and price > 0 then return price, "TSM" end
+    end
+    return nil
+end
+
+-- The price to go by: another addon's if there is one, otherwise our own scan.
+-- Returns copper each, and where it came from ("Auctionator", "TSM" or nil for ours).
+function SK.MarketPrice(itemID)
+    local price, source = SK.AddonAuctionPrice(itemID)
+    if price then return price, source end
+    return SK.AuctionPrice and SK.AuctionPrice(itemID), nil
+end

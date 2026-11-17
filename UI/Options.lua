@@ -196,6 +196,8 @@ SK.Listen("READY", function()
             L["A small icon you can keep on screen with how many scrolls you can decipher. Click it to open or close the panel in the view you picked above."], false)
         AddCheckbox("hideInCombat", L["Hide the panel in combat"],
             L["The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)"], true)
+        AddCheckbox("reminderToast", L["Imbue and familiar pop-up"],
+            L["A small pop-up when your weapon imbue or familiar wears off and you have a scroll for it. Click it to open the panel. Not in combat, and at most once every five minutes."], true)
         AddCheckbox("locked", L["Lock position"],
             L["Stops the panel (and the scroll icon) from being dragged."], false)
         local buttons = AddCheckbox("showScrollBar", L["Scroll buttons"],

@@ -48,6 +48,19 @@ local function DecipherResult(itemID, name)
     return false
 end
 
+-- Comprehension an untranslated scroll needs, read while the auction house
+-- has it loaded, and saved with its price (the plan can't always read
+-- tooltips after a /reload, the game hasn't loaded those items yet).
+local function ReadNeeds(itemID)
+    if not (C_TooltipInfo and C_TooltipInfo.GetItemByID) then return nil end
+    local data = SK.Try(C_TooltipInfo.GetItemByID, itemID)
+    return type(data) == "table" and SK.RequirementFromLines(data.lines) or nil
+end
+local function SaveNeeds(entry, itemID, old)
+    entry.needs = ReadNeeds(itemID) or (old and old.needs) or nil
+    return entry
+end
+
 local function Relevant(itemID)
     if relevant[itemID] ~= nil then return relevant[itemID] end
     local name = C_Item and C_Item.GetItemNameByID and SK.Try(C_Item.GetItemNameByID, itemID)
@@ -74,17 +87,16 @@ local function Relevant(itemID)
     return yes
 end
 
--- Remember a price. Within one scan keep the lowest; a new scan replaces old prices.
+-- Remember a price from the browse list: the lowest buyout for a scroll
+-- (the browse list never shows bids). A new scan replaces old prices.
 local scanStarted = 0
-local function Record(itemID, price, count)
+local scanning = false
+local function Record(itemID, price)
     if not (itemID and price and price > 0 and IsScroll(itemID) and Relevant(itemID)) then return end
     SK.db.ahPrices = SK.db.ahPrices or {}
     local known = SK.db.ahPrices[itemID]
-    if known and known.at >= scanStarted and known.price <= price then
-        known.count = (known.count or 0) + (count or 0)
-        return
-    end
-    SK.db.ahPrices[itemID] = { price = math.floor(price), count = count or 1, at = time() }
+    if known and known.at >= scanStarted and known.price < price then price = known.price end
+    SK.db.ahPrices[itemID] = SaveNeeds({ price = math.floor(price), at = time() }, itemID, known)
 end
 
 -- Our own price for an item: copper each and when we saw it, or nil.
@@ -106,13 +118,27 @@ end
 ------------------------------------------------------------------------
 
 local pages = 0
-local scanning = false
+
+-- The auction house drops requests sent while it's still busy with the
+-- last one (its "throttle"). Wait until it's ready, then send. Gives up
+-- after about 10 seconds and calls giveUp instead, if there is one.
+local function WhenReady(send, giveUp, tries)
+    tries = tries or 40
+    local ready = not (C_AuctionHouse and C_AuctionHouse.IsThrottledMessageSystemReady)
+        or C_AuctionHouse.IsThrottledMessageSystemReady()
+    if ready then send() return end
+    if tries <= 0 then
+        if giveUp then giveUp() end
+        return
+    end
+    C_Timer.After(0.25, function() WhenReady(send, giveUp, tries - 1) end)
+end
 
 local function ReadBrowseResults()
     local results = C_AuctionHouse.GetBrowseResults and C_AuctionHouse.GetBrowseResults() or {}
     for _, result in ipairs(results) do
         local key = result.itemKey
-        Record(key and key.itemID, result.minPrice, result.totalQuantity)
+        Record(key and key.itemID, result.minPrice)
     end
 end
 
@@ -124,6 +150,7 @@ local function FinishScan()
         if known.at >= scanStarted then count = count + 1 end
     end
     SK.Print(L["auction house: saved prices for %d |4scroll:scrolls;."]:format(count))
+    SK.db.ahLastScan = scanStarted   -- the plan only goes by prices from this scan on
     SK.Send("PRICES_CHANGED")
 end
 
@@ -134,28 +161,12 @@ local function MoreOrDone()
         FinishScan()
     else
         pages = pages + 1
-        C_AuctionHouse.RequestMoreBrowseResults()
+        WhenReady(function() C_AuctionHouse.RequestMoreBrowseResults() end, FinishScan)
     end
 end
 
 SK.On("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED", function() ReadBrowseResults() MoreOrDone() end)
 SK.On("AUCTION_HOUSE_BROWSE_RESULTS_ADDED", function() ReadBrowseResults() MoreOrDone() end)
-
--- Looking at one item's listings also gives its price.
-SK.On("ITEM_SEARCH_RESULTS_UPDATED", function(itemKey)
-    if not (itemKey and C_AuctionHouse.GetNumItemSearchResults) then return end
-    local lowest
-    for i = 1, C_AuctionHouse.GetNumItemSearchResults(itemKey) do
-        local info = C_AuctionHouse.GetItemSearchResultInfo(itemKey, i)
-        local price = info and (info.buyoutAmount or info.bidAmount)
-        if price and (not lowest or price < lowest) then lowest = price end
-    end
-    Record(itemKey.itemID, lowest, 1)
-end)
-SK.On("COMMODITY_SEARCH_RESULTS_UPDATED", function(itemID)
-    local info = C_AuctionHouse.GetCommoditySearchResultInfo and C_AuctionHouse.GetCommoditySearchResultInfo(itemID, 1)
-    if info then Record(itemID, info.unitPrice, info.quantity) end
-end)
 
 local function ScanModern()
     if not (C_AuctionHouse and C_AuctionHouse.SendBrowseQuery) then return false end
@@ -166,8 +177,8 @@ local function ScanModern()
         filters = {},
         itemClassFilters = { { classID = SK.ITEM_CLASS_CONSUMABLE, subClassID = SK.ITEM_SUBCLASS_SCROLL } },
     }
-    C_AuctionHouse.SendBrowseQuery(query)
-    C_Timer.After(20, FinishScan)   -- in case the results never finish
+    WhenReady(function() C_AuctionHouse.SendBrowseQuery(query) end, FinishScan)
+    C_Timer.After(30, FinishScan)   -- in case the results never finish
     return true
 end
 
@@ -180,7 +191,7 @@ SK.On("AUCTION_ITEM_LIST_UPDATE", function()
     local shown = GetNumAuctionItems("list")
     for i = 1, shown do
         local _, _, count, _, _, _, _, _, _, buyout, _, _, _, _, _, _, itemID = GetAuctionItemInfo("list", i)
-        if buyout and buyout > 0 and count and count > 0 then Record(itemID, buyout / count, count) end
+        if buyout and buyout > 0 and count and count > 0 then Record(itemID, buyout / count) end
     end
     if scanning then
         scanning = false
@@ -201,8 +212,29 @@ local function ScanClassic()
 end
 
 ------------------------------------------------------------------------
--- The "Scan scrolls" button
+-- Looking a scroll up, and the "Scan scrolls" / "Plan" buttons
 ------------------------------------------------------------------------
+
+-- Type the scroll's name in the auction house search box and search,
+-- same as you would. Never buys anything.
+function SK.ShowOnAuctionHouse(itemID)
+    local name = C_Item and C_Item.GetItemNameByID and SK.Try(C_Item.GetItemNameByID, itemID)
+    if not name then return end
+    local modern = _G.AuctionHouseFrame
+    if modern and modern:IsShown() then
+        local bar = modern.SearchBar
+        if not (bar and bar.SearchBox and type(bar.StartSearch) == "function") then return end
+        bar.SearchBox:SetText(name)
+        WhenReady(function() SK.Try(bar.StartSearch, bar) end)
+        return
+    end
+    if _G.AuctionFrame and _G.AuctionFrame:IsShown() and _G.BrowseName then
+        _G.BrowseName:SetText(name)
+        if _G.AuctionFrameBrowse_Search then SK.Try(_G.AuctionFrameBrowse_Search) end
+        return
+    end
+    SK.Print(L["open the auction house first."])
+end
 
 function SK.ScanAuctionScrolls()
     if not (ScanModern() or ScanClassic()) then
@@ -215,21 +247,24 @@ local function ShowButton()
     local parent = _G.AuctionHouseFrame or _G.AuctionFrame
     if not parent then return end
     if not button then
-        button = CreateFrame("Button", "ScrollkeeperScanButton", parent, "UIPanelButtonTemplate")
+        -- On the modern auction house the buttons belong to the category list
+        -- on the Buy tab, so they only show there (not on Sell, Auctions or
+        -- other addons' tabs like Auctionator's) and sit inside that list.
+        local categories = parent.CategoriesList
+        local host = (categories and categories.GetWidth) and categories or parent
+        button = CreateFrame("Button", "ScrollkeeperScanButton", host, "UIPanelButtonTemplate")
         button:SetSize(110, 22)
         button:SetText(L["Scan scrolls"])
-        -- Centered at the bottom of the category list on the modern auction
-        -- house (there's empty space there), otherwise under the top-right corner.
-        local categories = parent.CategoriesList
-        if categories and categories.GetWidth then
-            -- Same width as the category buttons (the list's scrollbar is on the right).
+        if host == categories then
+            -- Bottom of the category list, same width as its buttons
+            -- (its scrollbar is on the right).
             button:SetHeight(20)
             button:SetPoint("BOTTOMLEFT", categories, "BOTTOMLEFT", 6, 12)
             button:SetPoint("BOTTOMRIGHT", categories, "BOTTOMRIGHT", -26, 12)
         else
             button:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -60, -40)
         end
-        button:SetFrameLevel((parent:GetFrameLevel() or 0) + 50)
+        button:SetFrameLevel((host:GetFrameLevel() or 0) + 10)
         button:SetScript("OnClick", SK.ScanAuctionScrolls)
         button:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
@@ -238,8 +273,37 @@ local function ShowButton()
             GameTooltip:Show()
         end)
         button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+        -- Plan, just above it: the Plan window docked beside the auction house.
+        local plan = CreateFrame("Button", "ScrollkeeperAHPlanButton", host, "UIPanelButtonTemplate")
+        plan:SetHeight(button:GetHeight())
+        plan:SetFrameLevel(button:GetFrameLevel())
+        button.planHost = host
+        plan:SetText(L["Plan"])
+        plan:SetScript("OnClick", function() if SK.TogglePlan then SK.TogglePlan(parent) end end)
+        plan:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+            GameTooltip:SetText(L["Scrollkeeper"])
+            GameTooltip:AddLine(L["The scrolls here you'd still level from, and what they cost."], 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        plan:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        button.plan = plan
     end
-    button:SetShown(SK.db.ahScanButton ~= false)
+    -- With Auctionator or TSM their prices are used, so no scan button.
+    local otherAddon = SK.HasAuctionAddon and SK.HasAuctionAddon()
+    local showScan = SK.db.ahScanButton ~= false and not otherAddon
+    local showPlan = SK.db.ahScanButton ~= false and SK.isMage and true or false
+    button:SetShown(showScan)
+    button.plan:SetShown(showPlan)
+    -- Plan sits on top of Scan scrolls, or in its place when that's hidden.
+    button.plan:ClearAllPoints()
+    if showScan then
+        button.plan:SetPoint("BOTTOMLEFT", button, "TOPLEFT", 0, 2)
+        button.plan:SetPoint("BOTTOMRIGHT", button, "TOPRIGHT", 0, 2)
+    else
+        for i = 1, button:GetNumPoints() do button.plan:SetPoint(button:GetPoint(i)) end
+    end
 end
 
 SK.On("AUCTION_HOUSE_SHOW", function() C_Timer.After(0.2, ShowButton) end)

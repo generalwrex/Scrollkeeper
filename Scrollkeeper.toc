@@ -59,6 +59,7 @@ UI\Alts.lua
 UI\Export.lua
 UI\Mail.lua
 UI\Swap.lua
+UI\Plan.lua
 UI\Icon.lua
 UI\Minimap.lua
 UI\Setup.lua
