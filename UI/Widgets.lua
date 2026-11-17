@@ -162,7 +162,7 @@ function SK.UI.CreateItemButton(parent, name, size)
             GameTooltip:AddLine(L["|cffffd100Best %s you can use.|r"]:format((self.categoryLabel or ""):lower()))
         else
             local reason = SK.UI.WhyNotUsable(scroll)
-            if reason then GameTooltip:AddLine("|cffff6666" .. reason .. "|r", 1, 1, 1, true) end
+            if reason then GameTooltip:AddLine("|cffff6666" .. SK.KeepLinksWhole(reason) .. "|r", 1, 1, 1, true) end
         end
         GameTooltip:Show()
     end)

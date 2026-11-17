@@ -446,8 +446,8 @@ local function Build()
                 if hint then
                     local _, holding = SK.MainHandWeapon()
                     GameTooltip:AddLine(L["None of your imbues fit %s."]:format(holding or "what you're holding"), 1, 1, 1, true)
-                    GameTooltip:AddLine(L["%s can be put on your %s (in your bags). Equip it, then click here."]:format(
-                        SK.ScrollLink(hint.itemID, hint.name), weapon), 0.25, 1, 0.25, true)
+                    GameTooltip:AddLine(SK.KeepLinksWhole(L["%s can be put on your %s (in your bags). Equip it, then click here."]:format(
+                        SK.ScrollLink(hint.itemID, hint.name), weapon)), 0.25, 1, 0.25, true)
                 else
                     -- List what you do have, and what each one needs.
                     local have = {}

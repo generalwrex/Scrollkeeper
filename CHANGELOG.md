@@ -9,6 +9,7 @@
   - None: turns off the whole network.
 - The Network list shows how many anonymous players are around ("Anonymous +3 players"), so they still count even without names.
 - The panel and the Network window show which sharing mode you're on now, instead of just "on".
+- Scroll links don't get chopped in half across two lines anymore (the "best you have" reminders on the panel, and the tooltips).
 - Community data is back. 1.1.3 went out with it empty by accident, sorry!
 
 ## 1.1.3

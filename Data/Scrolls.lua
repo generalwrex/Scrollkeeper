@@ -156,6 +156,18 @@ end
 -- short = true drops "Scroll of " and the brackets, for tight spaces.
 -- Works before the game has the item's info: the link is built from the
 -- item ID, and the quality color is filled in once it's known.
+-- Keeps "[Scroll of Frog Familiar]" from being split across lines when
+-- text wraps, by using non-breaking spaces inside the brackets.
+-- Only for text people can't click (tooltips): a link shift-clicked
+-- into chat has to keep its real text or the server won't send it.
+local NBSP = "\194\160"
+function SK.KeepLinksWhole(text)
+    if type(text) ~= "string" then return text end
+    return (text:gsub("%[([^%]]*)%]", function(inside)
+        return "[" .. inside:gsub(" ", NBSP) .. "]"
+    end))
+end
+
 function SK.ScrollLink(itemID, name, short)
     itemID = itemID or SK.ItemIDByName(name)
     local link, quality
