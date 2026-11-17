@@ -15,6 +15,7 @@
 - If you have **Auctionator or TSM**, Scrollkeeper just uses their prices and doesn't scan the AH itself. If you don't, hit Scan scrolls (the plan asks if you want to when you open it at the AH, say no and it leaves you alone).
 - AH prices: bid-only auctions don't count anymore (they made some scrolls look like they cost 5 copper). Old saved prices get cleared once so you start fresh.
 - The Scrollkeeper title lines up with the "ready" line under it now.
+- Your Scrolls on the panel: the last icon in a row isn't hidden behind the scrollbar anymore.
 - **Fixed deciphers not getting logged** (they never showed up in your odds or counts, a lot of the time with higher tier scrolls). It now goes by the scroll leaving your bags plus the "You receive item" message, so it doesn't miss them. Sorry about that!
 - `/sk swap` opens on the first try now (it used to need two).
 - Scroll links don't get chopped in half across two lines anymore (the "best you have" reminders on the panel, and the tooltips).

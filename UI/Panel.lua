@@ -814,8 +814,12 @@ local function Layout()
     parts.scrollsBox:SetShown(#groups > 0)
     -- Full view: a labelled row per category. Compact: all icons in one
     -- flowing grid, categories still in order, no labels.
-    local perRow = compact and COMPACT_ICONS_PER_ROW or ICONS_PER_ROW
     local startX = compact and 0 or CATEGORY_LABEL_WIDTH
+    -- As many icons per row as fit in the box (its scrollbar sits just
+    -- right of it): 4 next to the labels, 6 in the compact grid.
+    local boxWidth = INNER - 18
+    local fit = math.floor((boxWidth - ICON_PAD - startX - ICON_SIZE) / (ICON_SIZE + ICON_GAP)) + 1
+    local perRow = math.max(1, math.min(fit, compact and COMPACT_ICONS_PER_ROW or ICONS_PER_ROW))
     local used, areaY, flowIndex = 0, 0, 0
     for _, group in ipairs(groups) do
         if not compact then
@@ -848,7 +852,7 @@ local function Layout()
             end
         end
         if not compact then
-            areaY = areaY - math.ceil(#group.scrolls / ICONS_PER_ROW) * (ICON_SIZE + ICON_GAP)
+            areaY = areaY - math.ceil(#group.scrolls / perRow) * (ICON_SIZE + ICON_GAP)
         end
     end
     if compact then
