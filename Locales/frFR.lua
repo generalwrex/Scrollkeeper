@@ -418,3 +418,7 @@ L["No prices yet. Hit Scan scrolls."] = "Pas encore de prix. Clique sur Scanner 
 L["Click a scroll to search for it on the auction house."] = "Clique sur un parchemin pour le chercher à l'hôtel des ventes."
 L["None of the scrolls with a price give you skill-ups right now."] = "Aucun des parchemins avec un prix ne te fait monter pour l'instant."
 L["The scrolls here you'd still level from, and what they cost."] = "Les parchemins d'ici qui te font encore monter, et ce qu'ils coûtent."
+L["Tier %d scrolls found most in: "] = "Parchemins de palier %d trouvés surtout à : "
+L["Where you found tier %d scrolls:"] = "Où tu as trouvé des parchemins de palier %d :"
+L["No tier %d drops logged yet, so these are all tiers:"] = "Pas encore de butin de palier %d, donc tous les paliers :"
+L["All tiers:"] = "Tous les paliers :"

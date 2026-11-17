@@ -418,3 +418,7 @@ L["No prices yet. Hit Scan scrolls."] = "Noch keine Preise. Klick auf Rollen sca
 L["Click a scroll to search for it on the auction house."] = "Klick eine Schriftrolle an, um im Auktionshaus danach zu suchen."
 L["None of the scrolls with a price give you skill-ups right now."] = "Keine der Schriftrollen mit Preis gibt dir gerade Fertigkeitspunkte."
 L["The scrolls here you'd still level from, and what they cost."] = "Die Schriftrollen hier, mit denen du noch steigst, und was sie kosten."
+L["Tier %d scrolls found most in: "] = "Stufe-%d-Schriftrollen am meisten gefunden in: "
+L["Where you found tier %d scrolls:"] = "Wo du Stufe-%d-Schriftrollen gefunden hast:"
+L["No tier %d drops logged yet, so these are all tiers:"] = "Noch keine Funde der Stufe %d, also alle Stufen:"
+L["All tiers:"] = "Alle Stufen:"

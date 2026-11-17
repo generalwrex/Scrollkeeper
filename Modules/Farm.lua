@@ -51,17 +51,25 @@ local function RealRate(tier, color)
     return nil
 end
 
--- Zones with the most scroll drops (yours and everyone's): list of { name, count }.
-local function BestZones(limit)
+-- Zones with the most scroll drops: list of { mapID, name, count }.
+-- No tier: every untranslated scroll, yours and everyone's.
+-- A tier: only scrolls of that tier (your own drops, logged since 1.1.4).
+local function BestZones(limit, tier)
     local byMap = {}
-    local function Add(drops)
-        for mapID, cells in pairs(drops or {}) do
-            for _, count in pairs(cells) do byMap[mapID] = (byMap[mapID] or 0) + count end
+    if tier then
+        for mapID, tiers in pairs(SK.db.dropTiers or {}) do
+            if tiers[tier] then byMap[mapID] = tiers[tier] end
         end
+    else
+        local function Add(drops)
+            for mapID, cells in pairs(drops or {}) do
+                for _, count in pairs(cells) do byMap[mapID] = (byMap[mapID] or 0) + count end
+            end
+        end
+        Add(SK.db.drops)
+        for _, entry in pairs(SK.db.community or {}) do Add(entry.drops) end
+        for _, entry in ipairs(SK.ShippedCommunity and SK.ShippedCommunity() or {}) do Add(entry.drops) end
     end
-    Add(SK.db.drops)
-    for _, entry in pairs(SK.db.community or {}) do Add(entry.drops) end
-    for _, entry in ipairs(SK.ShippedCommunity and SK.ShippedCommunity() or {}) do Add(entry.drops) end
     local list = {}
     for mapID, count in pairs(byMap) do
         local info = C_Map and C_Map.GetMapInfo and SK.Try(C_Map.GetMapInfo, tonumber(mapID))
@@ -218,8 +226,11 @@ function SK.FarmPlan()
         tier = best.tier, chance = best.chance, rate = bestRate, realRate = real,
         scrolls = math.ceil(expected),
         rates = rates,
-        zones = BestZones(3),
+        zones = BestZones(3, best.tier),
+        zonesTier = best.tier,
     }
+    -- No drops of that tier logged yet: fall back to every tier.
+    if #plan.zones == 0 then plan.zones, plan.zonesTier = BestZones(3), nil end
     local farm = SK.db.farm
     if farm and farm.seconds >= 1800 and farm.looted > 0 then
         plan.perHour = farm.looted / (farm.seconds / 3600)
@@ -249,7 +260,8 @@ function SK.FarmPlanLines(noZones)
     if not noZones and #plan.zones > 0 then
         local names = {}
         for _, zone in ipairs(plan.zones) do names[#names + 1] = ("%s (%d)"):format(zone.name, zone.count) end
-        lines[#lines + 1] = L["Most scrolls found in: "] .. table.concat(names, ", ") .. "."
+        lines[#lines + 1] = (plan.zonesTier and L["Tier %d scrolls found most in: "]:format(plan.zonesTier)
+            or L["Most scrolls found in: "]) .. table.concat(names, ", ") .. "."
     end
     return lines, plan
 end

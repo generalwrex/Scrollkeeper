@@ -193,6 +193,10 @@ SK.On("CHAT_MSG_LOOT", function(message)
     local name = message:match("|h%[(.-)%]|h")
     if not name then return end
     local id = tonumber(message:match("item:(%d+)"))
+    -- Looting an untranslated scroll isn't a decipher result (deciphers
+    -- never give one), so don't pair it with a scroll you just used.
+    local link = message:match("(|c.-|h|r)")
+    if link and SK.UntranslatedTier and SK.UntranslatedTier(link) then return end
     if pending and not pending.result then
         pending.result, pending.resultID = name, id
         if pending.tier then Finish() end

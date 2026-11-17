@@ -485,3 +485,9 @@ if SK.isMage then
   print("PLANRELOAD", #found, found[1] and found[1].itemID)
 end
 
+
+-- Drops remember their tier: the test loot is a tier 1 scroll
+if SK.isMage then
+  local t1, t50 = SK.BestZones(5, 1), SK.BestZones(5, 50)
+  print("DROPTIERS tier1 zones", #t1, t1[1] and t1[1].count, "tier50 zones", #t50)
+end

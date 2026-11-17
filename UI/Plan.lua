@@ -106,7 +106,12 @@ local function Build()
     local where = SK.UI.CreateHeader(world, L["Where to farm"], INNER)
     where:SetPoint("TOPLEFT", world.text, "BOTTOMLEFT", -6, -12)
     world.zones = SK.UI.CreateScrollList(world, INNER, ROWS)
-    world.zones:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -4)
+    -- Which tier the list is for ("Tier 50 drops" / no tier 50 logged yet).
+    world.zonesFor = world:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    world.zonesFor:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 6, -4)
+    world.zonesFor:SetWidth(INNER - 12)
+    world.zonesFor:SetJustifyH("LEFT")
+    world.zones:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -20)
 
     local worldNote = world:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     worldNote:SetPoint("BOTTOMLEFT", 16, 14)
@@ -190,12 +195,21 @@ end
 -- Filling it in
 ------------------------------------------------------------------------
 
-local function RefreshWorld(plan)
+local function RefreshWorld()
     local world = window.world
-    local lines = SK.FarmPlanLines(true)
+    local lines, plan = SK.FarmPlanLines(true)
     world.text:SetText(table.concat(lines, "\n"))
 
-    local zones = SK.BestZones and SK.BestZones(25) or {}
+    -- Zones for the tier the plan says to read; none logged yet: every tier.
+    local tier = plan and plan.tier
+    local zones = tier and SK.BestZones(25, tier) or {}
+    if tier and #zones > 0 then
+        world.zonesFor:SetText(L["Where you found tier %d scrolls:"]:format(tier))
+    else
+        zones = SK.BestZones(25)
+        world.zonesFor:SetText(tier and L["No tier %d drops logged yet, so these are all tiers:"]:format(tier)
+            or L["All tiers:"])
+    end
     world.zones:SetRows(zones, function(row, zone)
         row.itemID = nil
         row.label:SetText(zone.name)
@@ -204,7 +218,7 @@ local function RefreshWorld(plan)
     end, L["No drops logged yet. Loot some untranslated scrolls and the zones show up here."])
 
     local textHeight = world.text:GetStringHeight() or 60
-    window:SetHeight(84 + 22 + 6 + textHeight + 12 + 22 + 4 + ROWS * ROW_HEIGHT + 44)
+    window:SetHeight(84 + 22 + 6 + textHeight + 12 + 22 + 20 + ROWS * ROW_HEIGHT + 44)
 end
 
 local function RefreshAuctionHouse()

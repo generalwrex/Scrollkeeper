@@ -419,3 +419,7 @@ L["No prices yet. Hit Scan scrolls."] = "Aún no hay precios. Pulsa Buscar perga
 L["Click a scroll to search for it on the auction house."] = "Haz clic en un pergamino para buscarlo en la casa de subastas."
 L["None of the scrolls with a price give you skill-ups right now."] = "Ninguno de los pergaminos con precio te sube la habilidad ahora mismo."
 L["The scrolls here you'd still level from, and what they cost."] = "Los pergaminos de aquí que aún te suben la habilidad, y lo que cuestan."
+L["Tier %d scrolls found most in: "] = "Pergaminos de nivel %d encontrados sobre todo en: "
+L["Where you found tier %d scrolls:"] = "Dónde encontraste pergaminos de nivel %d:"
+L["No tier %d drops logged yet, so these are all tiers:"] = "Aún no hay botines de nivel %d, así que son todos los niveles:"
+L["All tiers:"] = "Todos los niveles:"
