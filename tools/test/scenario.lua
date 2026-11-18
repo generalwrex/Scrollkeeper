@@ -520,3 +520,17 @@ do
   SK.ShowMessages(); SK.ShowMessages()
   print("MESSAGES seen now", ScrollkeeperDB.messagesSeen["test-now"], "other", ScrollkeeperDB.messagesSeen["test-other"])
 end
+
+-- 1.1.5 checks: categories by item ID (any language), drop tiers in the export, mailbox option
+do
+  print("CATEGORY german frog", SK.CategoryFor("Schriftrolle: Froschvertrauter", 277483), "unknown", SK.CategoryFor("Rolle: Etwas", 1))
+  SK.db.dropTiers = { [1458] = { [50] = 3 } }
+  local text = SK.ExportText()
+  print("EXPORT has D line", text:find("\nD|1458|50:3", 1, true) ~= nil)
+  local before = #SK.MailPlan()
+  SK.db.mailIncludeMine = true
+  local after = SK.MailPlan()
+  local mine = 0; for _, p in ipairs(after) do mine = mine + (p.mineToo or 0) end
+  SK.db.mailIncludeMine = false
+  print("MAILMINE people", before, "->", #after, "you'd use too", mine)
+end

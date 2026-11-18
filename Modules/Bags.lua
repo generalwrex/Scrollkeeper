@@ -148,7 +148,7 @@ function SK.ScanBags()
                         if not entry then
                             entry = {
                                 itemID = id, name = name, count = 0, level = level, imbueFor = imbueFor,
-                                category = SK.CategoryFor(name),
+                                category = SK.CategoryFor(name, id),
                                 icon = item.iconFileID or (C_Item and SK.Try(C_Item.GetItemIconByID, id)),
                             }
                             translatedByID[id] = entry

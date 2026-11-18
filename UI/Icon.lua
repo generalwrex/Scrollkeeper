@@ -245,8 +245,7 @@ do
             title = L["No familiar out"]
         end
         toast.title:SetText(title)
-        toast.hint:SetText(L["Scrollkeeper: click to open the panel, right-click to close."] .. "\n"
-            .. L["Shift-right-click: stop these reminders."])
+        toast.hint:SetText(L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"])
 
         local scroll = familiar or imbue
         local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)

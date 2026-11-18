@@ -40,14 +40,14 @@ def read_exports(paths):
 
 
 def parse(lines):
-    data = {"id": None, "version": None, "T": {}, "U": {}, "P": {}, "K": {}, "I": set(), "N": {}, "W": [], "B": {}}
+    data = {"id": None, "version": None, "T": {}, "U": {}, "P": {}, "K": {}, "D": {}, "I": set(), "N": {}, "W": [], "B": {}}
     for line in lines:
         parts = line.split("|")
         kind = parts[0]
         try:
             if kind == "meta":
                 data["version"], data["id"] = parts[1], parts[8]
-            elif kind in ("T", "U", "P", "K"):
+            elif kind in ("T", "U", "P", "K", "D"):
                 entries = {}
                 for item in parts[2].split(","):
                     key, value = item.rsplit(":", 1)
@@ -103,6 +103,11 @@ def write_lua(players, path):
                 pairs = ", ".join(f"[{lua_string(c)}] = {int(n)}" for c, n in sorted(cells.items()))
                 out.append(f"            [{int(map_id)}] = {{ {pairs} }},")
             out.append("        },")
+        out.append("        dropTiers = {")
+        for map_id, tiers in sorted(data["D"].items()):
+            pairs = ", ".join(f"[{int(t)}] = {int(n)}" for t, n in sorted(tiers.items(), key=lambda kv: int(kv[0])))
+            out.append(f"            [{int(map_id)}] = {{ {pairs} }},")
+        out.append("        },")
         out.append("        backfires = {")
         for tier, value in sorted(data["B"].items(), key=lambda kv: int(kv[0])):
             b, t = value.split("/")

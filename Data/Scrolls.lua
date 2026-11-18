@@ -121,10 +121,35 @@ SK.SCROLL_CATEGORIES = {
     { key = "utility",   label = "Utility",   words = { "" } },   -- everything else
 }
 
-function SK.CategoryFor(name)
+-- The English name of a scroll, from the shared community data (players
+-- on English clients), so categories work in every language. nil if unknown.
+function SK.EnglishScrollName(itemID)
+    if not itemID then return nil end
+    for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
+        local name = entry.names and entry.names[itemID]
+        if name then return name end
+    end
+    for _, entry in pairs(SK.db and SK.db.community or {}) do
+        local name = entry.names and entry.names[itemID]
+        if name then return name end
+    end
+    if GetLocale and GetLocale():sub(1, 2) == "en" then
+        return SK.db and SK.db.itemNames and SK.db.itemNames[itemID]
+    end
+end
+
+-- Which category a scroll goes in. By its English name when that's known
+-- (any language), otherwise by the words in your language's name.
+function SK.CategoryFor(name, itemID)
+    local english = SK.EnglishScrollName(itemID)
+    local lowered = (name or ""):lower()
     for _, category in ipairs(SK.SCROLL_CATEGORIES) do
         for _, word in ipairs(category.words) do
-            if word == "" or name:find(word, 1, true) then return category.key end
+            if word == "" then return category.key end
+            if english and english:find(word, 1, true) then return category.key end
+            if name and name:find(word, 1, true) then return category.key end
+            local translated = SK.L[word]
+            if not english and translated ~= word and lowered:find(translated:lower(), 1, true) then return category.key end
         end
     end
     return "utility"

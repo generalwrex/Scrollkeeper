@@ -53,13 +53,20 @@ end
 
 -- Zones with the most scroll drops: list of { mapID, name, count }.
 -- No tier: every untranslated scroll, yours and everyone's.
--- A tier: only scrolls of that tier (your own drops, logged since 1.1.4).
+-- A tier: only scrolls of that tier (yours and everyone's, logged since 1.1.4/1.1.5).
 local function BestZones(limit, tier)
     local byMap = {}
     if tier then
-        for mapID, tiers in pairs(SK.db.dropTiers or {}) do
-            if tiers[tier] then byMap[mapID] = tiers[tier] end
+        -- Yours, what you heard from others, and the shipped community data.
+        local function AddTier(dropTiers)
+            for mapID, tiers in pairs(dropTiers or {}) do
+                local count = tiers[tier]
+                if count then byMap[mapID] = (byMap[mapID] or 0) + count end
+            end
         end
+        AddTier(SK.db.dropTiers)
+        for _, entry in pairs(SK.db.community or {}) do AddTier(entry.dropTiers) end
+        for _, entry in ipairs(SK.ShippedCommunity and SK.ShippedCommunity() or {}) do AddTier(entry.dropTiers) end
     else
         local function Add(drops)
             for mapID, cells in pairs(drops or {}) do

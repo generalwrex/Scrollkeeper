@@ -24,6 +24,13 @@ SK.LANGUAGES = {
     { "frFR", "Français" },
 }
 
+-- Chinese only on Chinese game clients: the fonts other clients use have
+-- no Chinese characters, so picking it there would show empty boxes.
+if SK.locale == "zhCN" or SK.locale == "zhTW" then
+    table.insert(SK.LANGUAGES, { "zhCN", "简体中文" })
+    table.insert(SK.LANGUAGES, { "zhTW", "繁體中文" })
+end
+
 -- Fill SK.L with the chosen language. Called once your settings load;
 -- changing the setting takes effect after a /reload.
 function SK.ApplyLanguage()

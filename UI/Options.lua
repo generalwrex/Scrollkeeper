@@ -279,6 +279,8 @@ SK.Listen("READY", function()
         AddHeader(L["Mailbox, guild bank and auction house"])
         AddCheckbox("mailHelper", L["Mailbox helper"],
             L["At the mailbox, list your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail."], true)
+        AddCheckbox("mailIncludeMine", L["Mailbox: offer scrolls I'd use too"],
+            L["Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use."], false)
         AddCheckbox("guildBankMarks", L["Guild bank marks"],
             L["Put a colored dot on guild bank scrolls that you, your mages or a guildie would get a skill-up from."], true)
         AddCheckbox("ahScanButton", L["Auction house scan button"],
@@ -300,7 +302,7 @@ SK.Listen("READY", function()
                 return container:GetData()
             end
             Settings.CreateDropdown(category, setting, Options,
-                L["Scrollkeeper's language. Spanish, French and German were translated with AI, so fixes are welcome on GitHub. Takes effect after /reload."])
+                L["Scrollkeeper's language. Spanish, French, German and Chinese were translated with AI, so fixes are welcome on GitHub. Takes effect after /reload."])
         end)
 
         -- Map ------------------------------------------------------------------

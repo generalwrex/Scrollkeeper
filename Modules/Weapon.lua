@@ -24,15 +24,41 @@ local function HasMainHandImbue()
     return hasMainHand and true or false
 end
 
+-- The buffs a familiar gives, in any language: each familiar scroll's own
+-- spell (its ID and its name in your language), plus every one seen before
+-- (saved, so it works even after the scroll is used up).
+local function FamiliarSpells()
+    SK.db.familiarSpells = SK.db.familiarSpells or {}
+    local ids, names = SK.db.familiarSpells, {}
+    for _, scroll in ipairs(SK.bags and SK.bags.translated or {}) do
+        if scroll.category == "familiars" and C_Item and C_Item.GetItemSpell then
+            local spellName, spellID = SK.Try(C_Item.GetItemSpell, scroll.itemID)
+            if spellID then ids[spellID] = spellName or true end
+        end
+    end
+    for _, spellName in pairs(ids) do
+        if type(spellName) == "string" then names[spellName] = true end
+    end
+    return ids, names
+end
+
 local function HasFamiliar()
     if not (C_UnitAuras and C_UnitAuras.GetAuraDataByIndex) then return true end
-    local familiarWord = "Familiar"
+    local ids, names = FamiliarSpells()
+    local words = { "Familiar", SK.L["Familiar"] }
     for i = 1, 40 do
         local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok then return state.familiar end
         if type(aura) ~= "table" then break end
-        local name = aura.name
-        if type(name) == "string" and name:find(familiarWord, 1, true) then return true end
+        local spellID, name = aura.spellId, aura.name
+        if issecretvalue and (issecretvalue(spellID) or issecretvalue(name)) then return state.familiar end
+        if spellID and ids[spellID] then return true end
+        if type(name) == "string" then
+            if names[name] then return true end
+            for _, word in ipairs(words) do
+                if word ~= "" and name:lower():find(word:lower(), 1, true) then return true end
+            end
+        end
     end
     return false
 end

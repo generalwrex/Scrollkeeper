@@ -6,6 +6,7 @@
 --   L|mapID|x|y|name                 a library you've used Study in
 --   P|mapID#part|cell:count,...      where you've looted untranslated scrolls
 --   K|mapID#part|cell:count,...      where you've looted books for the librarians
+--   D|mapID#part|tier:count,...      untranslated scrolls looted per zone, by tier (1.1.5)
 --   I|0#part|itemID,...              item IDs you've learned are books
 --   W|instance|x|y|name              a library spot as a world position
 --
@@ -34,6 +35,7 @@ local function Entry(sender)
         SK.db.community[sender] = entry
     end
     entry.books = entry.books or {}
+    entry.dropTiers = entry.dropTiers or {}
     entry.at = time()
     local peer = SK.peers and SK.peers[sender]
     if peer and peer.exportID then entry.exportID = peer.exportID end
@@ -80,6 +82,17 @@ Net.Handle("P", function(sender, f)
     for cell, count in (f[2] or ""):gmatch("(%d+%.%d+):(%d+)") do
         count = tonumber(count)
         if count > 0 and count <= MAX_COUNT and SK.CellCenter(cell) then cells[cell] = count end
+    end
+    SK.Send("DROPS_CHANGED")
+end)
+
+Net.Handle("D", function(sender, f)
+    local mapID, part = Head(f[1])
+    if not (mapID and part) then return end
+    local tiers = Target(Entry(sender).dropTiers, mapID, part)
+    for tier, count in (f[2] or ""):gmatch("(%d+):(%d+)") do
+        tier, count = tonumber(tier), tonumber(count)
+        if SK.TIER_RESULTS[tier] and count > 0 and count <= MAX_COUNT then tiers[tier] = count end
     end
     SK.Send("DROPS_CHANGED")
 end)
@@ -288,6 +301,11 @@ function SK.SendMyData()
         local items = {}
         for cell, count in pairs(cells) do items[#items + 1] = cell .. ":" .. count end
         if #items > 0 then Net.SendList("K", mapID, items) end
+    end
+    for mapID, tiers in pairs(db.dropTiers or {}) do
+        local items = {}
+        for tier, count in pairs(tiers) do items[#items + 1] = tier .. ":" .. count end
+        if #items > 0 then Net.SendList("D", mapID, items) end
     end
     local backfires = {}
     for tier, seen in pairs(db.backfires or {}) do

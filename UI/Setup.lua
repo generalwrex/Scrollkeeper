@@ -69,7 +69,7 @@ local function BuildQuestions()
             auto and L["Use the same language as the game."] or nil, ICON .. "INV_Misc_Book_11" }
     end
     list[#list + 1] = { key = "language", question = L["Language"],
-        hint = L["Spanish, French and German were translated with AI, so fixes are welcome on GitHub."], options = languages }
+        hint = L["Spanish, French, German and Chinese were translated with AI, so fixes are welcome on GitHub."], options = languages }
     return list
 end
 

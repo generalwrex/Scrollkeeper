@@ -4,6 +4,11 @@
 
 - **Thank you!** Seriously, everyone downloading this and sharing your scroll data is what makes the odds and drop spots actually useful. There's a little thank-you in chat the first time you open the panel.
 - **Backups.** Options > Scrollkeeper > Backup (or `/sk backup`) gives you all your Scrollkeeper data as text, so if you ever have to wipe WTF you don't lose your luck log, drops, settings and all that. `/sk restore` (or the Restore button) puts it back.
+- **Chinese!** Simplified and Traditional Chinese (AI translated, fixes welcome). Shows up by itself on Chinese game clients.
+- Familiars and the scroll categories (Imbues, Familiars...) now work in every language, not just English. They go by the item and spell, not the English name.
+- Where to farm uses everyone's shared drops now, not just yours (drop tiers are shared from this version on).
+- New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
+- The imbue/familiar pop-up's hint is one short line now.
 
 ## 1.1.4
 

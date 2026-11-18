@@ -30,6 +30,8 @@ local KIND_ORDER = { mine = 1, group = 2, guild = 3, friend = 4, public = 5 }
 ------------------------------------------------------------------------
 
 -- Untranslated scrolls you're carrying that you don't need yourself.
+-- With the "mailIncludeMine" setting, the ones you'd still level from
+-- too, marked mineToo so the list can say so.
 local function SpareScrolls()
     local spare = {}
     local skill = SK.isMage and SK.GetComprehension()
@@ -39,7 +41,11 @@ local function SpareScrolls()
             local chance = SK.SkillUpChance(scroll.needs, skill.rank)
             keep = chance and chance.gives or false
         end
-        if not keep then spare[#spare + 1] = scroll end
+        if not keep then
+            spare[#spare + 1] = scroll
+        elseif SK.db and SK.db.mailIncludeMine then
+            spare[#spare + 1] = setmetatable({ mineToo = true }, { __index = scroll })
+        end
     end
     return spare
 end
@@ -51,12 +57,13 @@ function SK.MailPlan()
     local function Offer(mailName, name, kind, scroll, givesSkillUp)
         local person = people[mailName]
         if not person then
-            person = { mailName = mailName, name = name, kind = kind, ups = {}, reads = {}, later = {} }
+            person = { mailName = mailName, name = name, kind = kind, ups = {}, reads = {}, later = {}, mineToo = 0 }
             people[mailName] = person
             order[#order + 1] = person
         end
         local into = givesSkillUp == "later" and person.later or (givesSkillUp and person.ups) or person.reads
         table.insert(into, scroll)
+        if scroll.mineToo then person.mineToo = person.mineToo + 1 end
     end
 
     local mages = SK.MailableMages and SK.MailableMages() or {}
@@ -257,6 +264,7 @@ local function Refresh()
             if person.ups > 0 then parts[#parts + 1] = L["|cff40ff40%d skill-up|r"]:format(person.ups) end
             if person.reads > 0 then parts[#parts + 1] = L["%d they can read"]:format(person.reads) end
             if person.later > 0 then parts[#parts + 1] = L["%d for later (trains at level 6)"]:format(person.later) end
+            if (person.mineToo or 0) > 0 then parts[#parts + 1] = L["|cffffd100%d you'd use too|r"]:format(person.mineToo) end
             row.detail:SetText(table.concat(parts, ", "))
             row:Show()
         else
