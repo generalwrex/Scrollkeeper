@@ -116,7 +116,13 @@ def write_lua(players, path):
         out.append("        },")
         out.append("    },")
     out.append("}")
-    Path(path).write_text("\n".join(out) + "\n", encoding="utf-8")
+    # Keep the previous one as tools/community/Community.lua.bak (not next to
+    # it in Data/, which ships with the addon), so a bad rebuild can be undone.
+    target = Path(path)
+    if target.exists():
+        backup = Path(__file__).with_name("Community.lua.bak")
+        backup.write_bytes(target.read_bytes())
+    target.write_text("\n".join(out) + "\n", encoding="utf-8")
     print(f"Wrote {path} ({len(players)} players)")
 
 
