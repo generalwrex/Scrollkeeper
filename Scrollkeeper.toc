@@ -24,6 +24,7 @@ Core\Constants.lua
 # Data: plain tables of game facts. Edit these when Blizzard changes scrolls.
 Data\Scrolls.lua
 Data\Community.lua
+Data\Messages.lua
 
 # Modules: one feature per file. None of them draw anything.
 Modules\Skill.lua

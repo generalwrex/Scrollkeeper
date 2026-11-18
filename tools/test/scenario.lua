@@ -510,3 +510,13 @@ do
   SK.ShowBackup(); SK.ShowRestore()
   print("errors:", #ScrollkeeperDB.errors)
 end
+
+-- MESSAGES: shown once when the panel opens, only in their version
+do
+  ScrollkeeperDB.messagesSeen = nil
+  local realVersion = SK.version
+  SK.MESSAGES = { { id = "test-now", version = realVersion, lines = { "hello one", "hello two" } },
+                  { id = "test-other", version = "9.9", lines = { "never" } } }
+  SK.ShowMessages(); SK.ShowMessages()
+  print("MESSAGES seen now", ScrollkeeperDB.messagesSeen["test-now"], "other", ScrollkeeperDB.messagesSeen["test-other"])
+end
