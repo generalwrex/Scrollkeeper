@@ -57,6 +57,7 @@ UI\Panel.lua
 UI\Network.lua
 UI\Alts.lua
 UI\Export.lua
+UI\Backup.lua
 UI\Mail.lua
 UI\Swap.lua
 UI\Plan.lua

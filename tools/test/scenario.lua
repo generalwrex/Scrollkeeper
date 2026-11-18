@@ -491,3 +491,22 @@ if SK.isMage then
   local t1, t50 = SK.BestZones(5, 1), SK.BestZones(5, 50)
   print("DROPTIERS tier1 zones", #t1, t1[1] and t1[1].count, "tier50 zones", #t50)
 end
+
+-- BACKUP: round trip, refuses junk and cut-off text, restore swaps the data in
+do
+  ScrollkeeperDB.backupTest = { a = 1, b = "x:y|z", c = { true, false, 2.5 }, ["weird key"] = "s5:fake" }
+  local text = SK.BackupText()
+  local data, why = SK.ReadBackup(text)
+  local same = data and data.backupTest and data.backupTest.b == "x:y|z" and data.backupTest.c[3] == 2.5
+    and data.backupTest["weird key"] == "s5:fake" and data.deciphered == ScrollkeeperDB.deciphered
+  local junk = SK.ReadBackup("hello")
+  local cut = SK.ReadBackup(text:sub(1, #text - 5))
+  local reloaded = false; ReloadUI = function() reloaded = true end
+  ScrollkeeperDB.deciphered = 999
+  SK.RestoreBackupData(data)
+  print("BACKUP roundtrip", same and true or false, "junk refused", junk == nil, "cut refused", cut == nil,
+    "restored", ScrollkeeperDB.deciphered ~= 999, "reloads", reloaded, "size", #text)
+  ScrollkeeperDB.backupTest = nil
+  SK.ShowBackup(); SK.ShowRestore()
+  print("errors:", #ScrollkeeperDB.errors)
+end

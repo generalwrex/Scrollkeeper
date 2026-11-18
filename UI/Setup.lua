@@ -356,3 +356,33 @@ SK.Listen("READY", function()
         elseif #Unseen(BuildQuestions()) > 0 then SK.ShowSetup(true) end
     end)
 end)
+
+------------------------------------------------------------------------
+-- A one-time thank-you in 1.1.5, once per account, after the setup window
+-- (if that shows). Only this release says it.
+------------------------------------------------------------------------
+
+if StaticPopupDialogs then
+    StaticPopupDialogs["SCROLLKEEPER_THANKS"] = {
+        text = "",   -- filled in when shown, in your language
+        button1 = OKAY or "Okay",
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+end
+
+SK.Listen("READY", function()
+    if not (type(SK.version) == "string" and SK.version:match("^1%.1%.5")) then return end
+    if SK.db.thanked115 then return end
+    C_Timer.After(10, function()
+        if SK.db.thanked115 or SK.InCombat() or not StaticPopup_Show then return end
+        if ScrollkeeperSetupFrame and ScrollkeeperSetupFrame:IsShown() then return end   -- next login then
+        SK.db.thanked115 = true
+        StaticPopupDialogs["SCROLLKEEPER_THANKS"].text =
+            L["|cffffd100Hey, thanks for using Scrollkeeper!|r\n\nAll of you downloading it and sharing your scroll data is what fills in the odds, the drop spots and everything else. Couldn't do it without you.\n\n- Natop (Archmage Naage)"]
+            .. "\n\n|cff9d9d9d" .. L["New: you can back up all your Scrollkeeper data now, in Options > Scrollkeeper > Backup."] .. "|r"
+        StaticPopup_Show("SCROLLKEEPER_THANKS")
+    end)
+end)

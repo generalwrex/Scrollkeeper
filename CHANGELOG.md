@@ -1,5 +1,10 @@
 # Scrollkeeper
 
+## 1.1.5
+
+- **Thank you!** Seriously, everyone downloading this and sharing your scroll data is what makes the odds and drop spots actually useful. You'll get a little thank-you pop-up once when you log in.
+- **Backups.** Options > Scrollkeeper > Backup (or `/sk backup`) gives you all your Scrollkeeper data as text, so if you ever have to wipe WTF you don't lose your luck log, drops, settings and all that. `/sk restore` (or the Restore button) puts it back.
+
 ## 1.1.4
 
 - **Sharing is one dropdown now** (in setup and in the settings): Full, Anonymous, Simple or None.

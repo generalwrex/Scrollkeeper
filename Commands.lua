@@ -89,6 +89,8 @@ commands.about = function()
     end
 end
 commands.bug = function() SK.ShowBugReport() end
+commands.backup = function() SK.ShowBackup() end
+commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()

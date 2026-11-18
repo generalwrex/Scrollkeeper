@@ -73,6 +73,41 @@ local function CopyBox(parent, url)
     return box
 end
 
+local function AddBackupPage()
+    if not Settings.RegisterCanvasLayoutSubcategory then return end
+    local page = CreateFrame("Frame")
+
+    local title = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 16, -16)
+    title:SetText(L["Backup"])
+
+    local text = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    text:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+    text:SetWidth(560)
+    text:SetJustifyH("LEFT")
+    text:SetSpacing(3)
+    text:SetText(L["Everything Scrollkeeper has saved (settings, your luck log, drops, books, your mages, prices and what you heard from other players) lives in your WTF folder. If you ever have to wipe WTF, it's gone."]
+        .. "\n\n" .. L["Make a backup, copy the text and keep it somewhere safe (a text file, a note, Discord). Restore pastes it back in and reloads."])
+
+    local backup = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
+    backup:SetSize(180, 26)
+    backup:SetPoint("TOPLEFT", text, "BOTTOMLEFT", 0, -18)
+    backup:SetText(L["Back up my data"])
+    backup:SetScript("OnClick", function() SK.ShowBackup() end)
+
+    local restore = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
+    restore:SetSize(180, 26)
+    restore:SetPoint("LEFT", backup, "RIGHT", 12, 0)
+    restore:SetText(L["Restore a backup"])
+    restore:SetScript("OnClick", function() SK.ShowRestore() end)
+
+    local commands = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    commands:SetPoint("TOPLEFT", backup, "BOTTOMLEFT", 0, -10)
+    commands:SetText(L["Same as /sk backup and /sk restore."])
+
+    Settings.RegisterCanvasLayoutSubcategory(category, page, L["Backup"])
+end
+
 local function AddAboutPage()
     if not Settings.RegisterCanvasLayoutSubcategory then return end
     local page = CreateFrame("Frame")
@@ -273,6 +308,7 @@ SK.Listen("READY", function()
         AddCheckbox("mapPins", L["Map pins"],
             L["Show libraries and the spots where untranslated scrolls dropped on the world map."], true)
 
+        SK.Safely("settings backup", AddBackupPage)
         SK.Safely("settings about", AddAboutPage)
 
         Settings.RegisterAddOnCategory(category)
