@@ -120,7 +120,7 @@ Net.Handle("H", function(sender, f, source)
 
     if not warnedNewer and VersionNumber(peer.version) > VersionNumber(SK.version) then
         warnedNewer = true
-        SK.Print(L["a newer version (%s) is out. You have %s."]:format(peer.version, SK.version))
+        SK.Print(L["a newer version (%s) is out. You have %s. Update it on CurseForge."]:format(peer.version, SK.version))
     end
     SK.Send("PEERS_CHANGED")
 end)
