@@ -313,19 +313,36 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         button.arrow = button:CreateTexture(nil, "OVERLAY", nil, 2)
         button.arrow:SetSize(10, 10)
         button.arrow:SetPoint("BOTTOMRIGHT", 4, -4)
-        button:SetScript("OnClick", function()
-            if (SK.db.mageSort or "skill") == mode then
+        if mode == "mine" then
+            -- Right-click: only show mages who could use your scrolls.
+            button.check = button:CreateTexture(nil, "OVERLAY", nil, 3)
+            button.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+            button.check:SetSize(14, 14)
+            button.check:SetPoint("TOPRIGHT", 6, 6)
+            button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        end
+        button:SetScript("OnClick", function(self, mouseButton)
+            if mode == "mine" and mouseButton == "RightButton" then
+                SK.db.mageOnlyMine = not SK.db.mageOnlyMine
+            elseif (SK.db.mageSort or "skill") == mode then
                 SK.db.mageSortReversed = not SK.db.mageSortReversed
             else
                 SK.db.mageSort, SK.db.mageSortReversed = mode, false
             end
             SK.RefreshNetwork()
+            local onEnter = self:GetScript("OnEnter")
+            if onEnter and GameTooltip:IsOwned(self) then onEnter(self) end
         end)
         button:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:AddLine(L["Sort: "] .. L[MAGE_SORTS[mode].label])
             GameTooltip:AddLine(L[MAGE_SORTS[mode].tip], 1, 1, 1, true)
             GameTooltip:AddLine(L["Click again to flip the order."], 0.6, 0.6, 0.6)
+            if mode == "mine" then
+                GameTooltip:AddLine(SK.db.mageOnlyMine
+                    and L["Right-click: show everyone again."]
+                    or L["Right-click: only mages who could use your scrolls."], 0.25, 0.75, 0.25)
+            end
             GameTooltip:Show()
         end)
         button:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -390,11 +407,13 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     function pane:Refresh()
         if not self.regions[1]:IsVisible() then return end
         -- Only mages: the others have nothing to show here.
+        -- With the My scrolls filter on, only the ones who could use yours.
+        local onlyMine = SK.db.mageOnlyMine and true or false
         local peers = {}
         for _, entry in ipairs(SK.PeerList()) do
             if entry.peer and entry.peer.class == "MAGE" then
                 entry.yours = YourScrollsFor(entry.peer)
-                peers[#peers + 1] = entry
+                if not onlyMine or entry.yours > 0 then peers[#peers + 1] = entry end
             end
         end
         local sortMode = MAGE_SORTS[SK.db.mageSort or ""] and SK.db.mageSort or "skill"
@@ -406,10 +425,12 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             button.glow:SetShown(active)
             button.arrow:SetShown(active)
             button.arrow:SetTexture(reversed and ARROW_DOWN or ARROW_UP)
-            button:GetNormalTexture():SetDesaturated(not active)
+            button:GetNormalTexture():SetDesaturated(not active and not (button.check and onlyMine))
+            if button.check then button.check:SetShown(onlyMine) end
         end
-        -- Anonymous players aren't named, but show that they're there.
-        local anonymous = SK.AnonymousCount and SK.AnonymousCount() or 0
+        -- Anonymous players aren't named, but show that they're there
+        -- (not while filtering: we can't tell what they need).
+        local anonymous = not onlyMine and SK.AnonymousCount and SK.AnonymousCount() or 0
         if anonymous > 0 then peers[#peers + 1] = { anonymous = anonymous } end
 
         self.users:SetRows(peers, function(row, entry)
@@ -444,7 +465,8 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 row.label:SetText(CLASS_COLOR .. entry.name .. "|r")
                 row.sub:SetText(L["|cffffd100%d|r skill"]:format(peer.skill or 0) .. "  ·  " .. needs .. upgrade)
             end
-        end, L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])
+        end, onlyMine and L["Nobody here could use the scrolls in your bags. Right-click the scroll icon to show everyone."]
+            or L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])
 
         for tier, button in pairs(self.tierButtons) do
             local active = tier == self.selectedTier

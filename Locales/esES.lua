@@ -468,3 +468,6 @@ L["Click again to flip the order."] = "Haz clic otra vez para invertir el orden.
 L["Sort: "] = "Ordenar: "
 L["What tier %d scrolls turned into, from everyone's deciphers."] = "En qué se convirtieron los pergaminos de nivel %d, según los descifrados de todos."
 L["Made Scrollkeeper!"] = "¡Creó Scrollkeeper!"
+L["Right-click: show everyone again."] = "Clic derecho: mostrar a todos otra vez."
+L["Right-click: only mages who could use your scrolls."] = "Clic derecho: solo magos que podrían usar tus pergaminos."
+L["Nobody here could use the scrolls in your bags. Right-click the scroll icon to show everyone."] = "Nadie aquí podría usar los pergaminos de tus bolsas. Clic derecho en el icono del pergamino para ver a todos."

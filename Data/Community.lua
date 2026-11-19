@@ -123,7 +123,7 @@ SK.COMMUNITY_DATA = {
         dropTiers = {
         },
         backfires = {
-            [50] = { b = 0, t = 8 },
+            [50] = { b = 0, t = 9 },
         },
         bookIDs = {  },
         names = {

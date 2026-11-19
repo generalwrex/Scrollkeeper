@@ -467,3 +467,6 @@ L["Click again to flip the order."] = "Nochmal klicken dreht die Reihenfolge um.
 L["Sort: "] = "Sortieren: "
 L["What tier %d scrolls turned into, from everyone's deciphers."] = "Was aus Schriftrollen der Stufe %d wurde, aus den Entzifferungen aller."
 L["Made Scrollkeeper!"] = "Hat Scrollkeeper gemacht!"
+L["Right-click: show everyone again."] = "Rechtsklick: wieder alle zeigen."
+L["Right-click: only mages who could use your scrolls."] = "Rechtsklick: nur Magier, die deine Schriftrollen nutzen könnten."
+L["Nobody here could use the scrolls in your bags. Right-click the scroll icon to show everyone."] = "Niemand hier könnte die Schriftrollen in deinen Taschen nutzen. Rechtsklick auf das Rollen-Symbol zeigt wieder alle."
