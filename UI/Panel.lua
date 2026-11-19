@@ -853,22 +853,17 @@ local function Layout()
     -- The news, until you click it away: the line between the window
     -- buttons and the toggles in Advanced, just a "!" in the narrow views.
     local news = SK.NEWS
-    local showNews = news and news.text and SK.db.newsSeen ~= news.id
+    -- (Advanced view only: the narrow views have no room for it.)
+    local showNews = advanced and news and news.text and SK.db.newsSeen ~= news.id
     parts.news:SetShown(showNews and true or false)
     if showNews then
         local lastButton = parts.windowButtons[#parts.windowButtons]
-        if advanced and lastButton.inAdvanced then lastButton = parts.windowButtons[#parts.windowButtons - 1] end
+        if lastButton.inAdvanced then lastButton = parts.windowButtons[#parts.windowButtons - 1] end
         parts.news:ClearAllPoints()
-        if advanced then
-            parts.news:SetPoint("LEFT", lastButton, "RIGHT", 10, 0)
-            parts.news:SetPoint("RIGHT", parts.iconToggle, "LEFT", -10, 0)
-            -- The yellow "!" is what catches the eye; the text stays plain.
-            parts.news.text:SetText(NEWS_ICON .. " |cffffd100" .. L["News:"] .. "|r |cffffffff" .. L[news.text] .. "|r")
-        else
-            parts.news:SetPoint("LEFT", lastButton, "RIGHT", 3, 0)
-            parts.news:SetWidth(18)
-            parts.news.text:SetText(NEWS_ICON)
-        end
+        parts.news:SetPoint("LEFT", lastButton, "RIGHT", 10, 0)
+        parts.news:SetPoint("RIGHT", parts.iconToggle, "LEFT", -10, 0)
+        -- The yellow "!" is what catches the eye; the text stays plain.
+        parts.news.text:SetText(NEWS_ICON .. " |cffffd100" .. L["News:"] .. "|r |cffffffff" .. L[news.text] .. "|r")
     end
     local top = TOP
 
