@@ -212,9 +212,10 @@ local MAGE_SORTS = {
               end },
 }
 -- The author's characters: their tooltip says so. Names are only unique
--- per server (PvE, PvP, RP, RP-PvP), so the server has to match too.
+-- per server (PvE, PvP, RP, RP-PvP); realm = nil means every server
+-- (the author has this name on all four).
 local AUTHOR_CHARACTERS = {
-    { names = { ["Archmage Naage"] = true, ["Naage"] = true }, realm = "CAMWOW US1 Realm 1 PvE" },
+    { names = { ["Archmage Naage"] = true, ["Naage"] = true } },
 }
 local function SameRealm(a, b)
     local function Plain(text) return (text or ""):gsub("[%s%-]", ""):lower() end
@@ -225,7 +226,7 @@ local function IsAuthor(sender)
     local short, realm = sender:match("^(.-)%-([^%-]+)$")
     if not short then short, realm = sender, GetRealmName and GetRealmName() end
     for _, author in ipairs(AUTHOR_CHARACTERS) do
-        if author.names[short] and SameRealm(realm, author.realm) then return true end
+        if author.names[short] and (not author.realm or SameRealm(realm, author.realm)) then return true end
     end
     return false
 end
