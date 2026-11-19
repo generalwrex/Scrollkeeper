@@ -4,8 +4,9 @@
 --   the number    how many scrolls you can decipher right now
 --                 (green when some of them still give skill-ups)
 --   a gold glow   Study is ready
---   click         open or close the panel, in the view you picked
---   drag          move it (unless the panel position is locked)
+--   left-click    decipher your best scroll (skill-ups first), no window needed
+--   right-click   open or close the panel, in the view you picked
+--   shift-drag    move it, or right-drag (unless the panel position is locked)
 --
 -- Turn it on in Options > AddOns > Scrollkeeper > Scroll icon. Mages only.
 -- (Idea from Curnil, thanks!)
@@ -17,14 +18,21 @@ local SIZE = 40
 local icon
 
 local function Build()
-    icon = CreateFrame("Button", "ScrollkeeperIcon", UIParent)
+    -- A secure button, so left-click can cast Decipher on your best scroll
+    -- (the same one the panel's Decipher button would read). Right-click is
+    -- ours: open or close the panel. Moving it is a Shift-drag or a
+    -- right-drag: a plain left-click casts as soon as the button goes down,
+    -- so Shift-left-click is set to do nothing (an empty macro).
+    icon = CreateFrame("Button", "ScrollkeeperIcon", UIParent, "SecureActionButtonTemplate")
     icon:SetSize(SIZE, SIZE)
     icon:SetFrameStrata("MEDIUM")
     icon:SetClampedToScreen(true)
     icon:SetMovable(true)
     icon:EnableMouse(true)
-    icon:RegisterForDrag("LeftButton")
-    icon:RegisterForClicks("LeftButtonUp")
+    icon:RegisterForDrag("LeftButton", "RightButton")
+    icon:SetAttribute("shift-type1", "macro")
+    icon:SetAttribute("shift-macrotext1", "")
+    icon:RegisterForClicks("AnyUp", "AnyDown")
 
     icon.texture = icon:CreateTexture(nil, "ARTWORK")
     icon.texture:SetAllPoints()
@@ -53,8 +61,9 @@ local function Build()
 
     icon:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
 
-    icon:SetScript("OnDragStart", function(self)
-        if SK.db.locked then return end
+    icon:SetScript("OnDragStart", function(self, button)
+        if SK.db.locked or InCombatLockdown() then return end
+        if button == "LeftButton" and not IsShiftKeyDown() then return end
         self:StartMoving()
     end)
     icon:SetScript("OnDragStop", function(self)
@@ -62,7 +71,10 @@ local function Build()
         local point, _, relativePoint, x, y = self:GetPoint()
         SK.db.iconPos = { point, relativePoint, x, y }
     end)
-    icon:SetScript("OnClick", function()
+    -- The template's own click handler casts the left-click; this hook
+    -- only handles the right button (once: clicks come down and up).
+    icon:HookScript("OnClick", function(_, button, down)
+        if button ~= "RightButton" or down then return end
         if SK.InCombat() then
             SK.Print(L["the panel can be opened after combat."])
             return
@@ -79,7 +91,12 @@ local function Build()
         if SK.StudySecondsLeft and SK.KnowsStudy and SK.KnowsStudy() then
             GameTooltip:AddDoubleLine(L["Study"], SK.FormatStudyTime(SK.StudySecondsLeft()), 1, 0.82, 0, 1, 1, 1)
         end
-        GameTooltip:AddLine(L["Click to open or close the panel. Drag to move."], 0.6, 0.6, 0.6, true)
+        local nextScroll = SK.NextDecipherable()
+        if nextScroll then
+            GameTooltip:AddLine(L["Click: decipher %s"]:format(SK.ScrollLink(nextScroll.itemID, nextScroll.name)),
+                0.25, 1, 0.25, true)
+        end
+        GameTooltip:AddLine(L["Right-click: open or close the panel. Shift-drag: move."], 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)
     icon:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -97,7 +114,7 @@ function SK.ResetIconPosition()
     SK.db.iconPos = nil
     SK.db.scrollIcon = true
     SK.RefreshIcon()   -- builds it if it was never shown
-    if icon then
+    if icon and not InCombatLockdown() then
         icon:ClearAllPoints()
         icon:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     end
@@ -109,12 +126,29 @@ function SK.RefreshIcon()
     local texture = toggle and toggle.GetNormalTexture and toggle:GetNormalTexture()
     if texture and texture.SetDesaturated then texture:SetDesaturated(not (SK.db and SK.db.scrollIcon)) end
     local wanted = SK.isMage and SK.db and SK.db.scrollIcon
+    -- It's a secure button: showing, hiding, moving and changing what it
+    -- casts all wait until combat ends (PLAYER_REGEN_ENABLED below).
+    local locked = InCombatLockdown()
     if not wanted then
-        if icon then icon:Hide() end
+        if icon and not locked then icon:Hide() end
         return
     end
-    if not icon then Build() end
-    local _, readable, _, skillUps = SK.NextDecipherable()
+    if not icon then
+        if locked then return end
+        Build()
+    end
+    local nextScroll, readable, _, skillUps = SK.NextDecipherable()
+    if not locked then
+        -- Left-click: Decipher on the best scroll, like the panel's button.
+        if nextScroll then
+            icon:SetAttribute("type1", "spell")
+            icon:SetAttribute("spell1", SK.SPELL_COMPREHEND_SCROLL)
+            icon:SetAttribute("target-bag", nextScroll.bag)
+            icon:SetAttribute("target-slot", nextScroll.slot)
+        else
+            icon:SetAttribute("type1", nil)
+        end
+    end
     icon.count:SetText(readable or 0)
     if (skillUps or 0) > 0 then
         icon.count:SetTextColor(0.25, 1, 0.25)
@@ -126,9 +160,12 @@ function SK.RefreshIcon()
     icon.texture:SetDesaturated((readable or 0) == 0)
     local studyReady = SK.KnowsStudy and SK.KnowsStudy() and SK.StudySecondsLeft and SK.StudySecondsLeft() <= 0
     icon.glow:SetShown(studyReady and true or false)
-    icon:SetScale(SK.db.scale or 1)
-    icon:Show()
+    if not locked then
+        icon:SetScale(SK.db.scale or 1)
+        icon:Show()
+    end
 end
+SK.On("PLAYER_REGEN_ENABLED", function() SK.RefreshIcon() end)
 
 SK.Listen("READY", SK.RefreshIcon)
 SK.Listen("BAGS_CHANGED", SK.RefreshIcon)

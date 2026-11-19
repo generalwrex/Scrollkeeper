@@ -13,6 +13,7 @@
 - **Window buttons at the top of the panel** for the Farming Plan, Luck Log, Scroll Swap and Fellow Mages, in every view. They took the spot of the "0 ready" line, since the Decipher button already says that.
 - A minimap button on/off toggle on the panel, next to the scroll icon one.
 - The "newer version is out" chat line says to update on CurseForge, and there's a setting to turn it off.
+- **The scroll icon deciphers now.** Click it to decipher your best scroll (skill-ups first) without opening anything. Right-click opens the panel, Shift-drag moves it.
 - Lost the scroll icon off screen? Right-click its toggle on the panel (or `/sk reset`) to put it back in the middle.
 - Clicking an imbue scroll on the panel puts it right on your main-hand weapon, no clicking the weapon after.
 - Advanced view: Fellow Mages gets more room. Your Stats is shorter, since the Luck Log, Plan and Swap have their own windows now.

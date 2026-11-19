@@ -16,7 +16,8 @@ Mage scroll helper for WoW Forever.
 - **Buttons along the top:** the Farming Plan, Luck Log, Scroll Swap and Fellow Mages windows, the scroll icon and
   minimap button toggles, the view size and the settings. Right-click the scroll icon toggle if you lost the icon
   off screen.
-- A **minimap button** and an optional **scroll icon** with how many scrolls you can decipher.
+- A **minimap button** and an optional **scroll icon** with how many scrolls you can decipher. Click the icon to
+  decipher your best scroll without opening anything; right-click it for the panel.
 
 ### Skill-ups and odds
 

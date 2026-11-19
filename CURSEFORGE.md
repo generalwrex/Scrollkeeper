@@ -31,7 +31,7 @@ The part I'm proudest of though is that it connects mages. Your alts, guildies, 
 *   Buttons along the top of the panel for every window, plus the scroll icon and minimap button on/off
 *   Hides itself in combat and comes back after (you can turn that off)
 *   Three sizes: Advanced, Simple, or just the title and your skill bar
-*   Or turn on the **scroll icon**: a little icon you can put anywhere with how many scrolls you can decipher (green when they still give skill-ups). Click it to pop open the panel in your favorite view (thanks Curnil for the idea!). Lost it off screen? Right-click its toggle on the panel
+*   Or turn on the **scroll icon**: a little icon you can put anywhere with how many scrolls you can decipher (green when they still give skill-ups). Click it to decipher your best scroll without opening anything, right-click to pop open the panel in your favorite view (thanks Curnil for the idea!). Lost it off screen? Right-click its toggle on the panel
 *   Tons of options. People love options
 
 ## Playing with other people
