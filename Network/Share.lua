@@ -177,8 +177,12 @@ function SK.CommunityOdds(tier)
     local totals, total, players = {}, 0, 0
     local function Add(results)
         for id, count in pairs(results or {}) do
-            totals[id] = (totals[id] or 0) + count
-            total = total + count
+            -- Older versions sometimes logged other loot (a recipe, water)
+            -- as a result; leave those out.
+            if SK.IsDecipherResult(id) then
+                totals[id] = (totals[id] or 0) + count
+                total = total + count
+            end
         end
     end
     Add(SK.db.resultsByID and SK.db.resultsByID[tier])

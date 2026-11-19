@@ -197,6 +197,9 @@ SK.On("CHAT_MSG_LOOT", function(message)
     -- never give one), so don't pair it with a scroll you just used.
     local link = message:match("(|c.-|h|r)")
     if link and SK.UntranslatedTier and SK.UntranslatedTier(link) then return end
+    -- Only scrolls come out of a decipher; other loot (a recipe, water...)
+    -- that lands at the same moment isn't the result.
+    if id and SK.IsDecipherResult and not SK.IsDecipherResult(id, name) then return end
     if pending and not pending.result then
         pending.result, pending.resultID = name, id
         if pending.tier then Finish() end

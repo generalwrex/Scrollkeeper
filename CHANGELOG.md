@@ -11,6 +11,7 @@
 - The imbue/familiar pop-up's hint is one short line now.
 - The network list is now "Fellow Mages" and only shows mages.
 - Community odds put standard scrolls (Scroll of Strength and such) in one row. Hover it to see each one with its count, or turn on the setting to list them one by one. Hovering any scroll there shows its count too.
+- Community odds no longer count loot that showed up while deciphering (like a recipe or water) as a scroll result. The luck log ignores it too.
 
 ## 1.1.4
 

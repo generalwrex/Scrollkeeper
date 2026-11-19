@@ -139,6 +139,26 @@ function SK.IsMageScroll(itemID, name)
     return english ~= nil and mageNames[(english:gsub("^Scroll of ", ""))] == true
 end
 
+-- The standard stat scrolls (Strength, Agility, Stamina, Spirit, Intellect,
+-- Protection, ranks I-IV) a decipher can also give.
+SK.STANDARD_SCROLLS = {
+    [954] = true, [2289] = true, [4426] = true, [10310] = true,    -- Strength
+    [3012] = true, [1477] = true, [4425] = true, [10309] = true,   -- Agility
+    [1180] = true, [1711] = true, [4422] = true, [10307] = true,   -- Stamina
+    [1181] = true, [1712] = true, [4424] = true, [10306] = true,   -- Spirit
+    [955] = true, [2290] = true, [4419] = true, [10308] = true,    -- Intellect
+    [3013] = true, [1478] = true, [4421] = true, [10305] = true,   -- Protection
+}
+
+-- Could a decipher have given this item? Anything else (a recipe, water,
+-- mob loot) was picked up at the same moment and isn't a result.
+function SK.IsDecipherResult(itemID, name)
+    if not itemID then return false end
+    if SK.STANDARD_SCROLLS[itemID] or SK.IsMageScroll(itemID, name) then return true end
+    local english = SK.EnglishScrollName(itemID)
+    return english ~= nil and english:find("^Scroll of ") ~= nil
+end
+
 function SK.EnglishScrollName(itemID)
     if not itemID then return nil end
     for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
