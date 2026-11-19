@@ -9,6 +9,9 @@
 - Where to farm uses everyone's shared drops now, not just yours (drop tiers are shared from this version on).
 - New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
 - The imbue/familiar pop-up's hint is one short line now.
+- **Luck Log window.** `/sk log` (or the dice tab) shows what your deciphers turned into, tier by tier, with your % next to everyone's, and how often each skill-up color really raised your skill. `/sk logchat` still prints it in chat.
+- **Tabs on the side of the panel** for the Farming Plan, Luck Log, Scroll Swap and Fellow Mages, in every view.
+- A minimap button on/off toggle on the panel, next to the scroll icon one.
 - The network list is now "Fellow Mages": only mages, with the full name on top and their skill, what they need and weapon upgrades underneath. Hover a name for more (and how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail. Little icons in its header sort it by skill, name, or who could use the most of your scrolls. Right-click the scroll icon to only show mages who could use yours.
 - Community odds tiers are scroll icons now. Community odds put standard scrolls (Scroll of Strength and such) in one row. Hover it to see each one with its count, or turn on the setting to list them one by one. Hovering any scroll there shows its count too.
 - Community odds no longer count loot that showed up while deciphering (like a recipe or water) as a scroll result. The luck log ignores it too.

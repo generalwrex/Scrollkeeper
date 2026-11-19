@@ -86,6 +86,10 @@ local function Build()
 end
 
 function SK.RefreshMinimapButton()
+    -- The toggle on the panel is greyed out while the button is off.
+    local toggle = ScrollkeeperPanel and ScrollkeeperPanel.minimapToggle
+    local texture = toggle and toggle.GetNormalTexture and toggle:GetNormalTexture()
+    if texture and texture.SetDesaturated then texture:SetDesaturated(not (SK.db and SK.db.minimapButton)) end
     if not (SK.isMage and SK.db and SK.db.minimapButton and Minimap) then
         if button then button:Hide() end
         return

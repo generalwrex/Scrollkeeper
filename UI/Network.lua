@@ -19,6 +19,12 @@ local window
 -- Pieces
 ------------------------------------------------------------------------
 
+-- Grey out (or color in) an icon button's picture.
+function SK.UI.Desaturate(button, grey)
+    local texture = button.GetNormalTexture and button:GetNormalTexture()
+    if type(texture) == "table" and texture.SetDesaturated then texture:SetDesaturated(grey and true or false) end
+end
+
 -- A bronze plate like "General" on the character window.
 function SK.UI.CreateHeader(host, text, width)
     local ok, header = pcall(CreateFrame, "Frame", nil, host, "CharacterStatFrameCategoryTemplate")
@@ -200,9 +206,9 @@ end
 -- (highest skill first, A to Z, most of your scrolls first).
 local MAGE_SORT_ORDER = { "skill", "name", "mine" }
 local MAGE_SORTS = {
-    skill = { label = "Skill", tip = "Highest Comprehension first.", icon = "Interface\\Icons\\INV_Misc_Book_11",
+    skill = { label = "Skill", tip = "Highest Comprehension first.", icon = "Interface\\Icons\\Spell_Holy_MagicalSentry",
               less = function(a, b) return (a.peer.skill or 0) > (b.peer.skill or 0) end },
-    name  = { label = "Name", tip = "A to Z.", icon = "Interface\\Icons\\INV_Misc_Note_01",
+    name  = { label = "Name", tip = "A to Z.", icon = "Interface\\Icons\\INV_Misc_Book_09",
               less = function(a, b) return a.name:lower() < b.name:lower() end },
     mine  = { label = "My scrolls", tip = "Who could use the most untranslated scrolls in your bags.",
               icon = "Interface\\Icons\\INV_Scroll_03",
@@ -238,6 +244,7 @@ local TIER_ICONS = {
     "Interface\\Icons\\INV_Scroll_05",
     "Interface\\Icons\\INV_Scroll_06",
 }
+SK.UI.TIER_ICONS = TIER_ICONS   -- the luck log uses the same ones
 local ARROW_UP = "Interface\\Buttons\\Arrow-Up-Up"
 local ARROW_DOWN = "Interface\\Buttons\\Arrow-Down-Up"
 
@@ -430,7 +437,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             button.glow:SetShown(active)
             button.arrow:SetShown(active)
             button.arrow:SetTexture(reversed and ARROW_DOWN or ARROW_UP)
-            button:GetNormalTexture():SetDesaturated(not active and not (button.check and onlyMine))
+            SK.UI.Desaturate(button, not active and not (button.check and onlyMine))
             if button.check then button.check:SetShown(onlyMine) end
         end
         -- Anonymous players aren't named, but show that they're there
@@ -476,7 +483,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         for tier, button in pairs(self.tierButtons) do
             local active = tier == self.selectedTier
             button.glow:SetShown(active)
-            button:GetNormalTexture():SetDesaturated(not active)
+            SK.UI.Desaturate(button, not active)
             button.number:SetTextColor(active and 1 or 0.6, active and 0.82 or 0.6, active and 0 or 0.6)
         end
         local odds, total, players = SK.CommunityOdds(self.selectedTier)

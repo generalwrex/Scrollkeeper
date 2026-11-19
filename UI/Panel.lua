@@ -373,11 +373,18 @@ local function Build()
     parts.collapse:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     parts.collapse:SetPoint("RIGHT", parts.gear, "LEFT", -1, 0)
 
-    -- (The network list is on the Advanced panel itself, so this button opens the plan.)
-    parts.network = IconButton("Interface\\Icons\\INV_Misc_Note_01", 18,
-        L["Farming plan: your next goal, and the cheapest scrolls on the auction house."],
-        function() SK.TogglePlan() end)
-    parts.network:SetPoint("RIGHT", parts.collapse, "LEFT", -4, 0)
+    -- Turn the minimap button (UI/Minimap.lua) on and off. Greyed out while it's off.
+    parts.minimapToggle = IconButton("Interface\\Icons\\INV_Misc_Map_01", 18,
+        function()
+            return (SK.db.minimapButton and L["Minimap button: |cff40ff40on|r"] or L["Minimap button: |cff808080off|r"])
+                .. "\n" .. L["|cffffffffClick to turn it on or off.|r"]
+        end,
+        function()
+            SK.db.minimapButton = not SK.db.minimapButton
+            if SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
+        end)
+    parts.minimapToggle:SetPoint("RIGHT", parts.collapse, "LEFT", -4, 0)
+    panel.minimapToggle = parts.minimapToggle
 
     -- Turn the scroll icon (UI/Icon.lua) on and off. Greyed out while it's off.
     parts.iconToggle = IconButton("Interface\\Icons\\INV_Scroll_03", 18,
@@ -389,9 +396,56 @@ local function Build()
             SK.db.scrollIcon = not SK.db.scrollIcon
             if SK.RefreshIcon then SK.RefreshIcon() end
         end)
-    parts.iconToggle:SetPoint("RIGHT", parts.network, "LEFT", -4, 0)
+    parts.iconToggle:SetPoint("RIGHT", parts.minimapToggle, "LEFT", -4, 0)
     panel.iconToggle = parts.iconToggle
     if SK.RefreshIcon then SK.RefreshIcon() end
+    if SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
+
+    -- Tabs down the panel's right edge, one per window, in every view.
+    local SIDE_TABS = {
+        { icon = "Interface\\Icons\\INV_Misc_Note_01", open = function() SK.TogglePlan() end,
+          title = "Farming Plan", text = "Your next goal, where to farm, and scroll prices at the auction house." },
+        { icon = "Interface\\Icons\\INV_Misc_Dice_01", open = function() SK.ToggleLog() end,
+          title = "Luck Log", text = "What your deciphers turned into, next to everyone's odds, and your skill-ups." },
+        { icon = "Interface\\Icons\\INV_Letter_15", open = function() SK.ToggleSwap() end,
+          title = "Scroll Swap", text = "Who has spare scrolls you'd level from, and who'd want yours." },
+        { icon = "Interface\\Icons\\INV_Misc_GroupLooking", open = function() SK.ToggleNetwork() end,
+          title = "Fellow Mages", text = "Other mages running Scrollkeeper, and the community's odds for each tier." },
+    }
+    parts.sideTabs = {}
+    for i, tab in ipairs(SIDE_TABS) do
+        local button = CreateFrame("Button", nil, panel)
+        button:SetSize(32, 32)
+        button:SetPoint("TOPLEFT", panel, "TOPRIGHT", -1, -46 - (i - 1) * 38)
+        local back = button:CreateTexture(nil, "BACKGROUND")
+        back:SetAllPoints()
+        back:SetColorTexture(0.08, 0.06, 0.04, 0.95)
+        local edge = button:CreateTexture(nil, "BORDER")
+        edge:SetPoint("TOPLEFT", -1, 1)
+        edge:SetPoint("BOTTOMRIGHT", 1, -1)
+        edge:SetColorTexture(0.45, 0.32, 0.12, 1)
+        back:SetDrawLayer("BORDER", 1)
+        button.icon = button:CreateTexture(nil, "ARTWORK")
+        button.icon:SetPoint("TOPLEFT", 3, -3)
+        button.icon:SetPoint("BOTTOMRIGHT", -3, 3)
+        button.icon:SetTexture(tab.icon)
+        button.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        local highlight = button:GetHighlightTexture()
+        if type(highlight) == "table" then
+            highlight:SetPoint("TOPLEFT", 3, -3)
+            highlight:SetPoint("BOTTOMRIGHT", -3, 3)
+        end
+        button:SetScript("OnClick", tab.open)
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine(L[tab.title])
+            GameTooltip:AddLine(L[tab.text], 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        parts.sideTabs[i] = button
+    end
 
     -- Comprehension bar
     parts.skillBar = SK.UI.CreateBar(panel, INNER, 16)

@@ -1,6 +1,7 @@
 -- Scrollkeeper: Commands.lua
 -- /sk            show or hide the panel
--- /sk log        what your deciphers have produced
+-- /sk log        the Luck Log window: what your deciphers have produced
+-- /sk logchat    the same, printed in chat
 -- /sk tooltips   turn the tooltip lines on or off
 -- /sk announce   turn the "deciphered: ..." chat line on or off
 -- /sk reset      move the panel back to the middle of the screen
@@ -31,7 +32,8 @@ commands[""] = function()
     end
 end
 
-commands.log = function() SK.PrintLog() end
+commands.log = function() SK.ToggleLog() end
+commands.logchat = function() SK.PrintLog() end
 
 commands.tooltips = function()
     SK.db.showTooltips = not SK.db.showTooltips
