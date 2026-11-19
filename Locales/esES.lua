@@ -499,3 +499,5 @@ L["|cffffffffTier %d|r: none logged yet, so all tiers:"] = "|cffffffffNivel %d|r
 L["scroll icon moved to the middle of the screen."] = "icono de pergamino movido al centro de la pantalla."
 L["|cffffffffRight-click: put it back in the middle of the screen.|r"] = "|cffffffffClic derecho: devolverlo al centro de la pantalla.|r"
 L["a newer version (%s) is out. You have %s. Update it on CurseForge."] = "hay una versión más nueva (%s). Tienes la %s. Actualízala en CurseForge."
+L["Update messages"] = "Avisos de actualización"
+L["Say in chat (once per session) when another player has a newer Scrollkeeper than you."] = "Avisar en el chat (una vez por sesión) cuando otro jugador tenga un Scrollkeeper más nuevo que el tuyo."

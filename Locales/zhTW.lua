@@ -496,3 +496,5 @@ L["|cffffffffTier %d|r: none logged yet, so all tiers:"] = "|cffffffff%d 檔|r�
 L["scroll icon moved to the middle of the screen."] = "卷軸圖示已移到螢幕中間。"
 L["|cffffffffRight-click: put it back in the middle of the screen.|r"] = "|cffffffff右鍵：放回螢幕中間。|r"
 L["a newer version (%s) is out. You have %s. Update it on CurseForge."] = "有新版本 (%s) 了。你的是 %s。去 CurseForge 更新吧。"
+L["Update messages"] = "更新提示"
+L["Say in chat (once per session) when another player has a newer Scrollkeeper than you."] = "當其他玩家的 Scrollkeeper 比你的新時，在聊天裡提示（每次登入一次）。"

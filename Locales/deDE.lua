@@ -498,3 +498,5 @@ L["|cffffffffTier %d|r: none logged yet, so all tiers:"] = "|cffffffffStufe %d|r
 L["scroll icon moved to the middle of the screen."] = "Schriftrollen-Symbol in die Bildschirmmitte verschoben."
 L["|cffffffffRight-click: put it back in the middle of the screen.|r"] = "|cffffffffRechtsklick: zurück in die Bildschirmmitte.|r"
 L["a newer version (%s) is out. You have %s. Update it on CurseForge."] = "eine neuere Version (%s) ist da. Du hast %s. Aktualisiere sie über CurseForge."
+L["Update messages"] = "Update-Hinweise"
+L["Say in chat (once per session) when another player has a newer Scrollkeeper than you."] = "Im Chat sagen (einmal pro Sitzung), wenn ein anderer Spieler ein neueres Scrollkeeper hat als du."

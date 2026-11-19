@@ -118,7 +118,7 @@ Net.Handle("H", function(sender, f, source)
         SK.db.community[sender].exportID = exportID
     end
 
-    if not warnedNewer and VersionNumber(peer.version) > VersionNumber(SK.version) then
+    if not warnedNewer and SK.db.updateNotice ~= false and VersionNumber(peer.version) > VersionNumber(SK.version) then
         warnedNewer = true
         SK.Print(L["a newer version (%s) is out. You have %s. Update it on CurseForge."]:format(peer.version, SK.version))
     end

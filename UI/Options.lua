@@ -251,6 +251,8 @@ SK.Listen("READY", function()
             L["Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll."], true)
         AddCheckbox("announce", L["Decipher messages"],
             L["Prints a chat line such as \"deciphered: Scroll of Frog Familiar\"."], true)
+        AddCheckbox("updateNotice", L["Update messages"],
+            L["Say in chat (once per session) when another player has a newer Scrollkeeper than you."], true)
         AddCheckbox("chatHelper", L["Chat notes"],
             L["When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages."], true)
 
