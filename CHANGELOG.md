@@ -9,6 +9,7 @@
 - Where to farm uses everyone's shared drops now, not just yours (drop tiers are shared from this version on).
 - New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
 - The imbue/familiar pop-up's hint is one short line now.
+- The network list is now "Fellow Mages" and only shows mages.
 
 ## 1.1.4
 

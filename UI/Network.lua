@@ -156,7 +156,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     local function Keep(region) table.insert(pane.regions, region) return region end
     local y = top
 
-    local users = Keep(SK.UI.CreateHeader(host, L["Scrollkeeper Users"], width))
+    local users = Keep(SK.UI.CreateHeader(host, L["Fellow Mages"], width))
     users:SetPoint("TOPLEFT", left, y)
     y = y - 26
     pane.users = SK.UI.CreateScrollList(host, width, userRows)
@@ -198,7 +198,11 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
 
     function pane:Refresh()
         if not self.regions[1]:IsVisible() then return end
-        local peers = SK.PeerList()
+        -- Only mages: the others have nothing to show here.
+        local peers = {}
+        for _, entry in ipairs(SK.PeerList()) do
+            if entry.peer and entry.peer.class == "MAGE" then peers[#peers + 1] = entry end
+        end
         -- Anonymous players aren't named, but show that they're there.
         local anonymous = SK.AnonymousCount and SK.AnonymousCount() or 0
         if anonymous > 0 then peers[#peers + 1] = { anonymous = anonymous } end
@@ -209,7 +213,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             if entry.anonymous then
                 row.label:SetText("|cff808080" .. L["Anonymous"] .. "|r")
                 row.value:SetText("|cff808080" .. L["+%d |4player:players;"]:format(entry.anonymous) .. "|r")
-            elseif peer.class == "MAGE" then
+            else
                 local tiers = {}
                 for _, tier in ipairs(SK.TIERS) do
                     if peer.tiers[tier] then tiers[#tiers + 1] = tier end
@@ -218,9 +222,6 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
                 row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
                 row.value:SetText(needs .. upgrade)
-            else
-                row.label:SetText(entry.name)
-                row.value:SetText(L["|cff808080not a mage|r"])
             end
         end, L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])
 
