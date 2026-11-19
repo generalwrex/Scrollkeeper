@@ -487,3 +487,6 @@ L["Who has spare scrolls you'd level from, and who'd want yours."] = "谁有你�
 L["Other mages running Scrollkeeper, and the community's odds for each tier."] = "其他使用 Scrollkeeper 的法师，以及社区每个档位的几率。"
 L["%d skill-ups"] = "%d 次技能提升"
 L["Click to open it."] = "点击打开。"
+L["You need |cffffffffTier %d|r. Where people found it:"] = "你需要 |cffffffff%d 档|r。大家在这些地方找到："
+L["You need |cffffffffTier %d|r. None logged yet, so all tiers:"] = "你需要 |cffffffff%d 档|r。还没有记录，所以显示全部："
+L["Drops by tier are only shared since 1.1.5, so this fills in as more people play."] = "按档位的掉落从 1.1.5 才开始分享，玩的人越多这里越全。"

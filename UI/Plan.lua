@@ -111,13 +111,15 @@ local function Build()
     world.zonesFor:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 6, -4)
     world.zonesFor:SetWidth(INNER - 12)
     world.zonesFor:SetJustifyH("LEFT")
+    world.zonesFor:SetWordWrap(false)   -- one line, or it runs into the list
     world.zones:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -20)
 
     local worldNote = world:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     worldNote:SetPoint("BOTTOMLEFT", 16, 14)
     worldNote:SetPoint("RIGHT", window, "RIGHT", -16, 0)
     worldNote:SetJustifyH("LEFT")
-    worldNote:SetText(L["Click a zone to open it on the map."])
+    worldNote:SetText(L["Click a zone to open it on the map."] .. "\n"
+        .. L["Drops by tier are only shared since 1.1.5, so this fills in as more people play."])
 
     -- At the auction house ---------------------------------------------------
     local ah = CreateFrame("Frame", nil, window)
@@ -204,10 +206,10 @@ local function RefreshWorld()
     local tier = plan and plan.tier
     local zones = tier and SK.BestZones(25, tier) or {}
     if tier and #zones > 0 then
-        world.zonesFor:SetText(L["Where you found tier %d scrolls:"]:format(tier))
+        world.zonesFor:SetText(L["You need |cffffffffTier %d|r. Where people found it:"]:format(tier))
     else
         zones = SK.BestZones(25)
-        world.zonesFor:SetText(tier and L["No tier %d drops logged yet, so these are all tiers:"]:format(tier)
+        world.zonesFor:SetText(tier and L["You need |cffffffffTier %d|r. None logged yet, so all tiers:"]:format(tier)
             or L["All tiers:"])
     end
     world.zones:SetRows(zones, function(row, zone)
@@ -218,7 +220,7 @@ local function RefreshWorld()
     end, L["No drops logged yet. Loot some untranslated scrolls and the zones show up here."])
 
     local textHeight = world.text:GetStringHeight() or 60
-    window:SetHeight(84 + 22 + 6 + textHeight + 12 + 22 + 20 + ROWS * ROW_HEIGHT + 44)
+    window:SetHeight(84 + 22 + 6 + textHeight + 12 + 22 + 20 + ROWS * ROW_HEIGHT + 58)
 end
 
 local function RefreshAuctionHouse()

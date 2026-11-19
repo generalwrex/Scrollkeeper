@@ -6,7 +6,7 @@
 - **Backups.** Options > Scrollkeeper > Backup (or `/sk backup`) gives you all your Scrollkeeper data as text, so if you ever have to wipe WTF you don't lose your luck log, drops, settings and all that. `/sk restore` (or the Restore button) puts it back.
 - **Chinese!** Simplified and Traditional Chinese (AI translated, fixes welcome). Shows up by itself on Chinese game clients.
 - Familiars and the scroll categories (Imbues, Familiars...) now work in every language, not just English. They go by the item and spell, not the English name.
-- Where to farm uses everyone's shared drops now, not just yours (drop tiers are shared from this version on).
+- Where to farm uses everyone's shared drops now, not just yours, and says which tier you need (drop tiers are shared from this version on, so it fills in as people play).
 - New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
 - The imbue/familiar pop-up's hint is one short line now.
 - **Luck Log window.** `/sk log` (or the dice tab) shows what your deciphers turned into, tier by tier, with your % next to everyone's, and how often each skill-up color really raised your skill. `/sk logchat` still prints it in chat.

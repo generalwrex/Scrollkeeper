@@ -489,3 +489,6 @@ L["Who has spare scrolls you'd level from, and who'd want yours."] = "Wer übrig
 L["Other mages running Scrollkeeper, and the community's odds for each tier."] = "Andere Magier mit Scrollkeeper und die Chancen der Gemeinschaft für jede Stufe."
 L["%d skill-ups"] = "%d Fertigkeitsgewinne"
 L["Click to open it."] = "Klicken zum Öffnen."
+L["You need |cffffffffTier %d|r. Where people found it:"] = "Du brauchst |cffffffffStufe %d|r. Hier wurde sie gefunden:"
+L["You need |cffffffffTier %d|r. None logged yet, so all tiers:"] = "Du brauchst |cffffffffStufe %d|r. Noch nichts, daher alle:"
+L["Drops by tier are only shared since 1.1.5, so this fills in as more people play."] = "Drops nach Stufe werden erst seit 1.1.5 geteilt, das füllt sich, je mehr Leute spielen."
