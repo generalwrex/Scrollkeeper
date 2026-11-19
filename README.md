@@ -2,33 +2,61 @@
 
 Mage scroll helper for WoW Forever.
 
-- **Panel (mages):** Comprehension bar with tier marks, scrolls ready or too hard,
-  a one-click **Decipher next scroll** button, buttons for your usable scrolls,
-  and the Study cooldown with your Light Feathers.
-- **Skill-ups:** every scroll shows whether deciphering it will raise your
-  Comprehension (skill-up, likely, unlikely, none), and the decipher button
-  reads the ones that still give points first.
-- **Tooltips (every class):** mages see whether they can decipher a scroll;
-  other classes see that it's a mage scroll to mail or sell. Hold Shift to see
-  what it can become.
-- **Luck log:** records what each decipher produced. `/sk log`.
-- **Network (guild and group):** other Scrollkeeper users share what their
-  scrolls became (community odds, Shift on a scroll tooltip), which mages
-  still get skill-ups from which tiers (tooltips name them), libraries, and
-  where scrolls drop. `/sk net` opens the Network window. Only scroll data
-  is sent; turn it off in the settings.
-- **World map pins:** libraries where Study worked, and spots where
-  untranslated scrolls dropped (yours and shared).
-- **Study and Open bundle buttons** on the panel, no bags needed.
-- **Your scrolls by category** (Imbues, Familiars, Combat, Utility, Upgrades),
-  with a star on the best imbue and familiar you can use.
-- **Reminders:** no weapon imbue, no familiar out, when a Scroll of Comprehension
-  would unlock more scrolls, and when a weapon upgrade is ready.
-- **Weapon upgrades:** Coldflame Saber, Narpas Sword, Wit's Edge: what you have,
-  what's missing, and where it drops.
-- **Works with** Titan Panel and other info bars, the game's addon menu,
-  Auctionator (sell-or-mail advice for non-mages) and TomTom (library waypoints).
-- **Settings:** Options > AddOns > Scrollkeeper, or `/sk options`.
+## Features
+
+### The panel (mages)
+
+- **Comprehension bar** with tier marks, in three views: Advanced, Simple and Title only.
+- A one-click **Decipher next scroll** button that reads the scrolls that still give skill-ups first.
+- **Study** button with the cooldown and your Light Feathers, and an **Open bundle** button. No bags needed.
+- Quick **familiar** and **imbue** buttons, pointed at your best scroll of each.
+- **Your scrolls by category** (Imbues, Familiars, Combat, Utility, Upgrades), best ones starred, click one to use it.
+  Clicking an imbue puts it straight on your main-hand weapon.
+- **Weapon upgrades:** Coldflame Saber, Narpas Sword, Wit's Edge: what you have, what's missing, and where it drops.
+- **Buttons along the top:** the Farming Plan, Luck Log, Scroll Swap and Fellow Mages windows, the scroll icon and
+  minimap button toggles, the view size and the settings. Right-click the scroll icon toggle if you lost the icon
+  off screen.
+- A **minimap button** and an optional **scroll icon** with how many scrolls you can decipher.
+
+### Skill-ups and odds
+
+- Every scroll shows whether deciphering it will raise your Comprehension: skill-up, likely, unlikely, or none.
+- **Luck Log** window (`/sk log`): what each tier of scroll turned into for you, your % next to everyone's, and how
+  often each skill-up color really raised your skill.
+- **Community Odds:** what scrolls turn into, from everyone's deciphers. Standard scrolls (Scroll of Strength and
+  such) are grouped in one row; hover it for each one.
+
+### Farming Plan
+
+- Your skill, your next goal, and about how many scrolls it takes to get there.
+- **Where to farm:** the zones where people found the tier of scroll you need (picked and framed in gold). Click
+  another tier to look at it, or a zone to open the map.
+- **At the auction house:** scroll prices you can sort by price, tier and name; click one to search for it. Uses
+  Auctionator or TSM prices when you have them, or its own scan when you don't.
+
+### Network (guild, group and everyone)
+
+- **Fellow Mages:** other mages running Scrollkeeper, their skill and what they still need. Hover a name for more
+  (like how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail.
+  Sort by skill, name or "my scrolls"; right-click "my scrolls" to see only who could use yours.
+- **Scroll Swap:** who has spare scrolls you'd level from, and who'd want yours.
+- Shared odds, skill-up rates, libraries, drop spots and sheep backfires make everyone's numbers better.
+- **Sharing** is Full, Anonymous, Simple (guild, group and friends only) or None. Only scroll data is sent, never
+  chat or gold.
+- Tells you in chat when someone has a newer Scrollkeeper (you can turn that off).
+
+### Everywhere else
+
+- **Tooltips (every class):** mages see whether they can decipher a scroll; other classes see that it's a mage scroll
+  to mail or sell. Hold Shift to see what it can become.
+- **Mailbox helper:** your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail.
+- **Guild bank** dots on scrolls someone would level from, and **chat notes** when someone links a scroll asking who
+  needs it.
+- **Reminders:** a small pop-up when your imbue or familiar wears off and you have a scroll for it.
+- **World map pins:** libraries where Study worked, and spots where untranslated scrolls dropped.
+- **Backup and restore** all your Scrollkeeper data (Options > Scrollkeeper > Backup), in case you ever wipe WTF.
+- **Works with** Titan Panel and other info bars, the game's addon menu, Auctionator, TSM and TomTom.
+- **Settings:** Options > AddOns > Scrollkeeper, or `/sk options`. Lots of them.
 
 Nothing is automatic: every cast is one click from the player.
 
@@ -39,14 +67,20 @@ Nothing is automatic: every cast is one click from the player.
 | `/sk` | show or hide the panel (on alts: your mages' window) |
 | `/sk simple` / `/sk advanced` | switch the panel view |
 | `/sk options` | open the settings page |
-| `/sk net` | the Network window |
-| `/sk demo` | try the network features with made-up players |
-| `/sk log` | what your deciphers have produced |
+| `/sk plan` | the Farming Plan |
+| `/sk log` | the Luck Log window |
+| `/sk logchat` | the luck log, printed in chat |
+| `/sk net` | the Fellow Mages and Community Odds window |
+| `/sk swap` | the Scroll Swap window |
+| `/sk mail` | who could use your spare scrolls |
 | `/sk export` | copy your scroll data to share |
+| `/sk backup` / `/sk restore` | save or bring back all your Scrollkeeper data |
 | `/sk bug` | copy a bug report |
 | `/sk about` | version and links |
-| `/sk reset` | move the panel to the middle and reset its size |
-| `/sk scan` | developer: dump game data to the saved file |
+| `/sk setup` | the first-time setup window |
+| `/sk demo` | try the network features with made-up players |
+| `/sk reset` | move the panel (and scroll icon) to the middle and reset its size |
+| `/sk scan` | scan the auction house for scroll prices |
 
 ## Help improve Scrollkeeper
 
@@ -85,13 +119,14 @@ This repo is the addon folder itself: clone it straight into
 ```
 Scrollkeeper.toc      load order
 Commands.lua          slash commands
-Core/                 shared helpers and game IDs
-Data/                 scroll tiers, skill-up colors, weapon upgrades
+Core/                 shared helpers, game IDs and language setup
+Locales/              translations, one file per language
+Data/                 scroll tiers, skill-up colors, weapon upgrades, shipped community data
 Modules/              one feature per file, no drawing
 Network/              talking to other players' Scrollkeeper (protocol notes in each file)
 Map/                  world map pins
 UI/                   everything you can see, plus optional links to other addons
-Dev/                  /sk scan data collection tool
+Dev/                  /sk scan data collection tool (not in the released addon)
 tools/community/      merges /sk export data from players (not loaded by the game)
 tools/test/           runs the addon in a fake WoW (not loaded by the game)
                       cd tools/test, npm install, npm test
@@ -99,8 +134,9 @@ tools/test/           runs the addon in a fake WoW (not loaded by the game)
 
 ## Translations
 
-Scrollkeeper is in English, Spanish, French and German. The Spanish, French and German were
-translated with AI, so they need fixes from native speakers. The files are in `Locales/`
-(one line per piece of text: `L["English"] = "your translation"`). Keep the `%d` / `%s`
-codes, `|c...|r` colors and `|4one:many;` plurals as they are. Pull requests and issues
-welcome!
+Scrollkeeper is in English, German, Spanish, French, and Simplified and Traditional Chinese.
+Everything but English was translated with AI, so fixes from native speakers are very welcome.
+(Chinese only shows up on Chinese game clients, since other clients' fonts have no Chinese characters.)
+The files are in `Locales/` (one line per piece of text: `L["English"] = "your translation"`).
+Keep the `%d` / `%s` codes, `|c...|r` colors and `|4one:many;` plurals as they are.
+Pull requests and issues welcome!

@@ -6,8 +6,8 @@
 --
 -- English is the text itself, so there's no English file. Other languages
 -- live in Locales\<locale>.lua and only fill in what they translate.
--- (The Spanish, French and German files were drafted with AI and need a
--- native speaker to check them. Fixes are very welcome on GitHub.)
+-- (Every language but English was drafted with AI and needs a native
+-- speaker to check it. Fixes are very welcome on GitHub.)
 
 local _, SK = ...
 

@@ -36,7 +36,7 @@ local function TooltipLines(tooltip)
     tooltip:AddDoubleLine(L["Skill-ups"], skillUps or 0, 1, 0.82, 0, 1, 1, 1)
     if tooHard > 0 then tooltip:AddDoubleLine(L["Too hard"], tooHard, 1, 0.82, 0, 1, 1, 1) end
     tooltip:AddLine(" ")
-    tooltip:AddLine(L["Click: panel   Right-click: network"], 0.6, 0.6, 0.6)
+    tooltip:AddLine(L["Click: panel   Right-click: Fellow Mages"], 0.6, 0.6, 0.6)
 end
 
 local function OnClick(_, button)

@@ -4,16 +4,22 @@
 -- /sk logchat    the same, printed in chat
 -- /sk tooltips   turn the tooltip lines on or off
 -- /sk announce   turn the "deciphered: ..." chat line on or off
--- /sk reset      move the panel back to the middle of the screen
+-- /sk reset      move the panel (and scroll icon) back to the middle of the screen
 -- /sk options    open the settings page
 -- /sk simple     simple panel: buttons, bars and your scrolls
 -- /sk advanced   advanced panel: everything
--- /sk net        the Network window: other Scrollkeeper users and community odds
--- /sk demo       fill the Network window, map and tooltips with made-up players
+-- /sk plan       the Farming Plan window
+-- /sk net        the Fellow Mages window: other mages and community odds
+-- /sk swap       the Scroll Swap window
+-- /sk mail       who could use your spare scrolls
+-- /sk demo       fill Fellow Mages, the map and tooltips with made-up players
 -- /sk export     copy your scroll data to share (GitHub issue "Share your data")
+-- /sk backup     copy all your Scrollkeeper data; /sk restore puts it back
+-- /sk setup      the first-time setup window
 -- /sk about      version and links
 -- /sk bug        copy a bug report (GitHub issue "Bug report")
--- /sk scan       developer data dump (see Dev/Scan.lua)
+-- /sk scan       scan the auction house for scroll prices
+--                (in the dev copy, Dev/Scan.lua makes it a data dump instead)
 
 local _, SK = ...
 local L = SK.L
@@ -98,7 +104,7 @@ commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk net, /sk options, /sk log, /sk export, /sk bug, /sk mail, /sk swap, /sk scan, /sk plan, /sk setup, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk mail, /sk export, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 -- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.

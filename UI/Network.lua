@@ -2,7 +2,7 @@
 -- The network pane: other Scrollkeeper users you can hear, and the
 -- community's odds for each scroll tier. It is built twice:
 --   * inside the panel's right-hand column in the Advanced view
---   * as its own window (/sk net, or the book button)
+--   * as its own window (/sk net, or the Fellow Mages button on the panel)
 -- /sk demo fills it with made-up players to try it out.
 
 local _, SK = ...
@@ -566,7 +566,7 @@ local function Build()
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
     if window.SetDontSavePosition then window:SetDontSavePosition(true) end
     if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Misc_Book_09") end
-    window:SetTitle(L["Scrollkeeper Network"])
+    window:SetTitle(L["Scrollkeeper: Fellow Mages"])
     tinsert(UISpecialFrames, "ScrollkeeperNetworkFrame")   -- Escape closes it
 
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
