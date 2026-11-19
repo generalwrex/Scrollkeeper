@@ -442,6 +442,4 @@ L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"] = "Klick: 
 L["Mailbox: offer scrolls I'd use too"] = "Briefkasten: auch Schriftrollen anbieten, die ich selbst nutze"
 L["Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use."] = "Zeigt auch Magier, die Schriftrollen nutzen könnten, mit denen du selbst noch steigst, markiert, damit du es weißt. Aus: nur Schriftrollen, die du nicht nutzen kannst."
 L["|cffffd100%d you'd use too|r"] = "|cffffd100%d nutzt du auch|r"
-L["Odds: list standard scrolls"] = "Chancen: normale Schriftrollen einzeln"
-L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard scrolls row."] = "Die Gemeinschafts-Chancen listen normale Schriftrollen (wie Rolle der Stärke) einzeln auf. Aus: sie werden in einer Zeile Normale Schriftrollen zusammengefasst."
 L["Standard scrolls"] = "Normale Schriftrollen"

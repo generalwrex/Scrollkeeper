@@ -156,9 +156,7 @@ local DEFAULTS = {
     announce = true,         -- print what each decipher produced
     hideInCombat = true,     -- hide the panel while in combat, show it again after
     mailHelper = true,       -- at the mailbox: who could use your scrolls
-    mailIncludeMine = false, -- ...also offer the scrolls you'd still level from yourself
-    oddsStandard = false,    -- community odds: list standard scrolls one by one (off: one merged row)
-    guildBankMarks = true,   -- dots on guild bank scrolls someone levels from
+    mailIncludeMine = false, -- ...also offer the scrolls you'd still level from yourself    guildBankMarks = true,   -- dots on guild bank scrolls someone levels from
     ahScanButton = true,     -- "Scan scrolls" button on the auction house
     chatHelper = true,       -- "who needs this? [scroll]" notes in chat
     scrollIcon = false,      -- small icon with the number of scrolls ready

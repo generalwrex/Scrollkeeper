@@ -88,6 +88,16 @@ function SK.UI.CreateScrollList(host, width, visibleRows)
         highlight:SetAllPoints()
         highlight:SetColorTexture(1, 0.82, 0, 0.12)
         row:SetScript("OnEnter", function(self)
+            -- Rows can carry their own tooltip: row.tipTitle plus row.tipLines.
+            if not self.itemID and self.tipTitle then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:AddLine(self.tipTitle)
+                for _, line in ipairs(self.tipLines or {}) do
+                    GameTooltip:AddDoubleLine(line[1], line[2], 1, 1, 1, 1, 1, 1)
+                end
+                GameTooltip:Show()
+                return
+            end
             if not self.itemID then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetItemByID(self.itemID)
@@ -229,29 +239,35 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             if tier == self.selectedTier then button:LockHighlight() else button:UnlockHighlight() end
         end
         local odds, total, players = SK.CommunityOdds(self.selectedTier)
-        -- Standard scrolls (Scroll of Strength...) go in one row unless the
-        -- setting lists them one by one. Percentages stay the same either way.
-        if not SK.db.oddsStandard then
-            local kept, merged = {}, nil
-            for _, entry in ipairs(odds) do
-                if SK.IsMageScroll(entry.itemID, entry.name) then
-                    kept[#kept + 1] = entry
-                else
-                    merged = merged or { standard = true, count = 0, share = 0 }
-                    merged.count = merged.count + entry.count
-                    merged.share = merged.share + entry.share
-                end
+        -- Standard scrolls (Scroll of Strength...) go in one row; hovering it
+        -- lists each one. Percentages stay the same.
+        local kept, merged = {}, nil
+        for _, entry in ipairs(odds) do
+            if SK.IsMageScroll(entry.itemID, entry.name) then
+                kept[#kept + 1] = entry
+            else
+                merged = merged or { standard = true, count = 0, share = 0, parts = {} }
+                merged.count = merged.count + entry.count
+                merged.share = merged.share + entry.share
+                merged.parts[#merged.parts + 1] = entry
             end
-            if merged then
-                kept[#kept + 1] = merged
-                table.sort(kept, function(a, b) return a.count > b.count end)
-            end
-            odds = kept
         end
+        if merged then
+            kept[#kept + 1] = merged
+            table.sort(kept, function(a, b) return a.count > b.count end)
+        end
+        odds = kept
         self.odds:SetRows(odds, function(row, entry)
             row.itemID = entry.itemID
+            row.tipTitle, row.tipLines = nil, nil
             if entry.standard then
                 row.label:SetText("|cffffffff" .. L["Standard scrolls"] .. "|r")
+                row.tipTitle = L["Standard scrolls"]
+                row.tipLines = {}
+                for _, part in ipairs(entry.parts) do
+                    row.tipLines[#row.tipLines + 1] = { SK.UI.ItemLabel(part.itemID, part.name),
+                        ("%d  %.1f%%"):format(part.count, part.share * 100) }
+                end
             else
                 row.label:SetText(SK.UI.ItemLabel(entry.itemID, (entry.name:gsub("^Scroll of ", ""))))
             end

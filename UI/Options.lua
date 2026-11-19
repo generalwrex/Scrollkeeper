@@ -18,7 +18,6 @@ local function AddCheckbox(key, label, tooltip, default)
         if key == "anonymous" and SK.SendHello then SK.SendHello() end
         if key == "scrollIcon" and SK.RefreshIcon then SK.RefreshIcon() end
         if key == "minimapButton" and SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
-        if key == "oddsStandard" and SK.RefreshNetwork then SK.RefreshNetwork() end
         SK.Send("DROPS_CHANGED")
     end)
     return Settings.CreateCheckbox(category, setting, tooltip)
@@ -275,9 +274,6 @@ SK.Listen("READY", function()
             Settings.CreateDropdown(category, setting, Options,
                 L["What Scrollkeeper shares with other players: what scrolls became, where they drop, which libraries work and who needs which scrolls. Only scroll data is sent, never chat or gold."])
         end)
-
-        AddCheckbox("oddsStandard", L["Odds: list standard scrolls"],
-            L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard scrolls row."], false)
 
         -- Helpers ------------------------------------------------------------
         AddHeader(L["Mailbox, guild bank and auction house"])

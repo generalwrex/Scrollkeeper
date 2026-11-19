@@ -442,6 +442,4 @@ L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"] = "Clic : 
 L["Mailbox: offer scrolls I'd use too"] = "Boîte aux lettres : proposer aussi les parchemins que j'utiliserais"
 L["Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use."] = "Affiche aussi les mages qui pourraient utiliser les parchemins avec lesquels tu montes encore, marqués pour que tu le saches. Désactivé : seulement ceux que tu ne peux pas utiliser."
 L["|cffffd100%d you'd use too|r"] = "|cffffd100%d te serviraient aussi|r"
-L["Odds: list standard scrolls"] = "Chances : parchemins standard un par un"
-L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard scrolls row."] = "Les chances de la communauté listent les parchemins standard (comme Parchemin de force) un par un. Désactivé : ils sont regroupés sur une ligne Parchemins standard."
 L["Standard scrolls"] = "Parchemins standard"

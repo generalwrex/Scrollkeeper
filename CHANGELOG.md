@@ -10,7 +10,7 @@
 - New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
 - The imbue/familiar pop-up's hint is one short line now.
 - The network list is now "Fellow Mages" and only shows mages.
-- Community odds put standard scrolls (Scroll of Strength and such) in one row. There's a setting to list them one by one.
+- Community odds put standard scrolls (Scroll of Strength and such) in one row. Hover it to see each one.
 
 ## 1.1.4
 
