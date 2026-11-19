@@ -38,7 +38,10 @@ end
 -- A scrolling list: a fixed-height box with a scrollbar, holding as many
 -- label/value rows as needed. list:SetRows(items, fill, emptyText)
 -- redraws it, where fill(row, item) sets row.label and row.value.
-function SK.UI.CreateScrollList(host, width, visibleRows)
+-- twoLine: taller rows with a smaller row.sub line under the label (and
+-- visibleRows counts those taller rows).
+function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
+    local ROW_HEIGHT = twoLine and 30 or ROW_HEIGHT
     local height = visibleRows * ROW_HEIGHT
     local listWidth = width - 22          -- room for the scrollbar on the right
     local scroll = CreateFrame("ScrollFrame", nil, host, "UIPanelScrollFrameTemplate")
@@ -80,6 +83,18 @@ function SK.UI.CreateScrollList(host, width, visibleRows)
         row.value = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.value:SetPoint("RIGHT", -6, 0)
         row.value:SetJustifyH("RIGHT")
+        if twoLine then
+            -- Name on top across the whole row, details underneath.
+            row.label:ClearAllPoints()
+            row.label:SetPoint("TOPLEFT", 6, -3)
+            row.label:SetWidth(listWidth - 12)
+            row.sub = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            row.sub:SetPoint("TOPLEFT", row.label, "BOTTOMLEFT", 8, -2)
+            row.sub:SetWidth(listWidth - 20)
+            row.sub:SetJustifyH("LEFT")
+            row.sub:SetWordWrap(false)
+            row.value:Hide()
+        end
 
         -- Rows that show an item (row.itemID): its tooltip on hover, and
         -- Shift-click puts its link in chat, like any item link.
@@ -170,7 +185,8 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     local users = Keep(SK.UI.CreateHeader(host, L["Fellow Mages"], width))
     users:SetPoint("TOPLEFT", left, y)
     y = y - 26
-    pane.users = SK.UI.CreateScrollList(host, width, userRows)
+    -- Two-line rows (name, then skill and needs) in the same space.
+    pane.users = SK.UI.CreateScrollList(host, width, math.max(1, math.floor(userRows * ROW_HEIGHT / 30)), true)
     pane.users:SetPoint("TOPLEFT", left, y)
     Keep(pane.users.scroll)
     y = y - userRows * ROW_HEIGHT - 10
@@ -223,16 +239,16 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             local peer = entry.peer
             if entry.anonymous then
                 row.label:SetText("|cff808080" .. L["Anonymous"] .. "|r")
-                row.value:SetText("|cff808080" .. L["+%d |4player:players;"]:format(entry.anonymous) .. "|r")
+                row.sub:SetText("|cff808080" .. L["+%d |4player:players;"]:format(entry.anonymous) .. "|r")
             else
                 local tiers = {}
                 for _, tier in ipairs(SK.TIERS) do
                     if peer.tiers[tier] then tiers[#tiers + 1] = tier end
                 end
                 local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or ("|cff808080" .. L["needs none"] .. "|r")
-                local upgrade = #peer.upgrades > 0 and (" |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
-                row.label:SetText(CLASS_COLOR .. entry.name .. "|r  " .. peer.skill)
-                row.value:SetText(needs .. upgrade)
+                local upgrade = #peer.upgrades > 0 and ("  ·  |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
+                row.label:SetText(CLASS_COLOR .. entry.name .. "|r")
+                row.sub:SetText(L["|cffffd100%d|r skill"]:format(peer.skill or 0) .. "  ·  " .. needs .. upgrade)
             end
         end, L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])
 
