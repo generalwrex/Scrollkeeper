@@ -10,7 +10,7 @@
 - New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
 - The imbue/familiar pop-up's hint is one short line now.
 - **Luck Log window.** `/sk log` (or the dice tab) shows what your deciphers turned into, tier by tier, with your % next to everyone's, and how often each skill-up color really raised your skill. `/sk logchat` still prints it in chat.
-- **Tabs on the side of the panel** for the Farming Plan, Luck Log, Scroll Swap and Fellow Mages, in every view.
+- **Window buttons at the top of the panel** for the Farming Plan, Luck Log, Scroll Swap and Fellow Mages, in every view. They took the spot of the "0 ready" line, since the Decipher button already says that.
 - A minimap button on/off toggle on the panel, next to the scroll icon one.
 - Clicking an imbue scroll on the panel puts it right on your main-hand weapon, no clicking the weapon after.
 - Advanced view: Fellow Mages gets more room. Your Stats is shorter, since the Luck Log, Plan and Swap have their own windows now.
