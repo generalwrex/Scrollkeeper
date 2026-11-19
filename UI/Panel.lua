@@ -77,6 +77,26 @@ end
 -- Small builders
 ------------------------------------------------------------------------
 
+-- What clicking a scroll button does. Most scrolls just get used. An imbue
+-- scroll would leave you with the targeting hand to click your weapon, so
+-- its button uses the scroll and then your main-hand weapon (slot 16) in
+-- one click. itemID nil: the button does nothing.
+local function SetScrollUse(button, itemID, imbue)
+    if not itemID then
+        button:SetAttribute("type", nil)
+        button:SetAttribute("item", nil)
+        button:SetAttribute("macrotext", nil)
+    elseif imbue then
+        button:SetAttribute("type", "macro")
+        button:SetAttribute("item", nil)
+        button:SetAttribute("macrotext", ("/use item:%d\n/use 16"):format(itemID))
+    else
+        button:SetAttribute("type", "item")
+        button:SetAttribute("item", "item:" .. itemID)
+        button:SetAttribute("macrotext", nil)
+    end
+end
+
 -- A small square button drawn with one of the game's button icons.
 local function IconButton(texture, size, tooltip, onClick)
     local button = CreateFrame("Button", nil, panel)
@@ -646,22 +666,21 @@ local function Build()
     side.divider:SetPoint("BOTTOMLEFT", sideLeft - 6, 14)
 
     local paneHeight
-    side.network, paneHeight = SK.UI.CreateNetworkPane(panel, sideLeft, -TOP + 4, SIDE_INNER, 6, 7)
+    -- Fellow Mages gets most of the room; the odds and a few stats follow.
+    side.network, paneHeight = SK.UI.CreateNetworkPane(panel, sideLeft, -TOP + 4, SIDE_INNER, 10, 7)
 
     local y = -TOP + 4 - paneHeight
     side.statsHeader = SK.UI.CreateHeader(panel, L["Your Stats"], SIDE_INNER)
     side.statsHeader:SetPoint("TOPLEFT", sideLeft, y)
     y = y - 26
     side.rows = {}
+    -- (Skill-ups, the most common result, the next goal and the swap board
+    -- have their own windows now, on the side tabs.)
     local statRows = {
         { "deciphered", L["Deciphered"] },
-        { "skillups", L["Skill-ups from scrolls"] },
-        { "common", L["Most common"] },
         { "drops", L["Scroll drops logged"] },
         { "books", L["Books found"] },
         { "backfires", L["Sheep backfires"] },
-        { "goal", L["Next goal"] },
-        { "swap", L["Scroll swap"] },
         { "sharing", L["Sharing"] },
     }
     for i, entry in ipairs(statRows) do
@@ -687,19 +706,17 @@ local function Build()
             SK.UI.EnableItemLinks(row)
         end
         side.rows[entry[1]] = row
-        if entry[1] == "goal" or entry[1] == "swap" or entry[1] == "backfires" then
+        if entry[1] == "deciphered" or entry[1] == "backfires" then
             row:EnableMouse(true)
             local highlight = row:CreateTexture(nil, "HIGHLIGHT")
             highlight:SetAllPoints()
             highlight:SetColorTexture(1, 0.82, 0, 0.12)
             row:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                if entry[1] == "goal" then
-                    GameTooltip:SetText(L["Farming plan"])
-                    for _, line in ipairs(SK.FarmPlanLines()) do GameTooltip:AddLine(line, 1, 1, 1, true) end
-                elseif entry[1] == "swap" then
-                    GameTooltip:SetText(L["Scroll swap"])
-                    GameTooltip:AddLine(L["Who has spare scrolls you'd level from, and who'd want yours. Click to open it."], 1, 1, 1, true)
+                if entry[1] == "deciphered" then
+                    GameTooltip:SetText(L["Luck Log"])
+                    GameTooltip:AddLine(L["What your deciphers turned into, next to everyone's odds, and your skill-ups."], 1, 1, 1, true)
+                    GameTooltip:AddLine(L["Click to open it."], 0.6, 0.6, 0.6)
                 else
                     local mine, all = SK.BackfireStats()
                     GameTooltip:SetText(L["Sheep backfires"])
@@ -711,8 +728,8 @@ local function Build()
                 GameTooltip:Show()
             end)
             row:SetScript("OnLeave", function() GameTooltip:Hide() end)
-            if entry[1] == "swap" then
-                row:SetScript("OnMouseUp", function() SK.ToggleSwap() end)
+            if entry[1] == "deciphered" then
+                row:SetScript("OnMouseUp", function() SK.ToggleLog() end)
             end
         end
         y = y - ROW_HEIGHT
@@ -731,30 +748,17 @@ end
 local function UpdateStats()
     if not side.rows then return end
     local db = SK.db
-    side.rows.deciphered.value:SetText(tostring(db.deciphered or 0))
-
+    -- Deciphered, with the skill-ups next to it (the Luck Log has the rest).
     local ups, tries = 0, 0
     for _, seen in pairs(db.skillups or {}) do
         ups, tries = ups + (seen.ups or 0), tries + (seen.tries or 0)
     end
-    side.rows.skillups.value:SetText(tries > 0 and L["%d of %d"]:format(ups, tries) or "|cff808080none yet|r")
-
-    local bestName, bestCount = nil, 0
-    for _, results in pairs(db.results or {}) do
-        for name, count in pairs(results) do
-            if count > bestCount then bestName, bestCount = name, count end
-        end
-    end
-    side.rows.common.value:SetText(bestName and (SK.ScrollLink(nil, bestName, true) .. " |cff808080x" .. bestCount .. "|r")
-        or "|cff808080none yet|r")
+    side.rows.deciphered.value:SetText(tostring(db.deciphered or 0)
+        .. (tries > 0 and ("  |cff808080" .. L["%d skill-ups"]:format(ups) .. "|r") or ""))
 
     local mine = SK.BackfireStats and SK.BackfireStats() or { b = 0, t = 0 }
     side.rows.backfires.value:SetText(mine.t > 0 and L["%d of %d (%.0f%%)"]:format(mine.b, mine.t, mine.b / mine.t * 100)
         or "|cff808080none yet|r")
-    local plan = SK.FarmPlan and SK.FarmPlan()
-    side.rows.goal.value:SetText(plan and L["%d, ~%d scrolls"]:format(plan.goal, plan.scrolls) or "|cff808080-|r")
-    local offers = (SK.ScrollsICouldGet and #SK.ScrollsICouldGet() or 0) + (SK.WhoWantsMine and #SK.WhoWantsMine() or 0)
-    side.rows.swap.value:SetText(offers > 0 and ("|cff40ff40%d |4match:matches;|r"):format(offers) or "|cff808080open|r")
 
     local drops = 0
     for _, cells in pairs(db.drops or {}) do
@@ -847,13 +851,12 @@ local function Layout()
     for _, button in ipairs({ parts.familiar, parts.imbue }) do
         local best = SK.BestScroll(button.categoryKey)
         if best then
-            button:SetAttribute("type", "item")
-            button:SetAttribute("item", "item:" .. best.itemID)
+            SetScrollUse(button, best.itemID, button.categoryKey == "imbues")
             button:SetDisplay(best.itemID, best.icon, best.count)
             button:SetUsable(true)
             button.detail:SetText((best.name:gsub("^Scroll of ", ""):gsub("^Imbue ", ""):gsub(" Familiar$", "")))
         else
-            button:SetAttribute("type", nil)
+            SetScrollUse(button, nil)
             button:SetDisplay(nil, button.emptyIcon)
             button:SetUsable(false)
             local hint = button.categoryKey == "imbues" and SK.ImbueSwapHint()
@@ -895,8 +898,7 @@ local function Layout()
                     ICON_PAD + startX + column * (ICON_SIZE + ICON_GAP), top - line * (ICON_SIZE + ICON_GAP))
                 -- Only scrolls you can use do anything when clicked. The rest
                 -- say why instead (wrong weapon, level too low).
-                button:SetAttribute("type", scroll.usable and "item" or nil)
-                button:SetAttribute("item", scroll.usable and ("item:" .. scroll.itemID) or nil)
+                SetScrollUse(button, scroll.usable and scroll.itemID or nil, group.key == "imbues")
                 button:SetDisplay(scroll.itemID, scroll.icon, scroll.count)
                 button:SetBest(scroll.best)
                 button:SetUsable(scroll.usable)
@@ -913,7 +915,7 @@ local function Layout()
         areaY = -math.ceil(flowIndex / perRow) * (ICON_SIZE + ICON_GAP)
     end
     for i = used + 1, MAX_SCROLL_BUTTONS do
-        scrollButtons[i]:SetAttribute("type", nil)
+        SetScrollUse(scrollButtons[i], nil)
         scrollButtons[i]:Hide()
     end
     if compact then parts.scrollsHeader:Hide() end

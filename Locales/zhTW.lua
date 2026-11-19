@@ -485,3 +485,5 @@ L["Your next goal, where to farm, and scroll prices at the auction house."] = "�
 L["What your deciphers turned into, next to everyone's odds, and your skill-ups."] = "你的解讀變成了什麼，旁邊是大家的機率，還有你的技能提升。"
 L["Who has spare scrolls you'd level from, and who'd want yours."] = "誰有你能升級用的多餘卷軸，誰想要你的。"
 L["Other mages running Scrollkeeper, and the community's odds for each tier."] = "其他使用 Scrollkeeper 的法師，以及社群每個檔位的機率。"
+L["%d skill-ups"] = "%d 次技能提升"
+L["Click to open it."] = "點擊開啟。"

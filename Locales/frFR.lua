@@ -487,3 +487,5 @@ L["Your next goal, where to farm, and scroll prices at the auction house."] = "T
 L["What your deciphers turned into, next to everyone's odds, and your skill-ups."] = "Ce que sont devenus tes déchiffrages, à côté des chances de tous, et tes gains de compétence."
 L["Who has spare scrolls you'd level from, and who'd want yours."] = "Qui a des parchemins en trop qui te feraient monter, et qui voudrait les tiens."
 L["Other mages running Scrollkeeper, and the community's odds for each tier."] = "Les autres mages qui utilisent Scrollkeeper, et les chances de la communauté pour chaque palier."
+L["%d skill-ups"] = "%d gains de compétence"
+L["Click to open it."] = "Clique pour l'ouvrir."
