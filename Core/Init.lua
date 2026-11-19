@@ -40,6 +40,10 @@ do
     local getMetadata = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
     local tagged = getMetadata and getMetadata(ADDON_NAME, "Version")
     if tagged and tagged:match("^v?%d") then SK.version = tagged:gsub("^v", "") end
+    -- Running straight from the git repo (the packager never filled in the
+    -- TOC version): other players aren't told about this copy's version, so
+    -- a version bumped while working on it never says "update" to anyone.
+    SK.devCopy = type(tagged) == "string" and tagged:find("project%-version") ~= nil
 end
 
 ------------------------------------------------------------------------

@@ -60,7 +60,9 @@ end
 local function HelloFields()
     local _, class = UnitClass("player")
     local skill = SK.GetComprehension()
-    return Net.PROTOCOL, SK.version, class, UnitLevel("player"),
+    -- A dev copy says "dev": older versions read that as 0, so they never
+    -- tell their player to update because of it.
+    return Net.PROTOCOL, SK.devCopy and "dev" or SK.version, class, UnitLevel("player"),
         skill.rank, skill.max, SK.isMage and MyTiers() or "", SK.isMage and MyUpgrades() or "",
         UnitGUID("player"), SK.db.share and SK.ExportID() or "", SK.db.anonymous and "1" or ""
 end

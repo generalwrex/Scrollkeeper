@@ -74,3 +74,5 @@ Titan Panel and ElvUI data bars, Auctionator, TSM, and TomTom waypoints from the
 It's new, so stuff will break. If it does, type `/sk bug` and drop it in a [bug report](https://github.com/generalwrex/scrollkeeper/issues/new?template=bug_report.yml). If you want to make the odds better for everyone, `/sk export` your data into a [share your data](https://github.com/generalwrex/scrollkeeper/issues/new?template=share_data.yml) post and I'll add it to the next update. Ideas are welcome [here](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
 
 Made by a mage, for mages. Say hi to Archmage Naage in game. Source is on [GitHub](https://github.com/generalwrex/scrollkeeper).
+
+If Scrollkeeper saved you some time (or some sheep), you can [buy me a coffee](https://donorbox.org/generalwrex) ☕ Totally optional, it's free forever either way.

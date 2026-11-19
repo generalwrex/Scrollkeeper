@@ -55,6 +55,7 @@ SK.LINKS = {
     { "CurseForge", "https://www.curseforge.com/wow/addons/scrollkeeper" },
     { "GitHub", "https://github.com/generalwrex/scrollkeeper" },
     { "Report a bug", "https://github.com/generalwrex/scrollkeeper/issues/new/choose" },
+    { "Buy me a coffee", "https://donorbox.org/generalwrex" },
 }
 
 -- A box holding a web address, ready to copy (the game can't open links).

@@ -94,6 +94,7 @@ Nothing is automatic: every cast is one click from the player.
   It's scroll data only, with no character or account names. Everyone's exports are combined
   (`tools/community/merge.py`) into real odds, skill-up rates and drop spots
   that ship with future releases.
+- **Like it?** You can [buy me a coffee](https://donorbox.org/generalwrex). Totally optional.
 - **Have an idea?** Open a
   [feature idea](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
 

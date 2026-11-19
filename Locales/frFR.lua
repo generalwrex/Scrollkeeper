@@ -511,3 +511,4 @@ L["The Farming Plan button moved: it's with the other window buttons up top."] =
 L["Click: print it in chat. Right-click: hide it until there's new news."] = "Clic : l'afficher dans le chat. Clic droit : le masquer jusqu'à la prochaine nouvelle."
 L["Study ready"] = "Étude prête"
 L["%d tier %d"] = "%d palier %d"
+L["Buy me a coffee"] = "Offre-moi un café"

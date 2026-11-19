@@ -509,3 +509,4 @@ L["The Farming Plan button moved: it's with the other window buttons up top."] =
 L["Click: print it in chat. Right-click: hide it until there's new news."] = "点击：在聊天里显示。右键：隐藏，直到有新消息。"
 L["Study ready"] = "研读就绪"
 L["%d tier %d"] = "%d 个 %d 档"
+L["Buy me a coffee"] = "请我喝杯咖啡"
