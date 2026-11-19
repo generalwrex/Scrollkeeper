@@ -280,8 +280,8 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             row.tipTitle, row.tipLines = nil, nil
             row.tipCount = L["Community: %d deciphered (%.1f%%)"]:format(entry.count, entry.share * 100)
             if entry.standard then
-                row.label:SetText("|cffffffff" .. L["Standard scrolls"] .. "|r")
-                row.tipTitle = L["Standard scrolls"]
+                row.label:SetText("|cffffffff" .. L["Standard Scrolls"] .. "|r")
+                row.tipTitle = L["Standard Scrolls"]
                 row.tipLines = {}
                 for _, part in ipairs(entry.parts) do
                     row.tipLines[#row.tipLines + 1] = { SK.UI.ItemLabel(part.itemID, part.name),

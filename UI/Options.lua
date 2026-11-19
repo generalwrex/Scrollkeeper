@@ -277,7 +277,7 @@ SK.Listen("READY", function()
         end)
 
         AddCheckbox("oddsStandard", L["Odds: list standard scrolls"],
-            L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard scrolls row."], false)
+            L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row."], false)
 
         -- Helpers ------------------------------------------------------------
         AddHeader(L["Mailbox, guild bank and auction house"])
