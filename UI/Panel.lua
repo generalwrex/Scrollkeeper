@@ -479,14 +479,23 @@ local function Build()
         GameTooltip:AddLine(L["News"])
         GameTooltip:AddLine(L[news.text], 1, 1, 1, true)
         for _, line in ipairs(news.more or {}) do GameTooltip:AddLine(L[line], 1, 1, 1, true) end
-        GameTooltip:AddLine(L["Click to hide this until there's new news."], 0.6, 0.6, 0.6, true)
+        GameTooltip:AddLine(L["Click: print it in chat. Right-click: hide it until there's new news."], 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)
     parts.news:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    parts.news:SetScript("OnClick", function()
-        if SK.NEWS then SK.db.newsSeen = SK.NEWS.id end
-        GameTooltip:Hide()
-        SK.RefreshPanel()
+    parts.news:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    parts.news:SetScript("OnClick", function(_, mouseButton)
+        local news = SK.NEWS
+        if not news then return end
+        if mouseButton == "RightButton" then
+            SK.db.newsSeen = news.id
+            GameTooltip:Hide()
+            SK.RefreshPanel()
+            return
+        end
+        -- Left-click: the whole thing in chat, where it can be read again.
+        SK.Print("|cffffd100" .. L["News:"] .. "|r " .. L[news.text])
+        for _, line in ipairs(news.more or {}) do print("  " .. L[line]) end
     end)
 
     -- Comprehension bar
