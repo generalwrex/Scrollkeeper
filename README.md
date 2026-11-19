@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.5):** a Luck Log window, Fellow Mages, one-click imbues, click the scroll icon to decipher, backups, and Chinese!
+**Latest (1.1.6):** bug fix! Fellow Mages only shows mages you can actually reach (your server and faction), and grays out anyone who's logged off.
 
 Mage scroll helper for WoW Forever.
 
