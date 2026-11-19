@@ -172,14 +172,16 @@ end
 
 -- A faint bar behind a row, as wide as its share.
 local function ShareBar(row, share)
-    if not row.shareBar then
+    if type(row.shareBar) ~= "table" then
         row.shareBar = row:CreateTexture(nil, "BORDER")
         row.shareBar:SetPoint("TOPLEFT", 0, -1)
         row.shareBar:SetPoint("BOTTOMLEFT", 0, 1)
         row.shareBar:SetColorTexture(0.64, 0.21, 0.93, 0.28)
     end
     if share and share > 0 then
-        row.shareBar:SetWidth(math.max(1, row:GetWidth() * share))
+        local width = row:GetWidth()
+        if type(width) ~= "number" or width <= 0 then width = WIDTH - 22 end
+        row.shareBar:SetWidth(math.max(1, width * share))
         row.shareBar:Show()
     else
         row.shareBar:Hide()
