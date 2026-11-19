@@ -211,8 +211,24 @@ local MAGE_SORTS = {
                   return (a.peer.skill or 0) > (b.peer.skill or 0)
               end },
 }
--- The author's characters: their tooltip says so.
-local AUTHOR_CHARACTERS = { ["Archmage Naage"] = true }
+-- The author's characters: their tooltip says so. Names are only unique
+-- per server (PvE, PvP, RP, RP-PvP), so the server has to match too.
+local AUTHOR_CHARACTERS = {
+    { names = { ["Archmage Naage"] = true, ["Naage"] = true }, realm = "CAMWOW US1 Realm 1 PvE" },
+}
+local function SameRealm(a, b)
+    local function Plain(text) return (text or ""):gsub("[%s%-]", ""):lower() end
+    return Plain(a) == Plain(b)
+end
+local function IsAuthor(sender)
+    -- "Name-Server" for players on another server, just "Name" on yours.
+    local short, realm = sender:match("^(.-)%-([^%-]+)$")
+    if not short then short, realm = sender, GetRealmName and GetRealmName() end
+    for _, author in ipairs(AUTHOR_CHARACTERS) do
+        if author.names[short] and SameRealm(realm, author.realm) then return true end
+    end
+    return false
+end
 
 -- Community Odds tier icons, lowest tier first (a fancier scroll each tier).
 local TIER_ICONS = {
@@ -227,8 +243,7 @@ local ARROW_DOWN = "Interface\\Buttons\\Arrow-Down-Up"
 -- Hovering a Fellow Mages name: everything we know about them.
 local function MageTooltip(tooltip, name, peer)
     tooltip:AddLine(CLASS_COLOR .. name .. "|r")
-    local short = SK.Net and SK.Net.ShortName and SK.Net.ShortName(name) or name
-    if AUTHOR_CHARACTERS[short] then
+    if IsAuthor(name) then
         tooltip:AddLine("|TInterface\\Icons\\INV_Scroll_03:14:14:0:0|t " .. L["Made Scrollkeeper!"], 1, 0.82, 0)
     end
     if peer.level and peer.level > 0 then
