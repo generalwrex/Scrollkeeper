@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.1.7
+
+- The scroll icon's frame shows the skill-up color of the scroll a click would read (orange, yellow, green, or gray when it won't give a point), and its tooltip says it too.
+
 ## 1.1.6
 
 Bug fix: Fellow Mages was listing mages you couldn't actually reach.

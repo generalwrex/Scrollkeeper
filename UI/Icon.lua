@@ -43,10 +43,12 @@ local function Build()
     icon.border:SetPoint("TOPLEFT", -2, 2)
     icon.border:SetPoint("BOTTOMRIGHT", 2, -2)
     icon.border:SetColorTexture(0, 0, 0, 0)
-    local edge = icon:CreateTexture(nil, "BACKGROUND")
-    edge:SetPoint("TOPLEFT", -2, 2)
-    edge:SetPoint("BOTTOMRIGHT", 2, -2)
-    edge:SetColorTexture(0, 0, 0, 0.8)
+    -- The frame around the icon: the skill-up color of the scroll a click
+    -- would read (orange, yellow, green; gray when it gives nothing).
+    icon.edge = icon:CreateTexture(nil, "BACKGROUND")
+    icon.edge:SetPoint("TOPLEFT", -3, 3)
+    icon.edge:SetPoint("BOTTOMRIGHT", 3, -3)
+    icon.edge:SetColorTexture(0, 0, 0, 0.8)
 
     icon.glow = icon:CreateTexture(nil, "OVERLAY")
     icon.glow:SetPoint("TOPLEFT", -10, 10)
@@ -93,7 +95,9 @@ local function Build()
         end
         local nextScroll = SK.NextDecipherable()
         if nextScroll then
-            GameTooltip:AddLine(L["Click: decipher %s"]:format(SK.ScrollLink(nextScroll.itemID, nextScroll.name)),
+            local chance = SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
+            GameTooltip:AddLine(L["Click: decipher %s"]:format(SK.ScrollLink(nextScroll.itemID, nextScroll.name))
+                .. (chance and (" (" .. SK.ColoredChance(chance) .. "|cff40ff40)|r") or ""),
                 0.25, 1, 0.25, true)
         end
         GameTooltip:AddLine(L["Right-click: open or close the panel. Shift-drag: move."], 0.6, 0.6, 0.6, true)
@@ -158,6 +162,14 @@ function SK.RefreshIcon()
         icon.count:SetTextColor(0.6, 0.6, 0.6)
     end
     icon.texture:SetDesaturated((readable or 0) == 0)
+    local chance = nextScroll and SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
+    if chance then
+        local hex = chance.color
+        icon.edge:SetColorTexture(tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255,
+            tonumber(hex:sub(5, 6), 16) / 255, 1)
+    else
+        icon.edge:SetColorTexture(0, 0, 0, 0.8)
+    end
     local studyReady = SK.KnowsStudy and SK.KnowsStudy() and SK.StudySecondsLeft and SK.StudySecondsLeft() <= 0
     icon.glow:SetShown(studyReady and true or false)
     if not locked then
