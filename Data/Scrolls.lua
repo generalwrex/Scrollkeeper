@@ -123,6 +123,22 @@ SK.SCROLL_CATEGORIES = {
 
 -- The English name of a scroll, from the shared community data (players
 -- on English clients), so categories work in every language. nil if unknown.
+-- Is this one of the mage scrolls (from TIER_RESULTS), or a standard
+-- scroll like Scroll of Strength that deciphering can also give?
+-- Mage scrolls are all new items with high IDs; the name is a backup.
+local mageNames
+function SK.IsMageScroll(itemID, name)
+    if itemID and itemID >= 200000 then return true end
+    if not mageNames then
+        mageNames = {}
+        for _, results in pairs(SK.TIER_RESULTS) do
+            for _, result in ipairs(results) do mageNames[result] = true end
+        end
+    end
+    local english = SK.EnglishScrollName(itemID) or name
+    return english ~= nil and mageNames[(english:gsub("^Scroll of ", ""))] == true
+end
+
 function SK.EnglishScrollName(itemID)
     if not itemID then return nil end
     for _, entry in pairs(SK.COMMUNITY_DATA or {}) do

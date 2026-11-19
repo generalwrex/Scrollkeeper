@@ -440,3 +440,6 @@ L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"] = "点击�
 L["Mailbox: offer scrolls I'd use too"] = "邮箱：也提供我自己能用的卷轴"
 L["Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use."] = "也列出能用你自己还能提升的卷轴的法师，并标记出来。关闭：只显示你用不上的卷轴。"
 L["|cffffd100%d you'd use too|r"] = "|cffffd100%d 张你自己也能用|r"
+L["Odds: list standard scrolls"] = "几率：逐个列出普通卷轴"
+L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard scrolls row."] = "社区几率逐个列出普通卷轴（比如力量卷轴）。关闭：它们合并成一行“普通卷轴”。"
+L["Standard scrolls"] = "普通卷轴"

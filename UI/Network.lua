@@ -229,9 +229,32 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             if tier == self.selectedTier then button:LockHighlight() else button:UnlockHighlight() end
         end
         local odds, total, players = SK.CommunityOdds(self.selectedTier)
+        -- Standard scrolls (Scroll of Strength...) go in one row unless the
+        -- setting lists them one by one. Percentages stay the same either way.
+        if not SK.db.oddsStandard then
+            local kept, merged = {}, nil
+            for _, entry in ipairs(odds) do
+                if SK.IsMageScroll(entry.itemID, entry.name) then
+                    kept[#kept + 1] = entry
+                else
+                    merged = merged or { standard = true, count = 0, share = 0 }
+                    merged.count = merged.count + entry.count
+                    merged.share = merged.share + entry.share
+                end
+            end
+            if merged then
+                kept[#kept + 1] = merged
+                table.sort(kept, function(a, b) return a.count > b.count end)
+            end
+            odds = kept
+        end
         self.odds:SetRows(odds, function(row, entry)
             row.itemID = entry.itemID
-            row.label:SetText(SK.UI.ItemLabel(entry.itemID, (entry.name:gsub("^Scroll of ", ""))))
+            if entry.standard then
+                row.label:SetText("|cffffffff" .. L["Standard scrolls"] .. "|r")
+            else
+                row.label:SetText(SK.UI.ItemLabel(entry.itemID, (entry.name:gsub("^Scroll of ", ""))))
+            end
             row.value:SetText(("%d  |cffffffff%.1f%%|r"):format(entry.count, entry.share * 100))
         end, "")
         if total == 0 then
