@@ -123,12 +123,51 @@ SK.SCROLL_CATEGORIES = {
 
 -- The English name of a scroll, from the shared community data (players
 -- on English clients), so categories work in every language. nil if unknown.
+-- Every scroll in TIER_RESULTS by item ID, with its English name (checked
+-- on Wowhead's WoW Forever database), so they're known in every language.
+SK.MAGE_SCROLL_IDS = {
+    -- tier 1
+    [213564] = "Scroll of Minor Evocation",
+    [215257] = "Scroll of Comprehension",
+    [274947] = "Scroll of Imbue Lesser Flame",
+    [275067] = "Scroll of Imbue Chillknife",
+    [275069] = "Scroll of Rat Familiar",
+    -- tier 15
+    [277485] = "Scroll of Imbue Frost",
+    [277486] = "Scroll of Imbue Striking",
+    [277487] = "Scroll of Imbue Baleflame",
+    [277488] = "Scroll of Imbue Iceknife",
+    [277489] = "Scroll of Imbue Spark",
+    [277483] = "Scroll of Frog Familiar",
+    [217495] = "Scroll of Cryoblast",
+    [213550] = "Scroll of Polymorph: Odd Melon",
+    [277484] = "Scroll of Confuse Beast",
+    [277490] = "Scroll of the Saber",
+    -- tier 50
+    [277497] = "Scroll of Imbue Flame",
+    [277494] = "Scroll of Imbue Accuracy",
+    [277496] = "Scroll of Imbue Balefrost",
+    [277495] = "Scroll of Imbue Quickening",
+    [277498] = "Scroll of Imbue Manablade",
+    [277493] = "Scroll of Cat Familiar",
+    [277492] = "Scroll of Khadgar's Unlocking",
+    [277491] = "Scroll of Rebuke Elemental",
+    [217496] = "Scroll of the Blade",
+    -- tier 175
+    [277499] = "Scroll of Greater Cryoblast",
+    [277500] = "Scroll of Imbue Greater Flame",
+    [277501] = "Scroll of Imbue Greater Frost",
+    [277502] = "Scroll of Imbue Precision",
+    [277503] = "Scroll of Imbue Spellbreak",
+    [277504] = "Scroll of Wit",
+}
+
 -- Is this one of the mage scrolls (from TIER_RESULTS), or a standard
 -- scroll like Scroll of Strength that deciphering can also give?
--- Mage scrolls are all new items with high IDs; the name is a backup.
+-- Goes by item ID; the English name is a backup.
 local mageNames
 function SK.IsMageScroll(itemID, name)
-    if itemID and itemID >= 200000 then return true end
+    if itemID and SK.MAGE_SCROLL_IDS[itemID] then return true end
     if not mageNames then
         mageNames = {}
         for _, results in pairs(SK.TIER_RESULTS) do
@@ -136,7 +175,7 @@ function SK.IsMageScroll(itemID, name)
         end
     end
     local english = SK.EnglishScrollName(itemID) or name
-    return english ~= nil and mageNames[(english:gsub("^Scroll of ", ""))] == true
+    return english ~= nil and (mageNames[english] or mageNames[(english:gsub("^Scroll of ", ""))]) == true
 end
 
 -- The standard stat scrolls (Strength, Agility, Stamina, Spirit, Intellect,
@@ -161,6 +200,7 @@ end
 
 function SK.EnglishScrollName(itemID)
     if not itemID then return nil end
+    if SK.MAGE_SCROLL_IDS[itemID] then return SK.MAGE_SCROLL_IDS[itemID] end
     for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
         local name = entry.names and entry.names[itemID]
         if name then return name end
