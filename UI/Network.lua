@@ -61,9 +61,14 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
 
     -- The template shows its scrollbar whenever the content changes; only
     -- show it when there are more rows than fit.
+    -- The template's own handler has to run first: it tells the scrollbar
+    -- how far it can go, without which dragging it or the mouse wheel
+    -- can't move the list.
     local bar = scroll.ScrollBar
     if type(bar) ~= "table" then bar = nil end
-    scroll:SetScript("OnScrollRangeChanged", function(self)
+    local templateHandler = scroll:GetScript("OnScrollRangeChanged")
+    scroll:SetScript("OnScrollRangeChanged", function(self, xrange, yrange)
+        if type(templateHandler) == "function" then templateHandler(self, xrange, yrange) end
         if bar then bar:SetShown(self.needsBar and true or false) end
     end)
 
@@ -387,6 +392,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         button.number:SetText(tier)
         button:SetScript("OnClick", function()
             pane.selectedTier = tier
+            pane.odds.scroll:SetVerticalScroll(0)   -- a new tier starts at the top
             pane:Refresh()
         end)
         button:SetScript("OnEnter", function(self)

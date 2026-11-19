@@ -585,7 +585,11 @@ local function Build()
     parts.scrollsBar = type(scrollBar) == "table" and scrollBar or nil
     -- The game's template shows its scrollbar again every time the content
     -- changes. Only show it when Layout says the icons don't fit.
-    parts.scrollsBox:SetScript("OnScrollRangeChanged", function(self)
+    -- (The template's own handler runs first: it sets how far the scrollbar
+    -- can go, or dragging it wouldn't move anything.)
+    local templateHandler = parts.scrollsBox:GetScript("OnScrollRangeChanged")
+    parts.scrollsBox:SetScript("OnScrollRangeChanged", function(self, xrange, yrange)
+        if type(templateHandler) == "function" then templateHandler(self, xrange, yrange) end
         if parts.scrollsBar then parts.scrollsBar:SetShown(self.needsBar and true or false) end
     end)
 

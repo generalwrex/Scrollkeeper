@@ -135,6 +135,7 @@ local function Build()
         button.number:SetText(tier)
         button:SetScript("OnClick", function()
             window.tier = tier
+            window.results.scroll:SetVerticalScroll(0)   -- a new tier starts at the top
             SK.RefreshLog()
         end)
         button:SetScript("OnEnter", function(self)
