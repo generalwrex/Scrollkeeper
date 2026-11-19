@@ -435,6 +435,7 @@ local function Build()
         { icon = "Interface\\Icons\\INV_Letter_15", open = function() SK.ToggleSwap() end,
           title = "Scroll Swap", text = "Who has spare scrolls you'd level from, and who'd want yours." },
         { icon = "Interface\\Icons\\INV_Misc_GroupLooking", open = function() SK.ToggleNetwork() end,
+          inAdvanced = true,   -- Advanced view has it built in, so no button there
           title = "Fellow Mages", text = "Other mages running Scrollkeeper, and the community's odds for each tier." },
     }
     parts.windowButtons = {}
@@ -448,6 +449,7 @@ local function Build()
         else
             button:SetPoint("TOPLEFT", panel, "TOPLEFT", 58, -30)
         end
+        button.inAdvanced = entry.inAdvanced
         parts.windowButtons[i] = button
         previous = button
     end
@@ -804,6 +806,10 @@ local function Layout()
     local advanced = mode == "full"
     panel:SetWidth(advanced and (WIDTH + SIDE_WIDTH) or WIDTH)
     SetSideShown(advanced)
+    -- No button for what this view already shows.
+    for _, button in ipairs(parts.windowButtons) do
+        button:SetShown(not (advanced and button.inAdvanced))
+    end
 
     FitBorder(collapsed)
     if collapsed then
