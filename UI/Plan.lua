@@ -106,13 +106,51 @@ local function Build()
     local where = SK.UI.CreateHeader(world, L["Where to farm"], INNER)
     where:SetPoint("TOPLEFT", world.text, "BOTTOMLEFT", -6, -12)
     world.zones = SK.UI.CreateScrollList(world, INNER, ROWS)
-    -- Which tier the list is for ("Tier 50 drops" / no tier 50 logged yet).
+
+    -- A scroll icon per tier, like Community Odds. The tier you need is
+    -- picked by itself and keeps a gold frame; click another to look at it.
+    world.tierButtons = {}
+    local slot = INNER / #SK.TIERS
+    for i, tier in ipairs(SK.TIERS) do
+        local button = CreateFrame("Button", nil, world)
+        button:SetSize(22, 22)
+        button:SetPoint("TOPLEFT", where, "BOTTOMLEFT", (i - 1) * slot + (slot - 22) / 2, -6)
+        button:SetNormalTexture(SK.UI.TIER_ICONS and SK.UI.TIER_ICONS[i] or "Interface\\Icons\\INV_Scroll_03")
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button.frame = button:CreateTexture(nil, "BACKGROUND")
+        button.frame:SetPoint("TOPLEFT", -2, 2)
+        button.frame:SetPoint("BOTTOMRIGHT", 2, -2)
+        button.frame:SetColorTexture(1, 0.82, 0, 1)
+        button.glow = button:CreateTexture(nil, "OVERLAY")
+        button.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight")
+        button.glow:SetBlendMode("ADD")
+        button.glow:SetAllPoints()
+        button.number = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+        button.number:SetPoint("BOTTOMRIGHT", 3, -2)
+        button.number:SetText(tier)
+        button:SetScript("OnClick", function()
+            world.picked = tier
+            world.zones.scroll:SetVerticalScroll(0)
+            SK.RefreshPlan()
+        end)
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["Tier "] .. tier)
+            if self.needed then GameTooltip:AddLine(L["The tier you need right now."], 1, 0.82, 0) end
+            GameTooltip:AddLine(L["Where people found tier %d scrolls."]:format(tier), 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        world.tierButtons[tier] = button
+    end
+
+    -- Which tier the list is for ("You need Tier 50" / none logged yet).
     world.zonesFor = world:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    world.zonesFor:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 6, -4)
+    world.zonesFor:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 6, -32)
     world.zonesFor:SetWidth(INNER - 12)
     world.zonesFor:SetJustifyH("LEFT")
     world.zonesFor:SetWordWrap(false)   -- one line, or it runs into the list
-    world.zones:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -20)
+    world.zones:SetPoint("TOPLEFT", where, "BOTTOMLEFT", 0, -48)
 
     local worldNote = world:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     worldNote:SetPoint("BOTTOMLEFT", 16, 14)
@@ -166,6 +204,7 @@ local function Build()
     ahNote:SetText(L["Click a scroll to search for it on the auction house."])
 
     window:SetScript("OnShow", function()
+        window.world.picked = nil   -- opens on the tier you need
         SK.RefreshPlan()
         -- Scroll info the game hadn't loaded yet comes in a moment later.
         C_Timer.After(1, SK.RefreshPlan)
@@ -202,14 +241,27 @@ local function RefreshWorld()
     local lines, plan = SK.FarmPlanLines(true)
     world.text:SetText(table.concat(lines, "\n"))
 
-    -- Zones for the tier the plan says to read; none logged yet: every tier.
-    local tier = plan and plan.tier
+    -- Zones for the tier the plan says to read, unless you clicked another
+    -- tier. None logged yet for it: every tier.
+    local needed = plan and plan.tier
+    local tier = type(world.picked) == "number" and world.picked or needed
+    for t, button in pairs(world.tierButtons) do
+        local shown = t == tier
+        button.needed = t == needed
+        button.frame:SetShown(button.needed)
+        button.glow:SetShown(shown)
+        SK.UI.Desaturate(button, not shown and not button.needed)
+        button.number:SetTextColor(shown and 1 or 0.6, shown and 0.82 or 0.6, shown and 0 or 0.6)
+    end
     local zones = tier and SK.BestZones(25, tier) or {}
+    local isNeeded = tier == needed
     if tier and #zones > 0 then
-        world.zonesFor:SetText(L["You need |cffffffffTier %d|r. Where people found it:"]:format(tier))
+        world.zonesFor:SetText((isNeeded and L["You need |cffffffffTier %d|r. Where people found it:"]
+            or L["|cffffffffTier %d|r. Where people found it:"]):format(tier))
     else
         zones = SK.BestZones(25)
-        world.zonesFor:SetText(tier and L["You need |cffffffffTier %d|r. None logged yet, so all tiers:"]:format(tier)
+        world.zonesFor:SetText(tier and (isNeeded and L["You need |cffffffffTier %d|r. None logged yet, so all tiers:"]
+            or L["|cffffffffTier %d|r: none logged yet, so all tiers:"]):format(tier)
             or L["All tiers:"])
     end
     world.zones:SetRows(zones, function(row, zone)
@@ -220,7 +272,7 @@ local function RefreshWorld()
     end, L["No drops logged yet. Loot some untranslated scrolls and the zones show up here."])
 
     local textHeight = world.text:GetStringHeight() or 60
-    window:SetHeight(84 + 22 + 6 + textHeight + 12 + 22 + 20 + ROWS * ROW_HEIGHT + 58)
+    window:SetHeight(84 + 22 + 6 + textHeight + 12 + 22 + 48 + ROWS * ROW_HEIGHT + 58)
 end
 
 local function RefreshAuctionHouse()
