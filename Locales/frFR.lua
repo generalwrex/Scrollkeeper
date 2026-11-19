@@ -466,3 +466,4 @@ L["Who could use the most untranslated scrolls in your bags."] = "Qui pourrait u
 L["Click again to flip the order."] = "Clique à nouveau pour inverser l'ordre."
 L["Sort: "] = "Trier : "
 L["What tier %d scrolls turned into, from everyone's deciphers."] = "Ce que sont devenus les parchemins de palier %d, d'après les déchiffrages de tous."
+L["Made Scrollkeeper!"] = "A créé Scrollkeeper !"

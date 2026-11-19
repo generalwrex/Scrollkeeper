@@ -466,3 +466,4 @@ L["Who could use the most untranslated scrolls in your bags."] = "Wer die meiste
 L["Click again to flip the order."] = "Nochmal klicken dreht die Reihenfolge um."
 L["Sort: "] = "Sortieren: "
 L["What tier %d scrolls turned into, from everyone's deciphers."] = "Was aus Schriftrollen der Stufe %d wurde, aus den Entzifferungen aller."
+L["Made Scrollkeeper!"] = "Hat Scrollkeeper gemacht!"

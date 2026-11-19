@@ -211,6 +211,9 @@ local MAGE_SORTS = {
                   return (a.peer.skill or 0) > (b.peer.skill or 0)
               end },
 }
+-- The author's characters: their tooltip says so.
+local AUTHOR_CHARACTERS = { ["Archmage Naage"] = true }
+
 -- Community Odds tier icons, lowest tier first (a fancier scroll each tier).
 local TIER_ICONS = {
     "Interface\\Icons\\INV_Scroll_01",
@@ -224,6 +227,10 @@ local ARROW_DOWN = "Interface\\Buttons\\Arrow-Down-Up"
 -- Hovering a Fellow Mages name: everything we know about them.
 local function MageTooltip(tooltip, name, peer)
     tooltip:AddLine(CLASS_COLOR .. name .. "|r")
+    local short = SK.Net and SK.Net.ShortName and SK.Net.ShortName(name) or name
+    if AUTHOR_CHARACTERS[short] then
+        tooltip:AddLine("|TInterface\\Icons\\INV_Scroll_03:14:14:0:0|t " .. L["Made Scrollkeeper!"], 1, 0.82, 0)
+    end
     if peer.level and peer.level > 0 then
         tooltip:AddLine(L["Level %d"]:format(peer.level), 1, 1, 1)
     end

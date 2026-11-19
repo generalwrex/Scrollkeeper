@@ -464,3 +464,4 @@ L["Who could use the most untranslated scrolls in your bags."] = "誰能用你�
 L["Click again to flip the order."] = "再點一次反轉順序。"
 L["Sort: "] = "排序："
 L["What tier %d scrolls turned into, from everyone's deciphers."] = "%d 檔卷軸在大家的解讀中變成了什麼。"
+L["Made Scrollkeeper!"] = "Scrollkeeper 的作者！"
