@@ -27,6 +27,7 @@ SK.TIER_RESULTS = {
         "Imbue Flame", "Imbue Accuracy", "Imbue Balefrost", "Imbue Quickening",
         "Imbue Manablade", "Cat Familiar", "Khadgar's Unlocking",
         "Rebuke Elemental", "Scroll of the Blade",
+        "Liminal Passage",   -- not in the guides; players' deciphers show it
     },
     [175] = {
         "Greater Cryoblast", "Imbue Greater Flame", "Imbue Greater Frost",
@@ -153,6 +154,7 @@ SK.MAGE_SCROLL_IDS = {
     [277492] = "Scroll of Khadgar's Unlocking",
     [277491] = "Scroll of Rebuke Elemental",
     [217496] = "Scroll of the Blade",
+    [213548] = "Scroll of Liminal Passage",
     -- tier 175
     [277499] = "Scroll of Greater Cryoblast",
     [277500] = "Scroll of Imbue Greater Flame",

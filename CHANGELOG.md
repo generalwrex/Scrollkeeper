@@ -20,6 +20,7 @@
 - Advanced view: Fellow Mages gets more room. Your Stats is shorter, since the Luck Log, Plan and Swap have their own windows now.
 - The network list is now "Fellow Mages": only mages, with the full name on top and their skill, what they need and weapon upgrades underneath. Hover a name for more (and how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail. Little icons in its header sort it by skill, name, or who could use the most of your scrolls. Right-click the scroll icon to only show mages who could use yours.
 - Community odds tiers are scroll icons now. Community odds put standard scrolls (Scroll of Strength and such) in one row. Hover it to see each one with its count, or turn on the setting to list them one by one. Hovering any scroll there shows its count too.
+- Scroll of Liminal Passage is now known as a tier 50 result (your deciphers turned it up, it isn't in any guide).
 - Community odds no longer count loot that showed up while deciphering (like a recipe or water) as a scroll result. The luck log ignores it too.
 - Scrollbars in the lists (odds, Fellow Mages, plan, swap) and on Your Scrolls actually scroll now when you drag them or use the mouse wheel.
 

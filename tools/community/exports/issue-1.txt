@@ -1,1 +1,0 @@
-Scrollkeeper export 1 meta|0.5.0|1.60.1|16001|MAGE|21|65|105|862ee863 T|1|213564:1,275067:1,275069:1,954:1 U|1|gray:0/4 N|954|Scroll of Strength N|213564|Scroll of Minor Evocation N|275067|Scroll of Imbue Chillknife N|275069|Scroll of Rat Familiar
