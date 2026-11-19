@@ -9,7 +9,7 @@
 - Where to farm uses everyone's shared drops now, not just yours (drop tiers are shared from this version on).
 - New mailbox setting: also offer scrolls you'd still use yourself, marked "you'd use too".
 - The imbue/familiar pop-up's hint is one short line now.
-- The network list is now "Fellow Mages": only mages, with the full name on top and their skill, what they need and weapon upgrades underneath.
+- The network list is now "Fellow Mages": only mages, with the full name on top and their skill, what they need and weapon upgrades underneath. Hover a name for more (and how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail.
 - Community odds put standard scrolls (Scroll of Strength and such) in one row. Hover it to see each one with its count, or turn on the setting to list them one by one. Hovering any scroll there shows its count too.
 - Community odds no longer count loot that showed up while deciphering (like a recipe or water) as a scroll result. The luck log ignores it too.
 

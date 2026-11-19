@@ -103,7 +103,14 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
         highlight:SetAllPoints()
         highlight:SetColorTexture(1, 0.82, 0, 0.12)
         row:SetScript("OnEnter", function(self)
-            -- Rows can carry their own tooltip: row.tipTitle plus row.tipLines.
+            -- Rows can fill the tooltip themselves (row.tipFunc), or carry
+            -- a simple one: row.tipTitle plus row.tipLines.
+            if not self.itemID and self.tipFunc then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                self.tipFunc(GameTooltip)
+                GameTooltip:Show()
+                return
+            end
             if not self.itemID and self.tipTitle then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:AddLine(self.tipTitle)
@@ -122,6 +129,7 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
         end)
         row:SetScript("OnLeave", function() GameTooltip:Hide() end)
         row:SetScript("OnMouseUp", function(self)
+            if not self.itemID and self.onClick then self.onClick() return end
             if not (self.itemID and IsModifiedClick and IsModifiedClick("CHATLINK")) then return end
             local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, self.itemID))
             if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
@@ -174,6 +182,54 @@ end)
 ------------------------------------------------------------------------
 -- The pane: Users, then Community Odds with a button per tier
 ------------------------------------------------------------------------
+
+-- Where a player was heard, for the tooltip.
+local SOURCES = { GUILD = "Guild", PARTY = "Group", RAID = "Group", INSTANCE_CHAT = "Group",
+                  CHANNEL = "Everyone online", WHISPER = "Whisper" }
+
+-- Hovering a Fellow Mages name: everything we know about them.
+local function MageTooltip(tooltip, name, peer)
+    tooltip:AddLine(CLASS_COLOR .. name .. "|r")
+    if peer.level and peer.level > 0 then
+        tooltip:AddLine(L["Level %d"]:format(peer.level), 1, 1, 1)
+    end
+    local skill = peer.skill or 0
+    if peer.max and peer.max > 0 then
+        tooltip:AddDoubleLine(L["Comprehension"], ("%d / %d"):format(skill, peer.max), 1, 0.82, 0, 1, 1, 1)
+    else
+        tooltip:AddDoubleLine(L["Comprehension"], tostring(skill), 1, 0.82, 0, 1, 1, 1)
+    end
+
+    local tiers, wanted = {}, {}
+    for _, tier in ipairs(SK.TIERS) do
+        if peer.tiers and peer.tiers[tier] then
+            tiers[#tiers + 1] = tier
+            wanted[tier] = true
+        end
+    end
+    if #tiers > 0 then
+        tooltip:AddDoubleLine(L["Levels from tiers"], table.concat(tiers, ", "), 1, 0.82, 0, 1, 1, 1)
+    else
+        tooltip:AddLine(L["Doesn't need any tier right now."], 0.6, 0.6, 0.6)
+    end
+    if peer.upgrades and #peer.upgrades > 0 then
+        tooltip:AddDoubleLine(L["Weapon upgrades"], table.concat(peer.upgrades, ", "), 1, 0.82, 0, 0.64, 0.21, 0.93)
+    end
+
+    -- Untranslated scrolls in your bags they'd get a skill-up from.
+    local yours = 0
+    for _, scroll in ipairs(SK.bags and SK.bags.untranslated or {}) do
+        if wanted[scroll.needs] then yours = yours + 1 end
+    end
+    if yours > 0 then
+        tooltip:AddLine(L["You have %d |4scroll:scrolls; they could use."]:format(yours), 0.25, 0.75, 0.25)
+    end
+
+    local source = peer.source and SOURCES[peer.source]
+    if source then tooltip:AddDoubleLine(L["Heard through"], L[source], 0.6, 0.6, 0.6, 0.6, 0.6, 0.6) end
+    if peer.version then tooltip:AddDoubleLine("Scrollkeeper", peer.version, 0.6, 0.6, 0.6, 0.6, 0.6, 0.6) end
+    tooltip:AddLine(L["Click: whisper  ·  Shift-click: put the name in the box you're typing in"], 0.6, 0.6, 0.6)
+end
 
 -- Builds the pane inside host, starting at (left, top). Returns the pane
 -- and how tall it is.
@@ -236,7 +292,23 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
 
         self.users:SetRows(peers, function(row, entry)
             row.itemID = nil
+            row.tipFunc, row.onClick = nil, nil
             local peer = entry.peer
+            if not entry.anonymous then
+                row.tipFunc = function(tooltip) MageTooltip(tooltip, entry.name, peer) end
+                row.onClick = function()
+                    local name = SK.Net and SK.Net.ShortName and SK.Net.ShortName(entry.name) or entry.name
+                    -- Shift-click: the name goes into whatever box you're
+                    -- typing in (chat, mail To:...). Click: a whisper.
+                    if IsShiftKeyDown and IsShiftKeyDown() then
+                        local box = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
+                        if box and box.Insert then box:Insert(name)
+                        elseif ChatEdit_InsertLink then ChatEdit_InsertLink(name) end
+                    elseif ChatFrame_OpenChat then
+                        ChatFrame_OpenChat("/w " .. name .. " ")
+                    end
+                end
+            end
             if entry.anonymous then
                 row.label:SetText("|cff808080" .. L["Anonymous"] .. "|r")
                 row.sub:SetText("|cff808080" .. L["+%d |4player:players;"]:format(entry.anonymous) .. "|r")
