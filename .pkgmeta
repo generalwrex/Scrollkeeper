@@ -10,6 +10,7 @@ ignore:
   - .github
   - README.md
   - CHANGELOG.md
+  - CURSEFORGE.md
   - .gitignore
   - .gitattributes
   - CLAUDE.md
