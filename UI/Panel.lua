@@ -21,7 +21,7 @@ local WIDTH = 250
 local LEFT, RIGHT = 16, 18             -- inner padding, clear of the gold border
 local INNER = WIDTH - LEFT - RIGHT
 local TOP = 62                          -- where the content starts, below the portrait
-local NEWS_HEIGHT = 12                  -- the news line (SK.NEWS), when there is one
+local NEWS_ICON = "|TInterface\\GossipFrame\\AvailableQuestIcon:18:18|t"   -- the yellow "!" for news
 local ROW_HEIGHT = 16
 local ICON_SIZE, ICON_GAP, ICONS_PER_ROW = 26, 4, 5
 local CATEGORY_LABEL_WIDTH = 64   -- "Familiars" etc. to the left of each icon row
@@ -461,15 +461,17 @@ local function Build()
         previous = button
     end
 
-    -- News: one short line under the buttons (SK.NEWS in Data/Messages.lua).
-    -- Hover for the whole thing; click to hide it until there's new news.
+    -- News (SK.NEWS in Data/Messages.lua), in the open space of the button
+    -- row under the title. Advanced view has room for the line itself;
+    -- the narrow views just get a yellow "!". Hover for the whole thing;
+    -- click to hide it until there's new news.
     parts.news = CreateFrame("Button", nil, panel)
-    parts.news:SetPoint("TOPLEFT", panel, "TOPLEFT", LEFT + 2, -TOP + 2)
-    parts.news:SetSize(INNER - 4, NEWS_HEIGHT)
-    parts.news.text = parts.news:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    parts.news:SetHeight(18)
+    parts.news.text = parts.news:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     parts.news.text:SetAllPoints()
-    parts.news.text:SetJustifyH("LEFT")
+    parts.news.text:SetJustifyH("CENTER")
     parts.news.text:SetWordWrap(false)
+    parts.news:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
     parts.news:SetScript("OnEnter", function(self)
         local news = SK.NEWS
         if not news then return end
@@ -848,19 +850,33 @@ local function Layout()
         button:SetShown(not (advanced and button.inAdvanced))
     end
 
-    -- The news line, until you click it away. It pushes everything below
-    -- down a little (the right-hand column stays where it is).
+    -- The news, until you click it away: the line between the window
+    -- buttons and the toggles in Advanced, just a "!" in the narrow views.
     local news = SK.NEWS
     local showNews = news and news.text and SK.db.newsSeen ~= news.id
     parts.news:SetShown(showNews and true or false)
-    if showNews then parts.news.text:SetText("|cffffd100" .. L["News:"] .. "|r |cffffffff" .. L[news.text] .. "|r") end
-    local top = TOP + (showNews and NEWS_HEIGHT + 4 or 0)
+    if showNews then
+        local lastButton = parts.windowButtons[#parts.windowButtons]
+        if advanced and lastButton.inAdvanced then lastButton = parts.windowButtons[#parts.windowButtons - 1] end
+        parts.news:ClearAllPoints()
+        if advanced then
+            parts.news:SetPoint("LEFT", lastButton, "RIGHT", 10, 0)
+            parts.news:SetPoint("RIGHT", parts.iconToggle, "LEFT", -10, 0)
+            -- The yellow "!" is what catches the eye; the text stays plain.
+            parts.news.text:SetText(NEWS_ICON .. " |cffffd100" .. L["News:"] .. "|r |cffffffff" .. L[news.text] .. "|r")
+        else
+            parts.news:SetPoint("LEFT", lastButton, "RIGHT", 3, 0)
+            parts.news:SetWidth(18)
+            parts.news.text:SetText(NEWS_ICON)
+        end
+    end
+    local top = TOP
 
     FitBorder(collapsed)
     if collapsed then
         for _, button in ipairs(scrollButtons) do button:Hide() end
         Place(parts.skillBar, -top, 16)
-        panel:SetHeight(COLLAPSED_HEIGHT + (top - TOP))
+        panel:SetHeight(COLLAPSED_HEIGHT)
         return
     end
 
