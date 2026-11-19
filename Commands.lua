@@ -11,6 +11,7 @@
 -- /sk plan       the Farming Plan window
 -- /sk net        the Fellow Mages window: other mages and community odds
 -- /sk swap       the Scroll Swap window
+-- /sk doors      Liminal Passage doors: who you can teleport to
 -- /sk mail       who could use your spare scrolls
 -- /sk demo       fill Fellow Mages, the map and tooltips with made-up players
 -- /sk export     copy your scroll data to share (GitHub issue "Share your data")
@@ -88,6 +89,8 @@ commands.mail = function()
     end
 end
 commands.swap = function() SK.ToggleSwap() end
+commands.doors = function() SK.ToggleDoors() end
+commands.door = commands.doors
 commands.setup = function() SK.ShowSetup() end
 commands.scan = function() SK.ScanAuctionScrolls() end
 commands.plan = function() SK.TogglePlan() end
@@ -104,7 +107,7 @@ commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk mail, /sk export, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk export, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 ------------------------------------------------------------------------

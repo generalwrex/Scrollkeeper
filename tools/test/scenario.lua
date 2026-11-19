@@ -121,8 +121,21 @@ SlashCmdList.SCROLLKEEPER("demo")
 print("peers with demo", #SK.PeerList())
 local odds1, t1, p1 = SK.CommunityOdds(1); print("demo odds tier1", t1, p1, odds1[1].name)
 SlashCmdList.SCROLLKEEPER("net")
+-- Liminal Passage doors
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "D|Ironforge|2", "GUILD", "Kaelith-Realm")
+print("open doors (demo on)", #SK.OpenDoors())
+SlashCmdList.SCROLLKEEPER("doors")
+SK.RefreshDoors()
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "DA", "WHISPER", "Kaelith-Realm")
+ScrollkeeperDB.liminalDoor = true
+SK.SendDoor(true)
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "DA", "WHISPER", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "DY", "WHISPER", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "DN", "WHISPER", "Kaelith-Realm")
+SlashCmdList.SCROLLKEEPER("doors")
 SlashCmdList.SCROLLKEEPER("demo")
 print("peers after demo off", #SK.PeerList())
+print("open doors (demo off)", #SK.OpenDoors())
 if SK.isMage then print("study button", ScrollkeeperStudyButton._attrs.spell, "bundle", ScrollkeeperBundleButton._attrs.item) end
 print("errors:", #ScrollkeeperDB.errors); for _, e in ipairs(ScrollkeeperDB.errors) do print("  ERR", e.where, e.error) end
 
@@ -381,8 +394,11 @@ end
 if SK.isMage then
   SK.db.scrollIcon = true; SK.RefreshIcon()
   print("ICON", ScrollkeeperIcon and ScrollkeeperIcon:IsShown(), ScrollkeeperIcon and ScrollkeeperIcon.count:GetText())
-  ScrollkeeperIcon:GetScript("OnClick")(ScrollkeeperIcon)
-  ScrollkeeperIcon:GetScript("OnEnter")(ScrollkeeperIcon)
+  -- A secure button since 1.1.5: its clicks may be hooks, not a script.
+  local onClick = ScrollkeeperIcon:GetScript("OnClick")
+  if type(onClick) == "function" then onClick(ScrollkeeperIcon, "LeftButton", false) end
+  local onEnter = ScrollkeeperIcon:GetScript("OnEnter")
+  if type(onEnter) == "function" then onEnter(ScrollkeeperIcon) end
   SK.db.scrollIcon = false; SK.RefreshIcon()
   print("ICON off", ScrollkeeperIcon:IsShown())
 end

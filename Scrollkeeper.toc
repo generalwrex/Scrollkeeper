@@ -64,6 +64,7 @@ UI\Backup.lua
 UI\Mail.lua
 UI\Swap.lua
 UI\Log.lua
+UI\Doors.lua
 UI\Plan.lua
 UI\Icon.lua
 UI\Minimap.lua

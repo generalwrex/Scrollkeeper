@@ -2,6 +2,7 @@
 
 ## 1.1.7
 
+- **Liminal Passage doors (/sk doors, or the new button on the panel).** Scroll of Liminal Passage takes you to a group member who's resting in an inn or a city. Tick "Be a door" and other mages on your server see you while you rest; they click your name, you get a pop-up to invite them, and their Go button uses the scroll on you. Off unless you turn it on.
 - The scroll icon's frame shows the skill-up color of the scroll a click would read (orange, yellow, green, or gray when it won't give a point), and its tooltip says it too.
 
 ## 1.1.6
