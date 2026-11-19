@@ -1,5 +1,7 @@
 # Scrollkeeper
 
+**Latest (1.1.5):** a Luck Log window, Fellow Mages, one-click imbues, click the scroll icon to decipher, backups, and Chinese!
+
 ### Thank you to all who downloaded, your data is invaluable! <3
 
 Fellow Scroll addon makers, lets share our data with eachother! Make all the addons great! PM me!

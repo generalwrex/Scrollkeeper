@@ -1,5 +1,7 @@
 # Scrollkeeper
 
+**Latest (1.1.5):** a Luck Log window, Fellow Mages, one-click imbues, click the scroll icon to decipher, backups, and Chinese!
+
 Mage scroll helper for WoW Forever.
 
 ## Features
