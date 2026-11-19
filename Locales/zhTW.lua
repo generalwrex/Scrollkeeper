@@ -510,3 +510,7 @@ L["Click: print it in chat. Right-click: hide it until there's new news."] = "�
 L["Study ready"] = "研讀就緒"
 L["%d tier %d"] = "%d 個 %d 檔"
 L["Buy me a coffee"] = "請我喝杯咖啡"
+L["Seems to be offline: whispers won't reach them, but mail will be waiting for them."] = "好像不在線：密語到不了，但郵件會等著他們。"
+L["Keep offline mages for"] = "離線法師保留"
+L["%d min"] = "%d 分鐘"
+L["When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long."] = "在同道法師裡把滑鼠放在名字上發現對方離線時，名字會變灰，並在列表裡保留這麼久。"

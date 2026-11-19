@@ -190,6 +190,20 @@ local function AddAboutPage()
     Settings.RegisterCanvasLayoutSubcategory(category, page, L["About"])
 end
 
+local function AddOfflineSlider()
+    local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_offlineMinutes", "offlineMinutes", SK.db,
+        "number", L["Keep offline mages for"], 5)
+    setting:SetValueChangedCallback(function() if SK.RefreshNetwork then SK.RefreshNetwork() end end)
+    local options = Settings.CreateSliderOptions(1, 15, 1)
+    if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
+        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+            return L["%d min"]:format(value)
+        end)
+    end
+    Settings.CreateSlider(category, setting, options,
+        L["When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long."])
+end
+
 local function AddScaleSlider()
     local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_scale", "scale", SK.db,
         "number", L["Panel size"], 1)
@@ -281,6 +295,8 @@ SK.Listen("READY", function()
 
         AddCheckbox("oddsStandard", L["Odds: list standard scrolls"],
             L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row."], false)
+
+        SK.Safely("settings offline slider", AddOfflineSlider)
 
         -- Helpers ------------------------------------------------------------
         AddHeader(L["Mailbox, guild bank and auction house"])

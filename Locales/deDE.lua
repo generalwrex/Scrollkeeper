@@ -512,3 +512,7 @@ L["Click: print it in chat. Right-click: hide it until there's new news."] = "Kl
 L["Study ready"] = "Studium bereit"
 L["%d tier %d"] = "%d Stufe %d"
 L["Buy me a coffee"] = "Spendier mir einen Kaffee"
+L["Seems to be offline: whispers won't reach them, but mail will be waiting for them."] = "Scheint offline zu sein: Flüstern kommt nicht an, aber Post wartet auf sie."
+L["Keep offline mages for"] = "Offline-Magier behalten für"
+L["%d min"] = "%d Min."
+L["When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long."] = "Wenn das Überfahren eines Namens bei den Mitmagiern zeigt, dass der Magier offline ist, wird sein Name grau und bleibt so lange in der Liste."

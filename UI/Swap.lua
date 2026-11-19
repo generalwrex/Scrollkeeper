@@ -139,7 +139,10 @@ local function OpenWhisper(person, asking)
         and L["Hey! Scrollkeeper says you have spare tier %s scrolls. Could I have one? Happy to pay or trade :)"]:format(table.concat(tiers, "/"))
         or L["Hey! I've got spare tier %s scrolls you'd get skill-ups from, want them?"]:format(table.concat(tiers, "/"))
     if ChatFrame_OpenChat then
-        ChatFrame_OpenChat(("/w %s %s"):format(person.name, text))
+        -- person.name is the sender name, which can include a title on
+        -- Forever; whisper their real name.
+        local target = SK.ContactName and SK.ContactName(person.name) or person.name
+        ChatFrame_OpenChat(("/w %s %s"):format(target, text))
     end
 end
 

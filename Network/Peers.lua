@@ -101,9 +101,65 @@ Net.Handle("Q", function(sender, _, source)
     C_Timer.After(1 + math.random() * 4, SK.SendHello)
 end)
 
+------------------------------------------------------------------------
+-- Are they still online? (hovering a name in Fellow Mages)
+-- We whisper them a hidden "Q". Online: they answer with a hello. Gone (or
+-- the other faction): the game says "No player named ... is currently
+-- playing", which we hide and mark them offline. Once per 30 seconds each.
+------------------------------------------------------------------------
+
+local pendingChecks = {}   -- short real name, lowercased -> the sender name we know them by
+local function CheckKey(name) return (Net.ShortName(name or "")):lower() end
+
+function SK.CheckOnline(sender)
+    local peer = SK.peers[sender]
+    if not peer or peer.demo or Net.IsMe(sender) then return end
+    if peer.checkedAt and time() - peer.checkedAt < 30 then return end
+    peer.checkedAt = time()
+    local target = SK.ContactName(sender)
+    local key = CheckKey(target)
+    pendingChecks[key] = sender
+    Net.Whisper(target, "Q")
+    C_Timer.After(6, function() if pendingChecks[key] == sender then pendingChecks[key] = nil end end)
+end
+
+-- "No player named '%s' is currently playing." as a pattern.
+local function NotFoundPattern()
+    local text = ERR_CHAT_PLAYER_NOT_FOUND_S
+    if type(text) ~= "string" then return nil end
+    text = text:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%%%s", "(.+)")
+    return "^" .. text .. "$"
+end
+
+if ChatFrame_AddMessageEventFilter then
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", function(_, _, message)
+        local pattern = type(message) == "string" and next(pendingChecks) and NotFoundPattern()
+        local name = pattern and message:match(pattern)
+        local sender = name and pendingChecks[CheckKey(name)]
+        if not sender then return false end
+        pendingChecks[CheckKey(name)] = nil
+        if SK.peers[sender] then SK.peers[sender].offline, SK.peers[sender].offlineAt = true, time() end
+        SK.Send("PEERS_CHANGED")
+        return true   -- our own check: don't show the error in chat
+    end)
+end
+
 Net.Handle("H", function(sender, f, source)
     local protocol = tonumber(f[1]) or 0
     if protocol ~= Net.PROTOCOL then return end
+    -- The answer to an online check comes from their real name, which can
+    -- differ from the (titled) name we list them by: update that one.
+    local checked = source == "WHISPER" and pendingChecks[CheckKey(sender)]
+    if checked and SK.peers[checked] and checked ~= sender then
+        pendingChecks[CheckKey(sender)] = nil
+        SK.peers[checked].seen, SK.peers[checked].offline, SK.peers[checked].offlineAt = time(), nil, nil
+        SK.Send("PEERS_CHANGED")
+        return
+    end
+    if checked then pendingChecks[CheckKey(sender)] = nil end
+    -- Keep where we first heard them (an online check answers by whisper).
+    local old = SK.peers[sender]
+    if source == "WHISPER" and old and old.source then source = old.source end
     local peer = {
         version = f[2], class = f[3], level = tonumber(f[4]) or 0,
         skill = math.min(tonumber(f[5]) or 0, 300), max = math.min(tonumber(f[6]) or 0, 300),
@@ -113,6 +169,8 @@ Net.Handle("H", function(sender, f, source)
     for upgrade in (f[8] or ""):gmatch("[^.]+") do peer.upgrades[#peer.upgrades + 1] = upgrade end
     local exportID = tostring(f[10] or ""):match("^%x%x%x%x%x%x%x%x$")
     peer.exportID = exportID
+    -- Their character's unique ID, for their real name (see SK.ContactName).
+    peer.guid = tostring(f[9] or ""):match("^Player%-[%x%-]+$")
     SK.peers[sender] = peer
     -- Anonymous players still count, but never show up by name.
     peer.anonymous = f[11] == "1"
@@ -131,9 +189,56 @@ end)
 -- Questions other files ask
 ------------------------------------------------------------------------
 
+-- The name to whisper or mail someone by. On Forever the sender name that
+-- comes with their messages can include their title ("Lofi Frostbeats"),
+-- which whispers and mail don't accept. Their hello carries their
+-- character's ID, and the game turns that into the real name.
+function SK.ContactName(sender)
+    local peer = SK.peers[sender]
+    if peer and peer.guid and GetPlayerInfoByGUID then
+        local ok, _, _, _, _, _, name, realm = pcall(GetPlayerInfoByGUID, peer.guid)
+        if ok and type(name) == "string" and name ~= "" then
+            if type(realm) == "string" and realm ~= "" then
+                return name .. "-" .. realm:gsub("[%s%-]", "")
+            end
+            return name
+        end
+    end
+    return Net.ShortName(sender)
+end
+
+-- Faction by race, for players the game only tells us the race of.
+local RACE_FACTION = {
+    Human = "Alliance", Dwarf = "Alliance", NightElf = "Alliance", Gnome = "Alliance",
+    Draenei = "Alliance", Worgen = "Alliance", VoidElf = "Alliance", LightforgedDraenei = "Alliance",
+    DarkIronDwarf = "Alliance", KulTiran = "Alliance", Mechagnome = "Alliance",
+    Orc = "Horde", Scourge = "Horde", Tauren = "Horde", Troll = "Horde", BloodElf = "Horde",
+    Goblin = "Horde", Nightborne = "Horde", HighmountainTauren = "Horde", MagharOrc = "Horde",
+    ZandalariTroll = "Horde", Vulpera = "Horde",
+    Pandaren = "either", Dracthyr = "either", EarthenDwarf = "either",
+}
+
+function SK.FactionOfRace(englishRace) return RACE_FACTION[englishRace or ""] end
+
+-- Is this player on the other faction? (Whispers, mail and trades can't
+-- reach them, so the lists leave them out.) Unknown race: no.
+local function OtherFaction(peer)
+    if not (peer.guid and GetPlayerInfoByGUID and UnitFactionGroup) then return false end
+    local ok, _, _, _, englishRace = pcall(GetPlayerInfoByGUID, peer.guid)
+    local faction = ok and RACE_FACTION[englishRace or ""]
+    local mine = UnitFactionGroup("player")
+    return faction ~= nil and faction ~= "either" and mine ~= nil and faction ~= mine
+end
+SK.IsOtherFaction = function(sender) return SK.peers[sender] and OtherFaction(SK.peers[sender]) or false end
+
 -- Is this peer someone we can still see? (heard from recently)
+-- Found offline by a hover check: gone from the lists after this many
+-- minutes (the "Keep offline mages for" setting, 5 by default).
 local function Fresh(peer)
-    return peer.demo or (time() - peer.seen) < STALE_SECONDS
+    if peer.demo then return true end
+    local keep = (tonumber(SK.db and SK.db.offlineMinutes) or 5) * 60
+    if peer.offline and peer.offlineAt and time() - peer.offlineAt >= keep then return false end
+    return (time() - peer.seen) < STALE_SECONDS
 end
 
 -- Where we know a peer from, in words: "guild", "group", "friend" or "public".
@@ -153,9 +258,9 @@ end
 function SK.FreshMages(includeAnonymous)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name)
+        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name) and not OtherFaction(peer)
             and (includeAnonymous or not peer.anonymous) then
-            list[#list + 1] = { name = name, short = Net.ShortName(name), skill = peer.skill or 0,
+            list[#list + 1] = { name = SK.ContactName(name), short = Net.ShortName(name), skill = peer.skill or 0,
                 tiers = peer.tiers or {}, kind = KindOf(name, peer) }
         end
     end
@@ -167,7 +272,7 @@ end
 function SK.MagesWhoNeed(tier)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous then
+        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous and not OtherFaction(peer) then
             local inGroup = peer.source == "PARTY" or peer.source == "RAID" or peer.source == "INSTANCE_CHAT"
                 or (UnitInParty and UnitInParty(Net.ShortName(name)))
             list[#list + 1] = { name = Net.ShortName(name), skill = peer.skill, group = inGroup and true or false }
@@ -193,8 +298,8 @@ end
 function SK.PeerList()
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and not peer.anonymous then
-            list[#list + 1] = { name = Net.ShortName(name), peer = peer }
+        if Fresh(peer) and not peer.anonymous and not OtherFaction(peer) then
+            list[#list + 1] = { name = Net.ShortName(name), sender = name, peer = peer }
         end
     end
     table.sort(list, function(a, b)

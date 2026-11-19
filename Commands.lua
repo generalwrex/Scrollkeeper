@@ -107,7 +107,74 @@ commands.help = function()
     SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk mail, /sk export, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
--- Dev/Scan.lua adds commands.scan, commands.show and commands.clear.
+------------------------------------------------------------------------
+-- Dev commands: for whoever works on Scrollkeeper from a git clone. They
+-- only run in a dev copy (SK.devCopy: the packager never filled in the TOC
+-- version); in a CurseForge copy they just say so.
+--
+--   /sk dev    list the dev commands
+--   /sk who    everyone heard: real name, race, faction, how and when
+--              (to see why a whisper doesn't reach someone)
+------------------------------------------------------------------------
+
+local DEV_COMMANDS = {
+    { "dev", "this list" },
+    { "who", "everyone heard: real name, race, faction, source, last heard" },
+    { "scan", "dump game data to the saved file (Dev/Scan.lua)" },
+    { "show", "show the latest scan to copy" },
+    { "eventlog", "start or stop recording game events" },
+    { "clear", "wipe the recorded scan data" },
+}
+
+local function DevOnly(run)
+    return function(...)
+        if not SK.devCopy then
+            SK.Print("that's a dev command (only in a copy run from the git repo).")
+            return
+        end
+        return run(...)
+    end
+end
+
+commands.dev = DevOnly(function()
+    SK.Print("dev commands (this copy runs from git):")
+    for _, entry in ipairs(DEV_COMMANDS) do
+        print(("  |cffffd100/sk %s|r  %s"):format(entry[1], entry[2]))
+    end
+end)
+
+commands.who = DevOnly(function()
+    local myFaction = UnitFactionGroup and UnitFactionGroup("player") or "?"
+    local names = {}
+    for sender in pairs(SK.peers or {}) do names[#names + 1] = sender end
+    table.sort(names)
+    if #names == 0 then SK.Print("nobody heard yet.") return end
+    SK.Print(("%d heard (you're %s). Red = other faction: no whispers or mail."):format(#names, myFaction))
+    for _, sender in ipairs(names) do
+        local peer = SK.peers[sender]
+        local real, race, faction = "?", "?", "?"
+        if peer.guid and GetPlayerInfoByGUID then
+            local ok, _, _, localRace, englishRace, _, name, realm = pcall(GetPlayerInfoByGUID, peer.guid)
+            if ok and name then
+                real = (realm and realm ~= "") and (name .. "-" .. realm) or name
+                race = localRace or englishRace or "?"
+                faction = SK.FactionOfRace(englishRace) or "?"
+            else
+                real = "not cached yet"
+            end
+        elseif not peer.guid then
+            real = "no ID yet (heard before this /reload?)"
+        end
+        local color = (faction == myFaction or faction == "either" or faction == "?") and "ffffff" or "ff5555"
+        local ago = peer.seen and (time() - peer.seen) or -1
+        print(("  |cff%s%s|r  real: %s  ·  %s %s  ·  %s %s, %ds ago  ·  v%s%s"):format(color, sender, real,
+            race, faction, peer.class or "?", peer.source or "?", ago, peer.version or "?",
+            (peer.anonymous and "  (anonymous)" or "") .. (peer.offline and "  |cff808080(offline)|r" or "")))
+    end
+end)
+
+-- Dev/Scan.lua adds commands.scan, show, eventlog and clear (dev copies only:
+-- that file isn't in the CurseForge package).
 SK.commands = commands
 
 SLASH_SCROLLKEEPER1 = "/sk"

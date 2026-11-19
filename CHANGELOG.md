@@ -1,5 +1,11 @@
 # Scrollkeeper
 
+## 1.1.6
+
+- **Fellow Mages knows who's really online.** Hover a name and Scrollkeeper quietly checks: if they've logged off, the name turns gray and drops off the list after a few minutes (Options > Sharing > "Keep offline mages for", 5 by default). Mail still reaches them, whispers won't.
+- Players from the other faction don't show up in Fellow Mages, the swap board or the mailbox list any more, since you can't whisper, mail or trade with them. Their shared odds and drop spots still count.
+- Whispers and mail go to people's real character names now. On Forever the name you see can include a title, and whispers to that never arrived.
+
 ## 1.1.5
 
 - **Thank you!** Seriously, everyone downloading this and sharing your scroll data is what makes the odds and drop spots actually useful. There's a little thank-you in chat the first time you open the panel.

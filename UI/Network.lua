@@ -255,7 +255,11 @@ local ARROW_DOWN = "Interface\\Buttons\\Arrow-Down-Up"
 
 -- Hovering a Fellow Mages name: everything we know about them.
 local function MageTooltip(tooltip, name, peer)
-    tooltip:AddLine(CLASS_COLOR .. name .. "|r")
+    tooltip:AddLine((peer.offline and "|cff808080" or CLASS_COLOR) .. name .. "|r")
+    if peer.offline then
+        tooltip:AddLine(L["Seems to be offline: whispers won't reach them, but mail will be waiting for them."],
+            0.6, 0.6, 0.6, true)
+    end
     if IsAuthor(name) then
         tooltip:AddLine("|TInterface\\Icons\\INV_Scroll_03:14:14:0:0|t " .. L["Made Scrollkeeper!"], 1, 0.82, 0)
     end
@@ -456,9 +460,14 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             row.tipFunc, row.onClick = nil, nil
             local peer = entry.peer
             if not entry.anonymous then
-                row.tipFunc = function(tooltip) MageTooltip(tooltip, entry.name, peer) end
+                row.tipFunc = function(tooltip)
+                    -- Hovering checks they're still online (grays them out if not).
+                    if SK.CheckOnline then SK.CheckOnline(entry.sender) end
+                    MageTooltip(tooltip, entry.name, peer)
+                end
                 row.onClick = function()
-                    local name = SK.Net and SK.Net.ShortName and SK.Net.ShortName(entry.name) or entry.name
+                    -- Their real name (the list shows what they're called with titles).
+                    local name = SK.ContactName and SK.ContactName(entry.sender or entry.name) or entry.name
                     -- Shift-click: the name goes into whatever box you're
                     -- typing in (chat, mail To:...). Click: a whisper.
                     if IsShiftKeyDown and IsShiftKeyDown() then
@@ -480,7 +489,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 end
                 local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or ("|cff808080" .. L["needs none"] .. "|r")
                 local upgrade = #peer.upgrades > 0 and ("  ·  |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
-                row.label:SetText(CLASS_COLOR .. entry.name .. "|r")
+                row.label:SetText((peer.offline and "|cff808080" or CLASS_COLOR) .. entry.name .. "|r")
                 row.sub:SetText(L["|cffffd100%d|r skill"]:format(peer.skill or 0) .. "  ·  " .. needs .. upgrade)
             end
         end, onlyMine and L["Nobody here could use the scrolls in your bags. Right-click the scroll icon to show everyone."]

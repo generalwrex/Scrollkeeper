@@ -162,6 +162,7 @@ local DEFAULTS = {
     mailHelper = true,       -- at the mailbox: who could use your scrolls
     mailIncludeMine = false, -- ...also offer the scrolls you'd still level from yourself
     updateNotice = true,     -- say in chat when someone has a newer Scrollkeeper
+    offlineMinutes = 5,      -- Fellow Mages: how long someone found offline stays listed
     oddsStandard = false,    -- community odds: list standard scrolls one by one (off: one merged row)    guildBankMarks = true,   -- dots on guild bank scrolls someone levels from
     ahScanButton = true,     -- "Scan scrolls" button on the auction house
     chatHelper = true,       -- "who needs this? [scroll]" notes in chat

@@ -74,7 +74,7 @@ UI\Options.lua
 # Slash commands.
 Commands.lua
 
-# Dev: data collection tool used while building the addon (/sk scan).
+# Dev: tools for working on the addon (/sk dev lists them). Not packaged.
 #@do-not-package@
 Dev\Scan.lua
 #@end-do-not-package@
