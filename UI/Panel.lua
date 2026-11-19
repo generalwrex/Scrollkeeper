@@ -21,6 +21,7 @@ local WIDTH = 250
 local LEFT, RIGHT = 16, 18             -- inner padding, clear of the gold border
 local INNER = WIDTH - LEFT - RIGHT
 local TOP = 62                          -- where the content starts, below the portrait
+local NEWS_HEIGHT = 12                  -- the news line (SK.NEWS), when there is one
 local ROW_HEIGHT = 16
 local ICON_SIZE, ICON_GAP, ICONS_PER_ROW = 26, 4, 5
 local CATEGORY_LABEL_WIDTH = 64   -- "Familiars" etc. to the left of each icon row
@@ -460,6 +461,32 @@ local function Build()
         previous = button
     end
 
+    -- News: one short line under the buttons (SK.NEWS in Data/Messages.lua).
+    -- Hover for the whole thing; click to hide it until there's new news.
+    parts.news = CreateFrame("Button", nil, panel)
+    parts.news:SetPoint("TOPLEFT", panel, "TOPLEFT", LEFT + 2, -TOP + 2)
+    parts.news:SetSize(INNER - 4, NEWS_HEIGHT)
+    parts.news.text = parts.news:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    parts.news.text:SetAllPoints()
+    parts.news.text:SetJustifyH("LEFT")
+    parts.news.text:SetWordWrap(false)
+    parts.news:SetScript("OnEnter", function(self)
+        local news = SK.NEWS
+        if not news then return end
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine(L["News"])
+        GameTooltip:AddLine(L[news.text], 1, 1, 1, true)
+        for _, line in ipairs(news.more or {}) do GameTooltip:AddLine(L[line], 1, 1, 1, true) end
+        GameTooltip:AddLine(L["Click to hide this until there's new news."], 0.6, 0.6, 0.6, true)
+        GameTooltip:Show()
+    end)
+    parts.news:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    parts.news:SetScript("OnClick", function()
+        if SK.NEWS then SK.db.newsSeen = SK.NEWS.id end
+        GameTooltip:Hide()
+        SK.RefreshPanel()
+    end)
+
     -- Comprehension bar
     parts.skillBar = SK.UI.CreateBar(panel, INNER, 16)
     parts.skillBar:SetBarColor(SK.UI.COLORS.accent)
@@ -821,15 +848,23 @@ local function Layout()
         button:SetShown(not (advanced and button.inAdvanced))
     end
 
+    -- The news line, until you click it away. It pushes everything below
+    -- down a little (the right-hand column stays where it is).
+    local news = SK.NEWS
+    local showNews = news and news.text and SK.db.newsSeen ~= news.id
+    parts.news:SetShown(showNews and true or false)
+    if showNews then parts.news.text:SetText("|cffffd100" .. L["News:"] .. "|r |cffffffff" .. L[news.text] .. "|r") end
+    local top = TOP + (showNews and NEWS_HEIGHT + 4 or 0)
+
     FitBorder(collapsed)
     if collapsed then
         for _, button in ipairs(scrollButtons) do button:Hide() end
-        Place(parts.skillBar, -TOP, 16)
-        panel:SetHeight(COLLAPSED_HEIGHT)
+        Place(parts.skillBar, -top, 16)
+        panel:SetHeight(COLLAPSED_HEIGHT + (top - TOP))
         return
     end
 
-    local y = -TOP
+    local y = -top
     y = Place(parts.skillBar, y, 16) - 10
 
     -- Decipher

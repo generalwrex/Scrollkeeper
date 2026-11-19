@@ -9,6 +9,20 @@
 
 local _, SK = ...
 
+-- The news line on the panel, under the buttons at the top. One short line
+-- (hover shows `more` too). Change the id for new news: everyone who
+-- clicked the old one away sees the new one. SK.NEWS = nil: no line at all.
+SK.NEWS = {
+    id = "1.1.5",
+    text = "Heads up: some clicks changed! Hover here to see what.",
+    more = {
+        "Scroll icon: click now deciphers your best scroll. Right-click opens the panel, Shift-drag moves it.",
+        "Clicking an imbue now puts it straight on your main-hand weapon.",
+        "/sk log opens a window now (/sk logchat for the old chat version).",
+        "The Farming Plan button moved: it's with the other window buttons up top.",
+    },
+}
+
 SK.MESSAGES = {
     {
         id = "thanks-1.1.5",
