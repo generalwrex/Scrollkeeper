@@ -509,3 +509,5 @@ L["Clicking an imbue now puts it straight on your main-hand weapon."] = "Ein Kli
 L["/sk log opens a window now (/sk logchat for the old chat version)."] = "/sk log öffnet jetzt ein Fenster (/sk logchat für die alte Chat-Version)."
 L["The Farming Plan button moved: it's with the other window buttons up top."] = "Der Farmplan-Knopf ist umgezogen: er ist oben bei den anderen Fensterknöpfen."
 L["Click: print it in chat. Right-click: hide it until there's new news."] = "Klick: im Chat anzeigen. Rechtsklick: ausblenden, bis es Neues gibt."
+L["Study ready"] = "Studium bereit"
+L["%d tier %d"] = "%d Stufe %d"

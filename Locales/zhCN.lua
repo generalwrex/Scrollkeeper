@@ -507,3 +507,5 @@ L["Clicking an imbue now puts it straight on your main-hand weapon."] = "现在�
 L["/sk log opens a window now (/sk logchat for the old chat version)."] = "/sk log 现在打开一个窗口（/sk logchat 是以前的聊天版）。"
 L["The Farming Plan button moved: it's with the other window buttons up top."] = "刷卷计划按钮挪了位置：在上面和其他窗口按钮在一起。"
 L["Click: print it in chat. Right-click: hide it until there's new news."] = "点击：在聊天里显示。右键：隐藏，直到有新消息。"
+L["Study ready"] = "研读就绪"
+L["%d tier %d"] = "%d 个 %d 档"
