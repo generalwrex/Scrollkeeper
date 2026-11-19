@@ -220,16 +220,26 @@ local RACE_FACTION = {
 
 function SK.FactionOfRace(englishRace) return RACE_FACTION[englishRace or ""] end
 
--- Is this player on the other faction? (Whispers, mail and trades can't
--- reach them, so the lists leave them out.) Unknown race: no.
-local function OtherFaction(peer)
-    if not (peer.guid and GetPlayerInfoByGUID and UnitFactionGroup) then return false end
-    local ok, _, _, _, englishRace = pcall(GetPlayerInfoByGUID, peer.guid)
-    local faction = ok and RACE_FACTION[englishRace or ""]
-    local mine = UnitFactionGroup("player")
+-- Can we actually reach this player? The shared channel reaches every
+-- Forever server (PvE, PvP, RP, RP-PvP) and maybe the other faction, but
+-- whispers, mail and trades only work on your own server and faction, so
+-- the lists leave everyone else out. (Their shared data still counts.)
+local function Plain(text) return ((text or ""):gsub("[%s%-]", "")):lower() end
+local function Unreachable(sender, peer)
+    local myRealm = GetRealmName and Plain(GetRealmName()) or ""
+    -- Another server: the sender name says so ("Name-Server"), or their ID does.
+    local senderRealm = sender:match("%-([^%-]+)$")
+    if senderRealm and myRealm ~= "" and Plain(senderRealm) ~= myRealm then return true end
+    if not (peer.guid and GetPlayerInfoByGUID) then return false end
+    local ok, _, _, _, englishRace, _, _, realm = pcall(GetPlayerInfoByGUID, peer.guid)
+    if not ok then return false end
+    if type(realm) == "string" and realm ~= "" and myRealm ~= "" and Plain(realm) ~= myRealm then return true end
+    -- The other faction (Pandaren and unknown races could be either: keep them).
+    local faction = RACE_FACTION[englishRace or ""]
+    local mine = UnitFactionGroup and UnitFactionGroup("player")
     return faction ~= nil and faction ~= "either" and mine ~= nil and faction ~= mine
 end
-SK.IsOtherFaction = function(sender) return SK.peers[sender] and OtherFaction(SK.peers[sender]) or false end
+SK.IsUnreachable = function(sender) return SK.peers[sender] and Unreachable(sender, SK.peers[sender]) or false end
 
 -- Is this peer someone we can still see? (heard from recently)
 -- Found offline by a hover check: gone from the lists after this many
@@ -258,7 +268,7 @@ end
 function SK.FreshMages(includeAnonymous)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name) and not OtherFaction(peer)
+        if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name) and not Unreachable(name, peer)
             and (includeAnonymous or not peer.anonymous) then
             list[#list + 1] = { name = SK.ContactName(name), short = Net.ShortName(name), skill = peer.skill or 0,
                 tiers = peer.tiers or {}, kind = KindOf(name, peer) }
@@ -272,7 +282,7 @@ end
 function SK.MagesWhoNeed(tier)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous and not OtherFaction(peer) then
+        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous and not Unreachable(name, peer) then
             local inGroup = peer.source == "PARTY" or peer.source == "RAID" or peer.source == "INSTANCE_CHAT"
                 or (UnitInParty and UnitInParty(Net.ShortName(name)))
             list[#list + 1] = { name = Net.ShortName(name), skill = peer.skill, group = inGroup and true or false }
@@ -298,7 +308,7 @@ end
 function SK.PeerList()
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and not peer.anonymous and not OtherFaction(peer) then
+        if Fresh(peer) and not peer.anonymous and not Unreachable(name, peer) then
             list[#list + 1] = { name = Net.ShortName(name), sender = name, peer = peer }
         end
     end

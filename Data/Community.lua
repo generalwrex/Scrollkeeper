@@ -32,11 +32,11 @@ SK.COMMUNITY_DATA = {
     ["1f6a135a"] = {
         results = {
             [50] = { [277491] = 1, [277493] = 1, [277497] = 1 },
-            [175] = { [213548] = 3, [277491] = 2, [277492] = 2, [277493] = 1, [277494] = 2, [277495] = 1, [277497] = 1, [277498] = 1, [277499] = 9, [277500] = 15, [277501] = 14, [277502] = 11 },
+            [175] = { [213548] = 3, [277491] = 3, [277492] = 2, [277493] = 1, [277494] = 2, [277495] = 1, [277497] = 1, [277498] = 1, [277499] = 9, [277500] = 15, [277501] = 14, [277502] = 11 },
         },
         skillups = {
             ["50 gray"] = { ups = 0, tries = 3 },
-            ["175 green"] = { ups = 10, tries = 32 },
+            ["175 green"] = { ups = 10, tries = 33 },
             ["175 orange"] = { ups = 1, tries = 1 },
             ["175 yellow"] = { ups = 25, tries = 29 },
         },
@@ -73,22 +73,18 @@ SK.COMMUNITY_DATA = {
         },
         bookIDs = {  },
         names = {
-            [954] = "Scroll of Strength",
-            [213550] = "Scroll of Polymorph: Odd Melon",
-            [213564] = "Scroll of Minor Evocation",
-            [275067] = "Scroll of Imbue Chillknife",
-            [275069] = "Scroll of Rat Familiar",
-            [277483] = "Scroll of Frog Familiar",
-            [277484] = "Scroll of Confuse Beast",
-            [277491] = "Scroll of Rebuke Elemental",
         },
     },
     ["57b12ab9"] = {
         results = {
-            [1] = { [1180] = 2, [1181] = 2, [213564] = 5, [274947] = 5, [275067] = 2, [275069] = 2 },
+            [1] = { [1180] = 2, [1181] = 2, [213564] = 6, [274947] = 7, [275067] = 2, [275069] = 2 },
+            [15] = { [217495] = 1, [277484] = 2, [277487] = 1 },
+            [50] = { [10592] = 1 },
         },
         skillups = {
-            ["1 gray"] = { ups = 0, tries = 18 },
+            ["1 gray"] = { ups = 0, tries = 21 },
+            ["15 orange"] = { ups = 4, tries = 4 },
+            ["50 orange"] = { ups = 0, tries = 1 },
         },
         drops = {
             [1413] = { ["26.11"] = 1 },
@@ -132,25 +128,25 @@ SK.COMMUNITY_DATA = {
     ["862ee863"] = {
         results = {
             [1] = { [213564] = 1, [275067] = 1, [275069] = 1, [954] = 1 },
-            [15] = { [213550] = 1, [277483] = 1, [277484] = 1 },
+            [15] = { [213550] = 2, [277483] = 2, [277484] = 1 },
             [50] = { [277491] = 1 },
         },
         skillups = {
             ["1 gray"] = { ups = 0, tries = 4 },
-            ["15 green"] = { ups = 1, tries = 3 },
+            ["15 green"] = { ups = 1, tries = 5 },
             ["50 orange"] = { ups = 1, tries = 1 },
         },
         drops = {
             [1421] = { ["28.35"] = 1, ["29.35"] = 2 },
-            [1424] = { ["16.22"] = 1, ["37.20"] = 1 },
+            [1424] = { ["16.22"] = 1, ["17.20"] = 1, ["17.23"] = 1, ["37.20"] = 1 },
         },
         books = {
         },
         dropTiers = {
-            [1424] = { [15] = 2 },
+            [1424] = { [15] = 4 },
         },
         backfires = {
-            [15] = { b = 0, t = 1 },
+            [15] = { b = 0, t = 2 },
             [50] = { b = 0, t = 1 },
         },
         bookIDs = { 207972, 208185, 208800, 210177 },
@@ -212,6 +208,14 @@ SK.COMMUNITY_DATA = {
         },
         bookIDs = {  },
         names = {
+            [954] = "Scroll of Strength",
+            [213550] = "Scroll of Polymorph: Odd Melon",
+            [213564] = "Scroll of Minor Evocation",
+            [275067] = "Scroll of Imbue Chillknife",
+            [275069] = "Scroll of Rat Familiar",
+            [277483] = "Scroll of Frog Familiar",
+            [277484] = "Scroll of Confuse Beast",
+            [277491] = "Scroll of Rebuke Elemental",
         },
     },
 }

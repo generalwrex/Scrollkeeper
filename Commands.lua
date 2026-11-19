@@ -149,7 +149,7 @@ commands.who = DevOnly(function()
     for sender in pairs(SK.peers or {}) do names[#names + 1] = sender end
     table.sort(names)
     if #names == 0 then SK.Print("nobody heard yet.") return end
-    SK.Print(("%d heard (you're %s). Red = other faction: no whispers or mail."):format(#names, myFaction))
+    SK.Print(("%d heard (you're %s). Red = other server or faction: hidden from the lists."):format(#names, myFaction))
     for _, sender in ipairs(names) do
         local peer = SK.peers[sender]
         local real, race, faction = "?", "?", "?"
@@ -165,7 +165,7 @@ commands.who = DevOnly(function()
         elseif not peer.guid then
             real = "no ID yet (heard before this /reload?)"
         end
-        local color = (faction == myFaction or faction == "either" or faction == "?") and "ffffff" or "ff5555"
+        local color = (SK.IsUnreachable and SK.IsUnreachable(sender)) and "ff5555" or "ffffff"
         local ago = peer.seen and (time() - peer.seen) or -1
         print(("  |cff%s%s|r  real: %s  ·  %s %s  ·  %s %s, %ds ago  ·  v%s%s"):format(color, sender, real,
             race, faction, peer.class or "?", peer.source or "?", ago, peer.version or "?",
