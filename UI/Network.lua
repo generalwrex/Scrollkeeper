@@ -187,6 +187,32 @@ end)
 local SOURCES = { GUILD = "Guild", PARTY = "Group", RAID = "Group", INSTANCE_CHAT = "Group",
                   CHANNEL = "Everyone online", WHISPER = "Whisper" }
 
+-- How many untranslated scrolls in your bags a mage would level from.
+local function YourScrollsFor(peer)
+    local count = 0
+    for _, scroll in ipairs(SK.bags and SK.bags.untranslated or {}) do
+        if peer.tiers and peer.tiers[scroll.needs] then count = count + 1 end
+    end
+    return count
+end
+
+-- Sorting Fellow Mages. Each sort's normal order is the useful one
+-- (highest skill first, A to Z, most of your scrolls first).
+local MAGE_SORT_ORDER = { "skill", "name", "mine" }
+local MAGE_SORTS = {
+    skill = { label = "Skill", tip = "Highest Comprehension first.",
+              less = function(a, b) return (a.peer.skill or 0) > (b.peer.skill or 0) end },
+    name  = { label = "Name", tip = "A to Z.",
+              less = function(a, b) return a.name:lower() < b.name:lower() end },
+    mine  = { label = "My scrolls", tip = "Who could use the most untranslated scrolls in your bags.",
+              less = function(a, b)
+                  if a.yours ~= b.yours then return a.yours > b.yours end
+                  return (a.peer.skill or 0) > (b.peer.skill or 0)
+              end },
+}
+local ARROW_UP = " |TInterface\\Buttons\\Arrow-Up-Up:10:10|t"
+local ARROW_DOWN = " |TInterface\\Buttons\\Arrow-Down-Up:10:10|t"
+
 -- Hovering a Fellow Mages name: everything we know about them.
 local function MageTooltip(tooltip, name, peer)
     tooltip:AddLine(CLASS_COLOR .. name .. "|r")
@@ -217,10 +243,7 @@ local function MageTooltip(tooltip, name, peer)
     end
 
     -- Untranslated scrolls in your bags they'd get a skill-up from.
-    local yours = 0
-    for _, scroll in ipairs(SK.bags and SK.bags.untranslated or {}) do
-        if wanted[scroll.needs] then yours = yours + 1 end
-    end
+    local yours = YourScrollsFor(peer)
     if yours > 0 then
         tooltip:AddLine(L["You have %d |4scroll:scrolls; they could use."]:format(yours), 0.25, 0.75, 0.25)
     end
@@ -241,13 +264,42 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     local users = Keep(SK.UI.CreateHeader(host, L["Fellow Mages"], width))
     users:SetPoint("TOPLEFT", left, y)
     y = y - 26
-    -- Two-line rows (name, then skill and needs) in the same space.
-    pane.users = SK.UI.CreateScrollList(host, width, math.max(1, math.floor(userRows * ROW_HEIGHT / 30)), true)
+
+    -- Small sort buttons: click one to sort by it, again to flip it.
+    pane.sortButtons = {}
+    local sortWidth = (width - 22 - 4 * (#MAGE_SORT_ORDER - 1)) / #MAGE_SORT_ORDER
+    for i, mode in ipairs(MAGE_SORT_ORDER) do
+        local button = Keep(CreateFrame("Button", nil, host, "UIPanelButtonTemplate"))
+        button:SetSize(sortWidth, 16)
+        button:SetPoint("TOPLEFT", left + (i - 1) * (sortWidth + 4), y)
+        button:SetText(L[MAGE_SORTS[mode].label])
+        if button.GetFontString and button:GetFontString() then button:GetFontString():SetFontObject("GameFontNormalSmall") end
+        button:SetScript("OnClick", function()
+            if (SK.db.mageSort or "skill") == mode then
+                SK.db.mageSortReversed = not SK.db.mageSortReversed
+            else
+                SK.db.mageSort, SK.db.mageSortReversed = mode, false
+            end
+            SK.RefreshNetwork()
+        end)
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L[MAGE_SORTS[mode].tip], 1, 1, 1, true)
+            GameTooltip:AddLine(L["Click again to flip the order."], 0.6, 0.6, 0.6)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        pane.sortButtons[mode] = button
+    end
+    y = y - 20
+
+    -- Two-line rows (name, then skill and needs) in the space that's left.
+    pane.users = SK.UI.CreateScrollList(host, width, math.max(1, math.floor((userRows * ROW_HEIGHT - 20) / 30)), true)
     pane.users:SetPoint("TOPLEFT", left, y)
     Keep(pane.users.scroll)
-    y = y - userRows * ROW_HEIGHT - 10
+    y = y - (userRows * ROW_HEIGHT - 20) - 10
 
-    local odds = Keep(SK.UI.CreateHeader(host, L["Community Odds"], width))
+    local odds =Keep(SK.UI.CreateHeader(host, L["Community Odds"], width))
     odds:SetPoint("TOPLEFT", left, y)
     y = y - 28
     local buttonWidth = (width - 6) / #SK.TIERS
@@ -284,7 +336,23 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         -- Only mages: the others have nothing to show here.
         local peers = {}
         for _, entry in ipairs(SK.PeerList()) do
-            if entry.peer and entry.peer.class == "MAGE" then peers[#peers + 1] = entry end
+            if entry.peer and entry.peer.class == "MAGE" then
+                entry.yours = YourScrollsFor(entry.peer)
+                peers[#peers + 1] = entry
+            end
+        end
+        local sortMode = MAGE_SORTS[SK.db.mageSort or ""] and SK.db.mageSort or "skill"
+        local reversed = SK.db.mageSortReversed and true or false
+        local less = MAGE_SORTS[sortMode].less
+        table.sort(peers, reversed and function(a, b) return less(b, a) end or less)
+        for mode, button in pairs(self.sortButtons) do
+            if mode == sortMode then
+                button:LockHighlight()
+                button:SetText(L[MAGE_SORTS[mode].label] .. (reversed and ARROW_DOWN or ARROW_UP))
+            else
+                button:UnlockHighlight()
+                button:SetText(L[MAGE_SORTS[mode].label])
+            end
         end
         -- Anonymous players aren't named, but show that they're there.
         local anonymous = SK.AnonymousCount and SK.AnonymousCount() or 0
@@ -463,6 +531,7 @@ end
 SK.Listen("PEERS_CHANGED", function() SK.RefreshNetwork() end)
 SK.Listen("COMMUNITY_CHANGED", function() SK.RefreshNetwork() end)
 SK.Listen("LOG_CHANGED", function() SK.RefreshNetwork() end)
+SK.Listen("BAGS_CHANGED", function() SK.RefreshNetwork() end)   -- "My scrolls" counts
 
 ------------------------------------------------------------------------
 -- Demo mode: made-up players, kept in memory only, never sent or saved
