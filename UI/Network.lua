@@ -200,18 +200,26 @@ end
 -- (highest skill first, A to Z, most of your scrolls first).
 local MAGE_SORT_ORDER = { "skill", "name", "mine" }
 local MAGE_SORTS = {
-    skill = { label = "Skill", tip = "Highest Comprehension first.",
+    skill = { label = "Skill", tip = "Highest Comprehension first.", icon = "Interface\\Icons\\INV_Misc_Book_11",
               less = function(a, b) return (a.peer.skill or 0) > (b.peer.skill or 0) end },
-    name  = { label = "Name", tip = "A to Z.",
+    name  = { label = "Name", tip = "A to Z.", icon = "Interface\\Icons\\INV_Misc_Note_01",
               less = function(a, b) return a.name:lower() < b.name:lower() end },
     mine  = { label = "My scrolls", tip = "Who could use the most untranslated scrolls in your bags.",
+              icon = "Interface\\Icons\\INV_Scroll_03",
               less = function(a, b)
                   if a.yours ~= b.yours then return a.yours > b.yours end
                   return (a.peer.skill or 0) > (b.peer.skill or 0)
               end },
 }
-local ARROW_UP = " |TInterface\\Buttons\\Arrow-Up-Up:10:10|t"
-local ARROW_DOWN = " |TInterface\\Buttons\\Arrow-Down-Up:10:10|t"
+-- Community Odds tier icons, lowest tier first (a fancier scroll each tier).
+local TIER_ICONS = {
+    "Interface\\Icons\\INV_Scroll_01",
+    "Interface\\Icons\\INV_Scroll_02",
+    "Interface\\Icons\\INV_Scroll_05",
+    "Interface\\Icons\\INV_Scroll_06",
+}
+local ARROW_UP = "Interface\\Buttons\\Arrow-Up-Up"
+local ARROW_DOWN = "Interface\\Buttons\\Arrow-Down-Up"
 
 -- Hovering a Fellow Mages name: everything we know about them.
 local function MageTooltip(tooltip, name, peer)
@@ -265,15 +273,23 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     users:SetPoint("TOPLEFT", left, y)
     y = y - 26
 
-    -- Small sort buttons: click one to sort by it, again to flip it.
+    -- Small sort icons on the right of the header: click one to sort by
+    -- it, again to flip it. The active one glows and shows an arrow.
     pane.sortButtons = {}
-    local sortWidth = (width - 22 - 4 * (#MAGE_SORT_ORDER - 1)) / #MAGE_SORT_ORDER
     for i, mode in ipairs(MAGE_SORT_ORDER) do
-        local button = Keep(CreateFrame("Button", nil, host, "UIPanelButtonTemplate"))
-        button:SetSize(sortWidth, 16)
-        button:SetPoint("TOPLEFT", left + (i - 1) * (sortWidth + 4), y)
-        button:SetText(L[MAGE_SORTS[mode].label])
-        if button.GetFontString and button:GetFontString() then button:GetFontString():SetFontObject("GameFontNormalSmall") end
+        local button = Keep(CreateFrame("Button", nil, host))
+        button:SetSize(16, 16)
+        button:SetFrameLevel(users:GetFrameLevel() + 2)
+        button:SetPoint("RIGHT", users, "RIGHT", -6 - (#MAGE_SORT_ORDER - i) * 19, 0)
+        button:SetNormalTexture(MAGE_SORTS[mode].icon)
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button.glow = button:CreateTexture(nil, "OVERLAY")
+        button.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight")
+        button.glow:SetBlendMode("ADD")
+        button.glow:SetAllPoints()
+        button.arrow = button:CreateTexture(nil, "OVERLAY", nil, 2)
+        button.arrow:SetSize(10, 10)
+        button.arrow:SetPoint("BOTTOMRIGHT", 4, -4)
         button:SetScript("OnClick", function()
             if (SK.db.mageSort or "skill") == mode then
                 SK.db.mageSortReversed = not SK.db.mageSortReversed
@@ -284,6 +300,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         end)
         button:SetScript("OnEnter", function(self)
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["Sort: "] .. L[MAGE_SORTS[mode].label])
             GameTooltip:AddLine(L[MAGE_SORTS[mode].tip], 1, 1, 1, true)
             GameTooltip:AddLine(L["Click again to flip the order."], 0.6, 0.6, 0.6)
             GameTooltip:Show()
@@ -291,30 +308,46 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         button:SetScript("OnLeave", function() GameTooltip:Hide() end)
         pane.sortButtons[mode] = button
     end
-    y = y - 20
 
-    -- Two-line rows (name, then skill and needs) in the space that's left.
-    pane.users = SK.UI.CreateScrollList(host, width, math.max(1, math.floor((userRows * ROW_HEIGHT - 20) / 30)), true)
+    -- Two-line rows (name, then skill and needs) in the same space.
+    pane.users = SK.UI.CreateScrollList(host, width, math.max(1, math.floor(userRows * ROW_HEIGHT / 30)), true)
     pane.users:SetPoint("TOPLEFT", left, y)
     Keep(pane.users.scroll)
-    y = y - (userRows * ROW_HEIGHT - 20) - 10
+    y = y - userRows * ROW_HEIGHT - 10
 
     local odds =Keep(SK.UI.CreateHeader(host, L["Community Odds"], width))
     odds:SetPoint("TOPLEFT", left, y)
     y = y - 28
-    local buttonWidth = (width - 6) / #SK.TIERS
+    -- One scroll icon per tier with its number on it, like a stack count.
+    -- The picked one glows; the others are grayed out.
+    local slot = width / #SK.TIERS
     for i, tier in ipairs(SK.TIERS) do
-        local button = Keep(CreateFrame("Button", nil, host, "UIPanelButtonTemplate"))
-        button:SetSize(buttonWidth, 20)
-        button:SetPoint("TOPLEFT", left + (i - 1) * (buttonWidth + 2), y)
-        button:SetText(L["Tier "] .. tier)
+        local button = Keep(CreateFrame("Button", nil, host))
+        button:SetSize(22, 22)
+        button:SetPoint("TOPLEFT", left + (i - 1) * slot + (slot - 22) / 2, y)
+        button:SetNormalTexture(TIER_ICONS[i] or TIER_ICONS[1])
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button.glow = button:CreateTexture(nil, "OVERLAY")
+        button.glow:SetTexture("Interface\\Buttons\\CheckButtonHilight")
+        button.glow:SetBlendMode("ADD")
+        button.glow:SetAllPoints()
+        button.number = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+        button.number:SetPoint("BOTTOMRIGHT", 3, -2)
+        button.number:SetText(tier)
         button:SetScript("OnClick", function()
             pane.selectedTier = tier
             pane:Refresh()
         end)
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(L["Tier "] .. tier)
+            GameTooltip:AddLine(L["What tier %d scrolls turned into, from everyone's deciphers."]:format(tier), 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function() GameTooltip:Hide() end)
         pane.tierButtons[tier] = button
     end
-    y = y - 26
+    y = y - 28
     pane.odds = SK.UI.CreateScrollList(host, width, oddsRows)
     pane.odds:SetPoint("TOPLEFT", left, y)
     Keep(pane.odds.scroll)
@@ -346,13 +379,11 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         local less = MAGE_SORTS[sortMode].less
         table.sort(peers, reversed and function(a, b) return less(b, a) end or less)
         for mode, button in pairs(self.sortButtons) do
-            if mode == sortMode then
-                button:LockHighlight()
-                button:SetText(L[MAGE_SORTS[mode].label] .. (reversed and ARROW_DOWN or ARROW_UP))
-            else
-                button:UnlockHighlight()
-                button:SetText(L[MAGE_SORTS[mode].label])
-            end
+            local active = mode == sortMode
+            button.glow:SetShown(active)
+            button.arrow:SetShown(active)
+            button.arrow:SetTexture(reversed and ARROW_DOWN or ARROW_UP)
+            button:GetNormalTexture():SetDesaturated(not active)
         end
         -- Anonymous players aren't named, but show that they're there.
         local anonymous = SK.AnonymousCount and SK.AnonymousCount() or 0
@@ -393,7 +424,10 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         end, L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])
 
         for tier, button in pairs(self.tierButtons) do
-            if tier == self.selectedTier then button:LockHighlight() else button:UnlockHighlight() end
+            local active = tier == self.selectedTier
+            button.glow:SetShown(active)
+            button:GetNormalTexture():SetDesaturated(not active)
+            button.number:SetTextColor(active and 1 or 0.6, active and 0.82 or 0.6, active and 0 or 0.6)
         end
         local odds, total, players = SK.CommunityOdds(self.selectedTier)
         -- Standard scrolls (Scroll of Strength...) go in one row, and hovering
