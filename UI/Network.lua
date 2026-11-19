@@ -101,6 +101,7 @@ function SK.UI.CreateScrollList(host, width, visibleRows)
             if not self.itemID then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
             GameTooltip:SetItemByID(self.itemID)
+            if self.tipCount then GameTooltip:AddLine(self.tipCount, 1, 0.82, 0) end
             GameTooltip:AddLine(L["Shift-click to link it in chat."], 0.6, 0.6, 0.6)
             GameTooltip:Show()
         end)
@@ -239,11 +240,12 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             if tier == self.selectedTier then button:LockHighlight() else button:UnlockHighlight() end
         end
         local odds, total, players = SK.CommunityOdds(self.selectedTier)
-        -- Standard scrolls (Scroll of Strength...) go in one row; hovering it
-        -- lists each one. Percentages stay the same.
+        -- Standard scrolls (Scroll of Strength...) go in one row, and hovering
+        -- it lists each one, unless the setting lists them one by one.
+        -- Percentages stay the same either way.
         local kept, merged = {}, nil
         for _, entry in ipairs(odds) do
-            if SK.IsMageScroll(entry.itemID, entry.name) then
+            if SK.db.oddsStandard or SK.IsMageScroll(entry.itemID, entry.name) then
                 kept[#kept + 1] = entry
             else
                 merged = merged or { standard = true, count = 0, share = 0, parts = {} }
@@ -260,6 +262,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         self.odds:SetRows(odds, function(row, entry)
             row.itemID = entry.itemID
             row.tipTitle, row.tipLines = nil, nil
+            row.tipCount = L["Community: %d deciphered (%.1f%%)"]:format(entry.count, entry.share * 100)
             if entry.standard then
                 row.label:SetText("|cffffffff" .. L["Standard scrolls"] .. "|r")
                 row.tipTitle = L["Standard scrolls"]

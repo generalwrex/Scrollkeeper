@@ -444,3 +444,6 @@ L["Mailbox: offer scrolls I'd use too"] = "Buzón: ofrecer también pergaminos q
 L["Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use."] = "También muestra magos que podrían usar los pergaminos con los que tú aún subes, marcados para que lo sepas. Desactivado: solo pergaminos que no puedes usar."
 L["|cffffd100%d you'd use too|r"] = "|cffffd100%d también te sirven|r"
 L["Standard scrolls"] = "Pergaminos normales"
+L["Odds: list standard scrolls"] = "Probabilidades: pergaminos normales por separado"
+L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard scrolls row."] = "Las probabilidades de la comunidad muestran los pergaminos normales (como Pergamino de fuerza) uno a uno. Desactivado: se juntan en una fila de Pergaminos normales."
+L["Community: %d deciphered (%.1f%%)"] = "Comunidad: %d descifrados (%.1f%%)"
