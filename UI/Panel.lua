@@ -415,11 +415,17 @@ local function Build()
         function()
             return (SK.db.scrollIcon and L["Scroll icon: |cff40ff40on|r"] or L["Scroll icon: |cff808080off|r"])
                 .. "\n" .. L["|cffffffffClick to turn it on or off.|r"]
+                .. "\n" .. L["|cffffffffRight-click: put it back in the middle of the screen.|r"]
         end,
-        function(self)
+        function(self, mouseButton)
+            if mouseButton == "RightButton" then
+                if SK.ResetIconPosition then SK.ResetIconPosition() end
+                return
+            end
             SK.db.scrollIcon = not SK.db.scrollIcon
             if SK.RefreshIcon then SK.RefreshIcon() end
         end)
+    parts.iconToggle:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     parts.iconToggle:SetPoint("RIGHT", parts.minimapToggle, "LEFT", -2, 0)
     panel.iconToggle = parts.iconToggle
     if SK.RefreshIcon then SK.RefreshIcon() end

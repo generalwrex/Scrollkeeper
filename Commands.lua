@@ -55,6 +55,8 @@ commands.reset = function()
         ScrollkeeperPanel:SetScale(1)
     end
     SK.Print(L["panel moved to the middle of the screen."])
+    -- The scroll icon too, if it's in use (it can get lost off screen).
+    if SK.db.scrollIcon and SK.ResetIconPosition then SK.ResetIconPosition() end
 end
 
 commands.options = function() SK.OpenOptions() end

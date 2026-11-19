@@ -92,6 +92,18 @@ local function Build()
     end
 end
 
+-- Lost the icon off screen? Turn it on and put it in the middle.
+function SK.ResetIconPosition()
+    SK.db.iconPos = nil
+    SK.db.scrollIcon = true
+    SK.RefreshIcon()   -- builds it if it was never shown
+    if icon then
+        icon:ClearAllPoints()
+        icon:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
+    SK.Print(L["scroll icon moved to the middle of the screen."])
+end
+
 function SK.RefreshIcon()
     local toggle = ScrollkeeperPanel and ScrollkeeperPanel.iconToggle
     local texture = toggle and toggle.GetNormalTexture and toggle:GetNormalTexture()

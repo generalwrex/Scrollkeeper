@@ -12,6 +12,7 @@
 - **Luck Log window.** `/sk log` (or the dice tab) shows what your deciphers turned into, tier by tier, with your % next to everyone's, and how often each skill-up color really raised your skill. `/sk logchat` still prints it in chat.
 - **Window buttons at the top of the panel** for the Farming Plan, Luck Log, Scroll Swap and Fellow Mages, in every view. They took the spot of the "0 ready" line, since the Decipher button already says that.
 - A minimap button on/off toggle on the panel, next to the scroll icon one.
+- Lost the scroll icon off screen? Right-click its toggle on the panel (or `/sk reset`) to put it back in the middle.
 - Clicking an imbue scroll on the panel puts it right on your main-hand weapon, no clicking the weapon after.
 - Advanced view: Fellow Mages gets more room. Your Stats is shorter, since the Luck Log, Plan and Swap have their own windows now.
 - The network list is now "Fellow Mages": only mages, with the full name on top and their skill, what they need and weapon upgrades underneath. Hover a name for more (and how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail. Little icons in its header sort it by skill, name, or who could use the most of your scrolls. Right-click the scroll icon to only show mages who could use yours.
