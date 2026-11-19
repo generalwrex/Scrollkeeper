@@ -323,7 +323,11 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         end
         button:SetScript("OnClick", function(self, mouseButton)
             if mode == "mine" and mouseButton == "RightButton" then
-                SK.db.mageOnlyMine = not SK.db.mageOnlyMine
+                -- Turning the filter on also switches to this sort.
+                SK.db.mageOnlyMine = not (SK.db.mageOnlyMine and SK.db.mageSort == "mine")
+                if SK.db.mageOnlyMine and SK.db.mageSort ~= "mine" then
+                    SK.db.mageSort, SK.db.mageSortReversed = "mine", false
+                end
             elseif (SK.db.mageSort or "skill") == mode then
                 SK.db.mageSortReversed = not SK.db.mageSortReversed
             else
@@ -339,7 +343,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             GameTooltip:AddLine(L[MAGE_SORTS[mode].tip], 1, 1, 1, true)
             GameTooltip:AddLine(L["Click again to flip the order."], 0.6, 0.6, 0.6)
             if mode == "mine" then
-                GameTooltip:AddLine(SK.db.mageOnlyMine
+                GameTooltip:AddLine((SK.db.mageOnlyMine and SK.db.mageSort == "mine")
                     and L["Right-click: show everyone again."]
                     or L["Right-click: only mages who could use your scrolls."], 0.25, 0.75, 0.25)
             end
@@ -407,8 +411,10 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     function pane:Refresh()
         if not self.regions[1]:IsVisible() then return end
         -- Only mages: the others have nothing to show here.
-        -- With the My scrolls filter on, only the ones who could use yours.
-        local onlyMine = SK.db.mageOnlyMine and true or false
+        local sortMode = MAGE_SORTS[SK.db.mageSort or ""] and SK.db.mageSort or "skill"
+        -- The My scrolls filter (right-click) only applies while sorting by
+        -- My scrolls; it's remembered for the next time you pick that sort.
+        local onlyMine = SK.db.mageOnlyMine and sortMode == "mine" or false
         local peers = {}
         for _, entry in ipairs(SK.PeerList()) do
             if entry.peer and entry.peer.class == "MAGE" then
@@ -416,7 +422,6 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 if not onlyMine or entry.yours > 0 then peers[#peers + 1] = entry end
             end
         end
-        local sortMode = MAGE_SORTS[SK.db.mageSort or ""] and SK.db.mageSort or "skill"
         local reversed = SK.db.mageSortReversed and true or false
         local less = MAGE_SORTS[sortMode].less
         table.sort(peers, reversed and function(a, b) return less(b, a) end or less)
