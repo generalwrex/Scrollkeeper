@@ -396,7 +396,13 @@ function SK.MageHistory()
     PruneHistory()
     local online = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and not peer.offline then online[SK.ContactName(name):lower()] = true end
+        -- Anyone still in the live list (even grayed out as offline) isn't
+        -- repeated from the history.
+        if Fresh(peer) then
+            online[SK.ContactName(name):lower()] = true
+            local alt = SK.AltMailName(name)
+            if alt then online[alt:lower()] = true end
+        end
     end
     local list = {}
     for key, entry in pairs(SK.db.mageHistory or {}) do

@@ -729,3 +729,17 @@ do
   end
   GetRealmName = realRealm
 end
+
+-- History never repeats someone still in the live list (even marked offline).
+do
+  local realRealm = GetRealmName
+  GetRealmName = function() return "Realm" end
+  SK.db.mageHistory = {}
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.2.0|MAGE|20|64|100|15.50||", "GUILD", "Turbo-Realm")
+  SK.peers["Turbo-Realm"].offline, SK.peers["Turbo-Realm"].offlineAt = true, time()
+  print("DUP history while listed:", #SK.MageHistory())
+  SK.peers["Turbo-Realm"] = nil
+  print("DUP history once gone:", #SK.MageHistory())
+  SK.db.mageHistory = nil
+  GetRealmName = realRealm
+end

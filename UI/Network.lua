@@ -503,7 +503,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 for _, tier in ipairs(SK.TIERS) do if mage.tiers[tier] then tiers[#tiers + 1] = tier end end
                 local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or L["needs none"]
                 row.tipFunc = function(tooltip)
-                    tooltip:AddLine(mage.name, 0.6, 0.6, 0.6)
+                    tooltip:AddLine(SK.Net.ShortName(mage.name), 0.6, 0.6, 0.6)
                     tooltip:AddLine(L["Seen %s. Offline now: whispers won't reach them, but mail will."]:format(SK.TimeAgo(mage.seen)), 1, 1, 1, true)
                     tooltip:AddLine(L["Level %d, %d skill when you last heard from them."]:format(mage.level or 0, mage.skill or 0), 1, 1, 1)
                     if (entry.yours or 0) > 0 then
@@ -515,7 +515,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                     local box = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
                     if IsShiftKeyDown and IsShiftKeyDown() and box and box.Insert then box:Insert(mage.name) end
                 end
-                row.label:SetText("|cff808080" .. mage.name .. "|r  |cff606060" .. L["seen %s"]:format(SK.TimeAgo(mage.seen)) .. "|r")
+                row.label:SetText("|cff808080" .. SK.Net.ShortName(mage.name) .. "|r  |cff606060" .. L["seen %s"]:format(SK.TimeAgo(mage.seen)) .. "|r")
                 row.sub:SetText("|cff808080" .. L["%d skill"]:format(mage.skill or 0) .. "  ·  " .. needs .. "|r")
             elseif entry.anonymous then
                 row.label:SetText("|cff808080" .. L["Anonymous"] .. "|r")

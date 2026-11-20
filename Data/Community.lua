@@ -153,7 +153,7 @@ SK.COMMUNITY_DATA = {
             [15] = { b = 0, t = 3 },
             [50] = { b = 0, t = 2 },
         },
-        bookIDs = { 207972, 208185, 208800, 210177 },
+        bookIDs = { 207972, 208185, 208800, 210177, 215683 },
         names = {
             [954] = "Scroll of Strength",
             [213548] = "Scroll of Liminal Passage",
