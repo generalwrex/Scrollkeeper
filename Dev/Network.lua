@@ -367,7 +367,14 @@ SK.Listen("READY", function()
         lastRefresh = GetTime()
         SK.Safely("net dev", SK.RefreshNetDev)
     end)
-    if SK.devCopy then C_Timer.NewTicker(STEP, function() SK.Safely("net dev sample", TakeSample) end) end
+    if SK.devCopy then
+        C_Timer.NewTicker(STEP, function() SK.Safely("net dev sample", TakeSample) end)
+        -- Keep a fresh report in the saved data, so any /reload or logout
+        -- writes the latest one (no need to remember Export).
+        C_Timer.NewTicker(60, function()
+            SK.Safely("net dev autosave", function() SK.db.netReport = { at = time(), text = SK.NetReportPlain(), auto = true } end)
+        end)
+    end
 end)
 
 SK.NetDevSample = function() TakeSample() DrawGraphs() end   -- for the test harness
