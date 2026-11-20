@@ -102,6 +102,15 @@ function SK.Safely(label, fn, ...)
     return false
 end
 
+-- The game can hand addons "secret" values (in combat, instances and some
+-- unit checks like UnitIsAFK) that we may not test or compare: doing so is
+-- an error. SK.Known(value) gives the value, or nil when it's secret.
+-- Wrap any unit check:  if SK.Known(UnitIsAFK("player")) then ...
+function SK.Known(value)
+    if issecretvalue and value ~= nil and issecretvalue(value) then return nil end
+    return value
+end
+
 function SK.InCombat()
     return InCombatLockdown and InCombatLockdown() or false
 end
@@ -122,9 +131,26 @@ function SK.On(event, fn)
     table.insert(handlers[event], fn)
 end
 
+-- Unit events can carry secret values (see SK.Known): handlers get nil in
+-- their place, so a plain `unit ~= "player"` never errors.
+local unpack = unpack or table.unpack
+local function Unsecret(...)
+    local count = select("#", ...)
+    if count == 0 or not issecretvalue then return ... end
+    local args = { ... }
+    for i = 1, count do
+        if args[i] ~= nil and issecretvalue(args[i]) then args[i] = nil end
+    end
+    return unpack(args, 1, count)
+end
+
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     local list = handlers[event]
     if not list then return end
+    if event:sub(1, 5) == "UNIT_" or event == "PARTY_INVITE_REQUEST" then
+        for i = 1, #list do SK.Safely(event, list[i], Unsecret(...)) end
+        return
+    end
     for i = 1, #list do
         SK.Safely(event, list[i], ...)
     end

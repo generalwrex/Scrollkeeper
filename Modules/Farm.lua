@@ -24,7 +24,7 @@ SK.Listen("READY", function()
     SK.db.farm = SK.db.farm or { seconds = 0, looted = 0 }
     if C_Timer.NewTicker then
         C_Timer.NewTicker(60, function()
-            if not (UnitIsAFK and UnitIsAFK("player")) then SK.db.farm.seconds = SK.db.farm.seconds + 60 end
+            if not (UnitIsAFK and SK.Known(UnitIsAFK("player"))) then SK.db.farm.seconds = SK.db.farm.seconds + 60 end
         end)
     end
 end)

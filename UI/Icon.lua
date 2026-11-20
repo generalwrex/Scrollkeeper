@@ -286,7 +286,7 @@ do
         if toast and toast:IsShown() and not imbue and not familiar then toast:Hide() end
 
         if not SK.db.reminderToast or SK.InCombat() then return end
-        if UnitIsDeadOrGhost and UnitIsDeadOrGhost("player") then return end
+        if UnitIsDeadOrGhost and SK.Known(UnitIsDeadOrGhost("player")) then return end
 
         local now = GetTime()
         local function Due(kind, scroll)

@@ -356,7 +356,7 @@ end)
 local trip   -- { short, target, kind, place, askedAt, teleported }
 
 local function InGroupWith(short)
-    return short and UnitInParty and UnitInParty(short) and true or false
+    return short and UnitInParty and SK.Known(UnitInParty(short)) and true or false
 end
 
 local function Ask(host)
@@ -390,6 +390,7 @@ end
 
 -- Accept the invite from the host we asked (only theirs, only for 3 minutes).
 SK.On("PARTY_INVITE_REQUEST", function(inviter)
+    inviter = SK.Known(inviter)
     if not (trip and trip.askedAt and time() - trip.askedAt < 180 and type(inviter) == "string") then return end
     if Net.ShortName(inviter):lower() ~= trip.short:lower() then return end
     if AcceptGroup then SK.Try(AcceptGroup) end
@@ -399,6 +400,7 @@ end)
 
 -- Notice when the scroll was used, for the Leave group step.
 SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
+    unit, spellID = SK.Known(unit), SK.Known(spellID)
     if unit ~= "player" or not trip then return end
     local _, scrollSpell = SK.Try(C_Item and C_Item.GetItemSpell or GetItemSpell, SK.LIMINAL_PASSAGE)
     if scrollSpell and spellID == scrollSpell then
@@ -420,7 +422,7 @@ local askedAt, invitesSent = {}, {}
 
 local function CanInviteNow()
     if not (IsInGroup and IsInGroup()) then return true end
-    local leader = UnitIsGroupLeader and UnitIsGroupLeader("player")
+    local leader = UnitIsGroupLeader and SK.Known(UnitIsGroupLeader("player"))
     local size = GetNumGroupMembers and GetNumGroupMembers() or 0
     return leader and not (IsInRaid and IsInRaid()) and size < 5
 end

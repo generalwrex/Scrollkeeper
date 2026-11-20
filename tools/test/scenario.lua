@@ -561,3 +561,11 @@ do
   SK.db.mailIncludeMine = false
   print("MAILMINE people", before, "->", #after, "you'd use too", mine)
 end
+
+-- Secret values (the client hides some unit info): SK.Known turns them into nil.
+do
+  local SECRET = {}
+  issecretvalue = function(v) return v == SECRET end
+  print("KNOWN secret ->", SK.Known(SECRET), " plain ->", SK.Known(true))
+  issecretvalue = nil
+end

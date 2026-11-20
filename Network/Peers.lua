@@ -269,7 +269,7 @@ end
 local function KindOf(name, peer)
     local source = peer.source
     if source == "PARTY" or source == "RAID" or source == "INSTANCE_CHAT"
-        or (UnitInParty and UnitInParty(Net.ShortName(name))) then return "group" end
+        or (UnitInParty and SK.Known(UnitInParty(Net.ShortName(name)))) then return "group" end
     if source == "GUILD" then return "guild" end
     if source == "WHISPER" then return "friend" end
     if peer.demo then return "guild" end
@@ -298,7 +298,7 @@ function SK.MagesWhoNeed(tier)
     for name, peer in pairs(SK.peers) do
         if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous and not Unreachable(name, peer) then
             local inGroup = peer.source == "PARTY" or peer.source == "RAID" or peer.source == "INSTANCE_CHAT"
-                or (UnitInParty and UnitInParty(Net.ShortName(name)))
+                or (UnitInParty and SK.Known(UnitInParty(Net.ShortName(name))))
             list[#list + 1] = { name = Net.ShortName(name), skill = peer.skill, group = inGroup and true or false }
         end
     end
