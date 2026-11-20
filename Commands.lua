@@ -165,6 +165,12 @@ commands.who = DevOnly(function()
     local myFaction = UnitFactionGroup and UnitFactionGroup("player") or "?"
     print(("you: realm %q, normalized %q, %s"):format(tostring(GetRealmName and GetRealmName()),
         tostring(GetNormalizedRealmName and GetNormalizedRealmName()), myFaction))
+    -- The public channel: are we in it, at which number, and how many
+    -- players are in it with us (everyone running Scrollkeeper online now).
+    local id = GetChannelName and GetChannelName(SK.Net.CHANNEL_NAME) or 0
+    local members = id > 0 and GetNumChannelMembers and SK.Try(GetNumChannelMembers, id)
+    print(("channel %s: %s, members %s, sharing %s, channel on %s"):format(SK.Net.CHANNEL_NAME,
+        id > 0 and ("/" .. id) or "NOT JOINED", tostring(members or "?"), tostring(SK.db.sharing), tostring(SK.db.shareChannel)))
     local names = {}
     for sender in pairs(SK.peers or {}) do names[#names + 1] = sender end
     table.sort(names)

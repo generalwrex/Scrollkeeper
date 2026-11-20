@@ -1,25 +1,28 @@
 Scrollkeeper export 1
-meta|1.1.8|1.60.1|16001|MAGE|25|74|125|862ee863
+meta|1.1.9|1.60.1|16001|MAGE|25|77|125|862ee863
 T|1|213564:1,275067:1,275069:1,954:1
-T|50|277491:1
+T|50|213548:1,277491:1,277493:1,277498:1
 T|15|213550:3,217495:1,277483:2,277484:1
 U|1|gray:0/4
 U|15|green:1/7
-U|50|orange:1/1
-B|15:0/3,50:0/1
+U|50|orange:4/4
+B|15:0/3,50:0/2
 P|1421|28.35:1,29.35:2
 P|1424|15.20:1,15.21:1,16.22:1,17.20:1,17.23:1,21.19:1,37.20:1
 D|1424|15:7
 I|207972,208185,208800,210177
 N|213564|Scroll of Minor Evocation
-N|275067|Scroll of Imbue Chillknife
 N|217495|Scroll of Cryoblast
-N|213550|Scroll of Polymorph: Odd Melon
-N|954|Scroll of Strength
-N|277483|Scroll of Frog Familiar
-N|275069|Scroll of Rat Familiar
-N|277491|Scroll of Rebuke Elemental
 N|277484|Scroll of Confuse Beast
+N|277493|Scroll of Cat Familiar
+N|275067|Scroll of Imbue Chillknife
+N|213550|Scroll of Polymorph: Odd Melon
+N|277483|Scroll of Frog Familiar
+N|213548|Scroll of Liminal Passage
+N|277498|Scroll of Imbue Manablade
+N|954|Scroll of Strength
+N|277491|Scroll of Rebuke Elemental
+N|275069|Scroll of Rat Familiar
 Scrollkeeper export 1
 meta|heard|?|?|MAGE|0|0|0|1f6a135a
 T|175|213548:3,277491:3,277492:2,277493:1,277494:2,277495:1,277497:1,277498:1,277499:9,277500:15,277501:14,277502:11
@@ -95,9 +98,9 @@ T|50|213548:9,277491:10,277492:4,277493:4,277494:4,277495:4,277496:6,277497:2,27
 U|50|green:8/17,yellow:20/32
 P|2548|18.33:2,22.29:1,23.32:1,23.40:1,31.28:1,35.36:1,36.16:1,37.12:1,41.20:1
 P|1434|13.30:1,15.44:1,16.44:1,17.25:3,17.26:1
+P|1444|19.7:1,23.31:1,27.34:1,27.35:1,27.36:1,27.37:1,28.32:1,33.23:1,35.23:1
 P|1446|14.31:1,30.28:1,35.22:1,35.23:1,36.22:1,36.23:1,37.23:2
 P|1425|16.23:1,16.24:1,16.26:1,20.30:1,26.20:1,29.21:1,30.21:1,31.26:1
-P|1444|19.7:1,23.31:1,27.34:1,27.35:1,27.36:1,27.37:1,28.32:1,33.23:1,35.23:1
 D|1425|50:8
 D|1446|50:8
 B|50:0/14
@@ -107,15 +110,20 @@ P|1420|25.18:1
 D|1420|1:1
 Scrollkeeper export 1
 meta|heard|?|?|MAGE|0|0|0|f0ca71f5
-T|15|277484:1,277485:1,277488:1
-U|15|green:1/3
+T|15|213550:1,277484:1,277485:1,277487:1,277488:1
+U|15|green:1/5
+P|1424|21.19:1,26.15:1
+D|1424|15:1
 B|15:0/1
-N|277484|Scroll of Confuse Beast
-N|275067|Scroll of Imbue Chillknife
-N|217495|Scroll of Cryoblast
-N|954|Scroll of Strength
-N|213550|Scroll of Polymorph: Odd Melon
-N|213564|Scroll of Minor Evocation
-N|277483|Scroll of Frog Familiar
-N|277491|Scroll of Rebuke Elemental
 N|275069|Scroll of Rat Familiar
+N|277484|Scroll of Confuse Beast
+N|954|Scroll of Strength
+N|275067|Scroll of Imbue Chillknife
+N|213550|Scroll of Polymorph: Odd Melon
+N|277493|Scroll of Cat Familiar
+N|213548|Scroll of Liminal Passage
+N|217495|Scroll of Cryoblast
+N|213564|Scroll of Minor Evocation
+N|277498|Scroll of Imbue Manablade
+N|277491|Scroll of Rebuke Elemental
+N|277483|Scroll of Frog Familiar

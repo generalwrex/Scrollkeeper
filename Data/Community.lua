@@ -133,12 +133,12 @@ SK.COMMUNITY_DATA = {
         results = {
             [1] = { [213564] = 1, [275067] = 1, [275069] = 1, [954] = 1 },
             [15] = { [213550] = 3, [217495] = 1, [277483] = 2, [277484] = 1 },
-            [50] = { [277491] = 1 },
+            [50] = { [213548] = 1, [277491] = 1, [277493] = 1, [277498] = 1 },
         },
         skillups = {
             ["1 gray"] = { ups = 0, tries = 4 },
             ["15 green"] = { ups = 1, tries = 7 },
-            ["50 orange"] = { ups = 1, tries = 1 },
+            ["50 orange"] = { ups = 4, tries = 4 },
         },
         drops = {
             [1421] = { ["28.35"] = 1, ["29.35"] = 2 },
@@ -151,11 +151,12 @@ SK.COMMUNITY_DATA = {
         },
         backfires = {
             [15] = { b = 0, t = 3 },
-            [50] = { b = 0, t = 1 },
+            [50] = { b = 0, t = 2 },
         },
         bookIDs = { 207972, 208185, 208800, 210177 },
         names = {
             [954] = "Scroll of Strength",
+            [213548] = "Scroll of Liminal Passage",
             [213550] = "Scroll of Polymorph: Odd Melon",
             [213564] = "Scroll of Minor Evocation",
             [217495] = "Scroll of Cryoblast",
@@ -164,6 +165,8 @@ SK.COMMUNITY_DATA = {
             [277483] = "Scroll of Frog Familiar",
             [277484] = "Scroll of Confuse Beast",
             [277491] = "Scroll of Rebuke Elemental",
+            [277493] = "Scroll of Cat Familiar",
+            [277498] = "Scroll of Imbue Manablade",
         },
     },
     ["95d14756"] = {
@@ -241,16 +244,18 @@ SK.COMMUNITY_DATA = {
     },
     ["f0ca71f5"] = {
         results = {
-            [15] = { [277484] = 1, [277485] = 1, [277488] = 1 },
+            [15] = { [213550] = 1, [277484] = 1, [277485] = 1, [277487] = 1, [277488] = 1 },
         },
         skillups = {
-            ["15 green"] = { ups = 1, tries = 3 },
+            ["15 green"] = { ups = 1, tries = 5 },
         },
         drops = {
+            [1424] = { ["21.19"] = 1, ["26.15"] = 1 },
         },
         books = {
         },
         dropTiers = {
+            [1424] = { [15] = 1 },
         },
         backfires = {
             [15] = { b = 0, t = 1 },
@@ -258,6 +263,7 @@ SK.COMMUNITY_DATA = {
         bookIDs = {  },
         names = {
             [954] = "Scroll of Strength",
+            [213548] = "Scroll of Liminal Passage",
             [213550] = "Scroll of Polymorph: Odd Melon",
             [213564] = "Scroll of Minor Evocation",
             [217495] = "Scroll of Cryoblast",
@@ -266,6 +272,8 @@ SK.COMMUNITY_DATA = {
             [277483] = "Scroll of Frog Familiar",
             [277484] = "Scroll of Confuse Beast",
             [277491] = "Scroll of Rebuke Elemental",
+            [277493] = "Scroll of Cat Familiar",
+            [277498] = "Scroll of Imbue Manablade",
         },
     },
 }
