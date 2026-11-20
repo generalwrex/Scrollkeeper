@@ -119,6 +119,70 @@ SK.On("BAG_UPDATE_DELAYED", function()
 end)
 
 ------------------------------------------------------------------------
+-- Books handed in, and the librarians' rewards
+-- Each book is handed in once, as a quest. Its quest ID is remembered the
+-- first time, and from then on the game says whether you've done it, so
+-- older hand-ins count too once their quest is known.
+------------------------------------------------------------------------
+
+SK.BOOKS_TOTAL = 40
+-- Rewards at these counts (you pick one). 25 and 35 are from the wiki
+-- only so far.
+SK.BOOK_REWARDS = {
+    { books = 10, title = "Friend of the Library", items = { "Scholarly Pendant", "Erudite's Amulet" } },
+    { books = 20, title = "Greater Friend of the Library", items = { "Field Researcher's Loop", "Philanthropist's Ring" } },
+    { books = 25, items = { "Truthseeker's Bow", "Crest of Elucidation", "Researcher's Night Light" } },
+    { books = 35, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" } },
+}
+
+local function QuestDone(questID)
+    local check = (C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) or IsQuestFlaggedCompleted
+    return check and SK.Try(check, questID) and true or false
+end
+
+-- Books this character has handed in, and the next reward (or nil).
+function SK.BookProgress()
+    local handed = 0
+    for questID in pairs(SK.db.bookQuests or {}) do
+        if QuestDone(questID) then handed = handed + 1 end
+    end
+    -- What this character was seen handing in (in case the game can't say).
+    local mage = SK.MyMage and SK.MyMage()
+    local seen = 0
+    for _ in pairs(mage and mage.booksHanded or {}) do seen = seen + 1 end
+    handed = math.min(math.max(handed, seen), SK.BOOKS_TOTAL)
+    for _, reward in ipairs(SK.BOOK_REWARDS) do
+        if handed < reward.books then return handed, reward end
+    end
+    return handed, nil
+end
+
+function SK.BookRewardText(reward)
+    local names = {}
+    for _, item in ipairs(reward.items) do names[#names + 1] = L[item] end
+    return table.concat(names, L[" or "])
+end
+
+SK.On("QUEST_TURNED_IN", function(questID)
+    questID = tonumber(questID)
+    if not questID or not (talking or TalkingToLibrarian()) then return end
+    SK.db.bookQuests = SK.db.bookQuests or {}
+    SK.db.bookQuests[questID] = true
+    local mage = SK.MyMage and SK.MyMage()
+    if mage then
+        mage.booksHanded = mage.booksHanded or {}
+        mage.booksHanded[questID] = true
+    end
+    local handed, reward = SK.BookProgress()
+    if reward then
+        SK.Print(L["book handed in: %d of %d. Next reward at %d books: %s."]:format(handed, SK.BOOKS_TOTAL, reward.books, SK.BookRewardText(reward)))
+    else
+        SK.Print(L["book handed in: %d of %d."]:format(handed, SK.BOOKS_TOTAL))
+    end
+    SK.Send("DROPS_CHANGED")
+end)
+
+------------------------------------------------------------------------
 -- Where books are found
 ------------------------------------------------------------------------
 

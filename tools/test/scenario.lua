@@ -617,3 +617,16 @@ do
   print("CHANNELS after move:", table.concat(chans, ", "))
   GetChannelList, C_ChatInfo = realList, realChat
 end
+
+-- Library books: hand-ins counted from the quests the game says are done.
+do
+  local done = { [90001] = true, [90002] = true }
+  local realLog = C_QuestLog
+  C_QuestLog = setmetatable({ IsQuestFlaggedCompleted = function(id) return done[id] or false end }, { __index = realLog })
+  SK.db.bookQuests = { [90001] = true, [90002] = true, [90003] = true }
+  local handed, reward = SK.BookProgress()
+  print("BOOKS handed", handed, "next at", reward and reward.books, reward and SK.BookRewardText(reward))
+  C_QuestLog = realLog
+  SK.db.bookQuests = nil
+  print("MOVING label ok", pcall(SK.UpdateDecipherLabel))
+end

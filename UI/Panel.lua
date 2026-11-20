@@ -717,7 +717,7 @@ local function Build()
     local statRows = {
         { "deciphered", L["Deciphered"] },
         { "drops", L["Scroll drops logged"] },
-        { "books", L["Books found"] },
+        { "books", L["Library books"] },
         { "backfires", L["Sheep backfires"] },
         { "sharing", L["Sharing"] },
     }
@@ -744,14 +744,26 @@ local function Build()
             SK.UI.EnableItemLinks(row)
         end
         side.rows[entry[1]] = row
-        if entry[1] == "deciphered" or entry[1] == "backfires" then
+        if entry[1] == "deciphered" or entry[1] == "backfires" or entry[1] == "books" then
             row:EnableMouse(true)
             local highlight = row:CreateTexture(nil, "HIGHLIGHT")
             highlight:SetAllPoints()
             highlight:SetColorTexture(1, 0.82, 0, 0.12)
             row:SetScript("OnEnter", function(self)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                if entry[1] == "deciphered" then
+                if entry[1] == "books" then
+                    local handed, reward = SK.BookProgress()
+                    GameTooltip:SetText(L["Library books"])
+                    GameTooltip:AddLine(L["Handed in: %d of %d"]:format(handed, SK.BOOKS_TOTAL), 1, 1, 1)
+                    GameTooltip:AddLine(L["Found: %d"]:format(self.found or 0), 1, 1, 1)
+                    if reward then
+                        GameTooltip:AddLine(" ")
+                        GameTooltip:AddLine(L["Next reward at %d books (pick one):"]:format(reward.books), 1, 0.82, 0)
+                        GameTooltip:AddLine(SK.BookRewardText(reward), 1, 1, 1, true)
+                    end
+                    GameTooltip:AddLine(" ")
+                    GameTooltip:AddLine(L["Hand books to Garion Wendell (Stormwind) or Owen Thadd (Undercity). Each one counts once."], 0.6, 0.6, 0.6, true)
+                elseif entry[1] == "deciphered" then
                     GameTooltip:SetText(L["Luck Log"])
                     GameTooltip:AddLine(L["What your deciphers turned into, next to everyone's odds, and your skill-ups."], 1, 1, 1, true)
                     GameTooltip:AddLine(L["Click to open it."], 0.6, 0.6, 0.6)
@@ -808,7 +820,9 @@ local function UpdateStats()
     for _, cells in pairs(db.bookDrops or {}) do
         for _, count in pairs(cells) do books = books + count end
     end
-    side.rows.books.value:SetText(tostring(books))
+    local handed = SK.BookProgress and SK.BookProgress() or 0
+    side.rows.books.found = books
+    side.rows.books.value:SetText(L["%d/%d handed in"]:format(handed, SK.BOOKS_TOTAL or 40))
 
     side.rows.sharing.value:SetText(SK.SharingLabel())
 end
@@ -1059,10 +1073,12 @@ local function Layout()
         parts.decipher:SetAttribute("target-slot", nextScroll.slot)
         local chance = SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
         local mark = (chance and chance.gives) and " |cffff8040+|r" or ""
-        parts.decipher:SetText(L["Decipher next scroll (%d)%s"]:format(readable, mark))
+        parts.decipher.readyText = L["Decipher next scroll (%d)%s"]:format(readable, mark)
+        SK.UpdateDecipherLabel()
         parts.decipher:Enable()
     else
         parts.decipher:SetAttribute("type", nil)
+        parts.decipher.readyText = nil
         parts.decipher:SetText(L["Nothing to decipher"])
         parts.decipher:Disable()
     end
@@ -1180,6 +1196,21 @@ end
 ------------------------------------------------------------------------
 -- Showing, hiding and settings
 ------------------------------------------------------------------------
+
+-- Scrolls can't be read while moving: the Decipher button says so then.
+-- (Only its text changes, which is allowed in combat too.)
+function SK.IsMoving()
+    local speed = GetUnitSpeed and SK.Known(GetUnitSpeed("player"))
+    return type(speed) == "number" and speed > 0
+end
+
+function SK.UpdateDecipherLabel()
+    local button = parts and parts.decipher
+    if not (button and button.readyText) then return end
+    button:SetText(SK.IsMoving() and ("|cffffd100" .. L["Stand still to decipher"] .. "|r") or button.readyText)
+end
+SK.On("PLAYER_STARTED_MOVING", function() SK.UpdateDecipherLabel() end)
+SK.On("PLAYER_STOPPED_MOVING", function() SK.UpdateDecipherLabel() end)
 
 function SK.TogglePanel()
     if not panel then return end

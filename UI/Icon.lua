@@ -93,6 +93,9 @@ local function Build()
                 .. (chance and (" (" .. SK.ColoredChance(chance) .. "|cff40ff40)|r") or ""),
                 0.25, 1, 0.25, true)
         end
+        if nextScroll and SK.IsMoving and SK.IsMoving() then
+            GameTooltip:AddLine(L["Stand still to decipher"], 1, 0.82, 0)
+        end
         GameTooltip:AddLine(L["Right-click: open or close the panel. Shift-drag: move."], 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)

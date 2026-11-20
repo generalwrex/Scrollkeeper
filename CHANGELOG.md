@@ -2,6 +2,8 @@
 
 ## 1.1.9
 
+- **Library books:** how many you've handed in (of 40) and the next reward, in chat after each hand-in and on the panel's stats (hover for the rewards).
+- The Decipher button says "Stand still to decipher" while you're moving.
 - Fixed: Scrollkeeper's hidden channel could take chat channel /1 and push General to /2. It now joins after the game's channels and moves itself to the end if it ever lands before them.
 - **Khadgar's Unlocking on locked chests:** set a key in Key Bindings > AddOns > Scrollkeeper ("Use Khadgar's Unlocking"), press it, then click the chest. Mouse over a locked chest and the tooltip reminds you how many scrolls you have and which key to press.
 - **Open the panel in combat:** click the minimap button or right-click the scroll icon. (`/sk` still waits for combat to end: the game doesn't let typed commands show it in a fight.)
