@@ -802,3 +802,12 @@ do
   print("LAYER mailable mages:", table.concat(names, ", "))
   GetRealmName, UnitFactionGroup, SK.db.mages = realRealm, realFaction, realMages
 end
+
+-- Network: who's-online messages jump ahead of bulk data in the send queue.
+do
+  local n0 = SK.Net.QueueLength()
+  SK.Net.Send("T", "15#1", "1:2")
+  SK.Net.Send("P", "1458#1", "3.4:1")
+  SK.Net.Send("H", "1", "x")
+  print("QUEUE grew by", SK.Net.QueueLength() - n0)
+end

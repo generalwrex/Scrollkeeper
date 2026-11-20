@@ -156,7 +156,16 @@ SK.Listen("NET_READY", function()
     C_Timer.After(30, function() SK.Safely("door", SendDoor, true) end)
     C_Timer.NewTicker(5 * 60, function() SK.Safely("door", SendDoor, true) end)
 end)
-Net.Handle("Q", function() C_Timer.After(6 + math.random() * 20, function() SK.Safely("door", SendDoor, true) end) end)
+-- Answer "who's there?" with our door (on the public channel at most
+-- every 10 minutes, and only if we are one: no door, nothing to say).
+local lastDoorAnswer = 0
+Net.Handle("Q", function(_, _, source)
+    if not SK.db.liminalDoor then return end
+    local small = source == "GUILD" or source == "PARTY" or source == "RAID" or source == "INSTANCE_CHAT"
+    if not small and time() - lastDoorAnswer < 600 then return end
+    lastDoorAnswer = time()
+    C_Timer.After(6 + math.random() * 20, function() SK.Safely("door", SendDoor, true) end)
+end)
 
 ------------------------------------------------------------------------
 -- Everyone's doors

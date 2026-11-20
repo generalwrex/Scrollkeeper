@@ -218,7 +218,8 @@ commands.who = DevOnly(function()
         local function List(t) local out = {} for k, v in pairs(t) do out[#out + 1] = k .. "=" .. v end table.sort(out) return table.concat(out, " ") end
         print(("net since %d min: received %d messages from %d players [%s] by [%s]"):format(
             math.floor((time() - stats.since) / 60), stats.received, senders, List(stats.kinds), List(stats.sources)))
-        print(("sent %d ok, %d refused [%s]"):format(stats.sent, stats.refused, List(stats.results)))
+        print(("sent %d ok, %d refused [%s], %d waiting"):format(stats.sent, stats.refused, List(stats.results),
+            SK.Net.QueueLength and SK.Net.QueueLength() or 0))
     end
     local names = {}
     for sender in pairs(SK.peers or {}) do names[#names + 1] = sender end

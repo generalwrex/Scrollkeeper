@@ -17,7 +17,17 @@ local Net = SK.Net
 Net.PREFIX = "Scrollkeeper"
 Net.PROTOCOL = 1                       -- bump if the message format changes
 Net.CHANNEL_NAME = "ScrollkeeperNet"   -- the optional public channel
-local SEND_INTERVAL = 0.4              -- seconds between messages (the game limits bursts)
+local SEND_INTERVAL = 0.25             -- how often the sender looks at the queue
+-- The game gives each addon a small budget: a burst of about 10 messages,
+-- then about 1 a second, and every destination (guild, channel...) costs
+-- one. Past it, messages are silently dropped (result 3). So we keep our own
+-- budget a little under that and only send when it allows.
+local BUDGET_MAX, BUDGET_PER_SECOND = 8, 0.8
+local budget, budgetAt = BUDGET_MAX, 0
+-- Which messages go first. Who's online (hello, "who's there?", doors,
+-- spares) must never wait behind bulk data (odds, drop spots...).
+local PRIORITY = { Q = 1, H = 1, G = 2, S = 2, DA = 2, DY = 2, DN = 2 }
+local nextSendAt = 0                   -- after a "throttled" answer, wait a little
 local MAX_LENGTH = 250                 -- the game allows 255 bytes per message
 
 local queue = {}
@@ -143,11 +153,20 @@ function Net.Send(kind, ...)
     -- Replace an older queued message of the same kind and first field,
     -- so a burst of updates becomes one message.
     local key = kind .. "|" .. tostring((select(1, ...)) or "")
+    local priority = PRIORITY[kind] or 3
     for i, queued in ipairs(queue) do
-        if queued.key == key then queue[i] = { key = key, text = text } return end
+        if queued.key == key then queue[i] = { key = key, text = text, priority = priority } return end
     end
-    queue[#queue + 1] = { key = key, text = text }
+    -- Behind everything of the same or higher priority, ahead of the rest.
+    local at = #queue + 1
+    for i, queued in ipairs(queue) do
+        if queued.priority > priority then at = i break end
+    end
+    table.insert(queue, at, { key = key, text = text, priority = priority })
 end
+
+-- How many messages are waiting (for /sk who).
+function Net.QueueLength() return #queue end
 
 -- Send one message straight to one player (used to find friends who run
 -- Scrollkeeper). Goes out right away, not through the queue.
@@ -159,6 +178,7 @@ function Net.Whisper(target, kind, ...)
     end
     local text = table.concat(parts, "|")
     if #text > MAX_LENGTH then return end
+    budget = budget - 1   -- whispers spend the same budget
     pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, text, "WHISPER", target)
 end
 
@@ -181,18 +201,42 @@ function Net.SendList(kind, head, items)
     Flush()
 end
 
+-- The game's answer to a send: 0 (or true, on older clients) is sent;
+-- 3 and 8 mean throttled (try again later); anything else won't ever work.
+local THROTTLED = { [3] = true, [8] = true }
+
 local function SendNext()
-    if #queue == 0 or SK.InCombat() then return end
+    if #queue == 0 or SK.InCombat() or GetTime() < nextSendAt then return end
+    -- Refill the budget, then send only if it covers every destination.
+    local now = GetTime()
+    budget = math.min(BUDGET_MAX, budget + (now - budgetAt) * BUDGET_PER_SECOND)
+    budgetAt = now
+    local destinations = queue[1].only or Destinations()
+    if budget < #destinations then return end
+    budget = budget - #destinations
     local message = table.remove(queue, 1)
-    for _, destination in ipairs(Destinations()) do
+    local retry = {}
+    for _, destination in ipairs(destinations) do
         local ok, result = pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, message.text, destination[1], destination[2])
-        -- The game answers with a result code: 0 (or true) is sent; anything
-        -- else (throttled, not in channel...) means it never left.
         local stats = Net.stats
         local key = destination[1] .. ":" .. tostring(ok and result)
         stats.results[key] = (stats.results[key] or 0) + 1
-        if ok and (result == nil or result == true or result == 0) then stats.sent = stats.sent + 1
-        else stats.refused = stats.refused + 1 end
+        if ok and (result == nil or result == true or result == 0) then
+            stats.sent = stats.sent + 1
+        else
+            stats.refused = stats.refused + 1
+            if ok and THROTTLED[result] then retry[#retry + 1] = destination end
+        end
+    end
+    -- Throttled somewhere: back off a few seconds and try just those again
+    -- (at most 3 times), instead of losing the message.
+    if #retry > 0 then
+        nextSendAt = GetTime() + 3
+        message.tries = (message.tries or 0) + 1
+        if message.tries <= 3 then
+            message.only = retry
+            table.insert(queue, 1, message)
+        end
     end
 end
 

@@ -97,7 +97,9 @@ local function HelloWithRuleset()
     return (unpack or table.unpack)(fields, 1, 15)
 end
 
+local lastHelloAt = 0
 function SK.SendHello()
+    lastHelloAt = time()
     Net.Send("H", HelloWithRuleset())
 end
 
@@ -127,8 +129,15 @@ Net.Handle("Q", function(sender, _, source)
         C_Timer.After(1 + math.random() * 2, function() Net.Whisper(sender, "H", HelloWithRuleset()) end)
         return
     end
+    -- On the public channel everyone hears everyone's hello anyway (every 5
+    -- minutes): only answer if we haven't said hello in the last minute, so
+    -- one login doesn't make 150 players answer at once.
+    if source == "CHANNEL" and time() - lastHelloAt < 60 then return end
     -- Answer after a short random wait so a whole guild doesn't reply at once.
-    C_Timer.After(1 + math.random() * 4, SK.SendHello)
+    C_Timer.After(1 + math.random() * (source == "CHANNEL" and 20 or 4), function()
+        if source == "CHANNEL" and time() - lastHelloAt < 60 then return end
+        SK.SendHello()
+    end)
 end)
 
 ------------------------------------------------------------------------

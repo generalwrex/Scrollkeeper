@@ -339,9 +339,21 @@ SK.Listen("MY_DATA_CHANGED", function()
     end)
 end)
 
--- Everyone sends their data when someone new says hello, so newcomers
--- catch up. Spread out to avoid everyone answering at once.
-Net.Handle("Q", function()
+-- When someone new asks "who's there?", guild and group answer with their
+-- data so newcomers catch up. On the public channel (150+ players) that
+-- would be thousands of messages per login: there each of us sends our
+-- data at most once every 30 minutes (plus on login and when it changes).
+local lastDataForChannel = 0
+-- (A friend's whispered ask counts like the channel: our data still goes
+-- to everyone, so it must not go out every time someone pings.)
+local SMALL = { GUILD = true, PARTY = true, RAID = true, INSTANCE_CHAT = true }
+Net.Handle("Q", function(_, _, source)
+    if not SMALL[source] then
+        if time() - lastDataForChannel < 30 * 60 then return end
+        lastDataForChannel = time()
+        C_Timer.After(20 + math.random() * 100, SK.SendMyData)
+        return
+    end
     C_Timer.After(5 + math.random() * 20, SK.SendMyData)
 end)
 

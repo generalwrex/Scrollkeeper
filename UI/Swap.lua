@@ -59,7 +59,15 @@ SK.Listen("BAGS_CHANGED", function()
     C_Timer.After(15, function() sendQueued = false SendSpares() end)
 end)
 SK.Listen("NET_READY", function() C_Timer.After(25, function() lastSent = nil SendSpares() end) end)
-Net.Handle("Q", function() C_Timer.After(6 + math.random() * 20, function() lastSent = nil SendSpares() end) end)
+-- Answer "who's there?" with our spares (on the public channel at most
+-- every 10 minutes: everyone else hears them when they change anyway).
+local lastAnswer = 0
+Net.Handle("Q", function(_, _, source)
+    local small = source == "GUILD" or source == "PARTY" or source == "RAID" or source == "INSTANCE_CHAT"
+    if not small and time() - lastAnswer < 600 then return end
+    lastAnswer = time()
+    C_Timer.After(6 + math.random() * 20, function() lastSent = nil SendSpares() end)
+end)
 
 Net.Handle("S", function(sender, f)
     local spares = {}
