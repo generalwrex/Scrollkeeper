@@ -1,9 +1,11 @@
-# Packages the addon and uploads it to CurseForge (and GitHub Releases)
+# Packages the addon and uploads it to CurseForge, Wago (and GitHub Releases)
 # whenever a version tag is pushed, e.g.  git tag v0.5.0 ; git push --tags
 #
 # Tags containing "alpha" or "beta" upload as Alpha / Beta files.
 # Needs a repository secret CF_API_KEY (CurseForge > Account > API tokens)
 # and the CurseForge project ID in Scrollkeeper.toc (## X-Curse-Project-ID).
+# Wago: repository secret WAGO_API_TOKEN (addons.wago.io > Account > API keys)
+# and ## X-Wago-ID in the TOC. Without both, the Wago upload is skipped.
 
 name: Package and release
 
@@ -17,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
       GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
