@@ -177,7 +177,9 @@ commands.realms = DevOnly(function()
             local ok, _, _, _, englishRace, _, _, guidRealm = pcall(GetPlayerInfoByGUID, peer.guid)
             if ok then realm, race = tostring(guidRealm or ""), tostring(englishRace or "?") end
         end
-        Add(("%s | real: %s | realm: %s | %s %s | %s | %s%s%s"):format(sender, SK.ContactName(sender),
+        local anon = peer.anonymous
+        Add(("%s | real: %s | realm: %s | %s %s | %s | %s%s%s"):format(anon and "anonymous player" or sender,
+            anon and "hidden" or SK.ContactName(sender),
             realm ~= "" and realm or "(same as yours)", race, tostring(SK.FactionOfRace(race) or "?"),
             tostring(peer.class), SK.IsUnreachable(sender) and "UNREACHABLE" or "reachable",
             peer.anonymous and " (anonymous)" or "", peer.offline and " (offline)" or ""))
@@ -230,9 +232,12 @@ commands.who = DevOnly(function()
         end
         local color = (SK.IsUnreachable and SK.IsUnreachable(sender)) and "ff5555" or "ffffff"
         local ago = peer.seen and (time() - peer.seen) or -1
-        print(("  |cff%s%s|r  real: %s  ·  %s %s  ·  %s %s, %ds ago  ·  v%s%s"):format(color, sender, real,
+        -- Anonymous means anonymous, here too: no names.
+        local shown = sender
+        if peer.anonymous then shown, real = "anonymous player", "hidden" end
+        print(("  |cff%s%s|r  real: %s  ·  %s %s  ·  %s %s, %ds ago  ·  v%s%s"):format(color, shown, real,
             race, faction, peer.class or "?", peer.source or "?", ago, peer.version or "?",
-            (peer.anonymous and "  (anonymous)" or "") .. (peer.offline and "  |cff808080(offline)|r" or "")))
+(peer.offline and "  |cff808080(offline)|r" or "")))
     end
 end)
 
