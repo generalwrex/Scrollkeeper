@@ -787,3 +787,18 @@ do
   SK.db.mageHistory = nil
   GetRealmName, GetPlayerInfoByGUID = realRealm, realInfo
 end
+
+-- Your mages on another realm layer of the same ruleset count (mail, alt hello).
+do
+  local realRealm, realFaction, realMages = GetRealmName, UnitFactionGroup, SK.db.mages
+  GetRealmName = function() return "CAMWOW US1 Realm 1 PvE" end
+  UnitFactionGroup = function() return "Horde" end
+  SK.db.mages = {
+    ["Layermage-CAMWOW US1 Realm 3 PvE"] = { name = "Layermage", skill = 90, faction = "Horde" },
+    ["Pvpmage-CAMWOW US2 Realm 6 PvP"] = { name = "Pvpmage", skill = 120, faction = "Horde" },
+  }
+  local names = {}
+  for _, mage in ipairs(SK.MailableMages()) do names[#names + 1] = mage.name end
+  print("LAYER mailable mages:", table.concat(names, ", "))
+  GetRealmName, UnitFactionGroup, SK.db.mages = realRealm, realFaction, realMages
+end

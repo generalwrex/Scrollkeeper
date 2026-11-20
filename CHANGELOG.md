@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.2.1
+
+- Fixed: your mages on another realm of the same ruleset (Realm 3 PvE when you're on Realm 1 PvE) were skipped: not offered at the mailbox, and not shown to others when you play another class.
+
 ## 1.2.0
 
 - Setup: Advanced comes first, marked recommended.

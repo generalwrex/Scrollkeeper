@@ -126,7 +126,10 @@ function SK.MailableMages()
     for _, mage in ipairs(SK.MyOtherMages()) do
         local entry = SK.db.mages[mage.key] or {}
         local entryRealm = entry.realm or mage.key:match("%-(.+)$")
-        if (not realm or not entryRealm or entryRealm == realm)
+        -- Same realm, or any realm of the same ruleset (Forever's realm
+        -- numbers are layers: Realm 1 PvE and Realm 3 PvE can mail each other).
+        local sameRuleset = entryRealm and SK.SameServerRealm and SK.SameServerRealm(entryRealm)
+        if (not realm or not entryRealm or entryRealm == realm or sameRuleset)
             and (not faction or not entry.faction or entry.faction == faction) then
             list[#list + 1] = mage
         end
