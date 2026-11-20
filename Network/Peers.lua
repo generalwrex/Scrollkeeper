@@ -228,6 +228,16 @@ function SK.FactionOfRace(englishRace) return RACE_FACTION[englishRace or ""] en
 local function Plain(text) return ((text or ""):gsub("[%s%-]", "")):lower() end
 -- Our own server, as both spellings: the display name and the "normalized"
 -- one that sender names carry ("Name-Server").
+-- Forever has 4 servers (PvE, PvP, RP, RP-PvP), each made of connected
+-- realms: "CAMWOW US1 Realm 1 PvE" and "...Realm 2 PvE" can whisper, mail
+-- and group with each other. So a realm counts as ours when the game lists
+-- it as connected, or when it's the same kind of server (ends in PvE...).
+local function RealmKind(plain)
+    for _, kind in ipairs({ "rppvp", "pvp", "rp", "pve" }) do
+        if plain:sub(-#kind) == kind then return kind end
+    end
+end
+
 local function MyRealms()
     local realms = {}
     if GetRealmName then realms[Plain(GetRealmName())] = true end
@@ -235,8 +245,28 @@ local function MyRealms()
         local normalized = SK.Try(GetNormalizedRealmName)
         if type(normalized) == "string" then realms[Plain(normalized)] = true end
     end
+    for _, connected in ipairs({ GetAutoCompleteRealms and SK.Try(GetAutoCompleteRealms) or nil }) do
+        if type(connected) == "table" then
+            for _, name in ipairs(connected) do realms[Plain(name)] = true end
+        elseif type(connected) == "string" then
+            realms[Plain(connected)] = true
+        end
+    end
     realms[""] = nil
+    -- And the kind of server: any realm of the same kind is reachable.
+    for name in pairs(realms) do
+        local kind = RealmKind(name)
+        if kind then realms.kind = kind end
+    end
     return realms
+end
+
+-- Is this realm (as a sender suffix or from their ID) one we can reach?
+local function OurRealm(realms, realm)
+    local plain = Plain(realm)
+    if realms[plain] then return true end
+    local kind = RealmKind(plain)
+    return kind ~= nil and kind == realms.kind
 end
 
 local function Unreachable(sender, peer)
@@ -244,11 +274,11 @@ local function Unreachable(sender, peer)
     local realms = MyRealms()
     -- Another server: the sender name says so ("Name-Server"), or their ID does.
     local senderRealm = sender:match("%-([^%-]+)$")
-    if senderRealm and next(realms) and not realms[Plain(senderRealm)] then return true end
+    if senderRealm and next(realms) and not OurRealm(realms, senderRealm) then return true end
     if not (peer.guid and GetPlayerInfoByGUID) then return false end
     local ok, _, _, _, englishRace, _, _, realm = pcall(GetPlayerInfoByGUID, peer.guid)
     if not ok then return false end
-    if type(realm) == "string" and realm ~= "" and next(realms) and not realms[Plain(realm)] then return true end
+    if type(realm) == "string" and realm ~= "" and next(realms) and not OurRealm(realms, realm) then return true end
     -- The other faction (Pandaren and unknown races could be either: keep them).
     local faction = RACE_FACTION[englishRace or ""]
     local mine = UnitFactionGroup and UnitFactionGroup("player")

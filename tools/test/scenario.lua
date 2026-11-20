@@ -691,3 +691,16 @@ do
   GetRealmName = realRealm
   SK.db.mageHistory = nil
 end
+
+-- Connected realms: other PvE realms are reachable, other server kinds aren't.
+do
+  local realRealm, realNorm = GetRealmName, GetNormalizedRealmName
+  GetRealmName = function() return "CAMWOW US1 Realm 1 PvE" end
+  GetNormalizedRealmName = function() return "CAMWOWUS1Realm1PvE" end
+  for _, sender in ipairs({ "Pve2-CAMWOWUS1Realm2PvE", "Same-CAMWOWUS1Realm1PvE", "Rppvp-CAMWOWUS1Realm9RPPvP", "Pvp-CAMWOWUS2Realm6PvP", "Rp-CAMWOWUS1Realm3RP", "Local" }) do
+    SK.peers[sender] = { class = "MAGE", tiers = {}, upgrades = {}, seen = time(), level = 20, skill = 50 }
+    print("REALM", sender, SK.IsUnreachable(sender) and "unreachable" or "reachable")
+    SK.peers[sender] = nil
+  end
+  GetRealmName, GetNormalizedRealmName = realRealm, realNorm
+end

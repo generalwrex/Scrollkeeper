@@ -2,6 +2,7 @@
 
 ## 1.2.0
 
+- **Big fix: Fellow Mages was hiding most of your server.** Mages on the other realms of your server (like Realm 2 PvE when you're on Realm 1 PvE) were treated as unreachable, but connected realms can whisper, mail and group. They all show up now; only the other server kinds (PvP, RP, RP-PvP) and the other faction stay out.
 - The mailbox list says it plainly: COD is not endorsed by Scrollkeeper, scroll sharing should be free!
 - **Fellow Mages remembers** the last 15 mages you could reach (for a week): offline ones show grayed out with when you saw them, their level and what they need, and the mailbox still offers them your spare skill-up scrolls.
 - Mailing scrolls fills in the subject and a short note (what they're for, and to send back any they don't need). Your own subject or note is never replaced.
