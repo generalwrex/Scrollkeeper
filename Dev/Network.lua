@@ -66,6 +66,28 @@ function SK.NetReport()
     Add(Label(Net.CHANNEL_NAME, id > 0 and ("/" .. id) or C(RED, "NOT JOINED")) .. "   " .. Label("members", tostring(members or "?"))
         .. "   " .. Label("guild", tostring(IsInGuild and IsInGuild())) .. "   " .. Label("group", tostring(IsInGroup and IsInGroup())))
 
+    -- Who's in the channel but never heard? (Characters that once ran
+    -- Scrollkeeper keep the channel even after it's removed or turned off.)
+    local roster = C_ChatInfo and C_ChatInfo.GetChannelRosterInfo or GetChannelRosterInfo
+    if id > 0 and roster and members and members > 0 then
+        local heardShort = {}
+        for sender in pairs(Net.heard or {}) do heardShort[Net.ShortName(sender):lower()] = true end
+        for sender in pairs(SK.peers or {}) do heardShort[Net.ShortName(sender):lower()] = true end
+        local silent, names = 0, {}
+        for i = 1, members do
+            local name = SK.Try(roster, id, i)
+            if type(name) == "string" and name ~= "" then
+                local short = Net.ShortName(name)
+                if not heardShort[short:lower()] and short ~= UnitName("player") then
+                    silent = silent + 1
+                    if #names < 40 then names[#names + 1] = short end
+                end
+            end
+        end
+        Add(Label("silent members", silent) .. C(GREY, "  (in the channel, never heard)"))
+        if #names > 0 then Add(C(GREY, table.concat(names, ", ") .. (silent > #names and ", ..." or ""))) end
+    end
+
     Header("Versions out there")
     local versions = {}
     for _, peer in pairs(SK.peers or {}) do
