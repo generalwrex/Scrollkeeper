@@ -353,9 +353,11 @@ local function Ask(host)
         Net.Whisper(target, "DA")
         SK.Print(L["asked %s to invite you. Accept the invite (Scrollkeeper does it for you), then click Teleport."]:format(trip.short))
     elseif ChatFrame_OpenChat then
-        local where = trip.place and trip.place.town or ""
-        ChatFrame_OpenChat(("/w %s %s"):format(target,
-            L["Hi! Could you invite me to your group for a moment? I'd use Scroll of Liminal Passage to teleport to you (it works while you rest in %s). I'll leave right after. Thanks!"]:format(where)))
+        -- Short and friendly: what you want, why it's quick, that you'll go.
+        local text = trip.place
+            and L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(trip.place.town)
+            or L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
+        ChatFrame_OpenChat(("/w %s %s"):format(target, text))
     end
     SK.Send("DOORS_CHANGED")
 end
