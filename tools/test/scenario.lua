@@ -588,3 +588,21 @@ if SK.isMage then
   print("EXPIRING again (should stay hidden)", ScrollkeeperToast:IsShown())
   GetWeaponEnchantInfo, SK.BestScroll = realEnchant, realBest
 end
+
+-- Khadgar's Unlocking: a hint on locked chests (a fake tooltip).
+if SK.isMage then
+  local realCount, lines, added = SK.UnlockingCount, { "Battered Chest", "Locked" }, {}
+  SK.UnlockingCount = function() return 2 end
+  _G.FakeTipTextLeft1 = { GetText = function() return lines[1] end }
+  _G.FakeTipTextLeft2 = { GetText = function() return lines[2] end }
+  local tip = { GetName = function() return "FakeTip" end, NumLines = function() return #lines end,
+    GetItem = function() end, GetUnit = function() end, Show = function() end,
+    AddLine = function(_, text) added[#added + 1] = text end }
+  SK.UnlockHint(tip)
+  print("UNLOCK hint:", added[1], "|", added[2])
+  local plain = { GetName = function() return "FakeTip" end, NumLines = function() return 1 end,
+    GetItem = function() end, GetUnit = function() end, Show = function() end, AddLine = function() error("no hint on unlocked things") end }
+  SK.UnlockHint(plain)
+  print("UNLOCK button:", ScrollkeeperUnlockButton and ScrollkeeperUnlockButton._attrs.type, ScrollkeeperUnlockButton and ScrollkeeperUnlockButton._attrs.item)
+  SK.UnlockingCount = realCount
+end

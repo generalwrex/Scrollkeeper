@@ -60,6 +60,8 @@ Mage scroll helper for WoW Forever.
 - **Mailbox helper:** your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail.
 - **Guild bank** dots on scrolls someone would level from, and **chat notes** when someone links a scroll asking who
   needs it.
+- **Locked chests:** a key binding for Scroll of Khadgar's Unlocking (press it, then click the chest), and a
+  tooltip hint on locked chests.
 - **Reminders:** a small pop-up when your imbue or familiar wears off and you have a scroll for it.
 - **World map pins:** libraries where Study worked, and spots where untranslated scrolls dropped.
 - **Backup and restore** all your Scrollkeeper data (Options > Scrollkeeper > Backup), in case you ever wipe WTF.

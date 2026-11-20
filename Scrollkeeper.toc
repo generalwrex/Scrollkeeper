@@ -67,6 +67,7 @@ UI\Log.lua
 UI\Doors.lua
 UI\Plan.lua
 UI\Icon.lua
+UI\Unlock.lua
 UI\Minimap.lua
 UI\Setup.lua
 UI\Integrations.lua
