@@ -122,7 +122,7 @@ print("peers with demo", #SK.PeerList())
 local odds1, t1, p1 = SK.CommunityOdds(1); print("demo odds tier1", t1, p1, odds1[1].name)
 SlashCmdList.SCROLLKEEPER("net")
 -- Liminal Passage doors
-fire("CHAT_MSG_ADDON", "Scrollkeeper", "D|Ironforge|2|1455|1", "GUILD", "Kaelith-Realm")
+fire("CHAT_MSG_ADDON", "Scrollkeeper", "G|Ironforge|2|1455|1", "GUILD", "Kaelith-Realm")
 print("open doors (demo on)", #SK.OpenDoors())
 SlashCmdList.SCROLLKEEPER("doors")
 SK.RefreshDoors()

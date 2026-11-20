@@ -13,7 +13,7 @@
 --   bottom  one button that does the next step: Ask, Teleport, Leave group
 --
 -- Network (doors are opt-in: "Be a door"):
---   D|place|scrolls|mapID|auto   my door: where I rest ("" = not one now),
+--   G|place|scrolls|mapID|auto   my door: where I rest ("" = not one now),
 --                                Liminal Passage scrolls carried, the
 --                                zone's map ID, "1" if I invite by myself
 --   DA                           whisper: "can I come to you?"
@@ -137,7 +137,7 @@ local function SendDoor(force)
     local text = table.concat({ place, SK.LiminalCount(), tostring(MyMapID()), auto }, "#")
     if text == lastSent and not force then return end
     lastSent = text
-    Net.Send("D", place, SK.LiminalCount(), place ~= "" and MyMapID() or "", auto)
+    Net.Send("G", place, SK.LiminalCount(), place ~= "" and MyMapID() or "", auto)
 end
 SK.SendDoor = SendDoor
 
@@ -165,7 +165,7 @@ Net.Handle("Q", function() C_Timer.After(6 + math.random() * 20, function() SK.S
 -- SK.doors[sender] = { place, scrolls, map, auto, at }
 SK.doors = {}
 
-Net.Handle("D", function(sender, f)
+Net.Handle("G", function(sender, f)
     local place = tostring(f[1] or ""):sub(1, 80)
     SK.doors[sender] = {
         place = place ~= "" and place or nil, scrolls = math.min(tonumber(f[2]) or 0, 99),
@@ -235,7 +235,7 @@ function SK.DoorPlaces()
     for order, place in ipairs(PLACES) do
         if place.side == "both" or not mine or place.side == mine then
             list[#list + 1] = { place = place, doors = counts[place] or 0, order = order,
-                own = place.capital and KnowsSpell(place.teleport) }
+                own = (place.capital and KnowsSpell(place.teleport)) and true or false }
         end
     end
     table.sort(list, function(a, b)
@@ -522,7 +522,7 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(LEFT_W + RIGHT_W + 50, 520)
+    window:SetSize(LEFT_W + RIGHT_W + 50, 556)
     window:SetPoint("CENTER", 120, 0)
     window:SetToplevel(true)
     window:SetClampedToScreen(true)
