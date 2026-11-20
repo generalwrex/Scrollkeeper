@@ -10,6 +10,7 @@ local _, SK = ...
 local Net = SK.Net
 
 local window, paused
+local SPEEDS, speedIndex, lastRefresh = { 0.5, 1, 2, 5 }, 2, 0   -- seconds between refreshes
 
 local function Ago(at)
     if not at then return "never" end
@@ -317,6 +318,13 @@ local function Build()
         SK.Print("network report saved. /reload writes it to disk (ScrollkeeperDB.netReport).")
     end)
     Button("Ask who's there", 556, function() Net.Send("Q") SK.Print("sent \"who's there?\" (Q).") end)
+    -- Speed: how often the report redraws.
+    local speed = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+    speed:SetSize(60, 22)
+    speed:SetPoint("BOTTOMRIGHT", -12, 12)
+    local function SpeedLabel() speed:SetText(SPEEDS[speedIndex] .. "s") end
+    SpeedLabel()
+    speed:SetScript("OnClick", function() speedIndex = speedIndex % #SPEEDS + 1 SpeedLabel() end)
     window:Hide()
 end
 
@@ -336,7 +344,11 @@ end
 
 SK.Listen("READY", function()
     if not C_Timer.NewTicker then return end
-    C_Timer.NewTicker(2, function() SK.Safely("net dev", SK.RefreshNetDev) end)
+    C_Timer.NewTicker(0.25, function()
+        if GetTime() - lastRefresh < SPEEDS[speedIndex] then return end
+        lastRefresh = GetTime()
+        SK.Safely("net dev", SK.RefreshNetDev)
+    end)
     if SK.devCopy then C_Timer.NewTicker(STEP, function() SK.Safely("net dev sample", TakeSample) end) end
 end)
 
