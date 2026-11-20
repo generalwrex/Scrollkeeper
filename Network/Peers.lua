@@ -204,7 +204,7 @@ Net.Handle("H", function(sender, f, source)
     SK.peers[sender] = peer
     -- Anonymous players still count, but never show up by name.
     peer.anonymous = f[11] == "1"
-    local RULESETS = { PvE = true, PvP = true, RP = true, ["RP-PvP"] = true }
+    local RULESETS = { PvE = true, PvP = true, RP = true, ["RP-PvP"] = true, Hardcore = true }
     peer.ruleset = RULESETS[f[15] or ""] and f[15] or nil
     -- Playing another class but has a mage: remember it, to list and mail it.
     local altName = tostring(f[12] or ""):sub(1, 40)
@@ -283,8 +283,9 @@ local function Plain(text) return ((text or ""):gsub("[%s%-]", "")):lower() end
 -- and group with each other. So a realm counts as ours when the game lists
 -- it as connected, or when it's the same ruleset (ends in PvE...).
 local function RealmKind(plain)
-    for _, kind in ipairs({ "rppvp", "pvp", "rp", "pve" }) do
-        if plain:sub(-#kind) == kind then return kind end
+    -- Hardcore isn't out yet; this guesses its realm names end like this.
+    for _, kind in ipairs({ "hardcore", "hc", "rppvp", "pvp", "rp", "pve" }) do
+        if plain:sub(-#kind) == kind then return kind == "hc" and "hardcore" or kind end
     end
 end
 
@@ -313,7 +314,7 @@ end
 
 -- Your ruleset as people say it: "PvE", "PvP", "RP" or "RP-PvP"
 -- (nil if the realm name doesn't say).
-local KIND_LABELS = { pve = "PvE", pvp = "PvP", rp = "RP", rppvp = "RP-PvP" }
+local KIND_LABELS = { pve = "PvE", pvp = "PvP", rp = "RP", rppvp = "RP-PvP", hardcore = "Hardcore" }
 function SK.ServerKind()
     local kind = GetRealmName and RealmKind(Plain(GetRealmName()))
     return kind and KIND_LABELS[kind]

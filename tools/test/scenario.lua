@@ -723,7 +723,7 @@ end
 -- "Fellow PvE Mages"
 do
   local realRealm = GetRealmName
-  for _, realm in ipairs({ "CAMWOW US1 Realm 1 PvE", "CAMWOW US1 Realm 9 RPPvP", "CAMWOW US2 Realm 6 PvP", "Forever" }) do
+  for _, realm in ipairs({ "CAMWOW US1 Realm 1 PvE", "CAMWOW US1 Realm 9 RPPvP", "CAMWOW US2 Realm 6 PvP", "CAMWOW US1 Realm 4 Hardcore", "Cam Wow AU 1 Realm 2 PvP", "Forever" }) do
     GetRealmName = function() return realm end
     print("TITLE", realm, "->", SK.FellowMagesTitle())
   end
