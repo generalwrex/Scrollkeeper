@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.7):** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there. `/sk doors` or the new button on the panel.
+**Latest (1.1.8):** bug fix! No more "secret boolean" errors, and Decipher reads your best skill-up scroll first again. **1.1.7:** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there. `/sk doors` or the new button on the panel.
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 

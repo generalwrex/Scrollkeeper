@@ -2,6 +2,8 @@
 
 ## 1.1.8
 
+Bug fix.
+
 - Fixed: an error about a "secret boolean" (Modules/Farm.lua). The game now hides some player info from addons in places; Scrollkeeper skips it instead of erroring.
 - Fixed: Decipher (the button and the scroll icon) now reads the scroll with the best skill-up chance first. It was taking the lowest tier, so a green tier 15 went before an orange tier 50.
 
