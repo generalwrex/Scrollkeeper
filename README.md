@@ -47,7 +47,7 @@ Mage scroll helper for WoW Forever.
   an inn or a city. Pick a town and see who you can go to: Scrollkeeper users who offer to be a **door** (click, they
   invite you, the invite is accepted for you) and anyone else there (a ready-made whisper asking for an
   invite). Guildies and friends first. One button does the next step: ask, Teleport, Leave group. Being a door is
-  off unless you turn it on.
+  off unless you turn it on. (Curnil's idea!)
 - Shared odds, skill-up rates, libraries, drop spots and sheep backfires make everyone's numbers better.
 - **Sharing** is Full, Anonymous, Simple (guild, group and friends only) or None. Only scroll data is sent, never
   chat or gold.
