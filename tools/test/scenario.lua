@@ -719,3 +719,13 @@ do
   SK.peers["Rotting Reverend"] = nil
   GetRealmName = realRealm
 end
+
+-- "Fellow PvE Mages"
+do
+  local realRealm = GetRealmName
+  for _, realm in ipairs({ "CAMWOW US1 Realm 1 PvE", "CAMWOW US1 Realm 9 RPPvP", "CAMWOW US2 Realm 6 PvP", "Forever" }) do
+    GetRealmName = function() return realm end
+    print("TITLE", realm, "->", SK.FellowMagesTitle())
+  end
+  GetRealmName = realRealm
+end

@@ -308,7 +308,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
     local function Keep(region) table.insert(pane.regions, region) return region end
     local y = top
 
-    local users = Keep(SK.UI.CreateHeader(host, L["Fellow Mages"], width))
+    local users = Keep(SK.UI.CreateHeader(host, SK.FellowMagesTitle and SK.FellowMagesTitle() or L["Fellow Mages"], width))
     users:SetPoint("TOPLEFT", left, y)
     y = y - 26
 
@@ -619,7 +619,7 @@ local function Build()
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
     if window.SetDontSavePosition then window:SetDontSavePosition(true) end
     if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Misc_Book_09") end
-    window:SetTitle(L["Scrollkeeper: Fellow Mages"])
+    window:SetTitle(L["Scrollkeeper: "] .. (SK.FellowMagesTitle and SK.FellowMagesTitle() or L["Fellow Mages"]))
     tinsert(UISpecialFrames, "ScrollkeeperNetworkFrame")   -- Escape closes it
 
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)

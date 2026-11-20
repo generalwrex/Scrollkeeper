@@ -292,12 +292,29 @@ local function MyRealms()
     return realms
 end
 
+-- Your server's kind as people say it: "PvE", "PvP", "RP" or "RP-PvP"
+-- (nil if the realm name doesn't say).
+local KIND_LABELS = { pve = "PvE", pvp = "PvP", rp = "RP", rppvp = "RP-PvP" }
+function SK.ServerKind()
+    local kind = GetRealmName and RealmKind(Plain(GetRealmName()))
+    return kind and KIND_LABELS[kind]
+end
+
+-- "Fellow PvE Mages" (just "Fellow Mages" if the realm name doesn't say).
+function SK.FellowMagesTitle()
+    local kind = SK.ServerKind()
+    return kind and L["Fellow %s Mages"]:format(kind) or L["Fellow Mages"]
+end
+
 -- Is this realm (as a sender suffix or from their ID) one we can reach?
 local function OurRealm(realms, realm)
     local plain = Plain(realm)
     if realms[plain] then return true end
+    -- Realm numbers are layers of one server: only the kind matters. If
+    -- either name doesn't say its kind, keep them (better shown than hidden).
     local kind = RealmKind(plain)
-    return kind ~= nil and kind == realms.kind
+    if not kind or not realms.kind then return true end
+    return kind == realms.kind
 end
 
 local function Unreachable(sender, peer)
