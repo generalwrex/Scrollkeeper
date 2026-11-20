@@ -32,8 +32,8 @@ local function BuildQuestions()
     local list = {}
     if SK.isMage then
         list[#list + 1] = { key = "viewMode", question = L["How much should the panel show?"], options = {
+            { "full", L["Advanced"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Everything: all the numbers, sections and weapon upgrades."], ICON .. "INV_Misc_Book_09" },
             { "compact", L["Simple"], L["Buttons, bars and your scrolls."], ICON .. "INV_Scroll_03" },
-            { "full", L["Advanced"], L["Everything: all the numbers, sections and weapon upgrades."], ICON .. "INV_Misc_Book_09" },
             { "mini", L["Title only"], L["Just the title and your skill bar."], ICON .. "INV_Scroll_05" },
         } }
         list[#list + 1] = { key = "open", question = L["How do you want to open it?"], multi = true,
