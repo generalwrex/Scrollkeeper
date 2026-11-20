@@ -124,6 +124,7 @@ local DEV_COMMANDS = {
     { "dev", "this list" },
     { "who", "everyone heard: real name, race, faction, source, last heard" },
     { "places", "Doorways towns: map ID, the zone name /who searches, and your faction's" },
+    { "realms", "your realm, connected realms, and every player heard with their realm (copy box)" },
     { "scan", "dump game data to the saved file (Dev/Scan.lua)" },
     { "show", "show the latest scan to copy" },
     { "eventlog", "start or stop recording game events" },
@@ -149,6 +150,42 @@ end)
 
 -- Every Doorways town with the zone name the game gives its map ID, so a
 -- wrong map ID shows up (MISSING, or the wrong zone next to the town).
+-- Realms: yours, the connected ones, and everyone heard, with whether
+-- Fellow Mages counts them as reachable. In the copy box.
+commands.realms = DevOnly(function()
+    local lines = {}
+    local function Add(text) lines[#lines + 1] = text end
+    Add("Realm: " .. tostring(GetRealmName and GetRealmName()))
+    Add("Normalized: " .. tostring(GetNormalizedRealmName and GetNormalizedRealmName()))
+    Add("Faction: " .. tostring(UnitFactionGroup and UnitFactionGroup("player")))
+    local connected = GetAutoCompleteRealms and { GetAutoCompleteRealms() } or {}
+    local names = {}
+    for _, value in ipairs(connected) do
+        if type(value) == "table" then for _, name in ipairs(value) do names[#names + 1] = tostring(name) end
+        else names[#names + 1] = tostring(value) end
+    end
+    Add("Connected realms (game): " .. (#names > 0 and table.concat(names, ", ") or "none listed"))
+    Add("")
+    Add("Players heard (" .. SK.version .. "):")
+    local senders = {}
+    for sender in pairs(SK.peers or {}) do senders[#senders + 1] = sender end
+    table.sort(senders)
+    for _, sender in ipairs(senders) do
+        local peer = SK.peers[sender]
+        local realm, race = "", "?"
+        if peer.guid and GetPlayerInfoByGUID then
+            local ok, _, _, _, englishRace, _, _, guidRealm = pcall(GetPlayerInfoByGUID, peer.guid)
+            if ok then realm, race = tostring(guidRealm or ""), tostring(englishRace or "?") end
+        end
+        Add(("%s | real: %s | realm: %s | %s %s | %s | %s%s%s"):format(sender, SK.ContactName(sender),
+            realm ~= "" and realm or "(same as yours)", race, tostring(SK.FactionOfRace(race) or "?"),
+            tostring(peer.class), SK.IsUnreachable(sender) and "UNREACHABLE" or "reachable",
+            peer.anonymous and " (anonymous)" or "", peer.offline and " (offline)" or ""))
+    end
+    if #senders == 0 then Add("  nobody heard yet") end
+    SK.ShowTextBox("Realms", table.concat(lines, "\n"))
+end)
+
 commands.places = DevOnly(function()
     local mine = UnitFactionGroup and UnitFactionGroup("player")
     local lines = { "You: " .. tostring(mine), "" }
