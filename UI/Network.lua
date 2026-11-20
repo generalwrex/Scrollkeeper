@@ -310,6 +310,19 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
 
     local users = Keep(SK.UI.CreateHeader(host, SK.FellowMagesTitle and SK.FellowMagesTitle() or L["Fellow Mages"], width))
     users:SetPoint("TOPLEFT", left, y)
+    -- The title sits in the space left of the sort icons ("Fellow RP-PvP
+    -- Mages" is long enough to run under them otherwise).
+    if users.Title then
+        users.Title:ClearAllPoints()
+        users.Title:SetPoint("LEFT", users, "LEFT", 14, 0)
+        users.Title:SetPoint("RIGHT", users, "RIGHT", -(10 + #MAGE_SORT_ORDER * 19), 0)
+        users.Title:SetJustifyH("CENTER")
+        users.Title:SetWordWrap(false)
+        -- Still too wide (long ruleset names, other languages)? A smaller font.
+        local room = width - 14 - (10 + #MAGE_SORT_ORDER * 19)
+        local wide = users.Title.GetUnboundedStringWidth and users.Title:GetUnboundedStringWidth() or users.Title:GetStringWidth()
+        if type(wide) == "number" and wide > room and GameFontNormalSmall then users.Title:SetFontObject(GameFontNormalSmall) end
+    end
     y = y - 26
 
     -- Small sort icons on the right of the header: click one to sort by
