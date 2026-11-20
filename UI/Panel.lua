@@ -1074,7 +1074,8 @@ local function Layout()
     end
 
     local height = -y + 20   -- room under the last line for the window's border
-    if advanced then height = math.max(height, TOP - 4 + side.height) end
+    -- (side.height already counts from the panel's top edge.)
+    if advanced then height = math.max(height, side.height) end
     panel:SetHeight(height)
     KeepAboveActionBars()
 
