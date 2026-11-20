@@ -14,9 +14,11 @@ local YARD_THRESHOLD = 20
 -- second and first values, in yards.
 local KNOWN_LIBRARY_COORDS = {
     { inst = 0, x = 161.5, y = 1672.2, name = "Magic Quarter", side = "Horde", map = 1458,
-      librarian = "Owen Thadd", city = "Undercity", firstBook = "Orgrimmar's Valley of Spirits" },
+      librarian = "Owen Thadd", city = "Undercity", firstBook = "Orgrimmar's Valley of Spirits",
+      firstBookName = "The Lessons of Ta'zo", firstBookSpot = "38, 78" },
     { inst = 0, x = 868.5, y = -9004.5, name = "Wizard's Sanctum", side = "Alliance", map = 1453,
-      librarian = "Garion Wendell", city = "Stormwind", firstBook = "Ironforge's Hall of Explorers" },
+      librarian = "Garion Wendell", city = "Stormwind", firstBook = "Ironforge's Hall of Explorers",
+      firstBookName = "Archmage Antonidas: The Unabridged Autobiography", firstBookSpot = "76, 10" },
 }
 
 -- Seconds until Study is ready. 0 means ready now.
@@ -61,8 +63,8 @@ end
 -- How to get Study, in one line: hand a library book to your librarian.
 function SK.HowToLearnStudy()
     local library = SK.MyLibrary()
-    return L["Learn Study: hand a library book to %s in %s (%s). Your first book is always in %s."]:format(
-        L[library.librarian], L[library.city], L[library.name], L[library.firstBook])
+    return L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %s: %s (%s), click it to pick it up."]:format(
+        L[library.librarian], L[library.city], L[library.name], L[library.firstBook], L[library.firstBookName], library.firstBookSpot)
 end
 
 -- Not in a library? Open the world map on your faction's library and put
