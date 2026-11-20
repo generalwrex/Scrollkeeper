@@ -222,7 +222,10 @@ function SK.ContactName(sender)
     if peer and peer.guid and GetPlayerInfoByGUID then
         local ok, _, _, _, _, _, name, realm = pcall(GetPlayerInfoByGUID, peer.guid)
         if ok and type(name) == "string" and name ~= "" then
-            if type(realm) == "string" and realm ~= "" then
+            -- On Forever the realms of one server (Realm 1 PvE, Realm 3
+            -- PvE...) are layers: whispers and mail only work by the plain
+            -- name there. Keep the realm only for a different server.
+            if type(realm) == "string" and realm ~= "" and not (SK.SameServerRealm and SK.SameServerRealm(realm)) then
                 return name .. "-" .. realm:gsub("[%s%-]", "")
             end
             return name
@@ -317,6 +320,11 @@ local function OurRealm(realms, realm)
     return kind == realms.kind
 end
 
+-- Is this realm one of ours (same server, any layer)?
+function SK.SameServerRealm(realm)
+    return OurRealm(MyRealms(), realm)
+end
+
 local function Unreachable(sender, peer)
     if peer.demo then return false end
     local realms = MyRealms()
@@ -366,6 +374,16 @@ local HISTORY_MAX, HISTORY_DAYS = 15, 7
 
 local function PruneHistory()
     local history = SK.db.mageHistory or {}
+    -- Names saved with a realm of our own server (before 1.2.0 knew realms
+    -- were layers) lose it: mail only reaches the plain name.
+    for key, entry in pairs(history) do
+        local base, realm = key:match("^(.-)%-([^%-]+)$")
+        if base and SK.SameServerRealm and SK.SameServerRealm(realm) then
+            history[key] = nil
+            entry.name = base
+            if not history[base] or (history[base].seen or 0) < (entry.seen or 0) then history[base] = entry end
+        end
+    end
     local cutoff, list = time() - HISTORY_DAYS * 86400, {}
     for key, entry in pairs(history) do
         if (entry.seen or 0) < cutoff then history[key] = nil else list[#list + 1] = key end

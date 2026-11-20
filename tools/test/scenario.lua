@@ -743,3 +743,16 @@ do
   SK.db.mageHistory = nil
   GetRealmName = realRealm
 end
+
+-- Whisper/mail names: same server (any layer) by plain name, other servers keep the realm.
+do
+  local realRealm, realInfo = GetRealmName, GetPlayerInfoByGUID
+  GetRealmName = function() return "CAMWOW US1 Realm 1 PvE" end
+  local realms = { ["Player-1-AA"] = "CAMWOWUS1Realm3PvE", ["Player-1-BB"] = "CAMWOWUS1Realm9RPPvP" }
+  GetPlayerInfoByGUID = function(guid) return "Mage", "MAGE", "Undead", "Scourge", 2, guid == "Player-1-AA" and "Count Turbo" or "Seifer", realms[guid] end
+  SK.peers["T"] = { guid = "Player-1-AA", class = "MAGE", tiers = {}, upgrades = {}, seen = time() }
+  SK.peers["S"] = { guid = "Player-1-BB", class = "MAGE", tiers = {}, upgrades = {}, seen = time() }
+  print("CONTACT", SK.ContactName("T"), "|", SK.ContactName("S"))
+  SK.peers["T"], SK.peers["S"] = nil, nil
+  GetRealmName, GetPlayerInfoByGUID = realRealm, realInfo
+end
