@@ -24,7 +24,7 @@ local L = SK.L
 local Net = SK.Net
 
 SK.LIMINAL_PASSAGE = 213548
-local PLACE_ROWS, HOST_ROWS = 17, 9
+local PLACE_ROWS, HOST_ROWS = 27, 9
 local LEFT_W, RIGHT_W = 200, 300
 local INVITES_PER_10MIN = 6
 
@@ -297,7 +297,6 @@ local WHO_WINDOWS = { "LFGWhoListFrame", "FriendsFrame", "WhoFrame", "LFGParentF
 local WHO_COOLDOWN = 15
 
 function SK.DoorWhoReady() return time() - lastWho >= WHO_COOLDOWN end
-
 local function SearchWho(place)
     if not (C_FriendList and C_FriendList.SendWho) or not SK.DoorWhoReady() then return end
     local zone = ZoneName(place.map)
@@ -499,6 +498,15 @@ end
 
 local window
 
+-- The search button: its text, with the seconds left while it cools down.
+local function UpdateWhoButton()
+    if not (window and type(selected) == "table") then return end
+    local zone = ZoneName(selected.map) or selected.town
+    local left = WHO_COOLDOWN - (time() - lastWho)
+    window.who:SetEnabled(left <= 0)
+    window.who:SetText(left > 0 and L["Find players in %s (%ds)"]:format(zone, left) or L["Find players in %s"]:format(zone))
+end
+
 -- What the big button does now: "ask", "teleport", "leave" or nil.
 local function NextStep()
     if not trip then return nil end
@@ -624,6 +632,16 @@ local function Build()
         if type(selected) == "table" then SearchWho(selected) end
         SK.RefreshDoors()
     end)
+    -- Hover works on it while it's cooling down too.
+    if who.SetMotionScriptsWhileDisabled then who:SetMotionScriptsWhileDisabled(true) end
+    who:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(L["Find players"])
+        GameTooltip:AddLine(L["Uses the game's /who search to find everyone in that zone. People standing in the town come first, but /who can't tell if they're resting."], 1, 1, 1, true)
+        GameTooltip:AddLine(L["The game allows one search every 15 seconds."], 1, 0.82, 0, true)
+        GameTooltip:Show()
+    end)
+    who:SetScript("OnLeave", function() GameTooltip:Hide() end)
     window.who = who
 
     -- The next step
@@ -734,13 +752,12 @@ function SK.RefreshDoors()
             end
         end
         row.onClick = function() Ask(host) end
-    end, selected == "all" and L["No open doors right now. Pick a place to search it with /who."]
-        or L["No doors here. Search with /who below to find anyone in this zone."])
+    end, selected == "all" and L["No open doors right now. Pick a place to find players there."]
+        or L["No doors here. Search below to find anyone in this zone."])
 
     if type(selected) == "table" then
         window.who:Show()
-        window.who:SetEnabled(SK.DoorWhoReady())
-        window.who:SetText(L["Search %s with /who"]:format(ZoneName(selected.map) or selected.town))
+        UpdateWhoButton()
     else
         window.who:Hide()
     end
@@ -759,5 +776,5 @@ SK.Listen("BAGS_CHANGED", SK.RefreshDoors)
 SK.On("GROUP_ROSTER_UPDATE", function() SK.RefreshDoors() end)
 SK.On("PLAYER_UPDATE_RESTING", function() C_Timer.After(0.5, SK.RefreshDoors) end)
 SK.On("PLAYER_REGEN_ENABLED", function() SK.RefreshDoors() end)
--- The /who button waits out its cooldown.
-SK.Listen("READY", function() C_Timer.NewTicker(5, function() if window and window:IsShown() and window.who:IsShown() then window.who:SetEnabled(SK.DoorWhoReady()) end end) end)
+-- The search button counts down its cooldown.
+SK.Listen("READY", function() C_Timer.NewTicker(1, function() if window and window:IsShown() and window.who:IsShown() then UpdateWhoButton() end end) end)

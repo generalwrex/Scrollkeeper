@@ -4,7 +4,7 @@
 
 - **Doorways (/sk doors, or the new button on the panel): getting around with Scroll of Liminal Passage.** The scroll takes you to a group member resting in an inn or a city. Pick a town (neutral ones first; capitals you can already teleport to are greyed out) and Doorways shows who you can go to:
   - Scrollkeeper users who offer to be a **door**: click one, they invite you, and the invite is accepted for you.
-  - Anyone else in that zone, found with /who: people standing in the town come first. Click one for a ready-made whisper asking for an invite (you press Enter to send it), and their invite is accepted for you. They don't need any addon.
+  - Anyone else in that zone: people standing in the town come first. Click one for a ready-made whisper asking for an invite (you press Enter to send it), and their invite is accepted for you. They don't need any addon.
   - Guildies and friends are tagged and listed first.
   - One button does the next step: ask, **Teleport**, then **Leave group**.
 - Be a door yourself: tick "Be a door" (off unless you turn it on). Mages who ask get a pop-up, or tick "Invite by myself" to skip it.

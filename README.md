@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.7):** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there with /who. `/sk doors` or the new button on the panel.
+**Latest (1.1.7):** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there. `/sk doors` or the new button on the panel.
 
 Mage scroll helper for WoW Forever.
 
@@ -45,7 +45,7 @@ Mage scroll helper for WoW Forever.
 - **Scroll Swap:** who has spare scrolls you'd level from, and who'd want yours.
 - **Doorways** (`/sk doors`): get around with Scroll of Liminal Passage, which takes you to a group member resting in
   an inn or a city. Pick a town and see who you can go to: Scrollkeeper users who offer to be a **door** (click, they
-  invite you, the invite is accepted for you) and anyone /who finds there (a ready-made whisper asking for an
+  invite you, the invite is accepted for you) and anyone else there (a ready-made whisper asking for an
   invite). Guildies and friends first. One button does the next step: ask, Teleport, Leave group. Being a door is
   off unless you turn it on.
 - Shared odds, skill-up rates, libraries, drop spots and sheep backfires make everyone's numbers better.
