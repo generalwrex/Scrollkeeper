@@ -403,7 +403,10 @@ function SK.RememberMage(sender, peer)
     local tiers = {}
     for _, tier in ipairs(SK.TIERS) do if mage.tiers[tier] then tiers[#tiers + 1] = tier end end
     SK.db.mageHistory = SK.db.mageHistory or {}
-    SK.db.mageHistory[name] = { name = name, level = level, skill = mage.skill, tiers = tiers, seen = time() }
+    -- Saved account-wide: note the ruleset and faction, so only characters
+    -- who can reach them list them.
+    SK.db.mageHistory[name] = { name = name, level = level, skill = mage.skill, tiers = tiers, seen = time(),
+        ruleset = SK.ServerKind and SK.ServerKind() or nil, faction = UnitFactionGroup and UnitFactionGroup("player") or nil }
     PruneHistory()
 end
 
@@ -423,8 +426,12 @@ function SK.MageHistory()
         end
     end
     local list = {}
+    local ruleset = SK.ServerKind and SK.ServerKind() or nil
+    local faction = UnitFactionGroup and UnitFactionGroup("player") or nil
     for key, entry in pairs(SK.db.mageHistory or {}) do
-        if not online[key:lower()] then
+        -- Only mages this character can reach: same ruleset and faction.
+        local reachable = entry.ruleset == ruleset and entry.faction == faction
+        if reachable and not online[key:lower()] then
             local tiers = {}
             for _, tier in ipairs(entry.tiers or {}) do tiers[tier] = true end
             list[#list + 1] = { name = entry.name, level = entry.level, skill = entry.skill or 0, tiers = tiers, seen = entry.seen }

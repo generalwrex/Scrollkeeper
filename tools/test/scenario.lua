@@ -756,3 +756,17 @@ do
   SK.peers["T"], SK.peers["S"] = nil, nil
   GetRealmName, GetPlayerInfoByGUID = realRealm, realInfo
 end
+
+-- History is per ruleset and faction (it's saved account-wide).
+do
+  local realRealm, realFaction = GetRealmName, UnitFactionGroup
+  GetRealmName = function() return "CAMWOW US1 Realm 1 PvE" end
+  UnitFactionGroup = function() return "Horde" end
+  SK.db.mageHistory = { Turbo = { name = "Turbo", seen = time(), tiers = { 15 }, ruleset = "PvE", faction = "Horde" } }
+  print("RULESET history on PvE Horde:", #SK.MageHistory())
+  GetRealmName = function() return "CAMWOW US2 Realm 2 PvP" end
+  UnitFactionGroup = function() return "Alliance" end
+  print("RULESET history on PvP Alliance:", #SK.MageHistory())
+  SK.db.mageHistory = nil
+  GetRealmName, UnitFactionGroup = realRealm, realFaction
+end
