@@ -6,6 +6,7 @@
   - Scrollkeeper users who offer to be a **door**: click one, they invite you, and the invite is accepted for you.
   - Anyone else in that zone: people standing in the town come first. Click one for a ready-made whisper asking for an invite (you press Enter to send it), and their invite is accepted for you. They don't need any addon.
   - Guildies and friends are tagged and listed first.
+  - Your Liminal Passage count and its auction house price at the top (hover for the scroll, Shift-click to link it).
   - One button does the next step: ask, **Teleport**, then **Leave group**.
 - Be a door yourself: tick "Be a door" (off unless you turn it on). Mages who ask get a pop-up, or tick "Invite by myself" to skip it.
 - The scroll icon's frame shows the skill-up color of the scroll a click would read (orange, yellow, green, or gray when it won't give a point), and its tooltip says it too.
