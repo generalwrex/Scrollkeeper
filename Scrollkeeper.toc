@@ -7,6 +7,7 @@
 ## Category: Class
 ## X-License: MIT
 ## X-Curse-Project-ID: 1808722
+## X-Wago-ID: aND9Wr6o
 ## X-Website: https://github.com/generalwrex/Scrollkeeper
 ## IconTexture: Interface\Icons\INV_Scroll_03
 ## AddonCompartmentFunc: Scrollkeeper_OnCompartmentClick
