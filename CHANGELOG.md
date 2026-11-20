@@ -2,6 +2,7 @@
 
 ## 1.1.9
 
+- Doorways: the whisper asks if you can group up, they invite you or say ok, and the button turns into **Invite** for when they do. Nobody gets an invite out of the blue.
 - **Doorways: write your own whisper** (Whisper text... in the window). Use {place}, {zone}, {name}, {me} and {scroll} (a link to the scroll); Default brings ours back.
 - Doorways tags cities (whole city is resting), and people found in one say "resting".
 - **Library books:** how many you've handed in (of 40) and the next reward, in chat after each hand-in and on the panel's stats (hover for the rewards).

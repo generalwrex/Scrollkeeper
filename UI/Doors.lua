@@ -383,14 +383,14 @@ function SK.DoorWhisper(place, info)
         return (custom:gsub("{(%a+)}", function(key) return values[key:lower()] end))
     end
     if place then
-        return L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(place)
+        return L["Hi! Could we group up for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. Invite me, or say ok and I'll invite you. I'll leave right after. Thanks!"]:format(place)
     end
-    return L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
+    return L["Hi! Could we group up for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. Invite me, or say ok and I'll invite you. I'll leave right after. Thanks!"]
 end
 
 -- The default, with {place} where the town goes, to start editing from.
 local function DefaultTemplate()
-    return (L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:gsub("%%s", "{place}"))
+    return (L["Hi! Could we group up for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. Invite me, or say ok and I'll invite you. I'll leave right after. Thanks!"]:gsub("%%s", "{place}"))
 end
 
 if StaticPopupDialogs then
@@ -433,6 +433,24 @@ if StaticPopupDialogs then
     }
 end
 
+-- Can I invite someone right now? (Not in a group, or leading one with room.)
+local function RoomToInvite()
+    if not (IsInGroup and IsInGroup()) then return true end
+    if IsInRaid and IsInRaid() then return false end
+    local leader = UnitIsGroupLeader and SK.Known(UnitIsGroupLeader("player"))
+    local size = GetNumGroupMembers and GetNumGroupMembers() or 0
+    return leader and size < 5 or false
+end
+
+-- Show the whole whisper in chat (only you see it: the chat box is too
+-- narrow to read it), then open the chat box with it, ready to send.
+local function OpenWhisper(target, text)
+    if not ChatFrame_OpenChat then return end
+    SK.Print(L["whisper to %s, press Enter to send it (or Escape to cancel):"]:format(Net.ShortName(target)))
+    if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cffff80ff" .. text .. "|r") end
+    ChatFrame_OpenChat(("/w %s %s"):format(target, text))
+end
+
 local function Ask(host)
     if host.kind == "door" and host.door.demo then
         SK.Print(L["%s is a demo door: real ones invite you, and the invite is accepted for you."]:format(host.short))
@@ -444,23 +462,42 @@ local function Ask(host)
     if host.kind == "door" then
         Net.Whisper(target, "DA")
         SK.Print(L["asked %s to invite you. Accept the invite (Scrollkeeper does it for you), then click Teleport."]:format(trip.short))
-    elseif ChatFrame_OpenChat then
-        -- Short and friendly: what you want, why it's quick, that you'll go.
+    else
         -- Name the town only when /who says they're standing in it (their
         -- own words for it, so it's right in any language). Someone
         -- elsewhere in the zone gets the general version.
-        local inTown = host.who and host.who.inTown
+        trip.where = host.who and host.who.inTown
             and (trip.place and trip.place.capital and (ZoneName(trip.place.map) or trip.place.town) or host.who.area)
-        local text = SK.DoorWhisper(inTown, { name = trip.short,
-            zone = trip.place and (ZoneName(trip.place.map) or trip.place.town) })
-        -- The whole message in chat (only you see it), since the chat box
-        -- is too narrow to read it, then the box ready to send.
-        SK.Print(L["whisper to %s, press Enter to send it (or Escape to cancel):"]:format(trip.short))
-        if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cffff80ff" .. text .. "|r") end
-        ChatFrame_OpenChat(("/w %s %s"):format(target, text))
+        trip.info = { name = trip.short, zone = trip.place and (ZoneName(trip.place.map) or trip.place.town) }
+        -- Ask first, never invite out of the blue: the whisper offers both
+        -- ways (they invite you, or they say ok and you click Invite).
+        OpenWhisper(target, SK.DoorWhisper(trip.where, trip.info))
     end
     SK.Send("DOORS_CHANGED")
 end
+
+-- The game's answer to our invite, as a pattern for its "%s ..." text.
+local function SystemPattern(text)
+    if type(text) ~= "string" then return nil end
+    return "^" .. text:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%%%s", "(.+)") .. "$"
+end
+
+SK.On("CHAT_MSG_SYSTEM", function(message)
+    message = SK.Known(message)
+    if not (trip and trip.invited and type(message) == "string") then return end
+    local function Matches(text)
+        local pattern = SystemPattern(text)
+        local name = pattern and message:match(pattern)
+        return name and Net.ShortName(name):lower() == trip.short:lower()
+    end
+    if Matches(ERR_ALREADY_IN_GROUP_S) then
+        trip.invited = nil
+        SK.Print(L["%s is in a group already, so they'll have to invite you."]:format(trip.short))
+    elseif Matches(ERR_DECLINE_GROUP_S) then
+        trip.invited = nil
+        SK.Print(L["%s said no to the invite. Pick someone else."]:format(trip.short))
+    end
+end)
 
 -- Accept the invite from the host we asked (only theirs, only for 3 minutes).
 SK.On("PARTY_INVITE_REQUEST", function(inviter)
@@ -596,6 +633,7 @@ local function NextStep()
     if not trip then return nil end
     if trip.teleported and IsInGroup and IsInGroup() then return "leave" end
     if InGroupWith(trip.short) then return "teleport" end
+    if trip.kind == "who" and RoomToInvite() then return "invite" end
     return "ask"
 end
 
@@ -618,6 +656,11 @@ local function UpdateAction()
         note:SetText(count == 0 and L["You have no Scroll of Liminal Passage."]
             or not Resting() and L["Rest in an inn or a city first: you both have to be resting."]
             or L["You're grouped with %s. They have to be resting too."]:format(trip.short))
+    elseif step == "invite" then
+        button:SetText(L["Invite %s"]:format(trip.short))
+        button:SetEnabled(true)
+        note:SetText(trip.invited and L["Invited. Waiting for %s to accept."]:format(trip.short)
+            or L["Send the whisper first. Click Invite once %s says ok, or wait for their invite (it's accepted for you)."]:format(trip.short))
     elseif step == "leave" then
         button:SetText(L["Leave group"])
         button:SetEnabled(true)
@@ -626,7 +669,7 @@ local function UpdateAction()
         button:SetText(L["Ask %s again"]:format(trip.short))
         button:SetEnabled(true)
         note:SetText(trip.kind == "door" and L["Waiting for %s to invite you."]:format(trip.short)
-            or L["Send the whisper. If %s invites you, it's accepted for you."]:format(trip.short))
+            or L["Send the whisper and wait for %s to invite you (it's accepted for you)."]:format(trip.short))
     else
         button:SetText(L["Pick a host"])
         button:SetEnabled(false)
@@ -767,6 +810,10 @@ local function Build()
                 if host.short == trip.short then Ask(host) return end
             end
             Ask({ kind = trip.kind, short = trip.short, target = trip.target, sender = trip.target })
+        elseif step == "invite" then
+            trip.invited = true
+            if C_PartyInfo and C_PartyInfo.InviteUnit then SK.Try(C_PartyInfo.InviteUnit, trip.target)
+            elseif InviteUnit then SK.Try(InviteUnit, trip.target) end
         elseif step == "leave" then
             if C_PartyInfo and C_PartyInfo.LeaveParty then SK.Try(C_PartyInfo.LeaveParty)
             elseif LeaveParty then SK.Try(LeaveParty) end
