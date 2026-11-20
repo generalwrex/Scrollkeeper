@@ -273,7 +273,8 @@ end
 -- /who: anyone in that zone. Results come back as WHO_LIST_UPDATE.
 ------------------------------------------------------------------------
 
-local whoPending, lastWho = nil, 0
+local whoPending, lastWho, whoWindowsOpen = nil, 0, {}
+local WHO_WINDOWS = { "FriendsFrame", "WhoFrame", "LFGParentFrame", "LFGBrowseFrame", "LFGListingFrame", "PVEFrame" }
 local WHO_COOLDOWN = 15
 
 function SK.DoorWhoReady() return time() - lastWho >= WHO_COOLDOWN end
@@ -285,6 +286,14 @@ local function SearchWho(place)
     lastWho = time()
     whoPending = place
     if C_FriendList.SetWhoToUi then SK.Try(C_FriendList.SetWhoToUi, true) end
+    -- The game opens a window with the results (FriendsFrame, or Forever's
+    -- Looking For Group list). Note which were already open, to close only
+    -- the one our search opens.
+    whoWindowsOpen = {}
+    for _, name in ipairs(WHO_WINDOWS) do
+        local frame = _G[name]
+        whoWindowsOpen[name] = type(frame) == "table" and frame.IsShown and frame:IsShown() or false
+    end
     C_FriendList.SendWho(('z-"%s"'):format(zone))
     SK.Print(L["looking for players in %s..."]:format(zone))
 end
@@ -298,13 +307,27 @@ SK.On("WHO_LIST_UPDATE", function()
     local people = {}
     for i = 1, (C_FriendList.GetNumWhoResults and C_FriendList.GetNumWhoResults()) or 0 do
         local info = C_FriendList.GetWhoInfo and C_FriendList.GetWhoInfo(i)
-        if type(info) == "table" and info.fullName and info.fullName ~= me and (not zone or info.area == zone) then
-            people[#people + 1] = { name = info.fullName, level = info.level, class = info.classStr, race = info.raceStr }
+        -- The search already asked for that zone; "area" is where in it they
+        -- are (Forever gives the subzone: "Tarren Mill", "Darrow Hill").
+        if type(info) == "table" and info.fullName and info.fullName ~= me then
+            people[#people + 1] = { name = info.fullName, level = info.level, class = info.classStr, race = info.raceStr,
+                area = info.area, inTown = info.area == place.town or info.area == zone and place.capital }
         end
     end
+    table.sort(people, function(a, b)
+        if (a.inTown and true or false) ~= (b.inTown and true or false) then return a.inTown and true or false end
+        return (a.level or 0) > (b.level or 0)
+    end)
     whoResults = { place = place, at = time(), people = people }
     -- The game opens its Who window with the results; we show them here.
-    if FriendsFrame and FriendsFrame.IsShown and FriendsFrame:IsShown() and HideUIPanel then HideUIPanel(FriendsFrame) end
+    C_Timer.After(0, function()
+        for _, name in ipairs(WHO_WINDOWS) do
+            local frame = _G[name]
+            if type(frame) == "table" and frame.IsShown and frame:IsShown() and not whoWindowsOpen[name] then
+                if HideUIPanel then HideUIPanel(frame) else frame:Hide() end
+            end
+        end
+    end)
     SK.Send("DOORS_CHANGED")
 end)
 
@@ -629,8 +652,9 @@ local function HostLine(host)
         return "|cff40ff40" .. L["Scrollkeeper door"] .. "|r  |cffffffff" .. door.place .. "|r  |cff808080" .. how .. "|r"
     end
     local who = host.who
-    return ("|cff808080/who:|r |cffffffff%s %s %s|r  |cff808080%s|r"):format(tostring(who.level or "?"),
-        who.race or "", who.class or "", L["may not be resting"])
+    return ("|cffffffff%s %s|r  |cff808080%s|r"):format(tostring(who.level or "?"),
+        who.class or "", who.inTown and ("|cff40ff40" .. L["in %s"]:format(who.area) .. "|r")
+        or (who.area and L["in %s, may not be resting"]:format(who.area)) or L["may not be resting"])
 end
 
 function SK.RefreshDoors()
