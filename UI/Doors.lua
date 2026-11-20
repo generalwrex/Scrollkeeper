@@ -274,7 +274,7 @@ end
 ------------------------------------------------------------------------
 
 local whoPending, lastWho, whoWindowsOpen = nil, 0, {}
-local WHO_WINDOWS = { "FriendsFrame", "WhoFrame", "LFGParentFrame", "LFGBrowseFrame", "LFGListingFrame", "PVEFrame" }
+local WHO_WINDOWS = { "LFGWhoListFrame", "FriendsFrame", "WhoFrame", "LFGParentFrame", "LFGBrowseFrame", "LFGListingFrame", "PVEFrame" }
 local WHO_COOLDOWN = 15
 
 function SK.DoorWhoReady() return time() - lastWho >= WHO_COOLDOWN end
