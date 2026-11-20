@@ -1,27 +1,104 @@
 -- Scrollkeeper: UI/Doors.lua
--- Liminal Passage doors (/sk doors).
+-- Doorways (/sk doors): getting somewhere with Scroll of Liminal Passage.
 --
--- Scroll of Liminal Passage teleports a mage to a party member, as long
--- as both are resting (an inn or a city). So a mage who wants to get to
--- Ironforge needs someone resting in Ironforge to group with. Scrollkeeper
--- users can offer to be that someone: a "door". Off by default.
+-- The scroll teleports a mage to a group member, as long as both are
+-- resting (an inn or a city). So to reach Booty Bay you need someone
+-- resting in Booty Bay to group with. The window:
+--   left    places with an inn, neutral towns first; capitals you can
+--           teleport to yourself are greyed out
+--   right   hosts for the place you picked: Scrollkeeper users who offer
+--           to be a "door" first (one click: they invite you, you accept
+--           by itself), then anyone /who finds there (a whisper ready to
+--           send; they need no addon)
+--   bottom  one button that does the next step: Ask, Teleport, Leave group
 --
---   D|place|scrolls      my door: where I'm resting ("" = not a door right
---                        now) and how many Liminal Passage scrolls I carry
---   DA                   whisper: "can I come to you?"
---   DY / DN              whisper: "inviting you" / "not right now"
---
--- The window lists the doors on your server and faction. Click one to ask;
--- they get a pop-up to invite you. Once you're grouped, the Go button uses
--- the scroll on them.
+-- Network (doors are opt-in: "Be a door"):
+--   D|place|scrolls|mapID|auto   my door: where I rest ("" = not one now),
+--                                Liminal Passage scrolls carried, the
+--                                zone's map ID, "1" if I invite by myself
+--   DA                           whisper: "can I come to you?"
+--   DY / DN                      whisper: "inviting you" / "not right now"
 
 local _, SK = ...
 local L = SK.L
 local Net = SK.Net
 
 SK.LIMINAL_PASSAGE = 213548
-local ROWS = 7
-local WIDTH = 300
+local PLACE_ROWS, HOST_ROWS = 17, 9
+local LEFT_W, RIGHT_W = 200, 300
+local INVITES_PER_10MIN = 6
+
+------------------------------------------------------------------------
+-- Places with an inn. map = the zone's map ID (the game gives its name in
+-- your language); side = who can rest there.
+------------------------------------------------------------------------
+
+local PLACES = {
+    -- neutral towns
+    { town = "Booty Bay", map = 1434, side = "both" },
+    { town = "Gadgetzan", map = 1446, side = "both" },
+    { town = "Ratchet", map = 1413, side = "both" },
+    { town = "Everlook", map = 1452, side = "both" },
+    { town = "Cenarion Hold", map = 1451, side = "both" },
+    { town = "Nighthaven", map = 1450, side = "both" },
+    -- Alliance
+    { town = "Goldshire", map = 1429, side = "Alliance" },
+    { town = "Sentinel Hill", map = 1436, side = "Alliance" },
+    { town = "Lakeshire", map = 1433, side = "Alliance" },
+    { town = "Darkshire", map = 1431, side = "Alliance" },
+    { town = "Kharanos", map = 1426, side = "Alliance" },
+    { town = "Thelsamar", map = 1432, side = "Alliance" },
+    { town = "Menethil Harbor", map = 1437, side = "Alliance" },
+    { town = "Southshore", map = 1424, side = "Alliance" },
+    { town = "Refuge Pointe", map = 1417, side = "Alliance" },
+    { town = "Aerie Peak", map = 1425, side = "Alliance" },
+    { town = "Nethergarde Keep", map = 1419, side = "Alliance" },
+    { town = "Morgan's Vigil", map = 1428, side = "Alliance" },
+    { town = "Dolanaar", map = 1438, side = "Alliance" },
+    { town = "Auberdine", map = 1439, side = "Alliance" },
+    { town = "Astranaar", map = 1440, side = "Alliance" },
+    { town = "Stonetalon Peak", map = 1442, side = "Alliance" },
+    { town = "Nijel's Point", map = 1443, side = "Alliance" },
+    { town = "Theramore Isle", map = 1445, side = "Alliance" },
+    { town = "Feathermoon Stronghold", map = 1444, side = "Alliance" },
+    -- Horde
+    { town = "Razor Hill", map = 1411, side = "Horde" },
+    { town = "Bloodhoof Village", map = 1412, side = "Horde" },
+    { town = "The Crossroads", map = 1413, side = "Horde" },
+    { town = "Camp Taurajo", map = 1413, side = "Horde" },
+    { town = "Brill", map = 1420, side = "Horde" },
+    { town = "The Sepulcher", map = 1421, side = "Horde" },
+    { town = "Tarren Mill", map = 1424, side = "Horde" },
+    { town = "Hammerfall", map = 1417, side = "Horde" },
+    { town = "Grom'gol Base Camp", map = 1434, side = "Horde" },
+    { town = "Kargath", map = 1418, side = "Horde" },
+    { town = "Stonard", map = 1435, side = "Horde" },
+    { town = "Splintertree Post", map = 1440, side = "Horde" },
+    { town = "Sun Rock Retreat", map = 1442, side = "Horde" },
+    { town = "Shadowprey Village", map = 1443, side = "Horde" },
+    { town = "Freewind Post", map = 1441, side = "Horde" },
+    { town = "Camp Mojache", map = 1444, side = "Horde" },
+    { town = "Brackenwall Village", map = 1445, side = "Horde" },
+    { town = "Revantusk Village", map = 1425, side = "Horde" },
+    -- capitals (teleport = the mage spell that already goes there)
+    { town = "Stormwind City", map = 1453, side = "Alliance", capital = true, teleport = 3561 },
+    { town = "Ironforge", map = 1455, side = "Alliance", capital = true, teleport = 3562 },
+    { town = "Darnassus", map = 1457, side = "Alliance", capital = true, teleport = 3565 },
+    { town = "Orgrimmar", map = 1454, side = "Horde", capital = true, teleport = 3567 },
+    { town = "Thunder Bluff", map = 1456, side = "Horde", capital = true, teleport = 3566 },
+    { town = "Undercity", map = 1458, side = "Horde", capital = true, teleport = 3563 },
+}
+SK.DOOR_PLACES = PLACES
+
+local function ZoneName(mapID)
+    local info = C_Map and C_Map.GetMapInfo and SK.Try(C_Map.GetMapInfo, mapID)
+    return type(info) == "table" and info.name or nil
+end
+
+local function KnowsSpell(id)
+    if not id then return false end
+    return (IsPlayerSpell and SK.Try(IsPlayerSpell, id)) or (IsSpellKnown and SK.Try(IsSpellKnown, id)) or false
+end
 
 ------------------------------------------------------------------------
 -- My door
@@ -32,9 +109,11 @@ function SK.LiminalCount()
     return tonumber(count) or 0
 end
 
--- Where I'm resting, in words: "Goldshire, Elwynn Forest" or "Stormwind City".
+local function Resting() return IsResting and IsResting() and true or false end
+
+-- Where I'm resting, in words: "Goldshire, Elwynn Forest" or "Ironforge".
 local function RestingPlace()
-    if not (IsResting and IsResting()) then return nil end
+    if not Resting() then return nil end
     local zone = (GetRealZoneText and GetRealZoneText()) or (GetZoneText and GetZoneText()) or ""
     local sub = GetSubZoneText and GetSubZoneText() or ""
     if zone == "" then return nil end
@@ -42,18 +121,23 @@ local function RestingPlace()
     return zone
 end
 
--- My door's place, or nil when I'm not one right now.
 function SK.MyDoorPlace()
     if not SK.db.liminalDoor or SK.InCombat() then return nil end
     return RestingPlace()
 end
 
+local function MyMapID()
+    return C_Map and C_Map.GetBestMapForUnit and SK.Try(C_Map.GetBestMapForUnit, "player") or ""
+end
+
 local lastSent
 local function SendDoor(force)
-    local text = (SK.MyDoorPlace() or "") .. "#" .. SK.LiminalCount()
+    local place = SK.MyDoorPlace() or ""
+    local auto = SK.db.doorAutoInvite and "1" or ""
+    local text = table.concat({ place, SK.LiminalCount(), tostring(MyMapID()), auto }, "#")
     if text == lastSent and not force then return end
     lastSent = text
-    Net.Send("D", SK.MyDoorPlace() or "", SK.LiminalCount())
+    Net.Send("D", place, SK.LiminalCount(), place ~= "" and MyMapID() or "", auto)
 end
 SK.SendDoor = SendDoor
 
@@ -78,85 +162,261 @@ Net.Handle("Q", function() C_Timer.After(6 + math.random() * 20, function() SK.S
 -- Everyone's doors
 ------------------------------------------------------------------------
 
--- SK.doors[sender] = { place = "Ironforge" or nil, scrolls = n, at = time() }
+-- SK.doors[sender] = { place, scrolls, map, auto, at }
 SK.doors = {}
 
 Net.Handle("D", function(sender, f)
     local place = tostring(f[1] or ""):sub(1, 80)
-    SK.doors[sender] = { place = place ~= "" and place or nil, scrolls = math.min(tonumber(f[2]) or 0, 99), at = time() }
+    SK.doors[sender] = {
+        place = place ~= "" and place or nil, scrolls = math.min(tonumber(f[2]) or 0, 99),
+        map = tonumber(f[3]), auto = f[4] == "1", at = time(),
+    }
     SK.Send("DOORS_CHANGED")
 end)
 
 local DEMO_DOORS = {
-    { name = "Kaelith", place = "Ironforge" },
-    { name = "Brannoc", place = "The Salty Sailor Tavern, Booty Bay" },
-    { name = "Mirelle", place = "Stormwind City" },
+    { name = "Kaelith", place = "Booty Bay, Stranglethorn Vale", map = 1434, auto = true },
+    { name = "Brannoc", place = "Gadgetzan, Tanaris", map = 1446 },
+    { name = "Mirelle", place = "Goldshire, Elwynn Forest", map = 1429, auto = true },
 }
 
--- Doors open right now that you can reach: list of { sender, short, place, scrolls, demo }.
+-- Every open door you can reach: list of { sender, short, place, scrolls, map, auto, demo }.
 function SK.OpenDoors()
     local list, fresh = {}, {}
     for _, entry in ipairs(SK.PeerList and SK.PeerList() or {}) do fresh[entry.sender] = true end
     for sender, door in pairs(SK.doors) do
         if door.place and fresh[sender] and not Net.IsMe(sender) and time() - door.at < 15 * 60 then
-            list[#list + 1] = { sender = sender, short = Net.ShortName(sender), place = door.place, scrolls = door.scrolls }
+            list[#list + 1] = { sender = sender, short = Net.ShortName(sender), place = door.place,
+                scrolls = door.scrolls, map = door.map, auto = door.auto }
         end
     end
     if SK.demoCommunity then
         for _, demo in ipairs(DEMO_DOORS) do
-            list[#list + 1] = { sender = demo.name, short = demo.name, place = demo.place, scrolls = 0, demo = true }
+            list[#list + 1] = { sender = demo.name, short = demo.name, place = demo.place, scrolls = 0,
+                map = demo.map, auto = demo.auto, demo = true }
         end
     end
-    table.sort(list, function(a, b) return a.place < b.place end)
+    return list
+end
+
+-- Which place a door is at: the town its place text starts with, else the
+-- first place in its zone.
+local function PlaceOfDoor(door)
+    local first
+    for _, place in ipairs(PLACES) do
+        if door.place:find(place.town, 1, true) == 1 then return place end
+        if not first and door.map and place.map == door.map then first = place end
+    end
+    if not first then
+        -- An old door message without a map ID: match the zone by name.
+        for _, place in ipairs(PLACES) do
+            local zone = ZoneName(place.map)
+            if zone and door.place:find(zone, 1, true) then return place end
+        end
+    end
+    return first
+end
+
+------------------------------------------------------------------------
+-- The places list
+------------------------------------------------------------------------
+
+local selected      -- the PLACES entry picked, or "all"
+local whoResults    -- { place = entry, at = time(), people = {...} }
+
+function SK.DoorPlaces()
+    local mine = UnitFactionGroup and UnitFactionGroup("player")
+    local counts = {}
+    for _, door in ipairs(SK.OpenDoors()) do
+        local place = PlaceOfDoor(door)
+        if place then counts[place] = (counts[place] or 0) + 1 end
+    end
+    local list = {}
+    for order, place in ipairs(PLACES) do
+        if place.side == "both" or not mine or place.side == mine then
+            list[#list + 1] = { place = place, doors = counts[place] or 0, order = order,
+                own = place.capital and KnowsSpell(place.teleport) }
+        end
+    end
+    table.sort(list, function(a, b)
+        if (a.doors > 0) ~= (b.doors > 0) then return a.doors > 0 end
+        if a.own ~= b.own then return not a.own end
+        return a.order < b.order
+    end)
     return list
 end
 
 ------------------------------------------------------------------------
--- Asking and answering
+-- Hosts for the picked place
 ------------------------------------------------------------------------
 
-local chosen          -- the door you asked last: { short, target }
-local askedAt = {}    -- sender -> time() we last showed their pop-up
-
-local function Invite(name)
-    if C_PartyInfo and C_PartyInfo.InviteUnit then SK.Try(C_PartyInfo.InviteUnit, name)
-    elseif InviteUnit then SK.Try(InviteUnit, name) end
+function SK.DoorHosts()
+    local list = {}
+    for _, door in ipairs(SK.OpenDoors()) do
+        if selected == "all" or PlaceOfDoor(door) == selected then
+            list[#list + 1] = { kind = "door", door = door, short = door.short, sender = door.sender }
+        end
+    end
+    if selected ~= "all" and whoResults and whoResults.place == selected then
+        local doorNames = {}
+        for _, host in ipairs(list) do doorNames[host.short:lower()] = true end
+        for _, person in ipairs(whoResults.people) do
+            if not doorNames[Net.ShortName(person.name):lower()] then
+                list[#list + 1] = { kind = "who", short = Net.ShortName(person.name), target = person.name, who = person }
+            end
+        end
+    end
+    return list
 end
 
-local function Ask(door)
-    if door.demo then
-        SK.Print(L["%s is a demo door: real ones get a pop-up to invite you."]:format(door.short))
+------------------------------------------------------------------------
+-- /who: anyone in that zone. Results come back as WHO_LIST_UPDATE.
+------------------------------------------------------------------------
+
+local whoPending, lastWho = nil, 0
+local WHO_COOLDOWN = 15
+
+function SK.DoorWhoReady() return time() - lastWho >= WHO_COOLDOWN end
+
+local function SearchWho(place)
+    if not (C_FriendList and C_FriendList.SendWho) or not SK.DoorWhoReady() then return end
+    local zone = ZoneName(place.map)
+    if not zone then return end
+    lastWho = time()
+    whoPending = place
+    if C_FriendList.SetWhoToUi then SK.Try(C_FriendList.SetWhoToUi, true) end
+    C_FriendList.SendWho(('z-"%s"'):format(zone))
+    SK.Print(L["looking for players in %s..."]:format(zone))
+end
+
+SK.On("WHO_LIST_UPDATE", function()
+    if not whoPending then return end
+    local place = whoPending
+    whoPending = nil
+    local zone = ZoneName(place.map)
+    local me = UnitName("player")
+    local people = {}
+    for i = 1, (C_FriendList.GetNumWhoResults and C_FriendList.GetNumWhoResults()) or 0 do
+        local info = C_FriendList.GetWhoInfo and C_FriendList.GetWhoInfo(i)
+        if type(info) == "table" and info.fullName and info.fullName ~= me and (not zone or info.area == zone) then
+            people[#people + 1] = { name = info.fullName, level = info.level, class = info.classStr, race = info.raceStr }
+        end
+    end
+    whoResults = { place = place, at = time(), people = people }
+    -- The game opens its Who window with the results; we show them here.
+    if FriendsFrame and FriendsFrame.IsShown and FriendsFrame:IsShown() and HideUIPanel then HideUIPanel(FriendsFrame) end
+    SK.Send("DOORS_CHANGED")
+end)
+
+------------------------------------------------------------------------
+-- The trip: ask, get invited (accepted by itself), teleport, leave.
+------------------------------------------------------------------------
+
+local trip   -- { short, target, kind, place, askedAt, teleported }
+
+local function InGroupWith(short)
+    return short and UnitInParty and UnitInParty(short) and true or false
+end
+
+local function Ask(host)
+    if host.kind == "door" and host.door.demo then
+        SK.Print(L["%s is a demo door: real ones invite you, and the invite is accepted for you."]:format(host.short))
         return
     end
-    local target = SK.ContactName(door.sender)
-    chosen = { short = Net.ShortName(target), target = target }
-    Net.Whisper(target, "DA")
-    SK.Print(L["asked %s for a door. Once they invite you, click Go in the Liminal Passage window."]:format(chosen.short))
+    local target = host.target or SK.ContactName(host.sender)
+    trip = { short = Net.ShortName(target), target = target, kind = host.kind, askedAt = time(),
+        place = selected ~= "all" and selected or nil }
+    if host.kind == "door" then
+        Net.Whisper(target, "DA")
+        SK.Print(L["asked %s to invite you. Accept the invite (Scrollkeeper does it for you), then click Teleport."]:format(trip.short))
+    elseif ChatFrame_OpenChat then
+        local where = trip.place and trip.place.town or ""
+        ChatFrame_OpenChat(("/w %s %s"):format(target,
+            L["Hi! Could you invite me to your group for a moment? I'd use Scroll of Liminal Passage to teleport to you (it works while you rest in %s). I'll leave right after. Thanks!"]:format(where)))
+    end
     SK.Send("DOORS_CHANGED")
+end
+
+-- Accept the invite from the host we asked (only theirs, only for 3 minutes).
+SK.On("PARTY_INVITE_REQUEST", function(inviter)
+    if not (trip and trip.askedAt and time() - trip.askedAt < 180 and type(inviter) == "string") then return end
+    if Net.ShortName(inviter):lower() ~= trip.short:lower() then return end
+    if AcceptGroup then SK.Try(AcceptGroup) end
+    if StaticPopup_Hide then StaticPopup_Hide("PARTY_INVITE") end
+    SK.Print(L["joined %s's group. Click Teleport when you're both resting."]:format(trip.short))
+end)
+
+-- Notice when the scroll was used, for the Leave group step.
+SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
+    if unit ~= "player" or not trip then return end
+    local _, scrollSpell = SK.Try(C_Item and C_Item.GetItemSpell or GetItemSpell, SK.LIMINAL_PASSAGE)
+    if scrollSpell and spellID == scrollSpell then
+        trip.teleported = true
+        SK.Send("DOORS_CHANGED")
+    end
+end)
+
+SK.On("GROUP_LEFT", function()
+    if trip and trip.teleported then trip = nil end
+    SK.Send("DOORS_CHANGED")
+end)
+
+------------------------------------------------------------------------
+-- Being asked (as a door)
+------------------------------------------------------------------------
+
+local askedAt, invitesSent = {}, {}
+
+local function CanInviteNow()
+    if not (IsInGroup and IsInGroup()) then return true end
+    local leader = UnitIsGroupLeader and UnitIsGroupLeader("player")
+    local size = GetNumGroupMembers and GetNumGroupMembers() or 0
+    return leader and not (IsInRaid and IsInRaid()) and size < 5
+end
+
+local function RecentInvites()
+    local now, count = time(), 0
+    for i = #invitesSent, 1, -1 do
+        if now - invitesSent[i] > 600 then table.remove(invitesSent, i) else count = count + 1 end
+    end
+    return count
+end
+
+local function Invite(name)
+    invitesSent[#invitesSent + 1] = time()
+    if C_PartyInfo and C_PartyInfo.InviteUnit then SK.Try(C_PartyInfo.InviteUnit, name)
+    elseif InviteUnit then SK.Try(InviteUnit, name) end
+    Net.Whisper(name, "DY")
 end
 
 Net.Handle("DA", function(sender, _, source)
     if source ~= "WHISPER" then return end
-    if not SK.MyDoorPlace() then Net.Whisper(sender, "DN") return end
+    if not SK.MyDoorPlace() or RecentInvites() >= INVITES_PER_10MIN then Net.Whisper(sender, "DN") return end
     if askedAt[sender] and time() - askedAt[sender] < 30 then return end
     askedAt[sender] = time()
+    local short = Net.ShortName(sender)
+    if SK.db.doorAutoInvite and CanInviteNow() then
+        Invite(sender)
+        SK.Print(L["%s asked to come to you with Liminal Passage: invited."]:format(short))
+        return
+    end
     if PlaySound and SOUNDKIT and SOUNDKIT.READY_CHECK then SK.Try(PlaySound, SOUNDKIT.READY_CHECK) end
     if StaticPopup_Show then
-        local popup = StaticPopup_Show("SCROLLKEEPER_DOOR", Net.ShortName(sender), nil, sender)
+        local popup = StaticPopup_Show("SCROLLKEEPER_DOOR", short, nil, sender)
         if type(popup) == "table" then popup.data = sender end
     else
-        SK.Print(L["%s wants to come to you with Liminal Passage."]:format(Net.ShortName(sender)))
+        SK.Print(L["%s wants to come to you with Liminal Passage."]:format(short))
     end
 end)
 
 Net.Handle("DY", function(sender, _, source)
     if source ~= "WHISPER" then return end
-    SK.Print(L["%s is inviting you. Accept, then click Go in the Liminal Passage window."]:format(Net.ShortName(sender)))
+    SK.Print(L["%s is inviting you."]:format(Net.ShortName(sender)))
 end)
 
 Net.Handle("DN", function(sender, _, source)
     if source ~= "WHISPER" then return end
-    SK.Print(L["%s isn't a door right now (not resting, or turned it off)."]:format(Net.ShortName(sender)))
+    SK.Print(L["%s can't be a door right now. Pick someone else."]:format(Net.ShortName(sender)))
 end)
 
 if StaticPopupDialogs then
@@ -166,9 +426,7 @@ if StaticPopupDialogs then
         button2 = L["Not now"],
         OnAccept = function(self, data)
             data = data or self.data
-            if not data then return end
-            Invite(data)
-            Net.Whisper(data, "DY")
+            if data then Invite(data) end
         end,
         OnCancel = function(self, data, reason)
             data = data or self.data
@@ -187,45 +445,74 @@ end
 
 local window
 
--- The Go button: target the door and use the scroll. Secure, so it can
--- only change out of combat.
-local function UpdateGo()
+-- What the big button does now: "ask", "teleport", "leave" or nil.
+local function NextStep()
+    if not trip then return nil end
+    if trip.teleported and IsInGroup and IsInGroup() then return "leave" end
+    if InGroupWith(trip.short) then return "teleport" end
+    return "ask"
+end
+
+local function UpdateAction()
     if not window then return end
-    local go = window.go
+    local button, note = window.action, window.actionNote
+    local step = NextStep()
     local count = SK.LiminalCount()
-    local inGroup = chosen and UnitInParty and UnitInParty(chosen.short)
     if not SK.InCombat() then
-        if chosen then
-            go:SetAttribute("type", "macro")
-            go:SetAttribute("macrotext", "/target " .. chosen.short .. "\n/use item:" .. SK.LIMINAL_PASSAGE)
+        if step == "teleport" then
+            button:SetAttribute("type", "macro")
+            button:SetAttribute("macrotext", "/target " .. trip.short .. "\n/use item:" .. SK.LIMINAL_PASSAGE)
         else
-            go:SetAttribute("type", nil)
+            button:SetAttribute("type", nil)
         end
     end
-    go:SetText(chosen and L["Go to %s"]:format(chosen.short) or L["Go"])
-    go:SetEnabled(chosen ~= nil and count > 0)
-    if count == 0 then
-        window.goNote:SetText(L["You have no Scroll of Liminal Passage. You can still be a door for others."])
-    elseif not chosen then
-        window.goNote:SetText(L["Click a door above to ask them for an invite."])
-    elseif not inGroup then
-        window.goNote:SetText(L["Waiting for %s to invite you. You both have to be resting."]:format(chosen.short))
+    if step == "teleport" then
+        button:SetText(L["Teleport to %s"]:format(trip.short))
+        button:SetEnabled(count > 0)
+        note:SetText(count == 0 and L["You have no Scroll of Liminal Passage."]
+            or not Resting() and L["Rest in an inn or a city first: you both have to be resting."]
+            or L["You're grouped with %s. They have to be resting too."]:format(trip.short))
+    elseif step == "leave" then
+        button:SetText(L["Leave group"])
+        button:SetEnabled(true)
+        note:SetText(L["You're there. Leave the group when you're ready."])
+    elseif step == "ask" then
+        button:SetText(L["Ask %s again"]:format(trip.short))
+        button:SetEnabled(true)
+        note:SetText(trip.kind == "door" and L["Waiting for %s to invite you."]:format(trip.short)
+            or L["Send the whisper. If %s invites you, it's accepted for you."]:format(trip.short))
     else
-        window.goNote:SetText(L["You're grouped with %s: click Go."]:format(chosen.short))
+        button:SetText(L["Pick a host"])
+        button:SetEnabled(false)
+        note:SetText(count == 0 and L["You have no Scroll of Liminal Passage. You can still be a door for others."]
+            or L["Pick a place on the left, then a host on the right."])
     end
 end
 
-local function UpdateStatus()
+local function UpdateMine()
     if not window then return end
     window.doorCheck:SetChecked(SK.db.liminalDoor and true or false)
+    window.autoCheck:SetChecked(SK.db.doorAutoInvite and true or false)
+    window.autoCheck:SetEnabled(SK.db.liminalDoor and true or false)
     local place = SK.MyDoorPlace()
     if not SK.db.liminalDoor then
-        window.status:SetText(L["Tick this so mages with Liminal Passage can ask to come to you."])
+        window.status:SetText(L["Off: nobody can ask to come to you."])
     elseif place then
         window.status:SetText(L["You're a door in |cffffffff%s|r."]:format(place))
     else
         window.status:SetText(L["You're a door whenever you rest in an inn or a city."])
     end
+    window.count:SetText(L["Scrolls of Liminal Passage: |cffffffff%d|r"]:format(SK.LiminalCount()))
+end
+
+local function SmallCheck(label, onClick)
+    local check = CreateFrame("CheckButton", nil, window, "UICheckButtonTemplate")
+    check:SetSize(22, 22)
+    check:SetScript("OnClick", onClick)
+    local text = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    text:SetPoint("LEFT", check, "RIGHT", 1, 0)
+    text:SetText(label)
+    return check
 end
 
 local function Build()
@@ -235,8 +522,8 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(330, 420)
-    window:SetPoint("CENTER", 220, 0)
+    window:SetSize(LEFT_W + RIGHT_W + 50, 520)
+    window:SetPoint("CENTER", 120, 0)
     window:SetToplevel(true)
     window:SetClampedToScreen(true)
     window:SetMovable(true)
@@ -244,8 +531,8 @@ local function Build()
     window:RegisterForDrag("LeftButton")
     window:SetScript("OnDragStart", window.StartMoving)
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
-    window:SetTitle(L["Scrollkeeper: Liminal Passage"])
-    local icon = (C_Item and SK.Try(C_Item.GetItemIconByID, SK.LIMINAL_PASSAGE)) or "Interface\\Icons\\INV_Scroll_05"
+    window:SetTitle(L["Scrollkeeper: Doorways"])
+    local icon = (C_Item and SK.Try(C_Item.GetItemIconByID, SK.LIMINAL_PASSAGE)) or "Interface\\Icons\\Spell_Arcane_Blink"
     if window.SetPortraitToAsset then window:SetPortraitToAsset(icon) end
     tinsert(UISpecialFrames, "ScrollkeeperDoorsFrame")
 
@@ -255,66 +542,153 @@ local function Build()
     background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
 
     local intro = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    intro:SetPoint("TOPLEFT", 16, -62)
-    intro:SetWidth(WIDTH)
+    intro:SetPoint("TOPLEFT", 64, -34)
+    intro:SetPoint("RIGHT", window, "RIGHT", -16, 0)
     intro:SetJustifyH("LEFT")
-    intro:SetText(L["Liminal Passage takes you to a group member who's resting in an inn or a city. Doors are Scrollkeeper users who offer to be that group member."])
+    intro:SetText(L["Scroll of Liminal Passage takes you to a group member resting in an inn or a city. Pick where you want to go, then who to go to."])
 
-    local header = SK.UI.CreateHeader(window, L["Open doors"], WIDTH)
-    header:SetPoint("TOPLEFT", 15, -100)
-    window.list = SK.UI.CreateScrollList(window, WIDTH, ROWS, true)
-    window.list:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -4)
+    window.count = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    window.count:SetPoint("TOPRIGHT", -16, -60)
 
-    local mine = SK.UI.CreateHeader(window, L["Your door"], WIDTH)
-    mine:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -(ROWS * 30 + 10))
+    -- Places
+    local placesHeader = SK.UI.CreateHeader(window, L["Where to"], LEFT_W)
+    placesHeader:SetPoint("TOPLEFT", 15, -76)
+    window.places = SK.UI.CreateScrollList(window, LEFT_W, PLACE_ROWS)
+    window.places:SetPoint("TOPLEFT", placesHeader, "BOTTOMLEFT", 0, -4)
 
-    local check = CreateFrame("CheckButton", nil, window, "UICheckButtonTemplate")
-    check:SetSize(24, 24)
-    check:SetPoint("TOPLEFT", mine, "BOTTOMLEFT", 0, -2)
-    check:SetScript("OnClick", function(self)
+    -- Hosts
+    local hostsHeader = SK.UI.CreateHeader(window, L["Who to go to"], RIGHT_W)
+    hostsHeader:SetPoint("TOPLEFT", placesHeader, "TOPRIGHT", 20, 0)
+    window.hostsHeader = hostsHeader
+    window.hosts = SK.UI.CreateScrollList(window, RIGHT_W, HOST_ROWS, true)
+    window.hosts:SetPoint("TOPLEFT", hostsHeader, "BOTTOMLEFT", 0, -4)
+
+    local who = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+    who:SetSize(RIGHT_W, 22)
+    who:SetPoint("TOPLEFT", hostsHeader, "BOTTOMLEFT", 0, -(HOST_ROWS * 30 + 10))
+    who:SetScript("OnClick", function()
+        if type(selected) == "table" then SearchWho(selected) end
+        SK.RefreshDoors()
+    end)
+    window.who = who
+
+    -- The next step
+    local action = CreateFrame("Button", "ScrollkeeperDoorsAction", window, "SecureActionButtonTemplate,UIPanelButtonTemplate")
+    action:SetSize(RIGHT_W, 26)
+    action:SetPoint("TOPLEFT", who, "BOTTOMLEFT", 0, -10)
+    action:RegisterForClicks("AnyUp", "AnyDown")
+    action:HookScript("OnClick", function(_, _, down)
+        if down then return end
+        local step = NextStep()
+        if step == "ask" then
+            for _, host in ipairs(SK.DoorHosts()) do
+                if host.short == trip.short then Ask(host) return end
+            end
+            Ask({ kind = trip.kind, short = trip.short, target = trip.target, sender = trip.target })
+        elseif step == "leave" then
+            if C_PartyInfo and C_PartyInfo.LeaveParty then SK.Try(C_PartyInfo.LeaveParty)
+            elseif LeaveParty then SK.Try(LeaveParty) end
+            trip = nil
+            SK.RefreshDoors()
+        end
+    end)
+    window.action = action
+    window.actionNote = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    window.actionNote:SetPoint("TOPLEFT", action, "BOTTOMLEFT", 2, -4)
+    window.actionNote:SetWidth(RIGHT_W)
+    window.actionNote:SetJustifyH("LEFT")
+
+    -- Your door
+    local mine = SK.UI.CreateHeader(window, L["Your door"], RIGHT_W)
+    mine:SetPoint("TOPLEFT", action, "BOTTOMLEFT", 0, -34)
+    window.doorCheck = SmallCheck(L["Be a door"], function(self)
         SK.db.liminalDoor = self:GetChecked() and true or false
         SK.Safely("door", SendDoor, true)
-        UpdateStatus()
+        UpdateMine()
     end)
-    window.doorCheck = check
-    local checkLabel = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    checkLabel:SetPoint("LEFT", check, "RIGHT", 2, 0)
-    checkLabel:SetText(L["Be a door"])
+    window.doorCheck:SetPoint("TOPLEFT", mine, "BOTTOMLEFT", 0, -2)
+    window.autoCheck = SmallCheck(L["Invite by myself"], function(self)
+        SK.db.doorAutoInvite = self:GetChecked() and true or false
+        SK.Safely("door", SendDoor, true)
+        UpdateMine()
+    end)
+    window.autoCheck:SetPoint("LEFT", window.doorCheck, "RIGHT", 100, 0)
     window.status = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    window.status:SetPoint("TOPLEFT", check, "BOTTOMLEFT", 4, 0)
-    window.status:SetWidth(WIDTH - 8)
+    window.status:SetPoint("TOPLEFT", window.doorCheck, "BOTTOMLEFT", 4, -2)
+    window.status:SetWidth(RIGHT_W - 8)
     window.status:SetJustifyH("LEFT")
-
-    local go = CreateFrame("Button", "ScrollkeeperDoorsGo", window, "SecureActionButtonTemplate,UIPanelButtonTemplate")
-    go:SetSize(150, 22)
-    go:SetPoint("BOTTOMLEFT", 16, 30)
-    go:RegisterForClicks("AnyUp", "AnyDown")
-    window.go = go
-    window.goNote = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    window.goNote:SetPoint("BOTTOMLEFT", 16, 12)
-    window.goNote:SetWidth(WIDTH)
-    window.goNote:SetJustifyH("LEFT")
 
     window:SetScript("OnShow", function() SK.RefreshDoors() end)
     window:Hide()
 end
 
+local function HostLine(host)
+    if host.kind == "door" then
+        local door = host.door
+        local how = door.auto and L["invites you by itself"] or L["gets a pop-up to invite you"]
+        return "|cff40ff40" .. L["Scrollkeeper door"] .. "|r  |cffffffff" .. door.place .. "|r  |cff808080" .. how .. "|r"
+    end
+    local who = host.who
+    return ("|cff808080/who:|r |cffffffff%s %s %s|r  |cff808080%s|r"):format(tostring(who.level or "?"),
+        who.race or "", who.class or "", L["may not be resting"])
+end
+
 function SK.RefreshDoors()
     if not (window and window:IsShown()) then return end
-    window.list:SetRows(SK.OpenDoors(), function(row, door)
+    if selected == nil then selected = "all" end
+
+    local places = SK.DoorPlaces()
+    local items = { { all = true, doors = #SK.OpenDoors() } }
+    for _, entry in ipairs(places) do items[#items + 1] = entry end
+    window.places:SetRows(items, function(row, entry)
         row.itemID = nil
-        row.label:SetText(door.short .. (door.demo and L["  |cffff8040demo|r"] or ""))
-        local extra = door.scrolls > 0 and ("  |cff808080" .. L["has Liminal Passage"] .. "|r") or ""
-        row.sub:SetText("|cffffffff" .. door.place .. "|r" .. extra)
+        local picked = (entry.all and selected == "all") or entry.place == selected
+        local name = entry.all and L["All open doors"] or entry.place.town
+        local color = picked and "|cffffffff" or entry.own and "|cff808080" or ""
+        row.label:SetText((picked and "> " or "") .. color .. name .. (color ~= "" and "|r" or ""))
+        row.value:SetText(entry.doors > 0 and ("|cff40ff40" .. entry.doors .. "|r") or "")
         row.tipFunc = function(tip)
-            tip:AddLine(door.short)
-            tip:AddLine(L["Resting in %s"]:format(door.place), 1, 1, 1)
-            tip:AddLine(L["Click: ask them to invite you, so you can use Liminal Passage on them."], 0.6, 0.6, 0.6, true)
+            tip:AddLine(name)
+            if not entry.all then
+                tip:AddLine(ZoneName(entry.place.map) or "", 1, 1, 1)
+                if entry.own then tip:AddLine(L["You can teleport here with your own spell."], 0.6, 0.6, 0.6) end
+            end
+            tip:AddLine(L["%d open doors"]:format(entry.doors), 0.25, 1, 0.25)
         end
-        row.onClick = function() Ask(door) end
-    end, L["No open doors on your server right now. Doors show up while their owners rest in an inn or a city."])
-    UpdateStatus()
-    UpdateGo()
+        row.onClick = function()
+            selected = entry.all and "all" or entry.place
+            SK.RefreshDoors()
+        end
+    end)
+
+    local hosts = SK.DoorHosts()
+    window.hosts:SetRows(hosts, function(row, host)
+        row.itemID = nil
+        local picked = trip and trip.short == host.short
+        row.label:SetText((picked and "> |cffffffff" or "") .. host.short .. (picked and "|r" or ""))
+        row.sub:SetText(HostLine(host))
+        row.tipFunc = function(tip)
+            tip:AddLine(host.short)
+            if host.kind == "door" then
+                tip:AddLine(L["Resting in %s"]:format(host.door.place), 1, 1, 1)
+                tip:AddLine(L["Click: ask them to invite you. The invite is accepted for you."], 0.6, 0.6, 0.6, true)
+            else
+                tip:AddLine(L["Click: whisper them asking for an invite. They don't need any addon, but they have to be resting."], 0.6, 0.6, 0.6, true)
+            end
+        end
+        row.onClick = function() Ask(host) end
+    end, selected == "all" and L["No open doors right now. Pick a place to search it with /who."]
+        or L["No doors here. Search with /who below to find anyone in this zone."])
+
+    if type(selected) == "table" then
+        window.who:Show()
+        window.who:SetEnabled(SK.DoorWhoReady())
+        window.who:SetText(L["Search %s with /who"]:format(ZoneName(selected.map) or selected.town))
+    else
+        window.who:Hide()
+    end
+    UpdateMine()
+    UpdateAction()
 end
 
 function SK.ToggleDoors()
@@ -328,3 +702,5 @@ SK.Listen("BAGS_CHANGED", SK.RefreshDoors)
 SK.On("GROUP_ROSTER_UPDATE", function() SK.RefreshDoors() end)
 SK.On("PLAYER_UPDATE_RESTING", function() C_Timer.After(0.5, SK.RefreshDoors) end)
 SK.On("PLAYER_REGEN_ENABLED", function() SK.RefreshDoors() end)
+-- The /who button waits out its cooldown.
+SK.Listen("READY", function() C_Timer.NewTicker(5, function() if window and window:IsShown() and window.who:IsShown() then window.who:SetEnabled(SK.DoorWhoReady()) end end) end)

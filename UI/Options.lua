@@ -18,7 +18,7 @@ local function AddCheckbox(key, label, tooltip, default)
         if key == "anonymous" and SK.SendHello then SK.SendHello() end
         if key == "scrollIcon" and SK.RefreshIcon then SK.RefreshIcon() end
         if key == "minimapButton" and SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
-        if key == "liminalDoor" and SK.SendDoor then SK.SendDoor(true) end
+        if (key == "liminalDoor" or key == "doorAutoInvite") and SK.SendDoor then SK.SendDoor(true) end
         if key == "oddsStandard" and SK.RefreshNetwork then SK.RefreshNetwork() end
         SK.Send("DROPS_CHANGED")
     end)
@@ -294,8 +294,10 @@ SK.Listen("READY", function()
                 L["What Scrollkeeper shares with other players: what scrolls became, where they drop, which libraries work and who needs which scrolls. Only scroll data is sent, never chat or gold."])
         end)
 
-        AddCheckbox("liminalDoor", L["Be a Liminal Passage door"],
-            L["While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors lists the open doors."], false)
+        AddCheckbox("liminalDoor", L["Doorways: be a door"],
+            L["While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways."], false)
+        AddCheckbox("doorAutoInvite", L["Doorways: invite by myself"],
+            L["Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes."], false)
 
         AddCheckbox("oddsStandard", L["Odds: list standard scrolls"],
             L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row."], false)

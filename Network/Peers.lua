@@ -225,15 +225,29 @@ function SK.FactionOfRace(englishRace) return RACE_FACTION[englishRace or ""] en
 -- whispers, mail and trades only work on your own server and faction, so
 -- the lists leave everyone else out. (Their shared data still counts.)
 local function Plain(text) return ((text or ""):gsub("[%s%-]", "")):lower() end
+-- Our own server, as both spellings: the display name and the "normalized"
+-- one that sender names carry ("Name-Server").
+local function MyRealms()
+    local realms = {}
+    if GetRealmName then realms[Plain(GetRealmName())] = true end
+    if GetNormalizedRealmName then
+        local normalized = SK.Try(GetNormalizedRealmName)
+        if type(normalized) == "string" then realms[Plain(normalized)] = true end
+    end
+    realms[""] = nil
+    return realms
+end
+
 local function Unreachable(sender, peer)
-    local myRealm = GetRealmName and Plain(GetRealmName()) or ""
+    if peer.demo then return false end
+    local realms = MyRealms()
     -- Another server: the sender name says so ("Name-Server"), or their ID does.
     local senderRealm = sender:match("%-([^%-]+)$")
-    if senderRealm and myRealm ~= "" and Plain(senderRealm) ~= myRealm then return true end
+    if senderRealm and next(realms) and not realms[Plain(senderRealm)] then return true end
     if not (peer.guid and GetPlayerInfoByGUID) then return false end
     local ok, _, _, _, englishRace, _, _, realm = pcall(GetPlayerInfoByGUID, peer.guid)
     if not ok then return false end
-    if type(realm) == "string" and realm ~= "" and myRealm ~= "" and Plain(realm) ~= myRealm then return true end
+    if type(realm) == "string" and realm ~= "" and next(realms) and not realms[Plain(realm)] then return true end
     -- The other faction (Pandaren and unknown races could be either: keep them).
     local faction = RACE_FACTION[englishRace or ""]
     local mine = UnitFactionGroup and UnitFactionGroup("player")

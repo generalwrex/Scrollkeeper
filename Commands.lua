@@ -148,6 +148,8 @@ end)
 
 commands.who = DevOnly(function()
     local myFaction = UnitFactionGroup and UnitFactionGroup("player") or "?"
+    print(("you: realm %q, normalized %q, %s"):format(tostring(GetRealmName and GetRealmName()),
+        tostring(GetNormalizedRealmName and GetNormalizedRealmName()), myFaction))
     local names = {}
     for sender in pairs(SK.peers or {}) do names[#names + 1] = sender end
     table.sort(names)

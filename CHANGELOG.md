@@ -2,7 +2,11 @@
 
 ## 1.1.7
 
-- **Liminal Passage doors (/sk doors, or the new button on the panel).** Scroll of Liminal Passage takes you to a group member who's resting in an inn or a city. Tick "Be a door" and other mages on your server see you while you rest; they click your name, you get a pop-up to invite them, and their Go button uses the scroll on you. Off unless you turn it on.
+- **Doorways (/sk doors, or the new button on the panel): getting around with Scroll of Liminal Passage.** The scroll takes you to a group member resting in an inn or a city. Pick a town (neutral ones first; capitals you can already teleport to are greyed out) and Doorways shows who you can go to:
+  - Scrollkeeper users who offer to be a **door**: click one, they invite you, and the invite is accepted for you.
+  - Anyone else in that zone, found with /who: click for a ready-made whisper asking for an invite. They don't need any addon.
+  - One button does the next step: ask, **Teleport**, then **Leave group**.
+- Be a door yourself: tick "Be a door" (off unless you turn it on). Mages who ask get a pop-up, or tick "Invite by myself" to skip it.
 - The scroll icon's frame shows the skill-up color of the scroll a click would read (orange, yellow, green, or gray when it won't give a point), and its tooltip says it too.
 
 ## 1.1.6

@@ -442,7 +442,7 @@ local function Build()
         { icon = "Interface\\Icons\\INV_Letter_15", open = function() SK.ToggleSwap() end,
           title = "Scroll Swap", text = "Who has spare scrolls you'd level from, and who'd want yours." },
         { icon = "Interface\\Icons\\Spell_Arcane_Blink", open = function() SK.ToggleDoors() end,
-          title = "Liminal Passage", text = "Doors: Scrollkeeper users resting in a city or inn you can teleport to with Liminal Passage." },
+          title = "Doorways", text = "Pick a town and get there with Scroll of Liminal Passage: Scrollkeeper doors invite you, or find anyone there with /who." },
         { icon = "Interface\\Icons\\INV_Misc_GroupLooking", open = function() SK.ToggleNetwork() end,
           inAdvanced = true,   -- Advanced view has it built in, so no button there
           title = "Fellow Mages", text = "Other mages running Scrollkeeper, and the community's odds for each tier." },
