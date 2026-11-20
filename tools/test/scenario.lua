@@ -569,3 +569,20 @@ do
   print("KNOWN secret ->", SK.Known(SECRET), " plain ->", SK.Known(true))
   issecretvalue = nil
 end
+
+-- Running-out reminder: an imbue with 3 minutes left (setting: 5) pops up once.
+if SK.isMage then
+  local realEnchant = GetWeaponEnchantInfo
+  GetWeaponEnchantInfo = function() return true, 180000 end
+  fire("UNIT_INVENTORY_CHANGED", "player"); runTimers()
+  local left = SK.BuffTimeLeft()
+  print("EXPIRING imbue left", left.imbue and math.floor(left.imbue))
+  print("EXPIRING no scroll ->", SK.BestScroll("imbues") == nil and "held back" or "has one")
+  local realBest = SK.BestScroll
+  SK.BestScroll = function(category) return category == "imbues" and { itemID = 275069, name = "Scroll of Imbue Frost" } or nil end
+  SK.CheckExpiring()
+  print("EXPIRING toast", ScrollkeeperToast and ScrollkeeperToast:IsShown(), ScrollkeeperToast and ScrollkeeperToast.title:GetText())
+  ScrollkeeperToast:Hide(); SK.CheckExpiring()
+  print("EXPIRING again (should stay hidden)", ScrollkeeperToast:IsShown())
+  GetWeaponEnchantInfo, SK.BestScroll = realEnchant, realBest
+end

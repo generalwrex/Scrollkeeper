@@ -246,6 +246,11 @@ do
         toast:SetScript("OnClick", function(self, button)
             self:Hide()
             -- Shift-right-click: turn these reminders off (same as the setting).
+            if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() and self.expiring then
+                SK.db.expiringReminder = false
+                SK.Print(L["running-out pop-ups are off. Turn them back on in /sk options (Panel)."])
+                return
+            end
             if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() then
                 SK.db.reminderToast = false
                 SK.Print(L["imbue and familiar pop-ups are off. Turn them back on in /sk options (Panel)."])
@@ -307,6 +312,7 @@ do
         end
         toast.title:SetText(title)
         toast.hint:SetText(L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"])
+        toast.expiring = nil
 
         local scroll = familiar or imbue
         local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)
@@ -325,6 +331,55 @@ do
         pending = true
         C_Timer.After(2, function() pending = false; SK.Safely("reminder toast", Update) end)
     end
+
+    -- Running out soon: a pop-up when the imbue or familiar has this many
+    -- minutes left (setting, 5 by default) and you carry a scroll to renew
+    -- it. Once per buff: renewing it resets that.
+    local warned = {}
+    local function CheckExpiring()
+        if not (SK.isMage and SK.db and SK.db.expiringReminder ~= false) or SK.InCombat() then return end
+        if not SK.BuffTimeLeft then return end
+        if UnitIsDeadOrGhost and SK.Known(UnitIsDeadOrGhost("player")) then return end
+        local limit = (tonumber(SK.db.expiringMinutes) or 5) * 60
+        local left = SK.BuffTimeLeft()
+        local due = {}
+        for _, kind in ipairs({ "imbue", "familiar" }) do
+            local seconds = left[kind]
+            if not seconds or seconds > limit then
+                warned[kind] = nil            -- renewed (or gone): warn again next time
+            elseif not warned[kind] then
+                local scroll = SK.BestScroll and SK.BestScroll(kind == "imbue" and "imbues" or "familiars")
+                if scroll then due[#due + 1] = { kind = kind, seconds = seconds, scroll = scroll } end
+            end
+        end
+        if #due == 0 then return end
+        for _, entry in ipairs(due) do warned[entry.kind] = true end
+
+        if not toast then Build() end
+        local function Minutes(seconds) return math.max(1, math.ceil(seconds / 60)) end
+        local title
+        if #due == 2 then
+            title = L["Imbue and familiar run out in %d min"]:format(Minutes(math.min(due[1].seconds, due[2].seconds)))
+        elseif due[1].kind == "imbue" then
+            title = L["Weapon imbue runs out in %d min"]:format(Minutes(due[1].seconds))
+        else
+            title = L["Familiar runs out in %d min"]:format(Minutes(due[1].seconds))
+        end
+        toast.title:SetText(title)
+        toast.hint:SetText(L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"])
+        toast.expiring = true
+        local scroll = due[#due].scroll
+        local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)
+        toast.icon:SetTexture(iconTexture or "Interface\\Icons\\INV_Scroll_03")
+        toast:Fit()
+        toast.age = 0
+        toast:SetAlpha(1)
+        toast:Show()
+    end
+    SK.CheckExpiring = CheckExpiring
+    SK.Listen("READY", function()
+        if C_Timer.NewTicker then C_Timer.NewTicker(15, function() SK.Safely("expiring reminder", CheckExpiring) end) end
+    end)
 
     SK.Listen("REMINDERS_CHANGED", UpdateSoon)
     SK.On("PLAYER_REGEN_ENABLED", UpdateSoon)

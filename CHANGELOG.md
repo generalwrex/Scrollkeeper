@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.1.9
+
+- **Running-out pop-up:** when your weapon imbue or familiar has 5 minutes left (and you carry a scroll to renew it), a pop-up tells you. Change the minutes or turn it off in Options > Panel, or Shift-right-click the pop-up.
+
 ## 1.1.8
 
 Bug fix.

@@ -12,6 +12,8 @@ local _, SK = ...
 local L = SK.L
 
 local state = { imbued = true, familiar = true }
+-- When they run out, as GetTime() seconds (nil = unknown or never).
+local endsAt = {}
 
 ------------------------------------------------------------------------
 -- Weapon imbue and familiar
@@ -19,8 +21,10 @@ local state = { imbued = true, familiar = true }
 
 local function HasMainHandImbue()
     if not GetWeaponEnchantInfo then return true end
-    local ok, hasMainHand = pcall(GetWeaponEnchantInfo)
+    local ok, hasMainHand, expiresMs = pcall(GetWeaponEnchantInfo)
     if not ok then return state.imbued end
+    hasMainHand, expiresMs = SK.Known(hasMainHand), SK.Known(expiresMs)
+    endsAt.imbue = hasMainHand and type(expiresMs) == "number" and expiresMs > 0 and GetTime() + expiresMs / 1000 or nil
     return hasMainHand and true or false
 end
 
@@ -52,14 +56,20 @@ local function HasFamiliar()
         if type(aura) ~= "table" then break end
         local spellID, name = aura.spellId, aura.name
         if issecretvalue and (issecretvalue(spellID) or issecretvalue(name)) then return state.familiar end
-        if spellID and ids[spellID] then return true end
-        if type(name) == "string" then
-            if names[name] then return true end
+        local found = (spellID and ids[spellID]) and true or false
+        if not found and type(name) == "string" then
+            if names[name] then found = true end
             for _, word in ipairs(words) do
-                if word ~= "" and name:lower():find(word:lower(), 1, true) then return true end
+                if word ~= "" and name:lower():find(word:lower(), 1, true) then found = true end
             end
         end
+        if found then
+            local expires = SK.Known(aura.expirationTime)
+            endsAt.familiar = type(expires) == "number" and expires > 0 and expires or nil
+            return true
+        end
     end
+    endsAt.familiar = nil
     return false
 end
 
@@ -70,6 +80,15 @@ local function Check()
         state.imbued, state.familiar = imbued, familiar
         SK.Send("REMINDERS_CHANGED")
     end
+end
+
+-- Seconds left on the imbue and the familiar: { imbue = n or nil, familiar = n or nil }.
+function SK.BuffTimeLeft()
+    local now, left = GetTime(), {}
+    for kind, at in pairs(endsAt) do
+        if at and at > now then left[kind] = at - now end
+    end
+    return left
 end
 
 -- Is a familiar out, and is the main hand imbued? (Last known answer.)

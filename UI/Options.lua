@@ -205,6 +205,19 @@ local function AddOfflineSlider()
         L["When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long."])
 end
 
+local function AddExpiringSlider()
+    local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_expiringMinutes", "expiringMinutes", SK.db,
+        "number", L["Warn this long before"], 5)
+    local options = Settings.CreateSliderOptions(1, 15, 1)
+    if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
+        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+            return L["%d min"]:format(value)
+        end)
+    end
+    return Settings.CreateSlider(category, setting, options,
+        L["How many minutes before your imbue or familiar runs out the running-out pop-up shows."])
+end
+
 local function AddScaleSlider()
     local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_scale", "scale", SK.db,
         "number", L["Panel size"], 1)
@@ -250,6 +263,12 @@ SK.Listen("READY", function()
             L["The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)"], true)
         AddCheckbox("reminderToast", L["Imbue and familiar pop-up"],
             L["A small pop-up when your weapon imbue or familiar wears off and you have a scroll for it. Click it to open the panel. Not in combat, and at most once every five minutes."], true)
+        local expiring = AddCheckbox("expiringReminder", L["Running-out pop-up"],
+            L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."], true)
+        SK.Safely("settings expiring slider", function()
+            local slider = AddExpiringSlider()
+            if slider and DependsOn then DependsOn(slider, expiring, "expiringReminder") end
+        end)
         AddCheckbox("locked", L["Lock position"],
             L["Stops the panel (and the scroll icon) from being dragged."], false)
         local buttons = AddCheckbox("showScrollBar", L["Scroll buttons"],
