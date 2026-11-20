@@ -15,7 +15,7 @@ Mage scroll helper for WoW Forever.
 - **Your scrolls by category** (Imbues, Familiars, Combat, Utility, Upgrades), best ones starred, click one to use it.
   Clicking an imbue puts it straight on your main-hand weapon.
 - **Weapon upgrades:** Coldflame Saber, Narpas Sword, Wit's Edge: what you have, what's missing, and where it drops.
-- **Buttons along the top:** the Farming Plan, Luck Log, Scroll Swap and Fellow Mages windows, the scroll icon and
+- **Buttons along the top:** the Farming Plan, Luck Log, Scroll Swap, Doorways and Fellow Mages windows, the scroll icon and
   minimap button toggles, the view size and the settings. Right-click the scroll icon toggle if you lost the icon
   off screen.
 - A **minimap button** and an optional **scroll icon** with how many scrolls you can decipher. Click the icon to
@@ -43,6 +43,11 @@ Mage scroll helper for WoW Forever.
   (like how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail.
   Sort by skill, name or "my scrolls"; right-click "my scrolls" to see only who could use yours.
 - **Scroll Swap:** who has spare scrolls you'd level from, and who'd want yours.
+- **Doorways** (`/sk doors`): get around with Scroll of Liminal Passage, which takes you to a group member resting in
+  an inn or a city. Pick a town and see who you can go to: Scrollkeeper users who offer to be a **door** (click, they
+  invite you, the invite is accepted for you) and anyone /who finds there (a ready-made whisper asking for an
+  invite). Guildies and friends first. One button does the next step: ask, Teleport, Leave group. Being a door is
+  off unless you turn it on.
 - Shared odds, skill-up rates, libraries, drop spots and sheep backfires make everyone's numbers better.
 - **Sharing** is Full, Anonymous, Simple (guild, group and friends only) or None. Only scroll data is sent, never
   chat or gold.
@@ -75,6 +80,7 @@ Nothing is automatic: every cast is one click from the player.
 | `/sk logchat` | the luck log, printed in chat |
 | `/sk net` | the Fellow Mages and Community Odds window |
 | `/sk swap` | the Scroll Swap window |
+| `/sk doors` | Doorways: get somewhere with Scroll of Liminal Passage |
 | `/sk mail` | who could use your spare scrolls |
 | `/sk export` | copy your scroll data to share |
 | `/sk backup` / `/sk restore` | save or bring back all your Scrollkeeper data |

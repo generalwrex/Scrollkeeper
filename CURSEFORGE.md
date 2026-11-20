@@ -40,6 +40,8 @@ The part I'm proudest of though is that it connects mages. Your alts, guildies, 
 
 Everyone running Scrollkeeper shares what each scroll tier really turns into, where scrolls (and which tiers) and librarian books drop, and who needs which scrolls. It also comes with data other players already shared, so the odds aren't empty on day one. Only scroll info is shared, and you pick how: Full, Anonymous, just your guild/group/friends, or off.
 
+**Doorways** (`/sk doors`): Scroll of Liminal Passage takes you to a group member resting in an inn or a city. Pick a town and Doorways shows who you can go to: Scrollkeeper users who offer to be a door (they invite you, the invite is accepted for you), and anyone /who finds there, with a friendly whisper ready to send. Guildies and friends are marked and listed first. One button does the rest: ask, Teleport, Leave group.
+
 ## Alts
 
 Log into your mage once and your other characters know about it. Your rogue's tooltips will say which of your mages can use a scroll, and there's a little window with each mage's skill and Study timer.
@@ -59,6 +61,7 @@ Titan Panel and ElvUI data bars, Auctionator, TSM, and TomTom waypoints from the
 *   `/sk net` Fellow Mages and the community odds
 *   `/sk mail` who could use your spare scrolls
 *   `/sk swap` the scroll swap board
+*   `/sk doors` Doorways: get somewhere with Scroll of Liminal Passage
 *   `/sk plan` your farming plan
 *   `/sk log` your luck log (`/sk logchat` prints it in chat)
 *   `/sk scan` scan the auction house for scroll prices

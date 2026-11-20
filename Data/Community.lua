@@ -17,6 +17,7 @@ SK.COMMUNITY_DATA = {
             ["50 orange"] = { ups = 3, tries = 5 },
         },
         drops = {
+            [2548] = { ["16.21"] = 1 },
         },
         books = {
         },
