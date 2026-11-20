@@ -210,6 +210,16 @@ commands.who = DevOnly(function()
     local members = id > 0 and GetNumChannelMembers and SK.Try(GetNumChannelMembers, id)
     print(("channel %s: %s, members %s, sharing %s, channel on %s"):format(SK.Net.CHANNEL_NAME,
         id > 0 and ("/" .. id) or "NOT JOINED", tostring(members or "?"), tostring(SK.db.sharing), tostring(SK.db.shareChannel)))
+    -- What the network actually did since login (before any filtering).
+    local stats = SK.Net.stats
+    if stats then
+        local senders = 0
+        for _ in pairs(stats.senders) do senders = senders + 1 end
+        local function List(t) local out = {} for k, v in pairs(t) do out[#out + 1] = k .. "=" .. v end table.sort(out) return table.concat(out, " ") end
+        print(("net since %d min: received %d messages from %d players [%s] by [%s]"):format(
+            math.floor((time() - stats.since) / 60), stats.received, senders, List(stats.kinds), List(stats.sources)))
+        print(("sent %d ok, %d refused [%s]"):format(stats.sent, stats.refused, List(stats.results)))
+    end
     local names = {}
     for sender in pairs(SK.peers or {}) do names[#names + 1] = sender end
     table.sort(names)

@@ -82,11 +82,20 @@ local function Split(text)
     return fields
 end
 
+-- Counts for /sk who: what actually arrives and leaves, before any
+-- filtering, to find out where messages get lost.
+Net.stats = { since = time(), received = 0, senders = {}, kinds = {}, sources = {}, sent = 0, refused = 0, results = {} }
+
 SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
     if prefix ~= Net.PREFIX or type(text) ~= "string" then return end
+    local stats = Net.stats
+    stats.received = stats.received + 1
+    if type(sender) == "string" then stats.senders[sender] = true end
+    if type(source) == "string" then stats.sources[source] = (stats.sources[source] or 0) + 1 end
     if not (SK.db and SK.db.share) then return end
     local fields = Split(text)
     local kind = table.remove(fields, 1)
+    if kind then stats.kinds[kind] = (stats.kinds[kind] or 0) + 1 end
     if kind == "H" and fields[9] and fields[9] == UnitGUID("player") then
         Net.RememberMyself(sender)
         return
@@ -176,7 +185,14 @@ local function SendNext()
     if #queue == 0 or SK.InCombat() then return end
     local message = table.remove(queue, 1)
     for _, destination in ipairs(Destinations()) do
-        C_ChatInfo.SendAddonMessage(Net.PREFIX, message.text, destination[1], destination[2])
+        local ok, result = pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, message.text, destination[1], destination[2])
+        -- The game answers with a result code: 0 (or true) is sent; anything
+        -- else (throttled, not in channel...) means it never left.
+        local stats = Net.stats
+        local key = destination[1] .. ":" .. tostring(ok and result)
+        stats.results[key] = (stats.results[key] or 0) + 1
+        if ok and (result == nil or result == true or result == 0) then stats.sent = stats.sent + 1
+        else stats.refused = stats.refused + 1 end
     end
 end
 
