@@ -770,3 +770,20 @@ do
   SK.db.mageHistory = nil
   GetRealmName, UnitFactionGroup = realRealm, realFaction
 end
+
+-- Ruleset in the hello: decides reachability; unknown-ruleset players aren't saved in the history.
+do
+  local realRealm, realInfo = GetRealmName, GetPlayerInfoByGUID
+  GetRealmName = function() return "CAMWOW US1 Realm 3 RP" end
+  GetPlayerInfoByGUID = function() return "Mage", "MAGE", "Undead", "Scourge", 2, "X", "" end   -- realm unknown
+  SK.db.mageHistory = {}
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.2.0|MAGE|20|64|100|15.50||Player-1-AA||||||PvE", "CHANNEL", "Turbo")
+  print("RULESET PvE seen from RP:", SK.IsUnreachable("Turbo") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["Turbo"] ~= nil)
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.1.9|MAGE|20|64|100|15.50||Player-1-AB", "CHANNEL", "Oldie")
+  print("RULESET old client, realm unknown:", SK.IsUnreachable("Oldie") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["Oldie"] ~= nil)
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.2.0|MAGE|20|64|100|15.50||Player-1-AC||||||RP", "CHANNEL", "Rper")
+  print("RULESET RP seen from RP:", SK.IsUnreachable("Rper") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["X"] ~= nil)
+  SK.peers["Turbo"], SK.peers["Oldie"], SK.peers["Rper"] = nil, nil, nil
+  SK.db.mageHistory = nil
+  GetRealmName, GetPlayerInfoByGUID = realRealm, realInfo
+end

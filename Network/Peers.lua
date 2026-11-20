@@ -4,6 +4,7 @@
 --   Q                       "who's there?"  Everyone answers with H.
 --   H|protocol|version|class|level|skill|max|tiers|upgrades|guid|exportID|anon|alt|altSkill|altTiers
 --        alt...    on a non-mage: their best mage (same realm and faction)
+--        ruleset   (field 15) "PvE", "PvP", "RP" or "RP-PvP"
 --        tiers     tiers this mage still gets skill-ups from, e.g. "15.50"
 --        upgrades  weapon-upgrade scrolls held, e.g. "Saber"
 
@@ -83,8 +84,17 @@ local function HelloFields()
         AltMageFields()
 end
 
+-- The hello, with your ruleset (PvE, PvP, RP, RP-PvP) at the end: the
+-- most reliable way for others to know if they can reach you.
+local function HelloWithRuleset()
+    local fields = { HelloFields() }
+    for i = #fields + 1, 14 do fields[i] = "" end
+    fields[15] = SK.ServerKind and SK.ServerKind() or ""
+    return (unpack or table.unpack)(fields, 1, 15)
+end
+
 function SK.SendHello()
-    Net.Send("H", HelloFields())
+    Net.Send("H", HelloWithRuleset())
 end
 
 -- Friends who aren't in your guild or group: ask each online friend
@@ -110,7 +120,7 @@ end)
 Net.Handle("Q", function(sender, _, source)
     if source == "WHISPER" then
         -- A friend asked us directly: answer them directly.
-        C_Timer.After(1 + math.random() * 2, function() Net.Whisper(sender, "H", HelloFields()) end)
+        C_Timer.After(1 + math.random() * 2, function() Net.Whisper(sender, "H", HelloWithRuleset()) end)
         return
     end
     -- Answer after a short random wait so a whole guild doesn't reply at once.
@@ -190,6 +200,8 @@ Net.Handle("H", function(sender, f, source)
     SK.peers[sender] = peer
     -- Anonymous players still count, but never show up by name.
     peer.anonymous = f[11] == "1"
+    local RULESETS = { PvE = true, PvP = true, RP = true, ["RP-PvP"] = true }
+    peer.ruleset = RULESETS[f[15] or ""] and f[15] or nil
     -- Playing another class but has a mage: remember it, to list and mail it.
     local altName = tostring(f[12] or ""):sub(1, 40)
     if peer.class ~= "MAGE" and altName ~= "" then
@@ -327,6 +339,9 @@ end
 
 local function Unreachable(sender, peer)
     if peer.demo then return false end
+    -- They told us their ruleset (1.2.0 and up): that settles it.
+    local mine = SK.ServerKind and SK.ServerKind()
+    if peer.ruleset and mine and peer.ruleset ~= mine then return true end
     local realms = MyRealms()
     -- Another ruleset: the sender name says so ("Name-Realm"), or their ID does.
     local senderRealm = sender:match("%-([^%-]+)$")
@@ -392,8 +407,19 @@ local function PruneHistory()
     for i = HISTORY_MAX + 1, #list do history[list[i]] = nil end
 end
 
+-- Do we really know where they are? Their ruleset, a realm on their name,
+-- or a realm from their ID (the game often doesn't know far-away players).
+local function WhereKnown(sender, peer)
+    if peer.ruleset or sender:find("%-") then return true end
+    if not (peer.guid and GetPlayerInfoByGUID) then return false end
+    local ok, _, _, _, _, _, _, realm = pcall(GetPlayerInfoByGUID, peer.guid)
+    return ok and type(realm) == "string" and realm ~= ""
+end
+
 function SK.RememberMage(sender, peer)
     if peer.anonymous or peer.demo or Net.IsMe(sender) or Unreachable(sender, peer) then return end
+    -- The history is only for people we're sure about.
+    if not WhereKnown(sender, peer) then return end
     local mage, name, level = peer, SK.ContactName(sender), peer.level
     if peer.class ~= "MAGE" then
         if not peer.alt then return end
