@@ -717,7 +717,16 @@ local function Build()
     side.network, paneHeight = SK.UI.CreateNetworkPane(panel, sideLeft, -TOP + 4, SIDE_INNER, 10, 7)
 
     local y = -TOP + 4 - paneHeight
-    side.statsHeader = SK.UI.CreateHeader(panel, L["Your Stats"], SIDE_INNER)
+    side.statsHeader = SK.UI.CreateHeader(panel, L["Account Stats"], SIDE_INNER)
+    -- Saved for the whole account (all your characters), except books.
+    side.statsHeader:EnableMouse(true)
+    side.statsHeader:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText(L["Account Stats"])
+        GameTooltip:AddLine(L["From all your characters together. Library books are this character's own."], 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    side.statsHeader:SetScript("OnLeave", function() GameTooltip:Hide() end)
     side.statsHeader:SetPoint("TOPLEFT", sideLeft, y)
     y = y - 26
     side.rows = {}
