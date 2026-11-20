@@ -665,3 +665,4 @@ L["Shift-click: put the name in the mail."] = "Mayús-clic: poner el nombre en e
 L["%d skill"] = "habilidad %d"
 L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill-ups. If you don't need them, feel free to send them back. Have fun!"] = "¡Hola %s! Aquí tienes unos pergaminos de nivel %s que deberían subirte Comprensión. Si no los necesitas, devuélvemelos sin problema. ¡Que te diviertas!"
 L[" (sent with Scrollkeeper)"] = " (enviado con Scrollkeeper)"
+L["COD is not endorsed by Scrollkeeper: scroll sharing should be free!"] = "Scrollkeeper no apoya el contra reembolso: ¡compartir pergaminos debería ser gratis!"

@@ -662,3 +662,4 @@ L["Shift-click: put the name in the mail."] = "Shift-点击：把名字填进邮
 L["%d skill"] = "技能 %d"
 L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill-ups. If you don't need them, feel free to send them back. Have fun!"] = "你好 %s！这是一些 %s 级卷轴，应该能提升你的理解技能。如果用不上，欢迎寄回给我。玩得开心！"
 L[" (sent with Scrollkeeper)"] = "（由 Scrollkeeper 发送）"
+L["COD is not endorsed by Scrollkeeper: scroll sharing should be free!"] = "Scrollkeeper 不支持货到付款：分享卷轴应该是免费的！"

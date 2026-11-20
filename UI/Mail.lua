@@ -243,6 +243,12 @@ local function Build()
     frame.note:SetPoint("TOPLEFT", 14, -38)
     frame.note:SetWidth(WIDTH - 28)
     frame.note:SetJustifyH("LEFT")
+    -- At the bottom: no COD from us.
+    frame.footer = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    frame.footer:SetPoint("BOTTOMLEFT", 14, 12)
+    frame.footer:SetWidth(WIDTH - 28)
+    frame.footer:SetJustifyH("LEFT")
+    frame.footer:SetText(L["COD is not endorsed by Scrollkeeper: scroll sharing should be free!"])
 
     for i = 1, MAX_ROWS do
         local row = CreateFrame("Button", nil, frame)
@@ -302,7 +308,7 @@ local function Refresh()
             row:Hide()
         end
     end
-    frame:SetHeight(48 + shown * ROW_HEIGHT)
+    frame:SetHeight(48 + shown * ROW_HEIGHT + (frame.footer:GetStringHeight() or 12) + 6)
     frame:Show()
 end
 SK.RefreshMailHelper = Refresh
