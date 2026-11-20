@@ -140,6 +140,11 @@ local function Show(title, hint, text, note, issueTitle)
     window.box:HighlightText()
 end
 
+-- Any text in the copy box (dev commands use it for long lists).
+function SK.ShowTextBox(title, text)
+    Show(title, L["Press Ctrl+C to copy."], text)
+end
+
 ------------------------------------------------------------------------
 -- What goes in
 ------------------------------------------------------------------------

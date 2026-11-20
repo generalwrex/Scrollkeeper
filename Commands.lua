@@ -151,13 +151,14 @@ end)
 -- wrong map ID shows up (MISSING, or the wrong zone next to the town).
 commands.places = DevOnly(function()
     local mine = UnitFactionGroup and UnitFactionGroup("player")
+    local lines = { "You: " .. tostring(mine), "" }
     for _, place in ipairs(SK.DOOR_PLACES or {}) do
         local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(place.map)
-        local zone = info and info.name
-        local shown = place.side == "both" or place.side == mine
-        print(("%s%s|r  map %d  ->  %s  (%s)"):format(shown and "|cffffffff" or "|cff808080", place.town, place.map,
-            zone and ("|cff40ff40" .. zone .. "|r") or "|cffff4040MISSING|r", place.side))
+        local zone = info and info.name or "MISSING"
+        local shown = (place.side == "both" or place.side == mine) and "" or "   (other faction, not listed)"
+        lines[#lines + 1] = ("%-24s map %d -> %s  [%s]%s"):format(place.town, place.map, zone, place.side, shown)
     end
+    SK.ShowTextBox("Doorways places", table.concat(lines, "\n"))
 end)
 
 commands.who = DevOnly(function()
