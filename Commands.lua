@@ -123,6 +123,7 @@ end
 local DEV_COMMANDS = {
     { "dev", "this list" },
     { "who", "everyone heard: real name, race, faction, source, last heard" },
+    { "places", "Doorways towns: map ID, the zone name /who searches, and your faction's" },
     { "scan", "dump game data to the saved file (Dev/Scan.lua)" },
     { "show", "show the latest scan to copy" },
     { "eventlog", "start or stop recording game events" },
@@ -143,6 +144,19 @@ commands.dev = DevOnly(function()
     SK.Print("dev commands (this copy runs from git):")
     for _, entry in ipairs(DEV_COMMANDS) do
         print(("  |cffffd100/sk %s|r  %s"):format(entry[1], entry[2]))
+    end
+end)
+
+-- Every Doorways town with the zone name the game gives its map ID, so a
+-- wrong map ID shows up (MISSING, or the wrong zone next to the town).
+commands.places = DevOnly(function()
+    local mine = UnitFactionGroup and UnitFactionGroup("player")
+    for _, place in ipairs(SK.DOOR_PLACES or {}) do
+        local info = C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(place.map)
+        local zone = info and info.name
+        local shown = place.side == "both" or place.side == mine
+        print(("%s%s|r  map %d  ->  %s  (%s)"):format(shown and "|cffffffff" or "|cff808080", place.town, place.map,
+            zone and ("|cff40ff40" .. zone .. "|r") or "|cffff4040MISSING|r", place.side))
     end
 end)
 

@@ -354,8 +354,12 @@ local function Ask(host)
         SK.Print(L["asked %s to invite you. Accept the invite (Scrollkeeper does it for you), then click Teleport."]:format(trip.short))
     elseif ChatFrame_OpenChat then
         -- Short and friendly: what you want, why it's quick, that you'll go.
-        local text = trip.place
-            and L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(trip.place.town)
+        -- Name the town only when /who says they're standing in it (their
+        -- own words for it, so it's right in any language). Someone
+        -- elsewhere in the zone gets the general version.
+        local inTown = host.who and host.who.inTown and host.who.area
+        local text = inTown
+            and L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(inTown)
             or L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
         ChatFrame_OpenChat(("/w %s %s"):format(target, text))
     end
