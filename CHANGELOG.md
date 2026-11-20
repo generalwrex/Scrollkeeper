@@ -2,6 +2,7 @@
 
 ## 1.1.9
 
+- **Study away from a library** opens the map on your faction's library (Undercity's Magic Quarter or Stormwind's Wizard's Sanctum) with a waypoint, TomTom if you have it.
 - Doorways: places you can already teleport to with your own spell are greyed out at the bottom of the list.
 - Doorways: clicking someone the search found checks they're still there first (a quick /who of just them). Moved on? You're told and they leave the list.
 - Doorways: the whisper asks if you can group up, they invite you or say ok, and the button turns into **Invite** for when they do. Nobody gets an invite out of the blue.

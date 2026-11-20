@@ -13,8 +13,8 @@ local YARD_THRESHOLD = 20
 -- inst = instance (0 = Eastern Kingdoms). x and y are UnitPosition's
 -- second and first values, in yards.
 local KNOWN_LIBRARY_COORDS = {
-    { inst = 0, x = 161.5, y = 1672.2, name = "Magic Quarter" },      -- Owen Thadd (Undercity)
-    { inst = 0, x = 868.5, y = -9004.5, name = "Wizard's Sanctum" },  -- Garion Wendell (Stormwind)
+    { inst = 0, x = 161.5, y = 1672.2, name = "Magic Quarter", side = "Horde", map = 1458 },          -- Owen Thadd (Undercity)
+    { inst = 0, x = 868.5, y = -9004.5, name = "Wizard's Sanctum", side = "Alliance", map = 1453 },  -- Garion Wendell (Stormwind)
 }
 
 -- Seconds until Study is ready. 0 means ready now.
@@ -44,6 +44,32 @@ end
 -- The known libraries, for the map pins.
 function SK.KnownLibraries()
     return KNOWN_LIBRARY_COORDS
+end
+
+-- Not in a library? Open the world map on your faction's library and put
+-- a waypoint on it (TomTom if you have it, else the game's own pin).
+function SK.ShowLibraryOnMap()
+    local faction = UnitFactionGroup and UnitFactionGroup("player")
+    local library = KNOWN_LIBRARY_COORDS[1]
+    for _, entry in ipairs(KNOWN_LIBRARY_COORDS) do
+        if entry.side == faction then library = entry end
+    end
+    local x, y = SK.WorldToMap(library.inst, library.x, library.y, library.map)
+    if OpenWorldMap then
+        SK.Try(OpenWorldMap, library.map)
+    elseif WorldMapFrame then
+        if ShowUIPanel then ShowUIPanel(WorldMapFrame) end
+        if WorldMapFrame.SetMapID then SK.Try(WorldMapFrame.SetMapID, WorldMapFrame, library.map) end
+    end
+    if x and y then
+        if _G.TomTom and TomTom.AddWaypoint then
+            TomTom:AddWaypoint(library.map, x, y, { title = L[library.name], from = "Scrollkeeper" })
+        elseif C_Map and C_Map.SetUserWaypoint and UiMapPoint then
+            SK.Try(C_Map.SetUserWaypoint, UiMapPoint.CreateFromCoordinates(library.map, x, y))
+            if C_SuperTrack then SK.Try(C_SuperTrack.SetSuperTrackedUserWaypoint, true) end
+        end
+    end
+    SK.Print(L["Study works in a library. Yours is the %s: it's on your map."]:format(L[library.name]))
 end
 
 -- Where the player is on the zone map: mapID, x, y (0 to 1), or nil.

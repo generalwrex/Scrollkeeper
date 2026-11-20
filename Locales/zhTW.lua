@@ -651,3 +651,7 @@ L["Send the whisper first. Click Invite once %s says ok, or wait for their invit
 L["Send the whisper and wait for %s to invite you (it's accepted for you)."] = "傳送密語，等待 %s 邀請你（會自動接受）。"
 L["checking %s is still in %s..."] = "正在確認 %s 是否還在%s..."
 L["%s isn't in %s anymore. Pick someone else."] = "%s 已經不在%s了。請選擇其他人。"
+L["Study works in a library. Yours is the %s: it's on your map."] = "研讀只能在圖書館進行。你的圖書館在%s：已在地圖上標出。"
+L["You're not in a library: click to see where yours is."] = "你不在圖書館：點選檢視你的圖書館在哪裡。"
+L["Magic Quarter"] = "魔法區"
+L["Wizard's Sanctum"] = "巫師聖殿"

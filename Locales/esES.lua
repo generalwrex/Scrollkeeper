@@ -654,3 +654,7 @@ L["Send the whisper first. Click Invite once %s says ok, or wait for their invit
 L["Send the whisper and wait for %s to invite you (it's accepted for you)."] = "Envía el susurro y espera a que %s te invite (se acepta sola)."
 L["checking %s is still in %s..."] = "comprobando si %s sigue en %s..."
 L["%s isn't in %s anymore. Pick someone else."] = "%s ya no está en %s. Elige a otra persona."
+L["Study works in a library. Yours is the %s: it's on your map."] = "Estudiar funciona en una biblioteca. La tuya está en %s: la tienes marcada en el mapa."
+L["You're not in a library: click to see where yours is."] = "No estás en una biblioteca: haz clic para ver dónde está la tuya."
+L["Magic Quarter"] = "Barrio de la Magia"
+L["Wizard's Sanctum"] = "Sagrario del Mago"

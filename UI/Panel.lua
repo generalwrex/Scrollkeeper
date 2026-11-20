@@ -681,7 +681,16 @@ local function Build()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Study"])
         GameTooltip:AddLine(L["Makes a Bundle of Scrolls. Needs a library and a Light Feather. One hour cooldown."], 1, 1, 1, true)
+        if self.awayFromLibrary then
+            GameTooltip:AddLine(L["You're not in a library: click to see where yours is."], 1, 0.82, 0, true)
+        end
         GameTooltip:Show()
+    end)
+    -- Away from a library the button casts nothing (see Layout): a click
+    -- shows your library on the map instead.
+    parts.study:HookScript("OnClick", function(self, _, down)
+        if down or not self.awayFromLibrary then return end
+        SK.ShowLibraryOnMap()
     end)
     parts.study:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
@@ -1045,6 +1054,11 @@ local function Layout()
     else
         parts.study:Disable()
     end
+    -- Not in a library: the button shows you where it is instead of casting.
+    local inLibrary = SK.InLibrary and SK.InLibrary()
+    parts.study.awayFromLibrary = knowsStudy and not inLibrary or nil
+    parts.study:SetAttribute("type", parts.study.awayFromLibrary and nil or "spell")
+    if parts.study.awayFromLibrary then parts.study:Enable() end
     if SK.bags.bundleBag then
         parts.bundle:SetAttribute("type", "item")
         parts.bundle:SetAttribute("item", SK.bags.bundleBag .. " " .. SK.bags.bundleSlot)
