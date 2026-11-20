@@ -613,3 +613,4 @@ L["How many minutes before your imbue or familiar runs out the running-out pop-u
 L["Running-out pop-up"] = "Aviso de que se acaba"
 L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."] = "Un aviso cuando el encantamiento de tu arma o tu familiar está a punto de acabarse y tienes un pergamino para renovarlo. Una vez cada vez, no en combate."
 L["in combat, open the panel with the minimap button or by right-clicking the scroll icon."] = "en combate, abre el panel con el botón del minimapa o con clic derecho en el icono del pergamino."
+L["panel hidden. Click the minimap button or right-click the scroll icon to show it again."] = "panel oculto. Haz clic en el botón del minimapa o clic derecho en el icono del pergamino para volver a mostrarlo."

@@ -326,7 +326,8 @@ local function Build()
         secureClose:SetAttribute("_onclick", [[ self:GetFrameRef("panel"):Hide() ]])
         secureClose:HookScript("OnClick", function()
             SK.db.showPanel = false
-            SK.Print(L["panel hidden. Type /sk to show it again"] .. (SK.InCombat() and L[" (after combat)."] or "."))
+            SK.Print(SK.InCombat() and L["panel hidden. Click the minimap button or right-click the scroll icon to show it again."]
+                or L["panel hidden. Type /sk to show it again"] .. ".")
         end)
         secureClose:SetScript("OnEnter", function() close:LockHighlight() end)
         secureClose:SetScript("OnLeave", function() close:UnlockHighlight() end)

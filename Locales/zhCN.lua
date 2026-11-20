@@ -610,3 +610,4 @@ L["How many minutes before your imbue or familiar runs out the running-out pop-u
 L["Running-out pop-up"] = "即将结束提示"
 L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."] = "当武器灌注或魔宠即将结束、且你有卷轴可以续上时弹出提示。每次只提示一次，战斗中不提示。"
 L["in combat, open the panel with the minimap button or by right-clicking the scroll icon."] = "战斗中，可用小地图按钮或右键点击卷轴图标打开面板。"
+L["panel hidden. Click the minimap button or right-click the scroll icon to show it again."] = "面板已隐藏。点击小地图按钮或右键点击卷轴图标即可再次显示。"

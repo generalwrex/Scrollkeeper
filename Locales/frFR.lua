@@ -612,3 +612,4 @@ L["How many minutes before your imbue or familiar runs out the running-out pop-u
 L["Running-out pop-up"] = "Alerte d'expiration"
 L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."] = "Une alerte quand l'enchantement de ton arme ou ton familier va expirer et que tu as un parchemin pour le renouveler. Une fois à chaque fois, pas en combat."
 L["in combat, open the panel with the minimap button or by right-clicking the scroll icon."] = "en combat, ouvre le panneau avec le bouton de la minicarte ou un clic droit sur l'icône du parchemin."
+L["panel hidden. Click the minimap button or right-click the scroll icon to show it again."] = "panneau masqué. Clique sur le bouton de la minicarte ou fais un clic droit sur l'icône du parchemin pour le réafficher."

@@ -612,3 +612,4 @@ L["How many minutes before your imbue or familiar runs out the running-out pop-u
 L["Running-out pop-up"] = "Hinweis vor dem Ablaufen"
 L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."] = "Ein Hinweis, wenn deine Waffenverzauberung oder dein Begleiter bald endet und du eine Schriftrolle zum Erneuern hast. Einmal pro Mal, nicht im Kampf."
 L["in combat, open the panel with the minimap button or by right-clicking the scroll icon."] = "im Kampf öffnest du das Fenster mit dem Minikarten-Knopf oder per Rechtsklick auf das Schriftrollen-Symbol."
+L["panel hidden. Click the minimap button or right-click the scroll icon to show it again."] = "Fenster ausgeblendet. Klicke auf den Minikarten-Knopf oder rechtsklicke das Schriftrollen-Symbol, um es wieder zu zeigen."
