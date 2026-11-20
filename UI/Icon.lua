@@ -73,16 +73,9 @@ local function Build()
         local point, _, relativePoint, x, y = self:GetPoint()
         SK.db.iconPos = { point, relativePoint, x, y }
     end)
-    -- The template's own click handler casts the left-click; this hook
-    -- only handles the right button (once: clicks come down and up).
-    icon:HookScript("OnClick", function(_, button, down)
-        if button ~= "RightButton" or down then return end
-        if SK.InCombat() then
-            SK.Print(L["the panel can be opened after combat."])
-            return
-        end
-        SK.TogglePanel()
-    end)
+    -- The template's own click handler casts the left-click. Right-click
+    -- opens and closes the panel, in combat too (see SK.MakePanelToggle).
+    if SK.MakePanelToggle then SK.MakePanelToggle(icon, "RightButton") end
     icon:SetScript("OnEnter", function(self)
         local _, readable, tooHard, skillUps = SK.NextDecipherable()
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")

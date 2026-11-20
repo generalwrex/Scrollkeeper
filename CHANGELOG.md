@@ -2,6 +2,7 @@
 
 ## 1.1.9
 
+- **Open the panel in combat:** click the minimap button or right-click the scroll icon. (`/sk` still waits for combat to end: the game doesn't let typed commands show it in a fight.)
 - **Running-out pop-up:** when your weapon imbue or familiar has 5 minutes left (and you carry a scroll to renew it), a pop-up tells you. Change the minutes or turn it off in Options > Panel, or Shift-right-click the pop-up.
 
 ## 1.1.8

@@ -1184,7 +1184,7 @@ function SK.TogglePanel()
     if not panel then return end
     if SK.InCombat() then
         SK.Print(panel:IsShown() and L["in combat, close the panel with its X button."]
-            or L["the panel can be shown again after combat."])
+            or L["in combat, open the panel with the minimap button or by right-clicking the scroll icon."])
         return
     end
     SK.db.showPanel = not panel:IsShown()
@@ -1236,6 +1236,34 @@ local function BuildCombatDriver()
         end
     ]])
     if RegisterStateDriver then RegisterStateDriver(combatDriver, "combat", "[combat] 1; 0") end
+    for _, wrap in ipairs(SK.panelTogglesWaiting or {}) do wrap() end
+    SK.panelTogglesWaiting = nil
+end
+
+-- Make a secure button (the scroll icon, the minimap button) open and close
+-- the panel, in combat too: the game's secure code does the showing, which
+-- addon code isn't allowed to in combat. `which` is the mouse button.
+-- Afterwards (not secure) we remember the choice and fill the panel in.
+function SK.MakePanelToggle(frame, which)
+    local function Wrap()
+        if not (SecureHandlerWrapScript and combatDriver and frame) then return end
+        SecureHandlerWrapScript(frame, "OnClick", combatDriver, ([[
+            if button == %q and not down then
+                local panel = owner:GetFrameRef("panel")
+                owner:SetAttribute("hidByCombat", nil)
+                if panel:IsShown() then panel:Hide() else panel:Show() end
+            end
+        ]]):format(which))
+        frame:HookScript("OnClick", function(_, button, down)
+            if button ~= which or down or not panel then return end
+            SK.db.showPanel = panel:IsShown()
+            if SK.db.showPanel then SK.Safely("panel refresh", SK.RefreshPanel) end
+        end)
+    end
+    if combatDriver then Wrap() else
+        SK.panelTogglesWaiting = SK.panelTogglesWaiting or {}
+        table.insert(SK.panelTogglesWaiting, Wrap)
+    end
 end
 
 -- Apply the setting (it can only change out of combat; in combat it waits).

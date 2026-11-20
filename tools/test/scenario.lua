@@ -432,7 +432,9 @@ if SK.isMage then
   SK.RefreshMinimapButton()
   local b = ScrollkeeperMinimapButton
   print("MINIMAP", b and b:IsShown(), b and b.count:GetText())
-  b:GetScript("OnEnter")(b); b:GetScript("OnClick")(b, "LeftButton"); b:GetScript("OnDragStart")(b); b:GetScript("OnDragStop")(b)
+  -- A secure button since 1.1.9: its clicks are the template's plus hooks.
+  b:GetScript("OnEnter")(b); b:GetScript("OnDragStart")(b); b:GetScript("OnDragStop")(b)
+  local onClick = b:GetScript("OnClick"); if type(onClick) == "function" then onClick(b, "LeftButton") end
   SK.db.minimapButton = false; SK.RefreshMinimapButton(); print("MINIMAP off", b:IsShown())
 end
 -- SETUP (one question per page)

@@ -14,7 +14,7 @@ local L = SK.L
 local button
 
 local function Place()
-    if not (button and Minimap) then return end
+    if not (button and Minimap) or SK.InCombat() then return end
     local angle = math.rad(SK.db.minimapAngle or 210)
     local radius = (Minimap:GetWidth() or 140) / 2 + 6
     button:ClearAllPoints()
@@ -22,7 +22,9 @@ local function Place()
 end
 
 local function Build()
-    button = CreateFrame("Button", "ScrollkeeperMinimapButton", Minimap)
+    -- A secure button, so a click can open the panel in combat too (see
+    -- SK.MakePanelToggle). It has no action of its own.
+    button = CreateFrame("Button", "ScrollkeeperMinimapButton", Minimap, "SecureActionButtonTemplate")
     button:SetSize(31, 31)
     button:SetFrameStrata("MEDIUM")
     button:SetFrameLevel((Minimap:GetFrameLevel() or 1) + 8)
@@ -49,16 +51,12 @@ local function Build()
     button.count = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
     button.count:SetPoint("BOTTOMRIGHT", -3, 3)
 
-    button:SetScript("OnClick", function(_, mouseButton)
-        if mouseButton == "RightButton" then
-            SK.OpenOptions()
-        elseif SK.InCombat() then
-            SK.Print(L["the panel can be opened after combat."])
-        else
-            SK.TogglePanel()
-        end
+    button:HookScript("OnClick", function(_, mouseButton)
+        if mouseButton == "RightButton" then SK.OpenOptions() end
     end)
+    if SK.MakePanelToggle then SK.MakePanelToggle(button, "LeftButton") end
     button:SetScript("OnDragStart", function(self)
+        if SK.InCombat() then return end   -- it can't move in combat
         self:SetScript("OnUpdate", function()
             local mx, my = Minimap:GetCenter()
             local scale = Minimap:GetEffectiveScale()
@@ -91,10 +89,13 @@ function SK.RefreshMinimapButton()
     local texture = toggle and toggle.GetNormalTexture and toggle:GetNormalTexture()
     if texture and texture.SetDesaturated then texture:SetDesaturated(not (SK.db and SK.db.minimapButton)) end
     if not (SK.isMage and SK.db and SK.db.minimapButton and Minimap) then
-        if button then button:Hide() end
+        if button and not SK.InCombat() then button:Hide() end
         return
     end
-    if not button then Build() end
+    if not button then
+        if SK.InCombat() then return end
+        Build()
+    end
     local _, readable, _, skillUps = SK.NextDecipherable()
     button.count:SetText((readable or 0) > 0 and readable or "")
     if (skillUps or 0) > 0 then
@@ -102,7 +103,7 @@ function SK.RefreshMinimapButton()
     else
         button.count:SetTextColor(1, 1, 1)
     end
-    button:Show()
+    if not button:IsShown() and not SK.InCombat() then button:Show() end
 end
 
 SK.Listen("READY", SK.RefreshMinimapButton)
