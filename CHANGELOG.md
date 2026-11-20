@@ -1,5 +1,10 @@
 # Scrollkeeper
 
+## 1.2.0
+
+- **Fellow Mages remembers** the last 15 mages you could reach (for a week): offline ones show grayed out with when you saw them, their level and what they need, and the mailbox still offers them your spare skill-up scrolls.
+- Mailing scrolls fills in the subject and a short note (what they're for, and to send back any they don't need). Your own subject or note is never replaced.
+
 ## 1.1.9
 
 - Fixed: an empty band at the bottom of the Advanced panel.

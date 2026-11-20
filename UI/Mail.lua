@@ -17,13 +17,14 @@ local MAX_ROWS = 8
 local ROW_HEIGHT = 34
 local WIDTH = 250
 
-local KIND_COLOR = { mine = "69ccf0", guild = "40ff40", friend = "82c5ff", group = "aad372", public = "9d9d9d" }
-local KIND_TEXT = { mine = "your mage", guild = "guild", friend = "friend", group = "group", public = "Scrollkeeper user" }
+local KIND_COLOR = { mine = "69ccf0", guild = "40ff40", friend = "82c5ff", group = "aad372", public = "9d9d9d", recent = "808080" }
+local KIND_TEXT = { mine = "your mage", guild = "guild", friend = "friend", group = "group", public = "Scrollkeeper user",
+    recent = "seen this week" }
 local function KindLabel(kind)
     if not KIND_TEXT[kind] then return "" end
     return "|cff" .. KIND_COLOR[kind] .. L[KIND_TEXT[kind]] .. "|r"
 end
-local KIND_ORDER = { mine = 1, group = 2, guild = 3, friend = 4, public = 5 }
+local KIND_ORDER = { mine = 1, group = 2, guild = 3, friend = 4, public = 5, recent = 6 }
 
 ------------------------------------------------------------------------
 -- Who could use what
@@ -68,6 +69,7 @@ function SK.MailPlan()
 
     local mages = SK.MailableMages and SK.MailableMages() or {}
     local others = SK.FreshMages and SK.FreshMages() or {}
+    local recent = SK.MageHistory and SK.MageHistory() or {}
     for _, scroll in ipairs(SpareScrolls()) do
         for _, mage in ipairs(mages) do
             if mage.skill >= scroll.needs and mage.skill > 0 then
@@ -85,6 +87,11 @@ function SK.MailPlan()
             if up or (mage.kind ~= "public" and mage.skill >= scroll.needs) then
                 Offer(mage.name, mage.short, mage.kind, scroll, up)
             end
+        end
+        -- Mages seen this week who are offline: only skill-ups (it's mail
+        -- they'll find later).
+        for _, mage in ipairs(recent) do
+            if mage.tiers[scroll.needs] then Offer(mage.name, mage.name, "recent", scroll, true) end
         end
     end
 
@@ -144,14 +151,38 @@ local function FindNow(scroll)
     return nil
 end
 
+-- The note in the mail: what the scrolls are for, and to send back any
+-- they don't need. Kept short; their first name only.
+local lastSubject, lastBody
+local function MailBody(person)
+    local tiers, seen = {}, {}
+    for _, scroll in ipairs(person.scrolls or {}) do
+        if not seen[scroll.needs] then seen[scroll.needs] = true; tiers[#tiers + 1] = scroll.needs end
+    end
+    table.sort(tiers)
+    local me = UnitName and UnitName("player") or ""
+    local first = (person.name or ""):match("^(%S+)") or person.name or ""
+    return L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill-ups. If you don't need them, feel free to send them back. Have fun!"]:format(first, table.concat(tiers, "/"))
+        .. "\n\n- " .. me .. L[" (sent with Scrollkeeper)"]
+end
+
 local function FillMail(person)
     if SK.InCombat() then SK.Print(L["the mail can be filled in after combat."]) return end
     if not (SendMailFrame and SendMailNameEditBox and ClickSendMailItemButton) then return end
     if not SendMailFrame:IsShown() and MailFrameTab_OnClick then MailFrameTab_OnClick(nil, 2) end
 
     SendMailNameEditBox:SetText(person.mailName)
-    if SendMailSubjectEditBox and (SendMailSubjectEditBox:GetText() or "") == "" then
-        SendMailSubjectEditBox:SetText(L["Scrolls for you"])
+    -- Subject and a short note, unless you already wrote your own.
+    local subject = L["Scrolls for you"]
+    if SendMailSubjectEditBox then
+        local now = SendMailSubjectEditBox:GetText() or ""
+        if now == "" or now == lastSubject then SendMailSubjectEditBox:SetText(subject); lastSubject = subject end
+    end
+    local bodyBox = _G.SendMailBodyEditBox or (_G.MailEditBox and _G.MailEditBox.GetEditBox and _G.MailEditBox:GetEditBox())
+    if bodyBox and bodyBox.SetText then
+        local body = MailBody(person)
+        local now = bodyBox:GetText() or ""
+        if now == "" or now == lastBody then bodyBox:SetText(body); lastBody = body end
     end
 
     local added, left, full = 0, 0, false

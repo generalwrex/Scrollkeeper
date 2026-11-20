@@ -182,6 +182,7 @@ Net.Handle("H", function(sender, f, source)
         warnedNewer = true
         SK.Print(L["a newer version (%s) is out. You have %s. Update it on CurseForge."]:format(peer.version, SK.version))
     end
+    SK.Safely("mage history", SK.RememberMage, sender, peer)
     SK.Send("PEERS_CHANGED")
 end)
 
@@ -274,6 +275,57 @@ local function KindOf(name, peer)
     if source == "WHISPER" then return "friend" end
     if peer.demo then return "guild" end
     return "public"
+end
+
+------------------------------------------------------------------------
+-- Mage history: the last few mages you could reach, saved, so you can
+-- still mail them scrolls after they log off. Small on purpose: at most
+-- HISTORY_MAX mages, each forgotten after HISTORY_DAYS without a word.
+--   SK.db.mageHistory[real name] = { name, level, skill, tiers = { 15, 50 }, seen }
+------------------------------------------------------------------------
+
+local HISTORY_MAX, HISTORY_DAYS = 15, 7
+
+local function PruneHistory()
+    local history = SK.db.mageHistory or {}
+    local cutoff, list = time() - HISTORY_DAYS * 86400, {}
+    for key, entry in pairs(history) do
+        if (entry.seen or 0) < cutoff then history[key] = nil else list[#list + 1] = key end
+    end
+    table.sort(list, function(a, b) return history[a].seen > history[b].seen end)
+    for i = HISTORY_MAX + 1, #list do history[list[i]] = nil end
+end
+
+function SK.RememberMage(sender, peer)
+    if peer.class ~= "MAGE" or peer.anonymous or peer.demo or Net.IsMe(sender) or Unreachable(sender, peer) then return end
+    local name = SK.ContactName(sender)
+    if not name or name == "" then return end
+    local tiers = {}
+    for _, tier in ipairs(SK.TIERS) do if peer.tiers[tier] then tiers[#tiers + 1] = tier end end
+    SK.db.mageHistory = SK.db.mageHistory or {}
+    SK.db.mageHistory[name] = { name = name, level = peer.level, skill = peer.skill, tiers = tiers, seen = time() }
+    PruneHistory()
+end
+
+-- Mages from the history who aren't online right now (newest first):
+-- list of { name, level, skill, tiers = { [15] = true }, seen }.
+function SK.MageHistory()
+    if not SK.db then return {} end
+    PruneHistory()
+    local online = {}
+    for name, peer in pairs(SK.peers) do
+        if Fresh(peer) and not peer.offline then online[SK.ContactName(name):lower()] = true end
+    end
+    local list = {}
+    for key, entry in pairs(SK.db.mageHistory or {}) do
+        if not online[key:lower()] then
+            local tiers = {}
+            for _, tier in ipairs(entry.tiers or {}) do tiers[tier] = true end
+            list[#list + 1] = { name = entry.name, level = entry.level, skill = entry.skill or 0, tiers = tiers, seen = entry.seen }
+        end
+    end
+    table.sort(list, function(a, b) return a.seen > b.seen end)
+    return list
 end
 
 -- Every mage running Scrollkeeper we've heard from recently:

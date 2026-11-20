@@ -672,3 +672,22 @@ do
   print("PLACES last:", list[#list].place.town, list[#list].own, "| first:", list[1].place.town)
   IsPlayerSpell = realKnown
 end
+
+-- Mage history: remembered when heard, offline ones listed, at most 15.
+do
+  SK.db.mageHistory = {}
+  local realRealm = GetRealmName
+  GetRealmName = function() return "Realm" end
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.1.9|MAGE|30|80|150|15.50||", "GUILD", "Histo-Realm")
+  print("HISTORY saved:", SK.db.mageHistory["Histo"] and SK.db.mageHistory["Histo"].level)
+  SK.peers["Histo-Realm"].seen = 0   -- gone stale
+  local list = SK.MageHistory()
+  print("HISTORY offline list:", #list, list[1] and list[1].name, list[1] and list[1].tiers[50])
+  for i = 1, 20 do SK.db.mageHistory["M" .. i] = { name = "M" .. i, seen = time() - i, tiers = {} } end
+  SK.db.mageHistory["Old"] = { name = "Old", seen = time() - 8 * 86400, tiers = {} }
+  local n = 0; for _ in pairs(SK.db.mageHistory) do n = n + 1 end
+  SK.MageHistory(); local m = 0; for _ in pairs(SK.db.mageHistory) do m = m + 1 end
+  print("HISTORY capped:", n, "->", m, "old kept?", SK.db.mageHistory["Old"] ~= nil)
+  GetRealmName = realRealm
+  SK.db.mageHistory = nil
+end

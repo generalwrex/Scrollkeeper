@@ -454,6 +454,14 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         -- (not while filtering: we can't tell what they need).
         local anonymous = not onlyMine and SK.AnonymousCount and SK.AnonymousCount() or 0
         if anonymous > 0 then peers[#peers + 1] = { anonymous = anonymous } end
+        -- Mages seen in the last week who are offline now: mail still
+        -- reaches them (newest first, after everyone online).
+        for _, mage in ipairs(SK.MageHistory and SK.MageHistory() or {}) do
+            local yours = YourScrollsFor(mage)
+            if not onlyMine or yours > 0 then
+                peers[#peers + 1] = { history = mage, name = mage.name, yours = yours }
+            end
+        end
 
         self.users:SetRows(peers, function(row, entry)
             row.itemID = nil
@@ -479,7 +487,27 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                     end
                 end
             end
-            if entry.anonymous then
+            if entry.history then
+                local mage = entry.history
+                local tiers = {}
+                for _, tier in ipairs(SK.TIERS) do if mage.tiers[tier] then tiers[#tiers + 1] = tier end end
+                local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or L["needs none"]
+                row.tipFunc = function(tooltip)
+                    tooltip:AddLine(mage.name, 0.6, 0.6, 0.6)
+                    tooltip:AddLine(L["Seen %s. Offline now: whispers won't reach them, but mail will."]:format(SK.TimeAgo(mage.seen)), 1, 1, 1, true)
+                    tooltip:AddLine(L["Level %d, %d skill when you last heard from them."]:format(mage.level or 0, mage.skill or 0), 1, 1, 1)
+                    if (entry.yours or 0) > 0 then
+                        tooltip:AddLine(L["You have %d scrolls they could use"]:format(entry.yours), 0.25, 1, 0.25)
+                    end
+                    tooltip:AddLine(L["Shift-click: put the name in the mail."], 0.6, 0.6, 0.6)
+                end
+                row.onClick = function()
+                    local box = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
+                    if IsShiftKeyDown and IsShiftKeyDown() and box and box.Insert then box:Insert(mage.name) end
+                end
+                row.label:SetText("|cff808080" .. mage.name .. "|r  |cff606060" .. L["seen %s"]:format(SK.TimeAgo(mage.seen)) .. "|r")
+                row.sub:SetText("|cff808080" .. L["%d skill"]:format(mage.skill or 0) .. "  ·  " .. needs .. "|r")
+            elseif entry.anonymous then
                 row.label:SetText("|cff808080" .. L["Anonymous"] .. "|r")
                 row.sub:SetText("|cff808080" .. L["+%d |4player:players;"]:format(entry.anonymous) .. "|r")
             else
