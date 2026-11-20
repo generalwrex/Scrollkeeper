@@ -663,3 +663,12 @@ do
   print("RECHECK moved away:", got[1], got[2])
   C_FriendList, C_Map.GetMapInfo = realFL, realMapInfo
 end
+
+-- Doorways: places you can teleport to yourself go to the bottom.
+do
+  local realKnown = IsPlayerSpell
+  IsPlayerSpell = function(id) return id == 3567 end   -- Teleport: Orgrimmar
+  local list = SK.DoorPlaces()
+  print("PLACES last:", list[#list].place.town, list[#list].own, "| first:", list[1].place.town)
+  IsPlayerSpell = realKnown
+end

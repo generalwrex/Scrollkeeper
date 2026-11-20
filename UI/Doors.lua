@@ -59,7 +59,7 @@ local PLACES = {
     { town = "Astranaar", map = 1440, side = "Alliance" },
     { town = "Stonetalon Peak", map = 1442, side = "Alliance" },
     { town = "Nijel's Point", map = 1443, side = "Alliance" },
-    { town = "Theramore Isle", map = 1445, side = "Alliance" },
+    { town = "Theramore Isle", map = 1445, side = "Alliance", teleport = 49359 },
     { town = "Feathermoon Stronghold", map = 1444, side = "Alliance" },
     -- Horde
     { town = "Razor Hill", map = 1411, side = "Horde" },
@@ -72,7 +72,7 @@ local PLACES = {
     { town = "Hammerfall", map = 1417, side = "Horde" },
     { town = "Grom'gol Base Camp", map = 1434, side = "Horde" },
     { town = "Kargath", map = 1418, side = "Horde" },
-    { town = "Stonard", map = 1435, side = "Horde" },
+    { town = "Stonard", map = 1435, side = "Horde", teleport = 49358 },
     { town = "Splintertree Post", map = 1440, side = "Horde" },
     { town = "Sun Rock Retreat", map = 1442, side = "Horde" },
     { town = "Shadowprey Village", map = 1443, side = "Horde" },
@@ -235,12 +235,16 @@ function SK.DoorPlaces()
     for order, place in ipairs(PLACES) do
         if place.side == "both" or not mine or place.side == mine then
             list[#list + 1] = { place = place, doors = counts[place] or 0, order = order,
-                own = (place.capital and KnowsSpell(place.teleport)) and true or false }
+                own = KnowsSpell(place.teleport) and true or false }
         end
     end
-    -- A to Z ("The Crossroads" under C). Door counts show next to each.
+    -- A to Z ("The Crossroads" under C); places you already have a
+    -- teleport spell for go grey at the bottom. Door counts show next to each.
     local function Key(entry) return (entry.place.town:gsub("^The ", "")):lower() end
-    table.sort(list, function(a, b) return Key(a) < Key(b) end)
+    table.sort(list, function(a, b)
+        if a.own ~= b.own then return not a.own end
+        return Key(a) < Key(b)
+    end)
     return list
 end
 
