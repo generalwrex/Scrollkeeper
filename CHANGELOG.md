@@ -2,10 +2,10 @@
 
 ## 1.2.0
 
-- Fixed: whispers, mail and the online check used "Name-Realm 3 PvE" for mages on another layer of your server, which the game doesn't accept, so they looked offline and mail bounced. Same server now means the plain name.
-- Fellow Mages says which server it's showing: "Fellow PvE Mages", "Fellow RP-PvP Mages"...
+- Fixed: whispers, mail and the online check used "Name-Realm 3 PvE" for mages on another realm of your ruleset, which the game doesn't accept, so they looked offline and mail bounced. Same ruleset now means the plain name.
+- Fellow Mages says which ruleset it's showing: "Fellow PvE Mages", "Fellow RP-PvP Mages"...
 - **Playing another class but have a mage?** Fellow Mages lists you as "on Priest" with your mage's name, skill and the tiers it needs, and the mailbox mails scrolls straight to your mage. (Both players need 1.2.0.)
-- **Big fix: Fellow Mages was hiding most of your server.** Mages on the other realms of your server (like Realm 2 PvE when you're on Realm 1 PvE) were treated as unreachable, but connected realms can whisper, mail and group. They all show up now; only the other server kinds (PvP, RP, RP-PvP) and the other faction stay out.
+- **Big fix: Fellow Mages was hiding most of your ruleset.** Mages on the other realms of your ruleset (like Realm 2 PvE when you're on Realm 1 PvE) were treated as unreachable, but connected realms can whisper, mail and group. They all show up now; only the other rulesets (PvP, RP, RP-PvP) and the other faction stay out.
 - The mailbox list says it plainly: COD is not endorsed by Scrollkeeper, scroll sharing should be free!
 - **Fellow Mages remembers** the last 15 mages you could reach (for a week): offline ones show grayed out with when you saw them, their level and what they need, and the mailbox still offers them your spare skill-up scrolls.
 - Mailing scrolls fills in the subject and a short note (what they're for, and to send back any they don't need). Your own subject or note is never replaced.
