@@ -238,11 +238,9 @@ function SK.DoorPlaces()
                 own = (place.capital and KnowsSpell(place.teleport)) and true or false }
         end
     end
-    table.sort(list, function(a, b)
-        if (a.doors > 0) ~= (b.doors > 0) then return a.doors > 0 end
-        if a.own ~= b.own then return not a.own end
-        return a.order < b.order
-    end)
+    -- A to Z ("The Crossroads" under C). Door counts show next to each.
+    local function Key(entry) return (entry.place.town:gsub("^The ", "")):lower() end
+    table.sort(list, function(a, b) return Key(a) < Key(b) end)
     return list
 end
 
