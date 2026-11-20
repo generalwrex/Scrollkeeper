@@ -329,6 +329,20 @@ function SK.ServerKind()
     return kind and KIND_LABELS[kind]
 end
 
+-- Someone's ruleset: what their hello says (1.2.1+), else from their realm
+-- (name suffix or character ID; no realm known means it's ours). Or nil.
+function SK.RulesetOf(sender)
+    local peer = SK.peers[sender]
+    if peer and peer.ruleset then return peer.ruleset end
+    local realm = sender:match("%-([^%-]+)$")
+    if not realm and peer and peer.guid and GetPlayerInfoByGUID then
+        local ok, _, _, _, _, _, _, guidRealm = pcall(GetPlayerInfoByGUID, peer.guid)
+        if ok and type(guidRealm) == "string" then realm = guidRealm ~= "" and guidRealm or (GetRealmName and GetRealmName()) end
+    end
+    local kind = realm and RealmKind(Plain(realm))
+    return kind and KIND_LABELS[kind]
+end
+
 -- "Fellow PvE Mages" (just "Fellow Mages" if the realm name doesn't say).
 function SK.FellowMagesTitle()
     local kind = SK.ServerKind()

@@ -82,6 +82,22 @@ function SK.NetReport()
     end
     Add(#parts > 0 and table.concat(parts, C(GREY, "  \194\183  ")) or C(GREY, "nobody heard yet"))
 
+    -- Rulesets of everyone heard (yours in green).
+    local rulesets = {}
+    for sender in pairs(SK.peers or {}) do
+        if not Net.IsMe(sender) then
+            local r = SK.RulesetOf and SK.RulesetOf(sender) or "unknown"
+            r = r or "unknown"
+            rulesets[r] = (rulesets[r] or 0) + 1
+        end
+    end
+    local mine = SK.ServerKind and SK.ServerKind()
+    local rparts = {}
+    for _, r in ipairs({ "PvE", "PvP", "RP", "RP-PvP", "Hardcore", "unknown" }) do
+        if rulesets[r] then rparts[#rparts + 1] = C(r == mine and GREEN or (r == "unknown" and GREY or WHITE), r .. " x" .. rulesets[r]) end
+    end
+    Add(C(GREY, "rulesets: ") .. (#rparts > 0 and table.concat(rparts, C(GREY, "  \194\183  ")) or C(GREY, "nobody heard yet")))
+
     Header("Sending")
     local inspect = Net.Inspect and Net.Inspect() or {}
     local dests = {}
