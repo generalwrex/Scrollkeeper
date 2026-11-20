@@ -704,3 +704,18 @@ do
   end
   GetRealmName, GetNormalizedRealmName = realRealm, realNorm
 end
+
+-- On a priest with a mage: listed and mailed as the mage.
+do
+  local realRealm = GetRealmName
+  GetRealmName = function() return "Realm" end
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.2.0|PRIEST|30|0|0|||Player-1-ABCD|||Rotmage|120|50", "GUILD", "Rotting Reverend")
+  local peer = SK.peers["Rotting Reverend"]
+  print("ALT peer:", peer and peer.alt and peer.alt.name, peer and peer.alt and peer.alt.skill, peer and peer.alt and peer.alt.tiers[50])
+  local found
+  for _, mage in ipairs(SK.FreshMages()) do if mage.altOf == "Rotting Reverend" then found = mage end end
+  print("ALT in mail list:", found and found.name, found and found.short, found and found.skill)
+  print("ALT needs 50:", #SK.MagesWhoNeed(50) > 0)
+  SK.peers["Rotting Reverend"] = nil
+  GetRealmName = realRealm
+end

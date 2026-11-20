@@ -434,7 +434,14 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         local onlyMine = SK.db.mageOnlyMine and sortMode == "mine" or false
         local peers = {}
         for _, entry in ipairs(SK.PeerList()) do
-            if entry.peer and entry.peer.class == "MAGE" then
+            if entry.peer and entry.peer.alt and entry.peer.class ~= "MAGE" then
+                -- On another class, but has a mage: listed as that mage.
+                local real = entry.peer
+                entry.onClass = real.class
+                entry.peer = setmetatable({ skill = real.alt.skill, tiers = real.alt.tiers, upgrades = {},
+                    altName = real.alt.name }, { __index = real })
+            end
+            if entry.peer and (entry.peer.class == "MAGE" or entry.peer.altName) then
                 entry.yours = YourScrollsFor(entry.peer)
                 if not onlyMine or entry.yours > 0 then peers[#peers + 1] = entry end
             end
@@ -479,6 +486,9 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                     -- Shift-click: the name goes into whatever box you're
                     -- typing in (chat, mail To:...). Click: a whisper.
                     if IsShiftKeyDown and IsShiftKeyDown() then
+                        -- On another class: Shift-click gives their mage's
+                        -- name (that's who you'd mail scrolls to).
+                        if peer.altName and SK.AltMailName then name = SK.AltMailName(entry.sender) or name end
                         local box = GetCurrentKeyBoardFocus and GetCurrentKeyBoardFocus()
                         if box and box.Insert then box:Insert(name)
                         elseif ChatEdit_InsertLink then ChatEdit_InsertLink(name) end
@@ -517,8 +527,14 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                 end
                 local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or ("|cff808080" .. L["needs none"] .. "|r")
                 local upgrade = #peer.upgrades > 0 and ("  ·  |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
-                row.label:SetText((peer.offline and "|cff808080" or CLASS_COLOR) .. entry.name .. "|r")
-                row.sub:SetText(L["|cffffd100%d|r skill"]:format(peer.skill or 0) .. "  ·  " .. needs .. upgrade)
+                local on = ""
+                if peer.altName then
+                    local className = (LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.onClass]) or entry.onClass or ""
+                    on = "  |cff808080" .. L["on %s"]:format(className) .. "|r"
+                end
+                row.label:SetText((peer.offline and "|cff808080" or CLASS_COLOR) .. entry.name .. "|r" .. on)
+                local who = peer.altName and (L["mage %s"]:format(peer.altName) .. "  ·  ") or ""
+                row.sub:SetText(who .. L["|cffffd100%d|r skill"]:format(peer.skill or 0) .. "  ·  " .. needs .. upgrade)
             end
         end, onlyMine and L["Nobody here could use the scrolls in your bags. Right-click the scroll icon to show everyone."]
             or L["No one yet. Guild and group members running Scrollkeeper show up here within a minute of logging in."])

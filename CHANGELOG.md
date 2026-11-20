@@ -2,6 +2,7 @@
 
 ## 1.2.0
 
+- **Playing another class but have a mage?** Fellow Mages lists you as "on Priest" with your mage's name, skill and the tiers it needs, and the mailbox mails scrolls straight to your mage. (Both players need 1.2.0.)
 - **Big fix: Fellow Mages was hiding most of your server.** Mages on the other realms of your server (like Realm 2 PvE when you're on Realm 1 PvE) were treated as unreachable, but connected realms can whisper, mail and group. They all show up now; only the other server kinds (PvP, RP, RP-PvP) and the other faction stay out.
 - The mailbox list says it plainly: COD is not endorsed by Scrollkeeper, scroll sharing should be free!
 - **Fellow Mages remembers** the last 15 mages you could reach (for a week): offline ones show grayed out with when you saw them, their level and what they need, and the mailbox still offers them your spare skill-up scrolls.

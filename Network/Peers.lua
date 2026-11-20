@@ -2,7 +2,8 @@
 -- Who else runs Scrollkeeper, and what their mages can use.
 --
 --   Q                       "who's there?"  Everyone answers with H.
---   H|protocol|version|class|level|skill|max|tiers|upgrades|guid
+--   H|protocol|version|class|level|skill|max|tiers|upgrades|guid|exportID|anon|alt|altSkill|altTiers
+--        alt...    on a non-mage: their best mage (same realm and faction)
 --        tiers     tiers this mage still gets skill-ups from, e.g. "15.50"
 --        upgrades  weapon-upgrade scrolls held, e.g. "Saber"
 
@@ -57,6 +58,20 @@ function SK.ExportID()
     return SK.db.exportID
 end
 
+-- On a non-mage: your best mage on this realm and faction, so others can
+-- mail it scrolls: name, skill, and the tiers it still levels from.
+local function AltMageFields()
+    if SK.isMage or not SK.MailableMages then return "", "", "" end
+    local mage = SK.MailableMages()[1]
+    if not mage or (mage.skill or 0) <= 0 then return "", "", "" end
+    local tiers = {}
+    for _, tier in ipairs(SK.TIERS) do
+        local chance = SK.SkillUpChance(tier, mage.skill)
+        if mage.skill >= tier and chance and chance.gives then tiers[#tiers + 1] = tier end
+    end
+    return (tostring(mage.name):gsub("|", "")), mage.skill, table.concat(tiers, ".")
+end
+
 local function HelloFields()
     local _, class = UnitClass("player")
     local skill = SK.GetComprehension()
@@ -64,7 +79,8 @@ local function HelloFields()
     -- tell their player to update because of it.
     return Net.PROTOCOL, SK.devCopy and "dev" or SK.version, class, UnitLevel("player"),
         skill.rank, skill.max, SK.isMage and MyTiers() or "", SK.isMage and MyUpgrades() or "",
-        UnitGUID("player"), SK.db.share and SK.ExportID() or "", SK.db.anonymous and "1" or ""
+        UnitGUID("player"), SK.db.share and SK.ExportID() or "", SK.db.anonymous and "1" or "",
+        AltMageFields()
 end
 
 function SK.SendHello()
@@ -174,6 +190,13 @@ Net.Handle("H", function(sender, f, source)
     SK.peers[sender] = peer
     -- Anonymous players still count, but never show up by name.
     peer.anonymous = f[11] == "1"
+    -- Playing another class but has a mage: remember it, to list and mail it.
+    local altName = tostring(f[12] or ""):sub(1, 40)
+    if peer.class ~= "MAGE" and altName ~= "" then
+        local alt = { name = altName, skill = math.min(tonumber(f[13]) or 0, 300), tiers = {} }
+        for tier in (f[14] or ""):gmatch("%d+") do alt.tiers[tonumber(tier)] = true end
+        peer.alt = alt
+    end
     if SK.db.community and SK.db.community[sender] then
         SK.db.community[sender].exportID = exportID
     end
@@ -206,6 +229,14 @@ function SK.ContactName(sender)
         end
     end
     return Net.ShortName(sender)
+end
+
+-- The name to mail someone's mage by (they're on another class right now).
+function SK.AltMailName(sender)
+    local peer = SK.peers[sender]
+    if not (peer and peer.alt) then return nil end
+    local realm = SK.ContactName(sender):match("%-([^%-]+)$")
+    return realm and (peer.alt.name .. "-" .. realm) or peer.alt.name
 end
 
 -- Faction by race, for players the game only tells us the race of.
@@ -327,13 +358,17 @@ local function PruneHistory()
 end
 
 function SK.RememberMage(sender, peer)
-    if peer.class ~= "MAGE" or peer.anonymous or peer.demo or Net.IsMe(sender) or Unreachable(sender, peer) then return end
-    local name = SK.ContactName(sender)
+    if peer.anonymous or peer.demo or Net.IsMe(sender) or Unreachable(sender, peer) then return end
+    local mage, name, level = peer, SK.ContactName(sender), peer.level
+    if peer.class ~= "MAGE" then
+        if not peer.alt then return end
+        mage, name, level = peer.alt, SK.AltMailName(sender), nil
+    end
     if not name or name == "" then return end
     local tiers = {}
-    for _, tier in ipairs(SK.TIERS) do if peer.tiers[tier] then tiers[#tiers + 1] = tier end end
+    for _, tier in ipairs(SK.TIERS) do if mage.tiers[tier] then tiers[#tiers + 1] = tier end end
     SK.db.mageHistory = SK.db.mageHistory or {}
-    SK.db.mageHistory[name] = { name = name, level = peer.level, skill = peer.skill, tiers = tiers, seen = time() }
+    SK.db.mageHistory[name] = { name = name, level = level, skill = mage.skill, tiers = tiers, seen = time() }
     PruneHistory()
 end
 
@@ -368,6 +403,11 @@ function SK.FreshMages(includeAnonymous)
             and (includeAnonymous or not peer.anonymous) then
             list[#list + 1] = { name = SK.ContactName(name), short = Net.ShortName(name), skill = peer.skill or 0,
                 tiers = peer.tiers or {}, kind = KindOf(name, peer) }
+        elseif Fresh(peer) and peer.alt and not Net.IsMe(name) and not Unreachable(name, peer)
+            and (includeAnonymous or not peer.anonymous) then
+            -- On another class, but has a mage: mail goes to the mage.
+            list[#list + 1] = { name = SK.AltMailName(name), short = peer.alt.name, skill = peer.alt.skill,
+                tiers = peer.alt.tiers, kind = KindOf(name, peer), altOf = Net.ShortName(name) }
         end
     end
     return list
@@ -378,10 +418,12 @@ end
 function SK.MagesWhoNeed(tier)
     local list = {}
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.class == "MAGE" and peer.tiers[tier] and not peer.anonymous and not Unreachable(name, peer) then
+        local mage = peer.class == "MAGE" and peer or peer.alt
+        if Fresh(peer) and mage and mage.tiers[tier] and not peer.anonymous and not Unreachable(name, peer) then
             local inGroup = peer.source == "PARTY" or peer.source == "RAID" or peer.source == "INSTANCE_CHAT"
                 or (UnitInParty and SK.Known(UnitInParty(Net.ShortName(name))))
-            list[#list + 1] = { name = Net.ShortName(name), skill = peer.skill, group = inGroup and true or false }
+            list[#list + 1] = { name = mage == peer and Net.ShortName(name) or mage.name, skill = mage.skill,
+                group = inGroup and true or false }
         end
     end
     table.sort(list, function(a, b)
