@@ -496,6 +496,16 @@ end
 
 local window
 
+-- The scroll's auction price: Auctionator's or TSM's if you have one, else
+-- the last Scrollkeeper scan's. Returns copper and when it was seen, or nil.
+local function LiminalPrice()
+    if SK.HasAuctionAddon and SK.HasAuctionAddon() and SK.AddonAuctionPrice then
+        local price = SK.AddonAuctionPrice(SK.LIMINAL_PASSAGE)
+        if price then return price, nil end
+    end
+    if SK.AuctionPrice then return SK.AuctionPrice(SK.LIMINAL_PASSAGE) end
+end
+
 -- The search button: its text, with the seconds left while it cools down.
 local function UpdateWhoButton()
     if not (window and type(selected) == "table") then return end
@@ -562,7 +572,10 @@ local function UpdateMine()
     else
         window.status:SetText(L["You're a door whenever you rest in an inn or a city."])
     end
-    window.count:SetText(L["Scrolls of Liminal Passage: |cffffffff%d|r"]:format(SK.LiminalCount()))
+    local text = L["Scrolls of Liminal Passage: |cffffffff%d|r"]:format(SK.LiminalCount())
+    local price = LiminalPrice()
+    if price then text = text .. "   " .. L["AH: %s"]:format(SK.ShortMoney(price)) end
+    window.count:SetText(text)
 end
 
 local function SmallCheck(label, onClick)
@@ -607,8 +620,31 @@ local function Build()
     intro:SetJustifyH("LEFT")
     intro:SetText(L["Scroll of Liminal Passage takes you to a group member resting in an inn or a city. Pick where you want to go, then who to go to."])
 
-    window.count = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    window.count:SetPoint("TOPRIGHT", -16, -60)
+    -- How many scrolls you have and their auction price. Hover for the
+    -- scroll's own tooltip; Shift-click links it in chat.
+    local countButton = CreateFrame("Button", nil, window)
+    countButton:SetPoint("TOPRIGHT", -16, -56)
+    countButton:SetSize(260, 16)
+    window.count = countButton:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    window.count:SetPoint("RIGHT")
+    countButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+        GameTooltip:SetItemByID(SK.LIMINAL_PASSAGE)
+        local price, at = LiminalPrice()
+        if price then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddDoubleLine(L["Auction house"], SK.Money(price), 1, 0.82, 0, 1, 1, 1)
+            if at then GameTooltip:AddLine(L["seen %s"]:format(SK.TimeAgo(at)), 0.6, 0.6, 0.6) end
+        end
+        GameTooltip:AddLine(L["Shift-click to link it in chat."], 0.6, 0.6, 0.6)
+        GameTooltip:Show()
+    end)
+    countButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    countButton:SetScript("OnClick", function()
+        if not (IsModifiedClick and IsModifiedClick("CHATLINK")) then return end
+        local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, SK.LIMINAL_PASSAGE))
+        if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
+    end)
 
     -- Places
     local placesHeader = SK.UI.CreateHeader(window, L["Where to"], LEFT_W)
