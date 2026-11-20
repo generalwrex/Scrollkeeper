@@ -814,7 +814,7 @@ end
 
 -- Dev network report builds without errors.
 if SK.NetReport then
-  local ok, text = pcall(SK.NetReport)
+  local ok, text = pcall(SK.NetReportPlain)
   print("NETREPORT ok:", ok, ok and #text or text)
   if ok then print((text:gsub("\n.*", ""))) end
 end

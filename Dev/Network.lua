@@ -36,40 +36,78 @@ local function WhoIs(guid)
     return englishRace or "?", SK.FactionOfRace and SK.FactionOfRace(englishRace) or "?", realm or ""
 end
 
+-- Colors for the window (the export strips them).
+local GOLD, GREY, WHITE, GREEN, RED, BLUE, ORANGE = "ffd100", "9d9d9d", "ffffff", "40ff40", "ff5555", "66bbff", "ff9933"
+local function C(color, text) return "|cff" .. color .. tostring(text) .. "|r" end
+local function Label(text, value) return C(GREY, text .. ": ") .. C(WHITE, value) end
+
+-- Newer first: "1.2.1" > "1.2.0" > "1.1.4"; "dev" last.
+local function VersionValue(v)
+    local a, b, c = tostring(v):match("(%d+)%.(%d+)%.?(%d*)")
+    if not a then return -1 end
+    return tonumber(a) * 10000 + tonumber(b) * 100 + (tonumber(c) or 0)
+end
+
 function SK.NetReport()
     local L = {}
     local function Add(text) L[#L + 1] = text end
-    local function Header(text) Add("") Add("== " .. text .. " ==") end
+    local function Header(text) Add("") Add(C(GOLD, "\226\150\140 " .. text)) end
 
-    Add(("Scrollkeeper %s network report, %s"):format(SK.version, date("%Y-%m-%d %H:%M:%S")))
-    Add(("You: %s, realm %q (ruleset %s), %s, sharing %s, public channel %s"):format(
-        tostring(UnitName("player")), tostring(GetRealmName and GetRealmName()), tostring(SK.ServerKind and SK.ServerKind()),
-        tostring(UnitFactionGroup and UnitFactionGroup("player")), tostring(SK.db.sharing), tostring(SK.db.shareChannel)))
+    Add(C(GOLD, "Scrollkeeper " .. SK.version) .. C(GREY, "  network report  " .. date("%Y-%m-%d %H:%M:%S")))
+    Add(Label("You", tostring(UnitName("player"))) .. "   " .. Label("realm", tostring(GetRealmName and GetRealmName()))
+        .. "   " .. Label("ruleset", tostring(SK.ServerKind and SK.ServerKind())) .. "   "
+        .. Label("faction", tostring(UnitFactionGroup and UnitFactionGroup("player"))))
+    Add(Label("Sharing", tostring(SK.db.sharing)) .. "   " .. Label("public channel", tostring(SK.db.shareChannel)))
 
     Header("Channel")
     local id = GetChannelName and GetChannelName(Net.CHANNEL_NAME) or 0
     local members = id > 0 and GetNumChannelMembers and SK.Try(GetNumChannelMembers, id)
-    Add(("%s: %s, members %s, in guild %s, in group %s"):format(Net.CHANNEL_NAME, id > 0 and ("/" .. id) or "NOT JOINED",
-        tostring(members or "?"), tostring(IsInGuild and IsInGuild()), tostring(IsInGroup and IsInGroup())))
+    Add(Label(Net.CHANNEL_NAME, id > 0 and ("/" .. id) or C(RED, "NOT JOINED")) .. "   " .. Label("members", tostring(members or "?"))
+        .. "   " .. Label("guild", tostring(IsInGuild and IsInGuild())) .. "   " .. Label("group", tostring(IsInGroup and IsInGroup())))
+
+    Header("Versions out there")
+    local versions = {}
+    for _, peer in pairs(SK.peers or {}) do
+        local v = tostring(peer.version or "?")
+        versions[v] = (versions[v] or 0) + 1
+    end
+    local order = {}
+    for v in pairs(versions) do order[#order + 1] = v end
+    table.sort(order, function(a, b) return VersionValue(a) > VersionValue(b) end)
+    local parts = {}
+    for _, v in ipairs(order) do
+        local color = VersionValue(v) >= VersionValue(SK.version) and GREEN or (VersionValue(v) >= 10200 and WHITE or ORANGE)
+        parts[#parts + 1] = C(color, v .. " x" .. versions[v])
+    end
+    Add(#parts > 0 and table.concat(parts, C(GREY, "  \194\183  ")) or C(GREY, "nobody heard yet"))
 
     Header("Sending")
     local inspect = Net.Inspect and Net.Inspect() or {}
     local dests = {}
     for _, d in ipairs(inspect.destinations or {}) do dests[#dests + 1] = d[1] .. (d[2] and ("/" .. d[2]) or "") end
-    Add(("budget %.1f / %d (+%.1f a second), backoff %.1fs, destinations: %s"):format(inspect.budget or 0,
-        inspect.budgetMax or 0, inspect.perSecond or 0, inspect.backoff or 0, table.concat(dests, ", ")))
-    Add(("queue (%d, next first): %s"):format(#(inspect.queue or {}), table.concat(inspect.queue or {}, " ")))
+    local budgetColor = (inspect.budget or 0) >= 2 and GREEN or ORANGE
+    Add(Label("budget", C(budgetColor, ("%.1f"):format(inspect.budget or 0)) .. C(GREY, (" / %d, +%.1f a second"):format(inspect.budgetMax or 0, inspect.perSecond or 0)))
+        .. "   " .. Label("backoff", ("%.1fs"):format(inspect.backoff or 0)) .. "   " .. Label("to", table.concat(dests, ", ")))
+    local queue = inspect.queue or {}
+    Add(Label("queue", #queue) .. (#queue > 0 and C(GREY, "  next: ") .. C(WHITE, table.concat(queue, " ")) or ""))
     local stats = Net.stats or {}
-    Add(("since %d min: sent %d ok, %d refused"):format(math.floor((time() - (stats.since or time())) / 60), stats.sent or 0, stats.refused or 0))
-    Add("results (where:code): " .. Sorted(stats.results or {}))
-    Add("codes: 0 sent, 3 addon throttle, 8 channel throttle, 7 bad channel, 5 not in group")
+    Add(Label("since", math.floor((time() - (stats.since or time())) / 60) .. " min") .. "   "
+        .. C(GREEN, (stats.sent or 0) .. " sent") .. "   " .. C((stats.refused or 0) > 0 and RED or GREY, (stats.refused or 0) .. " refused"))
+    local results = {}
+    for key, n in pairs(stats.results or {}) do
+        local code = key:match(":(.+)$")
+        results[#results + 1] = C((code == "0" or code == "true") and GREEN or RED, key .. "=" .. n)
+    end
+    table.sort(results)
+    Add(C(GREY, "results: ") .. table.concat(results, "  "))
+    Add(C(GREY, "codes: 0 sent \194\183 3 addon throttle \194\183 8 channel throttle \194\183 7 bad channel \194\183 5 not in group"))
 
     Header("Receiving")
     local others = 0
     for sender in pairs(stats.senders or {}) do if not Net.IsMe(sender) then others = others + 1 end end
-    Add(("received %d messages from %d other players (plus your own echo)"):format(stats.received or 0, others))
-    Add("by kind: " .. Sorted(stats.kinds or {}))
-    Add("by source: " .. Sorted(stats.sources or {}))
+    Add(Label("received", (stats.received or 0) .. " messages") .. C(GREY, " from ") .. C(WHITE, others) .. C(GREY, " other players (plus your own echo)"))
+    Add(C(GREY, "by kind: ") .. C(WHITE, Sorted(stats.kinds or {})))
+    Add(C(GREY, "by source: ") .. C(WHITE, Sorted(stats.sources or {})))
 
     Header("Everyone heard (raw, before filtering)")
     local senders = {}
@@ -82,34 +120,47 @@ function SK.NetReport()
         local heard = (Net.heard or {})[sender] or {}
         local peer = SK.peers[sender]
         local race, faction, realm = WhoIs(peer and peer.guid)
-        local why
-        if Net.IsMe(sender) then why = "YOU (your own messages echo back)"
-        elseif not peer then why = "no hello yet (only data heard)"
-        elseif peer.anonymous then why = "anonymous (counted, not named)"
-        elseif SK.IsUnreachable(sender) then why = "HIDDEN: other ruleset or faction"
-        elseif peer.class ~= "MAGE" and not peer.alt then why = "not a mage (no mage on account)"
-        else why = "listed" end
-        Add(("%s | %d msgs, last %s ago (%s via %s) | v%s %s lvl %s skill %s | ruleset %s realm %s | %s %s | %s%s%s"):format(
-            peer and peer.anonymous and "anonymous" or sender, heard.count or 0, Ago(heard.last), tostring(heard.kind),
-            tostring(heard.source), tostring(peer and peer.version), tostring(peer and peer.class), tostring(peer and peer.level),
-            tostring(peer and peer.skill), tostring(peer and peer.ruleset or "-"), realm ~= "" and realm or "-", race, faction,
-            why, peer and peer.offline and " (offline)" or "", peer and peer.alt and (" alt mage " .. peer.alt.name) or ""))
+        local why, color
+        if Net.IsMe(sender) then why, color = "YOU (your own echo)", BLUE
+        elseif not peer then why, color = "no hello yet (only data)", ORANGE
+        elseif peer.anonymous then why, color = "anonymous (counted, not named)", GREY
+        elseif SK.IsUnreachable(sender) then why, color = "hidden: other ruleset or faction", RED
+        elseif peer.class ~= "MAGE" and not peer.alt then why, color = "not a mage", GREY
+        else why, color = "LISTED", GREEN end
+        local name = peer and peer.anonymous and "anonymous" or sender
+        local versionColor = peer and VersionValue(peer.version) >= VersionValue(SK.version) and GREEN or ORANGE
+        Add(C(color, "\226\151\143 " .. name) .. "  " .. C(color, why))
+        Add("     " .. C(GREY, ("%d msgs, last %s ago (%s via %s)"):format(heard.count or 0, Ago(heard.last), tostring(heard.kind), tostring(heard.source)))
+            .. "   " .. C(versionColor, "v" .. tostring(peer and peer.version or "?"))
+            .. "  " .. C(WHITE, ("%s lvl %s skill %s"):format(tostring(peer and peer.class), tostring(peer and peer.level), tostring(peer and peer.skill)))
+            .. "  " .. C(GREY, ("ruleset %s  realm %s  %s %s"):format(tostring(peer and peer.ruleset or "-"), realm ~= "" and realm or "-", race, faction))
+            .. (peer and peer.offline and C(GREY, "  (offline)") or "") .. (peer and peer.alt and C(BLUE, "  alt mage " .. peer.alt.name) or ""))
     end
-    if #list == 0 then Add("nobody") end
+    if #list == 0 then Add(C(GREY, "nobody")) end
 
     Header("What the lists show")
-    Add(("Fellow Mages (fresh, reachable): %d   whole peer list: %d   anonymous: %d   history: %d"):format(
-        #(SK.FreshMages and SK.FreshMages() or {}), #(SK.PeerList and SK.PeerList() or {}),
-        SK.AnonymousCount and SK.AnonymousCount() or 0, #(SK.MageHistory and SK.MageHistory() or {})))
-    Add(("open doors: %d   players with spares: %d   community data from: %d players"):format(
-        #(SK.OpenDoors and SK.OpenDoors() or {}), Count(SK.spares), Count(SK.db.community)))
+    Add(Label("Fellow Mages", #(SK.FreshMages and SK.FreshMages() or {})) .. "   " .. Label("peer list", #(SK.PeerList and SK.PeerList() or {}))
+        .. "   " .. Label("anonymous", SK.AnonymousCount and SK.AnonymousCount() or 0) .. "   " .. Label("history", #(SK.MageHistory and SK.MageHistory() or {})))
+    Add(Label("open doors", #(SK.OpenDoors and SK.OpenDoors() or {})) .. "   " .. Label("players with spares", Count(SK.spares))
+        .. "   " .. Label("community data from", Count(SK.db.community) .. " players"))
 
     Header("Last messages (newest last)")
     for _, entry in ipairs(Net.log or {}) do
-        Add(("%s ago  %s  %-3s %-8s %s  %db%s"):format(Ago(entry.at), entry.dir == "in" and "<<" or ">>", tostring(entry.kind),
-            tostring(entry.where), tostring(entry.who or ""), entry.size or 0, entry.result and ("  result " .. entry.result) or ""))
+        local arrow = entry.dir == "in" and C(GREEN, "<<") or C(ORANGE, ">>")
+        local result = ""
+        if entry.result then
+            result = "  " .. C((entry.result == "0" or entry.result == "true") and GREEN or RED, "result " .. entry.result)
+        end
+        Add(C(GREY, ("%5s ago "):format(Ago(entry.at))) .. arrow .. "  " .. C(WHITE, ("%-3s"):format(tostring(entry.kind)))
+            .. C(GREY, (" %-8s "):format(tostring(entry.where))) .. C(Net.IsMe(entry.who or "") and BLUE or WHITE, tostring(entry.who or ""))
+            .. C(GREY, ("  %db"):format(entry.size or 0)) .. result)
     end
     return table.concat(L, "\n")
+end
+
+-- The report without colors (for the export).
+function SK.NetReportPlain()
+    return (SK.NetReport():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
 end
 
 local function Build()
@@ -123,7 +174,7 @@ local function Build()
     window:SetScript("OnDragStart", window.StartMoving)
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
     window:SetClampedToScreen(true)
-    if window.TitleText then window.TitleText:SetText("Scrollkeeper: Network (dev)") end
+    if window.TitleText then window.TitleText:SetText("Scrollkeeper " .. SK.version .. ": Network (dev)") end
     tinsert(UISpecialFrames, "ScrollkeeperNetDevFrame")
 
     local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
@@ -132,6 +183,7 @@ local function Build()
     local box = CreateFrame("EditBox", nil, scroll)
     box:SetMultiLine(true)
     box:SetFontObject(GameFontHighlightSmall)
+    box:SetSpacing(2)
     box:SetWidth(700)
     box:SetAutoFocus(false)
     box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
@@ -153,7 +205,7 @@ local function Build()
     Button("Reset counters", 148, function() if Net.ResetStats then Net.ResetStats() end SK.RefreshNetDev(true) end)
     Button("Select all", 284, function() window.box:SetFocus() window.box:HighlightText() end)
     Button("Export", 420, function()
-        SK.db.netReport = { at = time(), text = SK.NetReport() }
+        SK.db.netReport = { at = time(), text = SK.NetReportPlain() }
         SK.Print("network report saved. /reload writes it to disk (ScrollkeeperDB.netReport).")
     end)
     Button("Ask who's there", 556, function() Net.Send("Q") SK.Print("sent \"who's there?\" (Q).") end)
