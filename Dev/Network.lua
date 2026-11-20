@@ -51,7 +51,7 @@ end
 function SK.NetReport()
     local L = {}
     local function Add(text) L[#L + 1] = text end
-    local function Header(text) Add("") Add(C(GOLD, "\226\150\140 " .. text)) end
+    local function Header(text) Add("") Add(C(GOLD, ">> " .. text)) end
 
     Add(C(GOLD, "Scrollkeeper " .. SK.version) .. C(GREY, "  network report  " .. date("%Y-%m-%d %H:%M:%S")))
     Add(Label("You", tostring(UnitName("player"))) .. "   " .. Label("realm", tostring(GetRealmName and GetRealmName()))
@@ -129,7 +129,7 @@ function SK.NetReport()
         else why, color = "LISTED", GREEN end
         local name = peer and peer.anonymous and "anonymous" or sender
         local versionColor = peer and VersionValue(peer.version) >= VersionValue(SK.version) and GREEN or ORANGE
-        Add(C(color, "\226\151\143 " .. name) .. "  " .. C(color, why))
+        Add(C(color, "* " .. name) .. "  " .. C(color, why))
         Add("     " .. C(GREY, ("%d msgs, last %s ago (%s via %s)"):format(heard.count or 0, Ago(heard.last), tostring(heard.kind), tostring(heard.source)))
             .. "   " .. C(versionColor, "v" .. tostring(peer and peer.version or "?"))
             .. "  " .. C(WHITE, ("%s lvl %s skill %s"):format(tostring(peer and peer.class), tostring(peer and peer.level), tostring(peer and peer.skill)))
