@@ -606,3 +606,14 @@ if SK.isMage then
   print("UNLOCK button:", ScrollkeeperUnlockButton and ScrollkeeperUnlockButton._attrs.type, ScrollkeeperUnlockButton and ScrollkeeperUnlockButton._attrs.item)
   SK.UnlockingCount = realCount
 end
+
+-- Our channel never keeps /1: moved after the game's own, others keep their order.
+do
+  local chans = { "ScrollkeeperNet", "General", "Trade", "LocalDefense" }
+  local realList, realChat = GetChannelList, C_ChatInfo
+  GetChannelList = function() local t = {}; for i, n in ipairs(chans) do t[#t+1] = i; t[#t+1] = n; t[#t+1] = false end; return (unpack or table.unpack)(t) end
+  C_ChatInfo = setmetatable({ SwapChatChannelsByChannelIndex = function(a, b) chans[a], chans[b] = chans[b], chans[a]; return true end }, { __index = realChat })
+  SK.Net.MoveChannelLast()
+  print("CHANNELS after move:", table.concat(chans, ", "))
+  GetChannelList, C_ChatInfo = realList, realChat
+end

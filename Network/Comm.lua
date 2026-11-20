@@ -185,11 +185,57 @@ end
 ------------------------------------------------------------------------
 
 -- Join the public channel without showing it in any chat window.
+-- Your chat channels as { id, name } in order (/1 General, /2 Trade...).
+local function ChannelList()
+    local list, raw = {}, GetChannelList and { GetChannelList() } or {}
+    for i = 1, #raw, 3 do
+        if type(raw[i]) == "number" and type(raw[i + 1]) == "string" then
+            list[#list + 1] = { id = raw[i], name = raw[i + 1] }
+        end
+    end
+    return list
+end
+
+-- Our channel must never take /1 (General) or any number before the game's
+-- own channels: move it to the end, one swap at a time, so the others keep
+-- their order.
+local function MoveChannelLast()
+    local swap = C_ChatInfo and C_ChatInfo.SwapChatChannelsByChannelIndex
+    if not swap then return end
+    for _ = 1, 10 do
+        local list, mine = ChannelList(), nil
+        for i, channel in ipairs(list) do
+            if channel.name:lower() == Net.CHANNEL_NAME:lower() then mine = i end
+        end
+        if not mine or mine == #list then return end
+        if not SK.Try(swap, list[mine].id, list[mine + 1].id) then return end
+    end
+end
+Net.MoveChannelLast = MoveChannelLast
+
+-- Have the game's own channels (General...) been joined yet?
+local function GameChannelsReady()
+    for _, channel in ipairs(ChannelList()) do
+        if channel.name:lower() ~= Net.CHANNEL_NAME:lower() then return true end
+    end
+    return false
+end
+
+local waitedForChannels = 0
 function Net.UpdateChannel()
     if not (JoinTemporaryChannel and GetChannelName) then return end
     local joined = GetChannelName(Net.CHANNEL_NAME) > 0
+    if joined then MoveChannelLast() end
     if SK.db.share and SK.db.shareChannel and not joined then
+        -- Join after General and the rest, so ours gets the last number.
+        -- (Give up waiting after a minute: some places have no channels.)
+        if not GameChannelsReady() and waitedForChannels < 60 then
+            waitedForChannels = waitedForChannels + 5
+            C_Timer.After(5, Net.UpdateChannel)
+            return
+        end
         JoinTemporaryChannel(Net.CHANNEL_NAME)
+        C_Timer.After(2, MoveChannelLast)
         C_Timer.After(1, function()
             for i = 1, NUM_CHAT_WINDOWS or 10 do
                 local frame = _G["ChatFrame" .. i]
