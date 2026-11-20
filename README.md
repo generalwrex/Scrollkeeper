@@ -58,8 +58,7 @@ Mage scroll helper for WoW Forever.
 
 - **Tooltips (every class):** mages see whether they can decipher a scroll; other classes see that it's a mage scroll
   to mail or sell. Hold Shift to see what it can become.
-- **Mailbox helper:** your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail. No COD:
-  Scrollkeeper doesn't endorse it, scroll sharing should be free!
+- **Mailbox helper:** your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail.
 - **Guild bank** dots on scrolls someone would level from, and **chat notes** when someone links a scroll asking who
   needs it.
 - **Locked chests:** a key binding for Scroll of Khadgar's Unlocking (press it, then click the chest), and a
