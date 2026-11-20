@@ -2,6 +2,7 @@
 
 ## 1.2.0
 
+- New mages: the panel says Comprehend Scroll comes from a mage trainer at level 6, instead of an empty "Nothing to decipher".
 - Fixed: whispers, mail and the online check used "Name-Realm 3 PvE" for mages on another realm of your ruleset, which the game doesn't accept, so they looked offline and mail bounced. Same ruleset now means the plain name.
 - Fellow Mages says which ruleset it's showing: "Fellow PvE Mages", "Fellow RP-PvP Mages"...
 - **Playing another class but have a mage?** Fellow Mages lists you as "on Priest" with your mage's name, skill and the tiers it needs, and the mailbox mails scrolls straight to your mage. (Both players need 1.2.0.)

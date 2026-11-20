@@ -1094,7 +1094,9 @@ local function Layout()
     else
         parts.decipher:SetAttribute("type", nil)
         parts.decipher.readyText = nil
-        parts.decipher:SetText(L["Nothing to decipher"])
+        -- Not learned yet: say where it comes from.
+        local learned = SK.GetComprehension().known
+        parts.decipher:SetText(learned and L["Nothing to decipher"] or L["Learn at a mage trainer (level 6)"])
         parts.decipher:Disable()
     end
 end
@@ -1184,6 +1186,12 @@ local function UpdateText()
 
     -- Reminders at the bottom, most important first (at most 4).
     local notes = {}
+    if not SK.GetComprehension().known then
+        local level = UnitLevel and UnitLevel("player") or 1
+        notes[#notes + 1] = "|cffffd100" .. (level < 6
+            and L["Comprehend Scroll is learned from a mage trainer at level 6 (you're level %d)."]:format(level)
+            or L["Visit a mage trainer to learn Comprehend Scroll: it lets you read scrolls."]) .. "|r"
+    end
     if SK.bags.bundles > 0 then
         notes[#notes + 1] = L["|cffffd100Open your Bundle of Scrolls before the next Study.|r"]
     elseif knowsStudy and SK.bags.feathers == 0 then
