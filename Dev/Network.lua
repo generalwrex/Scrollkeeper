@@ -103,9 +103,8 @@ function SK.NetReport()
     Add(C(GREY, "codes: 0 sent \194\183 3 addon throttle \194\183 8 channel throttle \194\183 7 bad channel \194\183 5 not in group"))
 
     Header("Receiving")
-    local others = 0
-    for sender in pairs(stats.senders or {}) do if not Net.IsMe(sender) then others = others + 1 end end
-    Add(Label("received", (stats.received or 0) .. " messages") .. C(GREY, " from ") .. C(WHITE, others) .. C(GREY, " other players (plus your own echo)"))
+    Add(Label("received", (stats.received or 0) .. " messages") .. C(GREY, " from ") .. C(WHITE, Count(stats.senders)) .. C(GREY, " other players"))
+    Add(C(BLUE, ("your own echo: %d messages, last %s ago"):format(stats.echo or 0, Ago(stats.echoLast))) .. C(GREY, "  (left out of everything else)"))
     Add(C(GREY, "by kind: ") .. C(WHITE, Sorted(stats.kinds or {})))
     Add(C(GREY, "by source: ") .. C(WHITE, Sorted(stats.sources or {})))
 
@@ -113,6 +112,7 @@ function SK.NetReport()
     local senders = {}
     for sender in pairs(Net.heard or {}) do senders[sender] = true end
     for sender in pairs(SK.peers or {}) do senders[sender] = true end
+    for sender in pairs(senders) do if Net.IsMe(sender) then senders[sender] = nil end end
     local list = {}
     for sender in pairs(senders) do list[#list + 1] = sender end
     table.sort(list)
@@ -163,9 +163,111 @@ function SK.NetReportPlain()
     return (SK.NetReport():gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
 end
 
+------------------------------------------------------------------------
+-- Graphs: the last 10 minutes in 10-second steps. Sampled all the time
+-- (cheap), drawn while the window is open.
+------------------------------------------------------------------------
+
+local SAMPLES, STEP = 60, 10
+local samples = {}                -- { inbound, outbound, refused, players }
+local lastTotals = { received = 0, sent = 0, refused = 0 }
+
+local function TakeSample()
+    local stats = Net.stats or {}
+    local players = 0
+    for sender in pairs(Net.heard or {}) do if not Net.IsMe(sender) then players = players + 1 end end
+    local function Delta(key)
+        local now = stats[key] or 0
+        local d = now - (lastTotals[key] or 0)
+        lastTotals[key] = now
+        return d < 0 and now or d   -- counters were reset
+    end
+    table.insert(samples, { inbound = Delta("received"), outbound = Delta("sent"), refused = Delta("refused"), players = players })
+    if #samples > SAMPLES then table.remove(samples, 1) end
+end
+
+-- One graph: a dark box with SAMPLES columns of bars.
+local function MakeGraph(parent, width, height, title)
+    local graph = CreateFrame("Frame", nil, parent)
+    graph:SetSize(width, height)
+    local bg = graph:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0, 0, 0, 0.55)
+    for i = 1, 3 do
+        local line = graph:CreateTexture(nil, "BORDER")
+        line:SetColorTexture(1, 1, 1, 0.06)
+        line:SetHeight(1)
+        line:SetPoint("BOTTOMLEFT", 0, height * i / 4)
+        line:SetPoint("BOTTOMRIGHT", 0, height * i / 4)
+    end
+    graph.title = graph:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    graph.title:SetPoint("TOPLEFT", 4, -3)
+    graph.title:SetText(title)
+    graph.peak = graph:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    graph.peak:SetPoint("TOPRIGHT", -4, -3)
+    graph.bars = {}
+    local barWidth = width / SAMPLES
+    for i = 1, SAMPLES do
+        local column = {}
+        for _, key in ipairs({ "a", "b", "c" }) do
+            local bar = graph:CreateTexture(nil, "ARTWORK")
+            bar:SetWidth(math.max(1, barWidth - 1))
+            bar:SetPoint("BOTTOMLEFT", (i - 1) * barWidth, 0)
+            bar:Hide()
+            column[key] = bar
+        end
+        graph.bars[i] = column
+    end
+    graph.height, graph.width = height, width
+    return graph
+end
+
+-- values: list of { a = n, b = n, c = n } (stacked a, b, c), colors for each.
+local function DrawGraph(graph, values, colors, peakText)
+    local max = 1
+    for _, v in ipairs(values) do max = math.max(max, (v.a or 0) + (v.b or 0) + (v.c or 0)) end
+    local offset = SAMPLES - #values
+    for i = 1, SAMPLES do
+        local v = values[i - offset]
+        local column = graph.bars[i]
+        local y = 0
+        for _, key in ipairs({ "a", "b", "c" }) do
+            local bar = column[key]
+            local n = v and v[key] or 0
+            if n > 0 then
+                local h = math.max(1, n / max * (graph.height - 14))
+                bar:ClearAllPoints()
+                bar:SetPoint("BOTTOMLEFT", graph, "BOTTOMLEFT", (i - 1) * (graph.width / SAMPLES), y)
+                bar:SetHeight(h)
+                bar:SetColorTexture(colors[key][1], colors[key][2], colors[key][3], 0.9)
+                bar:Show()
+                y = y + h
+            else
+                bar:Hide()
+            end
+        end
+    end
+    graph.peak:SetText(peakText(max))
+end
+
+local function DrawGraphs()
+    if not (window and window.messages) then return end
+    local messages, players = {}, {}
+    for i, sample in ipairs(samples) do
+        messages[i] = { a = sample.inbound, b = sample.outbound, c = sample.refused }
+        players[i] = { a = sample.players }
+    end
+    DrawGraph(window.messages, messages,
+        { a = { 0.25, 1, 0.25 }, b = { 1, 0.6, 0.2 }, c = { 1, 0.3, 0.3 } },
+        function(max) return ("|cff40ff40in|r / |cffff9933out|r / |cffff5555refused|r per 10s, peak %d"):format(max) end)
+    local last = samples[#samples]
+    DrawGraph(window.players, players, { a = { 0.4, 0.73, 1 } },
+        function() return ("players heard: |cff66bbff%d|r"):format(last and last.players or 0) end)
+end
+
 local function Build()
     window = CreateFrame("Frame", "ScrollkeeperNetDevFrame", UIParent, "BasicFrameTemplateWithInset")
-    window:SetSize(760, 560)
+    window:SetSize(760, 660)
     window:SetPoint("CENTER")
     window:SetFrameStrata("HIGH")
     window:SetMovable(true)
@@ -174,11 +276,17 @@ local function Build()
     window:SetScript("OnDragStart", window.StartMoving)
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
     window:SetClampedToScreen(true)
-    if window.TitleText then window.TitleText:SetText("Scrollkeeper " .. SK.version .. ": Network (dev)") end
+    if type(window.TitleText) == "table" then window.TitleText:SetText("Scrollkeeper " .. SK.version .. ": Network (dev)") end
     tinsert(UISpecialFrames, "ScrollkeeperNetDevFrame")
 
+    -- Graphs on top: messages (wide) and players heard.
+    window.messages = MakeGraph(window, 470, 90, "Messages, last 10 min")
+    window.messages:SetPoint("TOPLEFT", 12, -30)
+    window.players = MakeGraph(window, 250, 90, "Players heard")
+    window.players:SetPoint("TOPRIGHT", -12, -30)
+
     local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 12, -30)
+    scroll:SetPoint("TOPLEFT", 12, -130)
     scroll:SetPoint("BOTTOMRIGHT", -32, 44)
     local box = CreateFrame("EditBox", nil, scroll)
     box:SetMultiLine(true)
@@ -216,6 +324,7 @@ function SK.RefreshNetDev(force)
     if not (window and window:IsShown()) or (paused and not force) then return end
     local text = SK.NetReport()
     window.box:SetText(text)
+    DrawGraphs()
 end
 
 SK.commands.netdev = function()
@@ -226,5 +335,9 @@ SK.commands.netdev = function()
 end
 
 SK.Listen("READY", function()
-    if C_Timer.NewTicker then C_Timer.NewTicker(2, function() SK.Safely("net dev", SK.RefreshNetDev) end) end
+    if not C_Timer.NewTicker then return end
+    C_Timer.NewTicker(2, function() SK.Safely("net dev", SK.RefreshNetDev) end)
+    if SK.devCopy then C_Timer.NewTicker(STEP, function() SK.Safely("net dev sample", TakeSample) end) end
 end)
+
+SK.NetDevSample = function() TakeSample() DrawGraphs() end   -- for the test harness

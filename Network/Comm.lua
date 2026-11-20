@@ -117,19 +117,25 @@ end
 SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
     if prefix ~= Net.PREFIX or type(text) ~= "string" then return end
     local stats = Net.stats
-    stats.received = stats.received + 1
-    if type(sender) == "string" then stats.senders[sender] = true end
-    if type(source) == "string" then stats.sources[source] = (stats.sources[source] or 0) + 1 end
-    if not (SK.db and SK.db.share) then return end
     local fields = Split(text)
     local kind = table.remove(fields, 1)
-    if kind then stats.kinds[kind] = (stats.kinds[kind] or 0) + 1 end
-    if type(sender) == "string" then
-        local who = Net.heard[sender] or { count = 0 }
-        who.count, who.last, who.kind, who.source = who.count + 1, GetTime(), kind, source
-        Net.heard[sender] = who
+    -- Our own messages echo back: counted on their own, not with everyone's.
+    if kind == "H" and fields[9] and fields[9] == UnitGUID("player") then Net.RememberMyself(sender) end
+    if Net.IsMe(sender) then
+        stats.echo, stats.echoLast = (stats.echo or 0) + 1, GetTime()
+    else
+        stats.received = stats.received + 1
+        if type(sender) == "string" then stats.senders[sender] = true end
+        if type(source) == "string" then stats.sources[source] = (stats.sources[source] or 0) + 1 end
+        if kind then stats.kinds[kind] = (stats.kinds[kind] or 0) + 1 end
+        if type(sender) == "string" then
+            local who = Net.heard[sender] or { count = 0 }
+            who.count, who.last, who.kind, who.source = who.count + 1, GetTime(), kind, source
+            Net.heard[sender] = who
+        end
+        Net.Log({ dir = "in", kind = kind, where = source, who = sender, size = #text })
     end
-    Net.Log({ dir = "in", kind = kind, where = source, who = sender, size = #text })
+    if not (SK.db and SK.db.share) then return end
     if kind == "H" and fields[9] and fields[9] == UnitGUID("player") then
         Net.RememberMyself(sender)
         return

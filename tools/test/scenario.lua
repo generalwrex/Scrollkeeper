@@ -818,3 +818,12 @@ if SK.NetReport then
   print("NETREPORT ok:", ok, ok and #text or text)
   if ok then print((text:gsub("\n.*", ""))) end
 end
+
+-- Dev inspector graphs: open, sample, draw.
+if SK.commands.netdev and SK.NetDevSample then
+  local dev = SK.devCopy; SK.devCopy = true
+  SK.commands.netdev()
+  for i = 1, 5 do SK.NetDevSample() end
+  print("GRAPHS ok")
+  SK.devCopy = dev
+end
