@@ -19,6 +19,8 @@ local L = SK.L
 -- first, because easy scrolls are the next to stop giving points. Scrolls
 -- that can't raise your skill come last; they are still worth reading for
 -- what they turn into.
+local CHANCE_ORDER = { orange = 0, yellow = 1, green = 2, gray = 100 }
+
 function SK.NextDecipherable()
     local skill = SK.GetComprehension()
     local best, bestRank
@@ -29,8 +31,11 @@ function SK.NextDecipherable()
             local chance = SK.SkillUpChance(scroll.needs, skill.rank)
             local gives = not chance or chance.gives
             if gives then skillUps = skillUps + 1 end
-            -- Lower rank = deciphered sooner.
-            local rank = (gives and 0 or 100000) + scroll.needs
+            -- Lower rank = deciphered sooner: the best skill-up chance first
+            -- (orange, then yellow, green, gray), and the lower tier between
+            -- two of the same color. So at 74 skill a tier 50 (orange) goes
+            -- before a tier 15 (green).
+            local rank = (CHANCE_ORDER[chance and chance.key or "orange"] or 3) * 1000 + scroll.needs
             if not bestRank or rank < bestRank then best, bestRank = scroll, rank end
         else
             tooHard = tooHard + 1

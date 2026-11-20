@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.1.8
+
+- Fixed: Decipher (the button and the scroll icon) now reads the scroll with the best skill-up chance first. It was taking the lowest tier, so a green tier 15 went before an orange tier 50.
+
 ## 1.1.7
 
 - **Doorways (/sk doors, or the new button on the panel): getting around with Scroll of Liminal Passage (thanks Curnil for the idea!).** The scroll takes you to a group member resting in an inn or a city. Pick a town (neutral ones first; capitals you can already teleport to are greyed out) and Doorways shows who you can go to:

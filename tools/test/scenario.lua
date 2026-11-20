@@ -7,6 +7,13 @@ local sk = SK.GetComprehension(); print("skill", sk.rank, sk.max, sk.known)
 print("untranslated:", #SK.bags.untranslated, "feathers", SK.bags.feathers, "bundles", SK.bags.bundles)
 for _, s in ipairs(SK.bags.untranslated) do print("  ", s.bag, s.slot, s.name, s.needs) end
 local nxt, ready, hard, ups = SK.NextDecipherable(); print("next", nxt and nxt.name, ready, hard, "skillups", ups)
+do -- best chance first: at 74 a tier 50 (orange) beats a tier 15 (green)
+  local bags, comprehension = SK.bags.untranslated, SK.GetComprehension
+  SK.bags.untranslated = { { name = "T15", needs = 15 }, { name = "T50", needs = 50 } }
+  SK.GetComprehension = function() return { rank = 74, effective = 74, max = 120 } end
+  print("PICK at 74:", SK.NextDecipherable().name)
+  SK.bags.untranslated, SK.GetComprehension = bags, comprehension
+end
 for _, t in ipairs({1, 15, 50, 175}) do for _, k in ipairs({0, 14, 15, 22, 23, 29, 30, 57}) do local c = SK.SkillUpChance(t, k); io.write(t, "@", k, "=", c.key, " ") end print() end
 if SK.isMage then
   local b = ScrollkeeperDecipherButton
