@@ -2,6 +2,7 @@
 
 ## 1.2.0
 
+- Mages who haven't learned Comprehend Scroll yet show as "not learned yet · needs 1", so others can send them tier 1 scrolls for when they do.
 - "Your Stats" is now "Account Stats": it always counted all your characters together.
 - New mages: the panel says Comprehend Scroll comes from a mage trainer at level 6, instead of an empty "Nothing to decipher".
 - Fixed: whispers, mail and the online check used "Name-Realm 3 PvE" for mages on another realm of your ruleset, which the game doesn't accept, so they looked offline and mail bounced. Same ruleset now means the plain name.

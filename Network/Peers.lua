@@ -31,6 +31,9 @@ end
 
 local function MyTiers()
     local skill = SK.GetComprehension()
+    -- Not learned yet (trains at level 6): tier 1 scrolls are the first
+    -- they'll read, so others can send some for later.
+    if not skill.known then return "1" end
     local tiers = {}
     for _, tier in ipairs(SK.TIERS) do
         local chance = SK.SkillUpChance(tier, skill.rank)
@@ -64,7 +67,8 @@ end
 local function AltMageFields()
     if SK.isMage or not SK.MailableMages then return "", "", "" end
     local mage = SK.MailableMages()[1]
-    if not mage or (mage.skill or 0) <= 0 then return "", "", "" end
+    if not mage then return "", "", "" end
+    if (mage.skill or 0) <= 0 then return (tostring(mage.name):gsub("|", "")), 0, "1" end
     local tiers = {}
     for _, tier in ipairs(SK.TIERS) do
         local chance = SK.SkillUpChance(tier, mage.skill)

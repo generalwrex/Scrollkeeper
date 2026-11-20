@@ -526,6 +526,9 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                     if peer.tiers[tier] then tiers[#tiers + 1] = tier end
                 end
                 local needs = #tiers > 0 and (L["needs "] .. table.concat(tiers, ", ")) or ("|cff808080" .. L["needs none"] .. "|r")
+                if (peer.skill or 0) <= 0 and peer.tiers[1] then
+                    needs = "|cff808080" .. L["not learned yet"] .. "|r  ·  " .. needs
+                end
                 local upgrade = #peer.upgrades > 0 and ("  ·  |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
                 local on = ""
                 if peer.altName then

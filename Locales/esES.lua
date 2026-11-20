@@ -675,3 +675,4 @@ L["Comprehend Scroll is learned from a mage trainer at level 6 (you're level %d)
 L["Visit a mage trainer to learn Comprehend Scroll: it lets you read scrolls."] = "Visita a un instructor de magos para aprender Comprender pergamino: te deja leer pergaminos."
 L["Account Stats"] = "Estadísticas de la cuenta"
 L["From all your characters together. Library books are this character's own."] = "De todos tus personajes juntos. Los libros de la biblioteca son de este personaje."
+L["not learned yet"] = "aún no aprendido"
