@@ -2,6 +2,7 @@
 
 ## 1.2.1
 
+- **Big network fix.** Every login made every Scrollkeeper user online answer with all their data at once, so the game throttled everyone and most messages (including "I'm online") were silently dropped: with 150+ users in the channel you'd hear 2 or 3. Now who's-online messages go first, data goes out on login and when it changes (not to every login), and sending stays under the game's limit, retrying anything it refuses.
 - Fixed: your mages on another realm of the same ruleset (Realm 3 PvE when you're on Realm 1 PvE) were skipped: not offered at the mailbox, and not shown to others when you play another class.
 
 ## 1.2.0
