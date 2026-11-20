@@ -297,6 +297,8 @@ function SK.BugReportText()
         GetLocale and GetLocale() or "?"))
     Line("Character", ("%s level %d, Comprehension %d/%d"):format(class or "?", UnitLevel("player") or 0,
         skill.rank, skill.max))
+    Line("Realm", ("%s, ruleset %s, %s"):format(tostring(GetRealmName and GetRealmName()),
+        tostring(SK.ServerKind and SK.ServerKind() or "?"), tostring(UnitFactionGroup and UnitFactionGroup("player"))))
     Line("View", SK.ViewMode and SK.ViewMode() or "?")
     Line("Settings", ("panel %s, tooltips %s, sharing %s, channel %s, map pins %s, scale %s"):format(
         tostring(db.showPanel), tostring(db.showTooltips), tostring(db.share),

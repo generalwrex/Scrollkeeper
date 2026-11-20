@@ -81,6 +81,26 @@ SK.COMMUNITY_DATA = {
         names = {
         },
     },
+    ["215557f6"] = {
+        results = {
+            [15] = { [277488] = 1 },
+        },
+        skillups = {
+            ["15 orange"] = { ups = 1, tries = 1 },
+        },
+        drops = {
+        },
+        books = {
+        },
+        dropTiers = {
+        },
+        backfires = {
+            [15] = { b = 0, t = 1 },
+        },
+        bookIDs = {  },
+        names = {
+        },
+    },
     ["38caa727"] = {
         results = {
             [1] = { [213564] = 5, [274947] = 6, [275067] = 1, [275069] = 1, [3012] = 1 },
@@ -97,6 +117,28 @@ SK.COMMUNITY_DATA = {
         },
         backfires = {
             [1] = { b = 0, t = 14 },
+        },
+        bookIDs = {  },
+        names = {
+        },
+    },
+    ["3b79ff81"] = {
+        results = {
+            [50] = { [277494] = 1, [277496] = 1 },
+            [175] = { [213548] = 21, [277491] = 15, [277492] = 5, [277493] = 15, [277494] = 11, [277495] = 12, [277496] = 9, [277497] = 6, [277498] = 10, [277499] = 108, [277500] = 50, [277501] = 57, [277502] = 51 },
+        },
+        skillups = {
+            ["50 gray"] = { ups = 0, tries = 2 },
+            ["175 gray"] = { ups = 0, tries = 370 },
+        },
+        drops = {
+            [1452] = { ["27.22"] = 1 },
+        },
+        books = {
+        },
+        dropTiers = {
+        },
+        backfires = {
         },
         bookIDs = {  },
         names = {
@@ -257,6 +299,9 @@ SK.COMMUNITY_DATA = {
         dropTiers = {
         },
         backfires = {
+            [1] = { b = 0, t = 1 },
+            [15] = { b = 0, t = 1 },
+            [50] = { b = 0, t = 10 },
         },
         bookIDs = {  },
         names = {
@@ -322,6 +367,25 @@ SK.COMMUNITY_DATA = {
             [277491] = "Scroll of Rebuke Elemental",
             [277493] = "Scroll of Cat Familiar",
             [277498] = "Scroll of Imbue Manablade",
+        },
+    },
+    ["f9c18af7"] = {
+        results = {
+        },
+        skillups = {
+        },
+        drops = {
+            [1433] = { ["23.22"] = 1 },
+        },
+        books = {
+        },
+        dropTiers = {
+            [1433] = { [15] = 1 },
+        },
+        backfires = {
+        },
+        bookIDs = {  },
+        names = {
         },
     },
 }
