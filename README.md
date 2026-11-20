@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.8):** bug fix! No more "secret boolean" errors, and Decipher reads your best skill-up scroll first again. **1.1.7:** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there. `/sk doors` or the new button on the panel.
+**Latest (1.1.9):** open the panel in combat (minimap button or right-click the scroll icon), a heads-up before your imbue or familiar runs out, a key for Khadgar's Unlocking on locked chests, library book progress and rewards, Study shows you the way to your library, and Doorways got smarter (ask before inviting, write your own whisper, cities marked).
 
 Mage scroll helper for WoW Forever.
 
@@ -11,6 +11,7 @@ Mage scroll helper for WoW Forever.
 - **Comprehension bar** with tier marks, in three views: Advanced, Simple and Title only.
 - A one-click **Decipher next scroll** button that reads the scrolls that still give skill-ups first.
 - **Study** button with the cooldown and your Light Feathers, and an **Open bundle** button. No bags needed.
+  Away from a library, Study opens the map to yours.
 - Quick **familiar** and **imbue** buttons, pointed at your best scroll of each.
 - **Your scrolls by category** (Imbues, Familiars, Combat, Utility, Upgrades), best ones starred, click one to use it.
   Clicking an imbue puts it straight on your main-hand weapon.
@@ -62,7 +63,9 @@ Mage scroll helper for WoW Forever.
   needs it.
 - **Locked chests:** a key binding for Scroll of Khadgar's Unlocking (press it, then click the chest), and a
   tooltip hint on locked chests.
-- **Reminders:** a small pop-up when your imbue or familiar wears off and you have a scroll for it.
+- **Reminders:** a small pop-up when your imbue or familiar wears off, or a few minutes before it does, and you
+  have a scroll for it.
+- **Library books:** how many of the 40 you've handed in, and the next librarian reward.
 - **World map pins:** libraries where Study worked, and spots where untranslated scrolls dropped.
 - **Backup and restore** all your Scrollkeeper data (Options > Scrollkeeper > Backup), in case you ever wipe WTF.
 - **Works with** Titan Panel and other info bars, the game's addon menu, Auctionator, TSM and TomTom.

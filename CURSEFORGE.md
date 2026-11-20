@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.8):** bug fix! No more "secret boolean" errors, and Decipher reads your best skill-up scroll first again. **1.1.7:** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there. `/sk doors` or the new button on the panel.
+**Latest (1.1.9):** open the panel in combat (minimap button or right-click the scroll icon), a heads-up before your imbue or familiar runs out, a key for Khadgar's Unlocking on locked chests, library book progress and rewards, Study shows you the way to your library, and Doorways got smarter (ask before inviting, write your own whisper, cities marked).
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 
@@ -26,8 +26,11 @@ The part I'm proudest of though is that it connects mages. Your alts, guildies, 
 *   **Farming plan** (`/sk plan`): how many skill-ups to your next tier, about how many scrolls that is, how long it'll take at your pace, and **where to farm** the tier you need (from everyone's drops, and you can flip through the other tiers too)
 *   **Luck log** (`/sk log`): everything your deciphers turned into, tier by tier, your luck next to everyone else's, how often each skill-up color really gave you a point, and yes, it counts how many times you got turned into a sheep
 *   Your scrolls are sorted into Imbues, Familiars, Combat and Utility, and the right imbue for the weapon you're holding gets a gold outline
-*   Study cooldown timer, and it knows when you're standing by a librarian. Both libraries are pinned on the map
-*   A little pop-up when your familiar or imbue wears off and you have a scroll for it
+*   Study cooldown timer, and it knows when you're standing by a librarian. Both libraries are pinned on the map, and clicking Study anywhere else opens the map to yours
+*   A little pop-up when your familiar or imbue wears off, or a few minutes before it does (you pick how many), when you have a scroll for it
+*   **Locked chests:** set a key for Khadgar's Unlocking, press it and click the chest. Hover a locked chest and the tooltip tells you which key
+*   **Library books:** how many of the 40 you've handed in and what the next librarian reward is
+*   Open the panel in combat from the minimap button or the scroll icon
 *   Scroll prices from the auction house on tooltips and in the farming plan. Uses Auctionator or TSM if you have them, or scans for you if you don't
 *   **Backups**: save all your Scrollkeeper data as text (Options > Scrollkeeper > Backup), so wiping WTF doesn't wipe your luck log
 *   Buttons along the top of the panel for every window, plus the scroll icon and minimap button on/off
@@ -40,7 +43,7 @@ The part I'm proudest of though is that it connects mages. Your alts, guildies, 
 
 Everyone running Scrollkeeper shares what each scroll tier really turns into, where scrolls (and which tiers) and librarian books drop, and who needs which scrolls. It also comes with data other players already shared, so the odds aren't empty on day one. Only scroll info is shared, and you pick how: Full, Anonymous, just your guild/group/friends, or off.
 
-**Doorways** (`/sk doors`): Scroll of Liminal Passage takes you to a group member resting in an inn or a city. Pick a town and Doorways shows who you can go to: Scrollkeeper users who offer to be a door (they invite you, the invite is accepted for you), and anyone else there, with a friendly whisper ready to send. Guildies and friends are marked and listed first. One button does the rest: ask, Teleport, Leave group. (Another great idea from Curnil!)
+**Doorways** (`/sk doors`): Scroll of Liminal Passage takes you to a group member resting in an inn or a city. Pick a town and Doorways shows who you can go to: Scrollkeeper users who offer to be a door (they invite you, the invite is accepted for you), and anyone else there, with a friendly whisper ready to send (or write your own). It never invites anyone without asking, checks they're still there before you whisper, and marks cities, where everyone is resting. Guildies and friends are listed first, and places you can already teleport to sit at the bottom. One button does the rest: ask, invite, Teleport, Leave group. (Another great idea from Curnil!)
 
 ## Alts
 
