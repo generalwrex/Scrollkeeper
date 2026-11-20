@@ -13,8 +13,10 @@ local YARD_THRESHOLD = 20
 -- inst = instance (0 = Eastern Kingdoms). x and y are UnitPosition's
 -- second and first values, in yards.
 local KNOWN_LIBRARY_COORDS = {
-    { inst = 0, x = 161.5, y = 1672.2, name = "Magic Quarter", side = "Horde", map = 1458 },          -- Owen Thadd (Undercity)
-    { inst = 0, x = 868.5, y = -9004.5, name = "Wizard's Sanctum", side = "Alliance", map = 1453 },  -- Garion Wendell (Stormwind)
+    { inst = 0, x = 161.5, y = 1672.2, name = "Magic Quarter", side = "Horde", map = 1458,
+      librarian = "Owen Thadd", city = "Undercity", firstBook = "Orgrimmar's Valley of Spirits" },
+    { inst = 0, x = 868.5, y = -9004.5, name = "Wizard's Sanctum", side = "Alliance", map = 1453,
+      librarian = "Garion Wendell", city = "Stormwind", firstBook = "Ironforge's Hall of Explorers" },
 }
 
 -- Seconds until Study is ready. 0 means ready now.
@@ -46,14 +48,27 @@ function SK.KnownLibraries()
     return KNOWN_LIBRARY_COORDS
 end
 
--- Not in a library? Open the world map on your faction's library and put
--- a waypoint on it (TomTom if you have it, else the game's own pin).
-function SK.ShowLibraryOnMap()
+-- Your faction's library (and its librarian).
+function SK.MyLibrary()
     local faction = UnitFactionGroup and UnitFactionGroup("player")
     local library = KNOWN_LIBRARY_COORDS[1]
     for _, entry in ipairs(KNOWN_LIBRARY_COORDS) do
         if entry.side == faction then library = entry end
     end
+    return library
+end
+
+-- How to get Study, in one line: hand a library book to your librarian.
+function SK.HowToLearnStudy()
+    local library = SK.MyLibrary()
+    return L["Learn Study: hand a library book to %s in %s (%s). Your first book is always in %s."]:format(
+        L[library.librarian], L[library.city], L[library.name], L[library.firstBook])
+end
+
+-- Not in a library? Open the world map on your faction's library and put
+-- a waypoint on it (TomTom if you have it, else the game's own pin).
+function SK.ShowLibraryOnMap()
+    local library = SK.MyLibrary()
     local x, y = SK.WorldToMap(library.inst, library.x, library.y, library.map)
     if OpenWorldMap then
         SK.Try(OpenWorldMap, library.map)
@@ -69,7 +84,11 @@ function SK.ShowLibraryOnMap()
             if C_SuperTrack then SK.Try(C_SuperTrack.SetSuperTrackedUserWaypoint, true) end
         end
     end
-    SK.Print(L["Study works in a library. Yours is the %s: it's on your map."]:format(L[library.name]))
+    if SK.KnowsStudy and not SK.KnowsStudy() then
+        SK.Print(SK.HowToLearnStudy() .. " " .. L["It's on your map."])
+    else
+        SK.Print(L["Study works in a library. Yours is the %s: it's on your map."]:format(L[library.name]))
+    end
 end
 
 -- Where the player is on the zone map: mapID, x, y (0 to 1), or nil.

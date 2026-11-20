@@ -681,7 +681,10 @@ local function Build()
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText(L["Study"])
         GameTooltip:AddLine(L["Makes a Bundle of Scrolls. Needs a library and a Light Feather. One hour cooldown."], 1, 1, 1, true)
-        if self.awayFromLibrary then
+        if SK.KnowsStudy and not SK.KnowsStudy() then
+            GameTooltip:AddLine(SK.HowToLearnStudy(), 1, 0.82, 0, true)
+            GameTooltip:AddLine(L["Click to see where on the map."], 0.6, 0.6, 0.6)
+        elseif self.awayFromLibrary then
             GameTooltip:AddLine(L["You're not in a library: click to see where yours is."], 1, 0.82, 0, true)
         end
         GameTooltip:Show()
@@ -1065,7 +1068,8 @@ local function Layout()
     end
     -- Not in a library: the button shows you where it is instead of casting.
     local inLibrary = SK.InLibrary and SK.InLibrary()
-    parts.study.awayFromLibrary = knowsStudy and not inLibrary or nil
+    -- (Not learned yet: the click shows the librarian who teaches it.)
+    parts.study.awayFromLibrary = (not knowsStudy or not inLibrary) or nil
     parts.study:SetAttribute("type", parts.study.awayFromLibrary and nil or "spell")
     if parts.study.awayFromLibrary then parts.study:Enable() end
     if SK.bags.bundleBag then
@@ -1203,6 +1207,8 @@ local function UpdateText()
     end
     if SK.bags.bundles > 0 then
         notes[#notes + 1] = L["|cffffd100Open your Bundle of Scrolls before the next Study.|r"]
+    elseif not knowsStudy and SK.GetComprehension().known then
+        notes[#notes + 1] = "|cffffd100" .. SK.HowToLearnStudy() .. "|r"
     elseif knowsStudy and SK.bags.feathers == 0 then
         notes[#notes + 1] = RED .. L["No Light Feathers. Study needs one.|r"]
     elseif knowsStudy and studyLeft == 0 and inLibrary then

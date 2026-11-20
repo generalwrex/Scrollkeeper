@@ -2,6 +2,7 @@
 
 ## 1.2.0
 
+- Don't have Study yet? The panel says how to get it (hand a library book to your librarian), and the Study button shows them on the map.
 - Mages who haven't learned Comprehend Scroll yet show as "not learned yet · needs 1", so others can send them tier 1 scrolls for when they do.
 - "Your Stats" is now "Account Stats": it always counted all your characters together.
 - New mages: the panel says Comprehend Scroll comes from a mage trainer at level 6, instead of an empty "Nothing to decipher".
