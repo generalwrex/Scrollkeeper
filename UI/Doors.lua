@@ -295,30 +295,97 @@ local WHO_WINDOWS = { "LFGWhoListFrame", "FriendsFrame", "WhoFrame", "LFGParentF
 local WHO_COOLDOWN = 15
 
 function SK.DoorWhoReady() return time() - lastWho >= WHO_COOLDOWN end
-local function SearchWho(place)
-    if not (C_FriendList and C_FriendList.SendWho) or not SK.DoorWhoReady() then return end
-    local zone = ZoneName(place.map)
-    if not zone then return end
-    lastWho = time()
-    whoPending = place
+-- The game opens a window with /who results (FriendsFrame, or Forever's
+-- Looking For Group list). Note which were already open, to close only the
+-- one our search opens.
+local function NoteWhoWindows()
     if C_FriendList.SetWhoToUi then SK.Try(C_FriendList.SetWhoToUi, true) end
-    -- The game opens a window with the results (FriendsFrame, or Forever's
-    -- Looking For Group list). Note which were already open, to close only
-    -- the one our search opens.
     whoWindowsOpen = {}
     for _, name in ipairs(WHO_WINDOWS) do
         local frame = _G[name]
         whoWindowsOpen[name] = type(frame) == "table" and frame.IsShown and frame:IsShown() or false
     end
+end
+
+local function CloseWhoWindows()
+    C_Timer.After(0, function()
+        for _, name in ipairs(WHO_WINDOWS) do
+            local frame = _G[name]
+            if type(frame) == "table" and frame.IsShown and frame:IsShown() and not whoWindowsOpen[name] then
+                if HideUIPanel then HideUIPanel(frame) else frame:Hide() end
+            end
+        end
+    end)
+end
+
+local function SearchWho(place)
+    if not (C_FriendList and C_FriendList.SendWho) or not SK.DoorWhoReady() then return end
+    local zone = ZoneName(place.map)
+    if not zone then return end
+    lastWho = time()
+    whoPending = { kind = "zone", place = place }
+    NoteWhoWindows()
     C_FriendList.SendWho(('z-"%s"'):format(zone))
     SK.Print(L["looking for players in %s..."]:format(zone))
 end
 
+-- Before whispering someone the zone search found, look them up again
+-- (only them, in that zone): they may have moved on. done(person or nil,
+-- checked) runs with what the game says; if it doesn't answer in a few
+-- seconds (/who is throttled), done runs anyway with checked = false.
+function SK.DoorRecheck(person, place, done)
+    local zone = ZoneName(place.map)
+    if not (C_FriendList and C_FriendList.SendWho and zone) or whoPending then return done(person, false) end
+    local pending = { kind = "check", name = person.name, place = place, done = done }
+    whoPending = pending
+    NoteWhoWindows()
+    C_FriendList.SendWho(('n-"%s" z-"%s"'):format(Net.ShortName(person.name), zone))
+    C_Timer.After(3, function()
+        if whoPending == pending then whoPending = nil; done(person, false) end
+    end)
+end
+
 SK.On("WHO_LIST_UPDATE", function()
     if not whoPending then return end
-    local place = whoPending
+    local pending = whoPending
     whoPending = nil
+    CloseWhoWindows()
+    local place = pending.place
     local zone = ZoneName(place.map)
+
+    if pending.kind == "check" then
+        local found
+        for i = 1, (C_FriendList.GetNumWhoResults and C_FriendList.GetNumWhoResults()) or 0 do
+            local info = C_FriendList.GetWhoInfo and C_FriendList.GetWhoInfo(i)
+            if type(info) == "table" and info.fullName
+                and Net.ShortName(info.fullName):lower() == Net.ShortName(pending.name):lower() then
+                found = info
+            end
+        end
+        -- Update (or drop) them in the list we show.
+        local people = whoResults and whoResults.place == place and whoResults.people or {}
+        for i = #people, 1, -1 do
+            local person = people[i]
+            if Net.ShortName(person.name):lower() == Net.ShortName(pending.name):lower() then
+                if found then
+                    person.area = found.area
+                    person.inTown = place.capital or found.area == place.town
+                else
+                    table.remove(people, i)
+                end
+            end
+        end
+        local person
+        if found then
+            person = { name = found.fullName, level = found.level, class = found.classStr, area = found.area,
+                inTown = place.capital or found.area == place.town, city = place.capital,
+                relation = Relation(found.fullName, found.fullGuildName) }
+        end
+        SK.Send("DOORS_CHANGED")
+        pending.done(person, true)
+        return
+    end
+
     local me = UnitName("player")
     local people = {}
     for i = 1, (C_FriendList.GetNumWhoResults and C_FriendList.GetNumWhoResults()) or 0 do
@@ -339,15 +406,6 @@ SK.On("WHO_LIST_UPDATE", function()
         return (a.level or 0) > (b.level or 0)
     end)
     whoResults = { place = place, at = time(), people = people }
-    -- The game opens its Who window with the results; we show them here.
-    C_Timer.After(0, function()
-        for _, name in ipairs(WHO_WINDOWS) do
-            local frame = _G[name]
-            if type(frame) == "table" and frame.IsShown and frame:IsShown() and not whoWindowsOpen[name] then
-                if HideUIPanel then HideUIPanel(frame) else frame:Hide() end
-            end
-        end
-    end)
     SK.Send("DOORS_CHANGED")
 end)
 
@@ -451,7 +509,22 @@ local function OpenWhisper(target, text)
     ChatFrame_OpenChat(("/w %s %s"):format(target, text))
 end
 
-local function Ask(host)
+local Ask
+function Ask(host)
+    -- Someone the zone search found: check they're still there first.
+    if host.kind == "who" and not host.rechecked and type(selected) == "table" then
+        SK.Print(L["checking %s is still in %s..."]:format(host.short, ZoneName(selected.map) or selected.town))
+        SK.DoorRecheck(host.who, selected, function(person, checked)
+            if checked and not person then
+                SK.Print(L["%s isn't in %s anymore. Pick someone else."]:format(host.short, ZoneName(selected.map) or selected.town))
+                return
+            end
+            local again = { kind = "who", short = host.short, target = host.target, rechecked = true,
+                who = person or host.who, relation = host.relation }
+            Ask(again)
+        end)
+        return
+    end
     if host.kind == "door" and host.door.demo then
         SK.Print(L["%s is a demo door: real ones invite you, and the invite is accepted for you."]:format(host.short))
         return

@@ -638,3 +638,28 @@ do
   print("WHISPER custom:", SK.DoorWhisper("Tarren Mill", { name = "Runey", zone = "Hillsbrad" }), "|", SK.DoorWhisper(nil))
   SK.db.doorWhisper = nil
 end
+
+-- Doorways: clicking someone /who found checks they're still there first.
+do
+  local realFL = C_FriendList
+  local results, sent = {}, {}
+  C_FriendList = setmetatable({
+    SendWho = function(q) sent[#sent + 1] = q end,
+    SetWhoToUi = function() end,
+    GetNumWhoResults = function() return #results end,
+    GetWhoInfo = function(i) return results[i] end,
+  }, { __index = realFL })
+  local place = SK.DOOR_PLACES[1]   -- Booty Bay
+  local realMapInfo = C_Map.GetMapInfo
+  C_Map.GetMapInfo = function() return { name = "Stranglethorn Vale" } end
+  local got
+  results = { { fullName = "Runey", area = place.town, level = 40, classStr = "Hunter" } }
+  SK.DoorRecheck({ name = "Runey" }, place, function(person, checked) got = { person, checked } end)
+  fire("WHO_LIST_UPDATE")
+  print("RECHECK still there:", got[1] and got[1].area, got[1] and got[1].inTown, got[2], "| query:", sent[#sent])
+  results, got = {}, nil
+  SK.DoorRecheck({ name = "Runey" }, place, function(person, checked) got = { person, checked } end)
+  fire("WHO_LIST_UPDATE")
+  print("RECHECK moved away:", got[1], got[2])
+  C_FriendList, C_Map.GetMapInfo = realFL, realMapInfo
+end

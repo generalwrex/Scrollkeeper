@@ -2,6 +2,7 @@
 
 ## 1.1.9
 
+- Doorways: clicking someone the search found checks they're still there first (a quick /who of just them). Moved on? You're told and they leave the list.
 - Doorways: the whisper asks if you can group up, they invite you or say ok, and the button turns into **Invite** for when they do. Nobody gets an invite out of the blue.
 - **Doorways: write your own whisper** (Whisper text... in the window). Use {place}, {zone}, {name}, {me} and {scroll} (a link to the scroll); Default brings ours back.
 - Doorways tags cities (whole city is resting), and people found in one say "resting".
