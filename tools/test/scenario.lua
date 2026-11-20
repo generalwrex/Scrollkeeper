@@ -630,3 +630,11 @@ do
   SK.db.bookQuests = nil
   print("MOVING label ok", pcall(SK.UpdateDecipherLabel))
 end
+
+-- Your own Doorways whisper: {place} filled in.
+do
+  print("WHISPER default:", SK.DoorWhisper("Tarren Mill"))
+  SK.db.doorWhisper = "yo {name}, {me} here, {place} in {zone}, {scroll} {nope} 100% inv pls"
+  print("WHISPER custom:", SK.DoorWhisper("Tarren Mill", { name = "Runey", zone = "Hillsbrad" }), "|", SK.DoorWhisper(nil))
+  SK.db.doorWhisper = nil
+end

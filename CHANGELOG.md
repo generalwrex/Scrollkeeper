@@ -2,6 +2,8 @@
 
 ## 1.1.9
 
+- **Doorways: write your own whisper** (Whisper text... in the window). Use {place}, {zone}, {name}, {me} and {scroll} (a link to the scroll); Default brings ours back.
+- Doorways tags cities (whole city is resting), and people found in one say "resting".
 - **Library books:** how many you've handed in (of 40) and the next reward, in chat after each hand-in and on the panel's stats (hover for the rewards).
 - The Decipher button says "Stand still to decipher" while you're moving.
 - Fixed: Scrollkeeper's hidden channel could take chat channel /1 and push General to /2. It now joins after the game's channels and moves itself to the end if it ever lands before them.

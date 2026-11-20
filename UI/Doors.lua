@@ -361,6 +361,78 @@ local function InGroupWith(short)
     return short and UnitInParty and SK.Known(UnitInParty(short)) and true or false
 end
 
+-- The whisper to someone /who found. Yours if you wrote one (Whisper
+-- text... in the window), else ours. Yours can use:
+--   {place}  the town or city ("an inn or a city" if they're elsewhere)
+--   {zone}   the zone you searched
+--   {name}   who you're whispering
+--   {me}     your name
+--   {scroll} a link to Scroll of Liminal Passage
+function SK.DoorWhisper(place, info)
+    info = info or {}
+    local custom = SK.db and SK.db.doorWhisper
+    if type(custom) == "string" and custom:find("%S") then
+        local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, SK.LIMINAL_PASSAGE))
+        local values = {
+            place = place or L["an inn or a city"],
+            zone = info.zone or place or "",
+            name = info.name or "",
+            me = UnitName and UnitName("player") or "",
+            scroll = link or L["Scroll of Liminal Passage"],
+        }
+        return (custom:gsub("{(%a+)}", function(key) return values[key:lower()] end))
+    end
+    if place then
+        return L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(place)
+    end
+    return L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
+end
+
+-- The default, with {place} where the town goes, to start editing from.
+local function DefaultTemplate()
+    return (L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:gsub("%%s", "{place}"))
+end
+
+if StaticPopupDialogs then
+    StaticPopupDialogs["SCROLLKEEPER_DOOR_WHISPER"] = {
+        text = L["Your whisper to people Doorways finds. You can use:"] .. "\n|cffffd100{place}|r " .. L["the town"]
+            .. "   |cffffd100{zone}|r " .. L["the zone"] .. "   |cffffd100{name}|r " .. L["who you whisper"]
+            .. "\n|cffffd100{me}|r " .. L["you"] .. "   |cffffd100{scroll}|r " .. L["a link to the scroll"],
+        button1 = SAVE or "Save",
+        button2 = CANCEL or "Cancel",
+        button3 = L["Default"],
+        hasEditBox = true,
+        maxLetters = 230,
+        editBoxWidth = 420,
+        OnShow = function(self)
+            local box = self.editBox or self.EditBox
+            if box then
+                box:SetText(SK.db.doorWhisper or DefaultTemplate())
+                box:HighlightText()
+            end
+        end,
+        OnAccept = function(self)
+            local box = self.editBox or self.EditBox
+            local text = box and box:GetText() or ""
+            SK.db.doorWhisper = text:find("%S") and text ~= DefaultTemplate() and text or nil
+            SK.Print(L["whisper saved. It reads:"] .. " |cffff80ff" .. SK.DoorWhisper("Tarren Mill", { name = "Runey", zone = "Hillsbrad Foothills" }) .. "|r")
+        end,
+        OnAlt = function()
+            SK.db.doorWhisper = nil
+            SK.Print(L["whisper back to the default."])
+        end,
+        EditBoxOnEnterPressed = function(box)
+            local popup = box:GetParent()
+            if popup and popup.button1 then popup.button1:Click() end
+        end,
+        EditBoxOnEscapePressed = function(box) box:GetParent():Hide() end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3,
+    }
+end
+
 local function Ask(host)
     if host.kind == "door" and host.door.demo then
         SK.Print(L["%s is a demo door: real ones invite you, and the invite is accepted for you."]:format(host.short))
@@ -379,9 +451,8 @@ local function Ask(host)
         -- elsewhere in the zone gets the general version.
         local inTown = host.who and host.who.inTown
             and (trip.place and trip.place.capital and (ZoneName(trip.place.map) or trip.place.town) or host.who.area)
-        local text = inTown
-            and L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(inTown)
-            or L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
+        local text = SK.DoorWhisper(inTown, { name = trip.short,
+            zone = trip.place and (ZoneName(trip.place.map) or trip.place.town) })
         -- The whole message in chat (only you see it), since the chat box
         -- is too narrow to read it, then the box ready to send.
         SK.Print(L["whisper to %s, press Enter to send it (or Escape to cancel):"]:format(trip.short))
@@ -710,6 +781,22 @@ local function Build()
     window.actionNote:SetJustifyH("LEFT")
 
     -- Your door
+    -- Write your own whisper (the one /who finds get).
+    local whisperEdit = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+    whisperEdit:SetSize(110, 18)
+    whisperEdit:SetPoint("TOPRIGHT", action, "BOTTOMRIGHT", 0, -16)
+    whisperEdit:SetText(L["Whisper text..."])
+    if whisperEdit.GetFontString and whisperEdit:GetFontString() then whisperEdit:GetFontString():SetFontObject("GameFontNormalSmall") end
+    whisperEdit:SetScript("OnClick", function() if StaticPopup_Show then StaticPopup_Show("SCROLLKEEPER_DOOR_WHISPER") end end)
+    whisperEdit:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(L["Whisper text"])
+        GameTooltip:AddLine(SK.DoorWhisper("Tarren Mill", { name = "Runey", zone = "Hillsbrad Foothills" }), 1, 0.5, 1, true)
+        GameTooltip:AddLine(L["Click to write your own."], 0.6, 0.6, 0.6)
+        GameTooltip:Show()
+    end)
+    whisperEdit:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     local mine = SK.UI.CreateHeader(window, L["Your door"], RIGHT_W)
     mine:SetPoint("TOPLEFT", action, "BOTTOMLEFT", 0, -34)
     window.doorCheck = SmallCheck(L["Be a door"], function(self)
