@@ -161,8 +161,10 @@ function SK.NetReport()
     Add(Label("open doors", #(SK.OpenDoors and SK.OpenDoors() or {})) .. "   " .. Label("players with spares", Count(SK.spares))
         .. "   " .. Label("community data from", Count(SK.db.community) .. " players"))
 
-    Header("Last messages (newest last)")
-    for _, entry in ipairs(Net.log or {}) do
+    Header("Last messages (newest first)")
+    local messages = Net.log or {}
+    for i = #messages, 1, -1 do
+        local entry = messages[i]
         local arrow = entry.dir == "in" and C(GREEN, "<<") or C(ORANGE, ">>")
         local result = ""
         if entry.result then
