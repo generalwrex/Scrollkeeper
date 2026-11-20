@@ -626,3 +626,6 @@ L["Next reward at %d books (pick one):"] = "下一個獎勵在 %d 本書時（�
 L["Hand books to Garion Wendell (Stormwind) or Owen Thadd (Undercity). Each one counts once."] = "把書交給加里恩·溫德爾（暴風城）或歐文·薩德（幽暗城）。每本只算一次。"
 L["%d/%d handed in"] = "已交 %d/%d"
 L["Stand still to decipher"] = "站著不動才能解讀"
+L["city"] = "主城"
+L["resting in %s"] = "在%s休息"
+L["A city: resting everywhere in it, so anyone found here works."] = "主城：城內任何地方都算休息，所以在這裡找到的任何人都可以。"

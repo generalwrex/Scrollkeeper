@@ -329,7 +329,7 @@ SK.On("WHO_LIST_UPDATE", function()
         -- and its search only finds people inside it: they all count.
         if type(info) == "table" and info.fullName and info.fullName ~= me then
             people[#people + 1] = { name = info.fullName, level = info.level, class = info.classStr, race = info.raceStr,
-                area = info.area, inTown = place.capital or info.area == place.town,
+                area = info.area, inTown = place.capital or info.area == place.town, city = place.capital,
                 relation = Relation(info.fullName, info.fullGuildName) }
         end
     end
@@ -741,7 +741,8 @@ local function HostLine(host)
     end
     local who = host.who
     return ("|cffffffff%s %s|r  |cff808080%s|r"):format(tostring(who.level or "?"),
-        who.class or "", who.inTown and ("|cff40ff40" .. L["in %s"]:format(who.area) .. "|r")
+        who.class or "", who.city and ("|cff40ff40" .. L["resting in %s"]:format(who.area or "") .. "|r")
+        or who.inTown and ("|cff40ff40" .. L["in %s"]:format(who.area) .. "|r")
         or (who.area and L["in %s, may not be resting"]:format(who.area)) or L["may not be resting"])
 end
 
@@ -757,12 +758,16 @@ function SK.RefreshDoors()
         local picked = (entry.all and selected == "all") or entry.place == selected
         local name = entry.all and L["All open doors"] or entry.place.town
         local color = picked and "|cffffffff" or entry.own and "|cff808080" or ""
-        row.label:SetText((picked and "> " or "") .. color .. name .. (color ~= "" and "|r" or ""))
+        local cityTag = (not entry.all and entry.place.capital) and ("  |cff66bbff" .. L["city"] .. "|r") or ""
+        row.label:SetText((picked and "> " or "") .. color .. name .. (color ~= "" and "|r" or "") .. cityTag)
         row.value:SetText(entry.doors > 0 and ("|cff40ff40" .. entry.doors .. "|r") or "")
         row.tipFunc = function(tip)
             tip:AddLine(name)
             if not entry.all then
                 tip:AddLine(ZoneName(entry.place.map) or "", 1, 1, 1)
+                if entry.place.capital then
+                    tip:AddLine(L["A city: resting everywhere in it, so anyone found here works."], 0.4, 0.73, 1, true)
+                end
                 if entry.own then tip:AddLine(L["You can teleport here with your own spell."], 0.6, 0.6, 0.6) end
             end
             tip:AddLine(L["%d open doors"]:format(entry.doors), 0.25, 1, 0.25)

@@ -628,3 +628,6 @@ L["Next reward at %d books (pick one):"] = "Nächste Belohnung bei %d Büchern (
 L["Hand books to Garion Wendell (Stormwind) or Owen Thadd (Undercity). Each one counts once."] = "Gib Bücher bei Garion Wendell (Sturmwind) oder Owen Thadd (Unterstadt) ab. Jedes zählt einmal."
 L["%d/%d handed in"] = "%d/%d abgegeben"
 L["Stand still to decipher"] = "Zum Entziffern stillstehen"
+L["city"] = "Stadt"
+L["resting in %s"] = "ruht in %s"
+L["A city: resting everywhere in it, so anyone found here works."] = "Eine Stadt: überall darin ruht man, also passt jeder, der hier gefunden wird."
