@@ -250,19 +250,38 @@ end
 -- Hosts for the picked place
 ------------------------------------------------------------------------
 
+-- "guild", "friend" or nil: people you know go first and get a tag.
+local function Relation(name, guild)
+    if not name then return nil end
+    local myGuild = GetGuildInfo and GetGuildInfo("player")
+    if myGuild and guild and guild == myGuild then return "guild" end
+    local short = Net.ShortName(name)
+    if C_FriendList and C_FriendList.IsFriend and SK.Try(C_FriendList.IsFriend, short) then return "friend" end
+    if C_FriendList and C_FriendList.GetFriendInfo and SK.Try(C_FriendList.GetFriendInfo, short) then return "friend" end
+    return nil
+end
+SK.DoorRelation = Relation
+
 function SK.DoorHosts()
     local list = {}
     for _, door in ipairs(SK.OpenDoors()) do
         if selected == "all" or PlaceOfDoor(door) == selected then
-            list[#list + 1] = { kind = "door", door = door, short = door.short, sender = door.sender }
+            local peer = SK.peers[door.sender]
+            local relation = (peer and peer.source == "GUILD" and "guild") or Relation(door.sender)
+            list[#list + 1] = { kind = "door", door = door, short = door.short, sender = door.sender, relation = relation }
         end
     end
+    table.sort(list, function(a, b)
+        if (a.relation and true or false) ~= (b.relation and true or false) then return a.relation and true or false end
+        return a.short < b.short
+    end)
     if selected ~= "all" and whoResults and whoResults.place == selected then
         local doorNames = {}
         for _, host in ipairs(list) do doorNames[host.short:lower()] = true end
         for _, person in ipairs(whoResults.people) do
             if not doorNames[Net.ShortName(person.name):lower()] then
-                list[#list + 1] = { kind = "who", short = Net.ShortName(person.name), target = person.name, who = person }
+                list[#list + 1] = { kind = "who", short = Net.ShortName(person.name), target = person.name, who = person,
+                    relation = person.relation }
             end
         end
     end
@@ -311,11 +330,13 @@ SK.On("WHO_LIST_UPDATE", function()
         -- are (Forever gives the subzone: "Tarren Mill", "Darrow Hill").
         if type(info) == "table" and info.fullName and info.fullName ~= me then
             people[#people + 1] = { name = info.fullName, level = info.level, class = info.classStr, race = info.raceStr,
-                area = info.area, inTown = info.area == place.town or info.area == zone and place.capital }
+                area = info.area, inTown = info.area == place.town or info.area == zone and place.capital,
+                relation = Relation(info.fullName, info.fullGuildName) }
         end
     end
     table.sort(people, function(a, b)
         if (a.inTown and true or false) ~= (b.inTown and true or false) then return a.inTown and true or false end
+        if (a.relation and true or false) ~= (b.relation and true or false) then return a.relation and true or false end
         return (a.level or 0) > (b.level or 0)
     end)
     whoResults = { place = place, at = time(), people = people }
@@ -695,7 +716,9 @@ function SK.RefreshDoors()
     window.hosts:SetRows(hosts, function(row, host)
         row.itemID = nil
         local picked = trip and trip.short == host.short
-        row.label:SetText((picked and "> |cffffffff" or "") .. host.short .. (picked and "|r" or ""))
+        local tag = host.relation == "guild" and ("  |cff40ff40<" .. L["guild"] .. ">|r")
+            or host.relation == "friend" and ("  |cff66bbff<" .. L["friend"] .. ">|r") or ""
+        row.label:SetText((picked and "> |cffffffff" or "") .. host.short .. (picked and "|r" or "") .. tag)
         row.sub:SetText(HostLine(host))
         row.tipFunc = function(tip)
             tip:AddLine(host.short)
