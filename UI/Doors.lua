@@ -382,6 +382,10 @@ local function Ask(host)
         local text = inTown
             and L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(inTown)
             or L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
+        -- The whole message in chat (only you see it), since the chat box
+        -- is too narrow to read it, then the box ready to send.
+        SK.Print(L["whisper to %s, press Enter to send it (or Escape to cancel):"]:format(trip.short))
+        if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cffff80ff" .. text .. "|r") end
         ChatFrame_OpenChat(("/w %s %s"):format(target, text))
     end
     SK.Send("DOORS_CHANGED")
