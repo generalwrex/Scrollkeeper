@@ -49,7 +49,8 @@ SK.AUTHOR_CHARACTER = "Archmage Naage"
 
 -- People who helped: { name, what they did }. Shown on the About page.
 SK.CREDITS = {
-    { "Curnil", "the scroll icon idea" },
+    { "Curnil", "the scroll icon idea, and the idea for Doorways" },
+    { "Lofi Frostbeats", "Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds" },
 }
 
 SK.LINKS = {

@@ -689,3 +689,5 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "Die Lehren von Ta'zo"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "Erzmagier Antonidas: Die ungekürzte Autobiografie"
 L["(recommended)"] = "(empfohlen)"
+L["the scroll icon idea, and the idea for Doorways"] = "die Idee für das Schriftrollen-Symbol und für die Durchgänge"
+L["Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds"] = "Mitmagier im Netzwerk (RP-PvP, Horde), der die meisten Gemeinschafts-Chancen für Stufe 175 geteilt hat"

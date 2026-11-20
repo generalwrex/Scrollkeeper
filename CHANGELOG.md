@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.2.2
+
+- Thanks to Fellow Mage network user **Lofi Frostbeats** (RP-PvP Horde), who shared most of the community's tier 175 odds. Every mage reading tier 175 scrolls benefits from those deciphers!
+
 ## 1.2.1
 
 - **Big network fix.** Every login made every Scrollkeeper user online answer with all their data at once, so the game throttled everyone and most messages (including "I'm online") were silently dropped: with 150+ users in the channel you'd hear 2 or 3. Now who's-online messages go first, data goes out on login and when it changes (not to every login), and sending stays under the game's limit, retrying anything it refuses.

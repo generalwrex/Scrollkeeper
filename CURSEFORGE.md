@@ -4,6 +4,8 @@
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 
+A special thanks to Fellow Mage network user **Lofi Frostbeats** (RP-PvP Horde), who shared most of the community's tier 175 odds!
+
 Fellow Scroll addon makers, lets share our data with eachother! Make all the addons great! PM me!
 
 I got tired of digging through my bags every time I wanted to decipher a scroll, so I made this. Scrollkeeper puts your whole Comprehension routine for WoW Forever in one window, and it tells you which scrolls will actually raise your skill before you waste them.
