@@ -79,4 +79,5 @@ Commands.lua
 # Dev: tools for working on the addon (/sk dev lists them). Not packaged.
 #@do-not-package@
 Dev\Scan.lua
+Dev\Network.lua
 #@end-do-not-package@

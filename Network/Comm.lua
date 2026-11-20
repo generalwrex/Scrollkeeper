@@ -96,6 +96,24 @@ end
 -- filtering, to find out where messages get lost.
 Net.stats = { since = time(), received = 0, senders = {}, kinds = {}, sources = {}, sent = 0, refused = 0, results = {} }
 
+-- The last messages in and out, for the dev network window (Dev/Network.lua).
+-- Each: { at, dir = "in"/"out", kind, where, who, size, result }.
+Net.log = {}
+local LOG_MAX = 100
+function Net.Log(entry)
+    entry.at = GetTime()
+    table.insert(Net.log, entry)
+    if #Net.log > LOG_MAX then table.remove(Net.log, 1) end
+end
+
+-- Per player heard: { count, last = GetTime(), kind, source } (before filtering).
+Net.heard = {}
+
+function Net.ResetStats()
+    Net.stats = { since = time(), received = 0, senders = {}, kinds = {}, sources = {}, sent = 0, refused = 0, results = {} }
+    Net.log, Net.heard = {}, {}
+end
+
 SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
     if prefix ~= Net.PREFIX or type(text) ~= "string" then return end
     local stats = Net.stats
@@ -106,6 +124,12 @@ SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
     local fields = Split(text)
     local kind = table.remove(fields, 1)
     if kind then stats.kinds[kind] = (stats.kinds[kind] or 0) + 1 end
+    if type(sender) == "string" then
+        local who = Net.heard[sender] or { count = 0 }
+        who.count, who.last, who.kind, who.source = who.count + 1, GetTime(), kind, source
+        Net.heard[sender] = who
+    end
+    Net.Log({ dir = "in", kind = kind, where = source, who = sender, size = #text })
     if kind == "H" and fields[9] and fields[9] == UnitGUID("player") then
         Net.RememberMyself(sender)
         return
@@ -168,6 +192,14 @@ end
 -- How many messages are waiting (for /sk who).
 function Net.QueueLength() return #queue end
 
+-- For the dev network window: the queue, the budget and the backoff.
+function Net.Inspect()
+    local kinds = {}
+    for i, message in ipairs(queue) do kinds[i] = message.key:match("^[^|]+") .. (message.tries and ("x" .. message.tries) or "") end
+    return { queue = kinds, budget = budget, budgetMax = BUDGET_MAX, perSecond = BUDGET_PER_SECOND,
+        backoff = math.max(0, nextSendAt - GetTime()), destinations = Destinations() }
+end
+
 -- Send one message straight to one player (used to find friends who run
 -- Scrollkeeper). Goes out right away, not through the queue.
 function Net.Whisper(target, kind, ...)
@@ -179,7 +211,8 @@ function Net.Whisper(target, kind, ...)
     local text = table.concat(parts, "|")
     if #text > MAX_LENGTH then return end
     budget = budget - 1   -- whispers spend the same budget
-    pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, text, "WHISPER", target)
+    local ok, result = pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, text, "WHISPER", target)
+    Net.Log({ dir = "out", kind = kind, where = "WHISPER", who = target, size = #text, result = tostring(ok and result) })
 end
 
 -- Send a list of "a:b" items as several messages that each fit.
@@ -219,6 +252,8 @@ local function SendNext()
     for _, destination in ipairs(destinations) do
         local ok, result = pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, message.text, destination[1], destination[2])
         local stats = Net.stats
+        Net.Log({ dir = "out", kind = message.key:match("^[^|]+"), where = destination[1], size = #message.text,
+            result = tostring(ok and result) })
         local key = destination[1] .. ":" .. tostring(ok and result)
         stats.results[key] = (stats.results[key] or 0) + 1
         if ok and (result == nil or result == true or result == 0) then

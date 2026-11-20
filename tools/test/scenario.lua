@@ -811,3 +811,10 @@ do
   SK.Net.Send("H", "1", "x")
   print("QUEUE grew by", SK.Net.QueueLength() - n0)
 end
+
+-- Dev network report builds without errors.
+if SK.NetReport then
+  local ok, text = pcall(SK.NetReport)
+  print("NETREPORT ok:", ok, ok and #text or text)
+  if ok then print((text:gsub("\n.*", ""))) end
+end

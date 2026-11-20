@@ -124,6 +124,7 @@ local DEV_COMMANDS = {
     { "dev", "this list" },
     { "who", "everyone heard: real name, race, faction, source, last heard" },
     { "places", "Doorways towns: map ID, the zone name /who searches, and your faction's" },
+    { "netdev", "everything about the network, live (Export saves it for /reload)" },
     { "realms", "your realm, connected realms, and every player heard with their realm (copy box)" },
     { "scan", "dump game data to the saved file (Dev/Scan.lua)" },
     { "show", "show the latest scan to copy" },
