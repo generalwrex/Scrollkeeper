@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.2.0):** big Fellow Mages fix! It was hiding most of your ruleset (PvE, PvP, RP, RP-PvP) and whispers to other realm layers failed. Now everyone on your ruleset shows up, it remembers mages you've seen this week so you can still mail them, players on another class show their mage, and mailing scrolls fills in a friendly note.
+**Latest (1.2.1):** big network fix! With 150+ Scrollkeeper users online, every login set off thousands of messages and the game throttled almost all of them, so you'd only see 2 or 3 fellow mages. Now "I'm online" goes first and everyone stays under the game's limit. Update so the whole network can hear you!
 
 Mage scroll helper for WoW Forever.
 

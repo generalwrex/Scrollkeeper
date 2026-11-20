@@ -65,7 +65,9 @@ function SK.NetReport()
     Add("codes: 0 sent, 3 addon throttle, 8 channel throttle, 7 bad channel, 5 not in group")
 
     Header("Receiving")
-    Add(("received %d messages from %d players"):format(stats.received or 0, Count(stats.senders)))
+    local others = 0
+    for sender in pairs(stats.senders or {}) do if not Net.IsMe(sender) then others = others + 1 end end
+    Add(("received %d messages from %d other players (plus your own echo)"):format(stats.received or 0, others))
     Add("by kind: " .. Sorted(stats.kinds or {}))
     Add("by source: " .. Sorted(stats.sources or {}))
 
@@ -81,7 +83,8 @@ function SK.NetReport()
         local peer = SK.peers[sender]
         local race, faction, realm = WhoIs(peer and peer.guid)
         local why
-        if not peer then why = "no hello yet (only data heard)"
+        if Net.IsMe(sender) then why = "YOU (your own messages echo back)"
+        elseif not peer then why = "no hello yet (only data heard)"
         elseif peer.anonymous then why = "anonymous (counted, not named)"
         elseif SK.IsUnreachable(sender) then why = "HIDDEN: other ruleset or faction"
         elseif peer.class ~= "MAGE" and not peer.alt then why = "not a mage (no mage on account)"
