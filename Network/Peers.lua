@@ -515,7 +515,8 @@ end
 function SK.AnonymousCount()
     local count = 0
     for name, peer in pairs(SK.peers) do
-        if Fresh(peer) and peer.anonymous and not Net.IsMe(name) then count = count + 1 end
+        -- Only ones on your ruleset and faction, like everyone else listed.
+        if Fresh(peer) and peer.anonymous and not Net.IsMe(name) and not Unreachable(name, peer) then count = count + 1 end
     end
     return count
 end
