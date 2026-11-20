@@ -8,6 +8,7 @@
   - One button does the next step: ask, **Teleport**, then **Leave group**.
 - Be a door yourself: tick "Be a door" (off unless you turn it on). Mages who ask get a pop-up, or tick "Invite by myself" to skip it.
 - The scroll icon's frame shows the skill-up color of the scroll a click would read (orange, yellow, green, or gray when it won't give a point), and its tooltip says it too.
+- Fixed: /sk demo showed no made-up mages since 1.1.6.
 
 ## 1.1.6
 

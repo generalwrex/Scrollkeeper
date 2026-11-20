@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.6):** bug fix! Fellow Mages only shows mages you can actually reach (your server and faction), and grays out anyone who's logged off.
+**Latest (1.1.7):** Doorways! Pick a town and get there with Scroll of Liminal Passage: other Scrollkeeper users can be a door that invites you, or find anyone resting there with /who. `/sk doors` or the new button on the panel.
 
 Mage scroll helper for WoW Forever.
 
