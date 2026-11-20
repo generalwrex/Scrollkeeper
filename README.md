@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.9):** open the panel in combat (minimap button or right-click the scroll icon), a heads-up before your imbue or familiar runs out, a key for Khadgar's Unlocking on locked chests, library book progress and rewards, Study shows you the way to your library, and Doorways got smarter (ask before inviting, write your own whisper, cities marked).
+**Latest (1.2.0):** big Fellow Mages fix! It was hiding most of your ruleset (PvE, PvP, RP, RP-PvP) and whispers to other realm layers failed. Now everyone on your ruleset shows up, it remembers mages you've seen this week so you can still mail them, players on another class show their mage, and mailing scrolls fills in a friendly note.
 
 Mage scroll helper for WoW Forever.
 
@@ -40,7 +40,9 @@ Mage scroll helper for WoW Forever.
 
 ### Network (guild, group and everyone)
 
-- **Fellow Mages:** other mages running Scrollkeeper, their skill and what they still need. Hover a name for more
+- **Fellow Mages:** other mages running Scrollkeeper on your ruleset, their skill and what they still need.
+  Mages seen this week stay listed after they log off (mail still reaches them), and players on another class
+  show their mage. Hover a name for more
   (like how many of your scrolls they could use), click to whisper, Shift-click to put the name in chat or mail.
   Sort by skill, name or "my scrolls"; right-click "my scrolls" to see only who could use yours.
 - **Scroll Swap:** who has spare scrolls you'd level from, and who'd want yours.

@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.1.9):** open the panel in combat (minimap button or right-click the scroll icon), a heads-up before your imbue or familiar runs out, a key for Khadgar's Unlocking on locked chests, library book progress and rewards, Study shows you the way to your library, and Doorways got smarter (ask before inviting, write your own whisper, cities marked).
+**Latest (1.2.0):** big Fellow Mages fix! It was hiding most of your ruleset (PvE, PvP, RP, RP-PvP) and whispers to other realm layers failed. Now everyone on your ruleset shows up, it remembers mages you've seen this week so you can still mail them, players on another class show their mage, and mailing scrolls fills in a friendly note.
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 
@@ -12,8 +12,8 @@ The part I'm proudest of though is that it connects mages. Your alts, guildies, 
 
 ## Getting scrolls to the right person
 
-*   **Fellow Mages** (`/sk net`, or right on the panel in Advanced view). Every mage running Scrollkeeper that you can hear, with their skill and which tiers they still need. Hover a name to see everything, including how many of the scrolls in your bags they could use. Click to whisper them, Shift-click to drop their name in chat or the mail. Sort by skill, name, or who could use the most of your scrolls (right-click that one to only show those mages).
-*   **At the mailbox** there's a list of who could use the scrolls you're carrying. Your own mages first, then guildies, friends and group members running Scrollkeeper. Click a name and it fills in the mail and attaches their scrolls. It never sends, you still click Send. There's a setting to also offer scrolls you'd still use yourself.
+*   **Fellow Mages** (`/sk net`, or right on the panel in Advanced view). Every mage running Scrollkeeper on your ruleset (it says which: "Fellow PvE Mages"), with their skill and which tiers they still need. Mages you've seen this week stay listed (grayed) after they log off, so you can still mail them, and players on another class show their mage. Hover a name to see everything, including how many of the scrolls in your bags they could use. Click to whisper them, Shift-click to drop their name in chat or the mail. Sort by skill, name, or who could use the most of your scrolls (right-click that one to only show those mages).
+*   **At the mailbox** there's a list of who could use the scrolls you're carrying. Your own mages first, then guildies, friends and group members running Scrollkeeper. Click a name and it fills in the mail, attaches their scrolls and writes a short note. It never sends, you still click Send. There's a setting to also offer scrolls you'd still use yourself.
 *   **Scroll swap board** (`/sk swap`). See who has spare scrolls you'd level from, and which mages would level from yours. Click a name to whisper them.
 *   **In the guild bank** scrolls get a little colored dot if you, one of your mages, or a guildie would get a skill-up from it.
 *   **In chat,** when someone links a scroll and asks who needs it, you get a note (only you see it) saying if it's a skill-up for you or your mages, with an \[I'll take it\] button to answer.
