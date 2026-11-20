@@ -13,7 +13,7 @@ local L = SK.L
 
 local WIDTH, HEIGHT = 440, 464
 local OPTION_HEIGHT, OPTION_GAP = 54, 6
-local MAX_OPTIONS = 5
+local MAX_OPTIONS = 8                    -- pages with more than 5 use short rows (see Layout)
 local window
 local questions, page = {}, 1
 local answers = {}
@@ -182,7 +182,7 @@ local function MakeOption(i)
     option.check:SetPoint("RIGHT", -8, 0)
     option.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
 
-    option:SetPoint("TOPLEFT", 24, -112 - (i - 1) * (OPTION_HEIGHT + OPTION_GAP))
+    option.index = i
     option:SetScript("OnClick", function(self)
         local q = questions[page]
         if q.multi then
@@ -301,6 +301,18 @@ function SK.RefreshSetupPage()
     end
     window.question:SetText(q.question)
     window.hint:SetText(q.hint or "")
+    -- Up to 5 options get full rows; more (like the 7 languages) get short
+    -- rows without the description, so they all fit.
+    local short = #q.options > 5
+    local height, gap = short and 34 or OPTION_HEIGHT, short and 4 or OPTION_GAP
+    for i, option in ipairs(window.options) do
+        option:SetHeight(height)
+        option:ClearAllPoints()
+        option:SetPoint("TOPLEFT", 24, -112 - (i - 1) * (height + gap))
+        option:SetPoint("RIGHT", window, "RIGHT", -24, 0)
+        option.icon:SetSize(height - 12, height - 12)
+        option.description:SetShown(not short)
+    end
     for i, option in ipairs(window.options) do
         local data = q.options[i]
         if data then
