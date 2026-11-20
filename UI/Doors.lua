@@ -325,9 +325,11 @@ SK.On("WHO_LIST_UPDATE", function()
         local info = C_FriendList.GetWhoInfo and C_FriendList.GetWhoInfo(i)
         -- The search already asked for that zone; "area" is where in it they
         -- are (Forever gives the subzone: "Tarren Mill", "Darrow Hill").
+        -- A capital is resting all over (the Rises, the Valley of Spirits...),
+        -- and its search only finds people inside it: they all count.
         if type(info) == "table" and info.fullName and info.fullName ~= me then
             people[#people + 1] = { name = info.fullName, level = info.level, class = info.classStr, race = info.raceStr,
-                area = info.area, inTown = info.area == place.town or info.area == zone and place.capital,
+                area = info.area, inTown = place.capital or info.area == place.town,
                 relation = Relation(info.fullName, info.fullGuildName) }
         end
     end
@@ -375,7 +377,8 @@ local function Ask(host)
         -- Name the town only when /who says they're standing in it (their
         -- own words for it, so it's right in any language). Someone
         -- elsewhere in the zone gets the general version.
-        local inTown = host.who and host.who.inTown and host.who.area
+        local inTown = host.who and host.who.inTown
+            and (trip.place and trip.place.capital and (ZoneName(trip.place.map) or trip.place.town) or host.who.area)
         local text = inTown
             and L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting in %s. I'll leave the group right after. Thanks!"]:format(inTown)
             or L["Hi! Mind inviting me for a sec? I've got a Scroll of Liminal Passage and can teleport to you while you're resting at an inn or in a city. I'll leave the group right after. Thanks!"]
