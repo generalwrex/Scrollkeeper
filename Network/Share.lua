@@ -343,13 +343,23 @@ function SK.LibraryPins(mapID)
     for _, library in ipairs(SK.KnownLibraries and SK.KnownLibraries() or {}) do
         if faction and library.side and library.side ~= faction then others[#others + 1] = library end
     end
+    -- A spot belongs to the faction whose library is closest to it (same
+    -- continent, within a city's reach): Stormwind's Royal Library is
+    -- Alliance, anything in Undercity is Horde.
+    local CITY_REACH = 2000   -- yards
     local function OtherSide(pin)
         for _, library in ipairs(others) do
             if pin.name and pin.name == library.name then return true end
-            if pin.inst and pin.inst == library.inst and pin.x and pin.y
-                and (pin.x - library.x) ^ 2 + (pin.y - library.y) ^ 2 < 150 ^ 2 then return true end
         end
-        return false
+        if not (pin.inst and pin.x and pin.y) then return false end
+        local nearest, nearestDistance
+        for _, library in ipairs(SK.KnownLibraries and SK.KnownLibraries() or {}) do
+            if library.inst == pin.inst and library.side then
+                local distance = math.sqrt((pin.x - library.x) ^ 2 + (pin.y - library.y) ^ 2)
+                if not nearestDistance or distance < nearestDistance then nearest, nearestDistance = library, distance end
+            end
+        end
+        return nearest ~= nil and faction ~= nil and nearest.side ~= faction and nearestDistance < CITY_REACH
     end
 
     for _, library in ipairs(SK.KnownLibraries and SK.KnownLibraries() or {}) do

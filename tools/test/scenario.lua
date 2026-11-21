@@ -915,3 +915,20 @@ do
   local text = SK.ExportText()
   print("LOOTLOG export has Z", text:find("\nZ|", 1, true) ~= nil)
 end
+
+-- Libraries: a shared spot in Stormwind (the Royal Library) isn't shown to the Horde.
+do
+  local realFaction, realPlace = UnitFactionGroup, SK.WorldToMap
+  SK.WorldToMap = function(inst, x, y) return (x % 1000) / 1000, (math.abs(y) % 1000) / 1000 end
+  SK.db.sharedLibraries = { ["0_41_-836"] = { inst = 0, x = 410.4, y = -8356.9, name = "Royal Library", from = { X = true } } }
+  SK.db.libraryPins = {}
+  local function Names(f)
+    UnitFactionGroup = function() return f end
+    local names = {}
+    for _, pin in ipairs(SK.LibraryPins(1415)) do names[#names + 1] = pin.name end
+    table.sort(names)
+    return table.concat(names, ", ")
+  end
+  print("LIBRARIES Horde:", Names("Horde"), "| Alliance:", Names("Alliance"))
+  UnitFactionGroup, SK.WorldToMap = realFaction, realPlace
+end

@@ -8,7 +8,7 @@
 - Fellow Mages: someone playing another class shows in that class's color ("on Warrior" in warrior brown).
 - Community odds: scroll icons and colors are loaded after you log in, so the list no longer shows plain names first.
 - Waypoints (library pins, the Study button) use Zygor's arrow if you have Zygor, then TomTom, then the game's own pin.
-- The map only pins your own faction's library.
+- The map only pins your own faction's library, including spots players shared in the other faction's city (like Stormwind's Royal Library for the Horde).
 - Farming plan: with Zygor or TomTom, each zone in Where to farm gets an Arrow button that points you at the spot where the most scrolls dropped.
 - Map: scroll (and book) spots close together are grouped into one shaded circle with the total in the middle, instead of a pile of little pins.
 - Map: a book for the librarians shows as one book (it sits in one place), not a count of how often it was found. Spots right next to each other are that same book.
