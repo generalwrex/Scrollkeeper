@@ -152,6 +152,20 @@ SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
     end
 end)
 
+-- Why a scroll is your pick, in words: "your usual (used 5 times)",
+-- "for your Fire spec", or nil.
+local SPEC_NAMES = { arcane = "Arcane", fire = "Fire", frost = "Frost" }
+function SK.ScrollReason(scroll)
+    if not scroll then return nil end
+    local uses = SK.ScrollUses(scroll.itemID)
+    if uses >= 2 then return L["your usual (used %d times)"]:format(uses) end
+    if scroll.category == "imbues" and scroll.forSpec then
+        local spec = SK.MageSpec and SK.MageSpec()
+        if spec then return L["for your %s spec"]:format(L[SPEC_NAMES[spec]]) end
+    end
+    return nil
+end
+
 -- Returns a list of { key, label, scrolls = { ... } } for the categories
 -- you have scrolls in, in display order. Each scroll gets .usable and .best.
 function SK.ScrollGroups()

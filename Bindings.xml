@@ -3,6 +3,6 @@
      use items itself, but a key that clicks a secure button can. -->
 <Bindings>
     <Binding name="CLICK ScrollkeeperUnlockButton:LeftButton" header="SCROLLKEEPER" category="ADDONS"/>
-    <Binding name="CLICK ScrollkeeperImbueButton:LeftButton" category="ADDONS"/>
-    <Binding name="CLICK ScrollkeeperFamiliarButton:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK ScrollkeeperImbueKey:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK ScrollkeeperFamiliarKey:LeftButton" category="ADDONS"/>
 </Bindings>

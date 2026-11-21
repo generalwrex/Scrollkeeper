@@ -997,7 +997,7 @@ print("REMINDER in combat default", SK.db.reminderInCombat)
 -- Renew keys: pointed at the best imbue and familiar scrolls.
 do
   if SK.PointRenewButtons then SK.PointRenewButtons() end
-  print("RENEW imbue", ScrollkeeperImbueButton and ScrollkeeperImbueButton.itemID, "familiar", ScrollkeeperFamiliarButton and ScrollkeeperFamiliarButton.itemID)
+  print("RENEW imbue", ScrollkeeperImbueKey and ScrollkeeperImbueKey.itemID, "familiar", ScrollkeeperFamiliarKey and ScrollkeeperFamiliarKey.itemID)
 end
 
 -- Setup keys page: a key already used elsewhere is refused.

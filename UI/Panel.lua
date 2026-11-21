@@ -566,6 +566,9 @@ local function Build()
         button:SetScript("OnEnter", function(self)
             if self.itemID then
                 showItem(self)
+                local best = SK.BestScroll and SK.BestScroll(categoryKey)
+                local why = best and best.itemID == self.itemID and SK.ScrollReason and SK.ScrollReason(best)
+                if why then GameTooltip:AddLine(L["Picked: %s"]:format(why), 0.4, 0.73, 1) end
                 GameTooltip:AddLine(L["|cff40ff40Click to use.|r"])
                 GameTooltip:Show()
             else

@@ -343,12 +343,18 @@ do
         return toast
     end
 
-    -- The hint line: what clicking does (or, in combat, your key).
-    local function Hint(kind)
-        if toast.secure then return L["Click: use it  ·  Right-click: close  ·  Shift-right-click: off"] .. "  ·  " .. L["Alt-drag: move"] end
+    -- The hint line: which scroll and why, then what clicking does (or, in
+    -- combat, your key).
+    local function Hint(kind, scroll)
+        local which = ""
+        if scroll then
+            local why = SK.ScrollReason and SK.ScrollReason(scroll)
+            which = "|cffffffff" .. (scroll.name or "") .. "|r" .. (why and (" |cff66bbff(" .. why .. ")|r") or "") .. "\n"
+        end
+        if toast.secure then return which .. L["Click: use it  ·  Right-click: close  ·  Shift-right-click: off"] .. "  ·  " .. L["Alt-drag: move"] end
         local key = SK.RenewKey and SK.RenewKey(kind)
-        if key then return L["In combat: press %s to use it."]:format(key) end
-        return L["In combat: set a key in Key Bindings > Scrollkeeper to use it mid-fight."]
+        if key then return which .. L["In combat: press %s to use it."]:format(key) end
+        return which .. L["In combat: set a key in Key Bindings > Scrollkeeper to use it mid-fight."]
     end
 
     -- Which reminders apply right now: { imbue = scroll or nil, familiar = scroll or nil }
@@ -389,7 +395,7 @@ do
             title = L["No familiar out"]
         end
         toast.title:SetText(title)
-        toast.hint:SetText(Hint(familiar and "familiar" or "imbue"))
+        toast.hint:SetText(Hint(familiar and "familiar" or "imbue", familiar or imbue))
         toast.expiring = nil
 
         local scroll = familiar or imbue
@@ -446,7 +452,7 @@ do
             title = L["Familiar runs out in %d min"]:format(Minutes(due[1].seconds))
         end
         toast.title:SetText(title)
-        toast.hint:SetText(Hint(pick.kind))
+        toast.hint:SetText(Hint(pick.kind, pick.scroll))
         toast.expiring = true
         local scroll = due[#due].scroll
         local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)

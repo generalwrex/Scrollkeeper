@@ -9,8 +9,8 @@
 local _, SK = ...
 local L = SK.L
 
-local IMBUE_BINDING = "CLICK ScrollkeeperImbueButton:LeftButton"
-local FAMILIAR_BINDING = "CLICK ScrollkeeperFamiliarButton:LeftButton"
+local IMBUE_BINDING = "CLICK ScrollkeeperImbueKey:LeftButton"
+local FAMILIAR_BINDING = "CLICK ScrollkeeperFamiliarKey:LeftButton"
 BINDING_HEADER_SCROLLKEEPER = "Scrollkeeper"
 _G["BINDING_NAME_" .. IMBUE_BINDING] = L["Imbue your weapon (best imbue scroll)"]
 _G["BINDING_NAME_" .. FAMILIAR_BINDING] = L["Summon a familiar (best familiar scroll)"]
@@ -28,8 +28,8 @@ local function MakeButton(name, kind)
     return button
 end
 
-local imbueButton = MakeButton("ScrollkeeperImbueButton", "imbue")
-local familiarButton = MakeButton("ScrollkeeperFamiliarButton", "familiar")
+local imbueButton = MakeButton("ScrollkeeperImbueKey", "imbue")
+local familiarButton = MakeButton("ScrollkeeperFamiliarKey", "familiar")
 
 -- Point both buttons at your best scrolls (out of combat only).
 local function Point()

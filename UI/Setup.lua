@@ -53,8 +53,8 @@ local function BuildQuestions()
         } }
         list[#list + 1] = { key = "keys", keys = true, question = L["Set some keys?"],
             hint = L["Click one, then press the key you want. Keys you already use are left alone. Escape cancels."], options = {
-            { "CLICK ScrollkeeperFamiliarButton:LeftButton", L["Summon a familiar"], nil, ICON .. "Ability_Hunter_BeastCall" },
-            { "CLICK ScrollkeeperImbueButton:LeftButton", L["Imbue your weapon"], nil, ICON .. "Spell_Fire_FlameTounge" },
+            { "CLICK ScrollkeeperFamiliarKey:LeftButton", L["Summon a familiar"], nil, ICON .. "Ability_Hunter_BeastCall" },
+            { "CLICK ScrollkeeperImbueKey:LeftButton", L["Imbue your weapon"], nil, ICON .. "Spell_Fire_FlameTounge" },
             { "CLICK ScrollkeeperUnlockButton:LeftButton", L["Khadgar's Unlocking (locked chests)"], nil, ICON .. "INV_Misc_Key_03" },
         } }
     else
