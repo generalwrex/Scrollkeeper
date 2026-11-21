@@ -6,6 +6,7 @@
 - Fixed: hovering a Fellow Mage to check they're online kept whispering them over and over while the tooltip was up.
 - Fixed: right after logging in, the game sometimes doesn't say your realm yet, so Scrollkeeper didn't know your ruleset and told others nothing. It now remembers it.
 - Fellow Mages: someone playing another class shows in that class's color ("on Warrior" in warrior brown).
+- Community odds: scroll icons and colors are loaded after you log in, so the list no longer shows plain names first.
 
 ## 1.2.1
 

@@ -183,6 +183,20 @@ function SK.UI.ItemLabel(itemID, text)
     return icon and ("|T" .. icon .. ":14:14:0:0|t " .. colored) or colored
 end
 
+-- Load every scroll's info a little after login (a few a second), so the
+-- odds list shows icons and colors right away instead of plain names first.
+SK.Listen("READY", function()
+    if not (C_Item and C_Item.RequestLoadItemDataByID and C_Timer and C_Timer.After) then return end
+    local ids = {}
+    for itemID in pairs(SK.MAGE_SCROLL_IDS or {}) do ids[#ids + 1] = itemID end
+    for itemID in pairs(SK.STANDARD_SCROLLS or {}) do ids[#ids + 1] = itemID end
+    for i, itemID in ipairs(ids) do
+        C_Timer.After(5 + i * 0.2, function()
+            if not SK.Try(C_Item.GetItemQualityByID, itemID) then SK.Try(C_Item.RequestLoadItemDataByID, itemID) end
+        end)
+    end
+end)
+
 SK.On("GET_ITEM_INFO_RECEIVED", function(itemID)
     if itemID and waitingForItems[itemID] then
         waitingForItems[itemID] = nil
