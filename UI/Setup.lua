@@ -64,7 +64,7 @@ local function BuildQuestions()
         hint = L["Only scroll info is shared: your Comprehension skill, what your scrolls became and where they dropped. Never your chat, gold, bags or where you are."], options = {
         { "full", L["Full"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."], ICON .. "Spell_Holy_PrayerOfHealing02" },
         { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
-        { "none", L["None"] .. " |cffff6666" .. L["(not recommended)"] .. "|r", L["Turns off the network: nothing sent, no Fellow Mages or swap board. Odds that come with each update still show."], ICON .. "Ability_Rogue_Feint" },
+        { "none", L["None"] .. " |cffff6666" .. L["(not recommended)"] .. "|r", L["Nothing is sent. No Fellow Mages or swap board, but each update's odds still show."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
     for _, language in ipairs(SK.LANGUAGES or {}) do
