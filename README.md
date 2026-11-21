@@ -70,7 +70,7 @@ Mage scroll helper for WoW Forever.
 - **Library books:** how many of the 40 you've handed in, and the next librarian reward.
 - **World map pins:** libraries where Study worked, and spots where untranslated scrolls dropped.
 - **Backup and restore** all your Scrollkeeper data (Options > Scrollkeeper > Backup), in case you ever wipe WTF.
-- **Works with** Titan Panel and other info bars, the game's addon menu, Auctionator, TSM and TomTom.
+- **Works with** Titan Panel and other info bars, the game's addon menu, Auctionator, TSM, and Zygor or TomTom for waypoint arrows.
 - **Settings:** Options > AddOns > Scrollkeeper, or `/sk options`. Lots of them.
 
 Nothing is automatic: every cast is one click from the player.
