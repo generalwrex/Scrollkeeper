@@ -1030,6 +1030,12 @@ function SK.RefreshDoors()
 end
 
 function SK.ToggleDoors()
+    -- The window holds a secure button (Teleport), so the game won't let
+    -- addons show or hide it in combat.
+    if SK.InCombat() then
+        SK.Print(L["Doorways can be opened after combat."])
+        return
+    end
     if not window then Build() end
     window:SetShown(not window:IsShown())
 end

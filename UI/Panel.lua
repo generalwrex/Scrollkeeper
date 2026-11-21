@@ -1141,11 +1141,11 @@ local function UpdateText()
     local bonus = skill.bonus > 0 and (" " .. GREEN .. "+%d|r"):format(skill.bonus) or ""
     parts.skillBar:SetProgress(skill.rank, skill.max)
     parts.skillBar:SetMarks(SK.TIERS, skill.max)
-    parts.skillBar:SetLabel("Skill", ("%d%s / %d"):format(skill.rank, bonus, skill.max))
+    parts.skillBar:SetLabel(L["Skill"], ("%d%s / %d"):format(skill.rank, bonus, skill.max))
 
     -- Decipher rows
     rows.ready.value:SetText(readable > 0 and (GREEN .. readable .. "|r") or (GRAY .. "0|r"))
-    rows.skillups.value:SetText(skillUps > 0 and (ORANGE .. skillUps .. "|r") or (GRAY .. "none|r"))
+    rows.skillups.value:SetText(skillUps > 0 and (ORANGE .. skillUps .. "|r") or (GRAY .. L["none"] .. "|r"))
     rows.tooHard.value:SetText(tooHard > 0 and (RED .. tooHard .. "|r") or (GRAY .. "0|r"))
 
     local nextTier = SK.NextTierAfter(skill.effective)
@@ -1188,11 +1188,11 @@ local function UpdateText()
     elseif studyLeft == 0 then
         parts.studyBar:SetProgress(1, 1)
         parts.studyBar:SetBarColor(colors.good)
-        parts.studyBar:SetLabel("Ready")
+        parts.studyBar:SetLabel(L["Ready"])
     else
         parts.studyBar:SetProgress(SK.STUDY_COOLDOWN_SECONDS - studyLeft, SK.STUDY_COOLDOWN_SECONDS)
         parts.studyBar:SetBarColor(colors.wait)
-        parts.studyBar:SetLabel("Cooldown", SK.FormatStudyTime(studyLeft))
+        parts.studyBar:SetLabel(L["Cooldown"], SK.FormatStudyTime(studyLeft))
     end
     rows.feathers.value:SetText(SK.bags.feathers > 0 and SK.bags.feathers or (RED .. "0|r"))
     rows.library.value:SetText(inLibrary and (GREEN .. L["you're in one|r"]) or (GRAY .. L["not here|r"]))
