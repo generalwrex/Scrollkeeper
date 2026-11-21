@@ -53,6 +53,20 @@ SK.On("CHAT_MSG_LOOT", function(message, _, _, _, looter)
     SK.db.dropTiers = SK.db.dropTiers or {}
     SK.db.dropTiers[mapID] = SK.db.dropTiers[mapID] or {}
     SK.db.dropTiers[mapID][tier] = (SK.db.dropTiers[mapID][tier] or 0) + count
+    -- And which tier at this spot: cellTiers[mapID][cell][tier] = count.
+    SK.db.cellTiers = SK.db.cellTiers or {}
+    SK.db.cellTiers[mapID] = SK.db.cellTiers[mapID] or {}
+    SK.db.cellTiers[mapID][cell] = SK.db.cellTiers[mapID][cell] or {}
+    SK.db.cellTiers[mapID][cell][tier] = (SK.db.cellTiers[mapID][cell][tier] or 0) + count
+    -- Which untranslated scroll (item ID), kept for later:
+    -- cellItems[mapID][cell][itemID] = count.
+    local itemID = tonumber(link:match("item:(%d+)"))
+    if itemID then
+        SK.db.cellItems = SK.db.cellItems or {}
+        SK.db.cellItems[mapID] = SK.db.cellItems[mapID] or {}
+        SK.db.cellItems[mapID][cell] = SK.db.cellItems[mapID][cell] or {}
+        SK.db.cellItems[mapID][cell][itemID] = (SK.db.cellItems[mapID][cell][itemID] or 0) + count
+    end
     SK.Send("SCROLL_LOOTED", count)
     SK.Send("DROPS_CHANGED")
     SK.Send("MY_DATA_CHANGED")

@@ -872,6 +872,12 @@ do
       if a[2].stale then print("MAP GREY BOOK", a[2].mine) end
       if a[2].movedHere then print("MAP MOVED HERE", a[2].name, a[2].mine) end
     end
+    -- Tiers at a spot: recorded per spot, else the zone's mix.
+    SK.db.cellTiers = { [1429] = { ["10.10"] = { [15] = 2 }, ["11.10"] = { [15] = 1, [50] = 2 } } }
+    SK.db.dropTiers = { [1429] = { [15] = 9 } }
+    local here = SK.TiersAt(1429, { "10.10", "11.10" })
+    local zone = SK.TiersInZone(1429)
+    print("MAP TIERS here", here and here[15], here and here[50], "zone 15:", zone and zone[15] or 0)
   else
     print("MAP CIRCLES no provider")
   end

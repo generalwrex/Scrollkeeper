@@ -40,14 +40,14 @@ def read_exports(paths):
 
 
 def parse(lines):
-    data = {"id": None, "version": None, "T": {}, "U": {}, "P": {}, "K": {}, "D": {}, "J": {}, "I": set(), "N": {}, "W": [], "B": {}}
+    data = {"id": None, "version": None, "T": {}, "U": {}, "P": {}, "K": {}, "D": {}, "J": {}, "E": {}, "I": set(), "N": {}, "W": [], "B": {}}
     for line in lines:
         parts = line.split("|")
         kind = parts[0]
         try:
             if kind == "meta":
                 data["version"], data["id"] = parts[1], parts[8]
-            elif kind in ("T", "U", "P", "K", "D", "J"):
+            elif kind in ("T", "U", "P", "K", "D", "J", "E"):
                 entries = {}
                 for item in parts[2].split(","):
                     key, value = item.rsplit(":", 1)
@@ -88,6 +88,8 @@ def pack_lines(players):
         for kind in ("P", "K"):
             for map_id, cells in sorted(data[kind].items()):
                 lines.append(f"{kind}|{int(map_id)}|" + ",".join(f"{c}:{int(n)}" for c, n in sorted(cells.items())))
+        for map_id, cells in sorted(data["E"].items()):
+            lines.append(f"E|{int(map_id)}|" + ",".join(f"{k}:{int(n)}" for k, n in sorted(cells.items())))
         for map_id, cells in sorted(data["J"].items()):
             lines.append(f"J|{int(map_id)}|" + ",".join(f"{c}:{int(i)}" for c, i in sorted(cells.items())))
         for map_id, tiers in sorted(data["D"].items()):

@@ -18,6 +18,8 @@
 --   P|mapID|cell:count,...           untranslated scroll drops
 --   K|mapID|cell:count,...           book drops
 --   J|mapID|cell:itemID,...          which book was at each book spot
+--   E|mapID|cell:tier:count,...      which tier dropped at each scroll spot
+--   F|mapID|cell:itemID:count,...    which untranslated scroll dropped there (not shipped yet)
 --   D|mapID|tier:count,...           untranslated scroll drops by tier, per zone (1.1.5)
 --   I|itemID,...                     items learned as books
 --   B|tier:backfires/tries,...       how often Comprehend Scroll backfired
@@ -218,6 +220,21 @@ function SK.ExportText()
     for mapID, cells in pairs(db.bookItems or {}) do
         if next(cells) then Add("J", mapID, Pairs(cells)) end
     end
+    for mapID, cells in pairs(db.cellTiers or {}) do
+        local out = {}
+        for cell, tiers in pairs(cells) do
+            for tier, count in pairs(tiers) do out[#out + 1] = cell .. ":" .. tier .. ":" .. count end
+        end
+        if #out > 0 then Add("E", mapID, table.concat(out, ",")) end
+    end
+    -- Which untranslated scroll dropped at each spot (yours only, kept for later).
+    for mapID, cells in pairs(db.cellItems or {}) do
+        local out = {}
+        for cell, items in pairs(cells) do
+            for itemID, count in pairs(items) do out[#out + 1] = cell .. ":" .. itemID .. ":" .. count end
+        end
+        if #out > 0 then Add("F", mapID, table.concat(out, ",")) end
+    end
 
     local books = {}
     for id, name in pairs(db.bookIDs or {}) do
@@ -270,6 +287,13 @@ function SK.ExportText()
             end
             for mapID, cells in pairs(entry.bookItems or {}) do
                 if next(cells) then Put("J", mapID, Pairs(cells)) end
+            end
+            for mapID, cells in pairs(entry.cellTiers or {}) do
+                local out = {}
+                for cell, tiers in pairs(cells) do
+                    for tier, count in pairs(tiers) do out[#out + 1] = cell .. ":" .. tier .. ":" .. count end
+                end
+                if #out > 0 then Put("E", mapID, table.concat(out, ",")) end
             end
             local theirs = Backfires(entry.backfires)
             if theirs then Put("B", theirs) end

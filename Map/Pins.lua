@@ -93,6 +93,21 @@ local function AddPinLines(data, first)
         Title(L["Untranslated scrolls"])
         if data.mine > 0 then GameTooltip:AddLine(L["You looted %d here."]:format(data.mine), 1, 1, 1) end
         if data.others > 0 then GameTooltip:AddLine(L["Others looted %d here."]:format(data.others), 0.7, 0.7, 0.7) end
+        -- Which tiers: at these spots if anyone recorded it, else the zone's mix.
+        local function TierText(tiers)
+            local parts = {}
+            for _, tier in ipairs(SK.TIERS) do
+                if tiers[tier] then parts[#parts + 1] = L["Tier %d: %d"]:format(tier, tiers[tier]) end
+            end
+            return table.concat(parts, "   ")
+        end
+        local here = data.mapID and data.cells and SK.TiersAt and SK.TiersAt(data.mapID, data.cells)
+        local zone = not here and data.mapID and SK.TiersInZone and SK.TiersInZone(data.mapID)
+        if here then
+            GameTooltip:AddLine(TierText(here), 0.4, 0.73, 1)
+        elseif zone then
+            GameTooltip:AddLine(L["In this zone:"] .. " " .. TierText(zone), 0.4, 0.73, 1, true)
+        end
     end
     if data.spots then GameTooltip:AddLine(L["All around this circle (%d spots)."]:format(data.spots), 1, 0.82, 0) end
 end
@@ -321,13 +336,16 @@ local function CreateProvider()
                     local x, y = SK.CellCenter(spot.cell)
                     if x then
                         map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = spot.counts.mine,
-                            others = spot.counts.others, name = nameFor and nameFor(spot.cell) })
+                            others = spot.counts.others, name = nameFor and nameFor(spot.cell),
+                            mapID = self.mapID, cells = { spot.cell } })
                     end
                 end
             else
                 map:AcquirePin(AREA_TEMPLATE, { x = cx, y = cy, size = radius * 2, color = color })
+                local groupCells = {}
+                for _, spot in ipairs(group) do groupCells[#groupCells + 1] = spot.cell end
                 map:AcquirePin(TEMPLATE, { kind = kind, x = cx, y = cy, mine = mine, others = others,
-                    spots = #group, name = nameFor and nameFor(group[1].cell) })
+                    spots = #group, name = nameFor and nameFor(group[1].cell), mapID = self.mapID, cells = groupCells })
             end
         end
     end
@@ -347,6 +365,7 @@ local function CreateProvider()
         if not SK.db.mapPins then return end
         local mapID = self:GetMap():GetMapID()
         if not mapID then return end
+        self.mapID = mapID
 
         self:DrawSpots(SK.DropCells(mapID), "drop", { 1, 0.82, 0 })
         -- Every known book spot in this zone (Data/BookSpots.lua). Player

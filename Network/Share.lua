@@ -9,6 +9,7 @@
 --   D|mapID#part|tier:count,...      untranslated scrolls looted per zone, by tier (1.1.5)
 --   I|0#part|itemID,...              item IDs you've learned are books
 --   J|mapID#part|cell:itemID,...     which book was found at each book spot (1.2.2)
+--   E|mapID#part|cell:tier:count,... which tier dropped at each scroll spot (1.2.2)
 --   W|instance|x|y|name              a library spot as a world position
 --
 -- Each player's totals REPLACE their previous ones, so hearing the same
@@ -38,6 +39,7 @@ local function Entry(sender)
     entry.books = entry.books or {}
     entry.dropTiers = entry.dropTiers or {}
     entry.bookItems = entry.bookItems or {}
+    entry.cellTiers = entry.cellTiers or {}
     entry.at = time()
     local peer = SK.peers and SK.peers[sender]
     if peer and peer.exportID then entry.exportID = peer.exportID end
@@ -117,6 +119,20 @@ Net.Handle("J", function(sender, f)
     for cell, itemID in (f[2] or ""):gmatch("(%d+%.%d+):(%d+)") do
         itemID = tonumber(itemID)
         if itemID and itemID > 0 and SK.CellCenter(cell) then cells[cell] = itemID end
+    end
+    SK.Send("DROPS_CHANGED")
+end)
+
+Net.Handle("E", function(sender, f)
+    local mapID, part = Head(f[1])
+    if not (mapID and part) then return end
+    local cells = Target(Entry(sender).cellTiers, mapID, part)
+    for cell, tier, count in (f[2] or ""):gmatch("(%d+%.%d+):(%d+):(%d+)") do
+        tier, count = tonumber(tier), tonumber(count)
+        if SK.TIER_RESULTS[tier] and count > 0 and count <= MAX_COUNT and SK.CellCenter(cell) then
+            cells[cell] = cells[cell] or {}
+            cells[cell][tier] = count
+        end
     end
     SK.Send("DROPS_CHANGED")
 end)
@@ -251,6 +267,36 @@ function SK.DropCells(mapID, kind)
     return cells
 end
 
+-- Which tiers dropped at these spots of a map (yours and everyone's):
+-- { [tier] = count }, or nil if nobody recorded it per spot.
+function SK.TiersAt(mapID, cellList)
+    local wanted, totals, any = {}, {}, false
+    for _, cell in ipairs(cellList) do wanted[cell] = true end
+    local function Add(byMap)
+        for cell, tiers in pairs(byMap and byMap[mapID] or {}) do
+            if wanted[cell] then
+                for tier, count in pairs(tiers) do totals[tier] = (totals[tier] or 0) + count; any = true end
+            end
+        end
+    end
+    Add(SK.db.cellTiers)
+    for _, entry in pairs(SK.db.community or {}) do Add(entry.cellTiers) end
+    for _, entry in ipairs(SK.ShippedCommunity()) do Add(entry.cellTiers) end
+    return any and totals or nil
+end
+
+-- Which tiers dropped anywhere in a zone (yours and everyone's): { [tier] = count } or nil.
+function SK.TiersInZone(mapID)
+    local totals, any = {}, false
+    local function Add(byMap)
+        for tier, count in pairs(byMap and byMap[mapID] or {}) do totals[tier] = (totals[tier] or 0) + count; any = true end
+    end
+    Add(SK.db.dropTiers)
+    for _, entry in pairs(SK.db.community or {}) do Add(entry.dropTiers) end
+    for _, entry in ipairs(SK.ShippedCommunity()) do Add(entry.dropTiers) end
+    return any and totals or nil
+end
+
 -- Which book sits at a book spot: its item ID, from your finds or anyone's
 -- (shared, or shipped with the addon). nil if nobody said.
 function SK.BookAt(mapID, cell)
@@ -356,6 +402,13 @@ function SK.SendMyData()
         local items = {}
         for tier, count in pairs(tiers) do items[#items + 1] = tier .. ":" .. count end
         if #items > 0 then Net.SendList("D", mapID, items) end
+    end
+    for mapID, cells in pairs(db.cellTiers or {}) do
+        local items = {}
+        for cell, tiers in pairs(cells) do
+            for tier, count in pairs(tiers) do items[#items + 1] = cell .. ":" .. tier .. ":" .. count end
+        end
+        if #items > 0 then Net.SendList("E", mapID, items) end
     end
     for mapID, cells in pairs(db.bookItems or {}) do
         local items = {}
