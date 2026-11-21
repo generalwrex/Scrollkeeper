@@ -204,7 +204,9 @@ local function ScrollRow(row, entry)
     if entry.count > 0 then tags[#tags + 1] = "|cffffffff" .. L["you have %d"]:format(entry.count) .. "|r" end
     if entry.pick then tags[#tags + 1] = "|cff66bbff" .. entry.pick .. "|r" end
     if entry.uses > 0 and not entry.pick then tags[#tags + 1] = "|cff808080" .. L["used %d times"]:format(entry.uses) .. "|r" end
-    row.label:SetText(SK.UI.ItemLabel(entry.itemID, name) .. (#tags > 0 and ("  " .. table.concat(tags, "  ")) or ""))
+    -- The scroll as an item link, like in chat ([Scroll of ...]).
+    local link = SK.ScrollLink and SK.ScrollLink(entry.itemID, name) or name
+    row.label:SetText(link .. (#tags > 0 and ("  " .. table.concat(tags, "  ")) or ""))
     row.sub:SetText("|cffbbbbbb" .. (WhatItDoes(entry.itemID) or L["(loading...)"]) .. "|r")
     row.tipCount = #tags > 0 and table.concat(tags, "  ") or nil
 end
