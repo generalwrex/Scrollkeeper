@@ -88,6 +88,42 @@ function SK.ImbueSwapHint()
     return nil
 end
 
+------------------------------------------------------------------------
+-- Imbues for your spec: a Fire mage's best imbue is a flame one, a Frost
+-- mage's a frost one, an Arcane mage's an arcane one. Spec = the talent
+-- tree with the most points (none below level 10).
+------------------------------------------------------------------------
+
+local SPEC_TREES = { "arcane", "fire", "frost" }   -- mage talent tabs, in order
+
+-- "arcane", "fire", "frost", or nil (no points yet, or not a mage).
+function SK.MageSpec()
+    if not (SK.isMage and GetNumTalentTabs and GetTalentTabInfo) then return nil end
+    local best, bestPoints = nil, 0
+    for tab = 1, math.min(3, GetNumTalentTabs() or 0) do
+        local info = { SK.Try(GetTalentTabInfo, tab) }
+        -- Classic: name, icon, points...  Later clients: id, name, description, icon, points...
+        local points = type(info[1]) == "number" and info[5] or info[3]
+        points = tonumber(points) or 0
+        if points > bestPoints then best, bestPoints = SPEC_TREES[tab], points end
+    end
+    return best
+end
+
+-- Which school an imbue is, by its (English) name.
+local IMBUE_SCHOOLS = {
+    { "Flame", "fire" },
+    { "Frost", "frost" }, { "Chill", "frost" }, { "Ice", "frost" },
+    { "Mana", "arcane" }, { "Spellbreak", "arcane" }, { "Spark", "arcane" },
+}
+function SK.ImbueSchool(scroll)
+    local name = ((SK.EnglishScrollName and SK.EnglishScrollName(scroll.itemID)) or scroll.name or ""):lower()
+    for _, pair in ipairs(IMBUE_SCHOOLS) do
+        if name:find(pair[1]:lower(), 1, true) then return pair[2] end
+    end
+    return nil
+end
+
 -- Returns a list of { key, label, scrolls = { ... } } for the categories
 -- you have scrolls in, in display order. Each scroll gets .usable and .best.
 function SK.ScrollGroups()
@@ -102,13 +138,20 @@ function SK.ScrollGroups()
         table.insert(byKey[scroll.category], scroll)
     end
 
+    local spec = SK.MageSpec and SK.MageSpec()
+    for _, scroll in ipairs(byKey.imbues or {}) do
+        scroll.forSpec = spec ~= nil and SK.ImbueSchool(scroll) == spec
+    end
+
     local groups = {}
     for _, category in ipairs(SK.SCROLL_CATEGORIES) do
         local scrolls = byKey[category.key]
         if scrolls then
-            -- Highest level first; usable before not-yet-usable.
+            -- Usable first; then (imbues) the ones for your spec; then
+            -- highest level.
             table.sort(scrolls, function(a, b)
                 if a.usable ~= b.usable then return a.usable end
+                if (a.forSpec or false) ~= (b.forSpec or false) then return a.forSpec or false end
                 if a.level ~= b.level then return a.level > b.level end
                 return a.name < b.name
             end)

@@ -1023,3 +1023,13 @@ do
   SK.SetCharacterLayout(false)
   print("CHARLAYOUT off ->", SK.db.scale)
 end
+
+-- Imbues follow the spec: Fire picks a flame imbue over a higher frost one.
+do
+  local realTabs, realInfo = GetNumTalentTabs, GetTalentTabInfo
+  GetNumTalentTabs = function() return 3 end
+  GetTalentTabInfo = function(tab) return "Tree" .. tab, "icon", tab == 2 and 20 or 0 end
+  print("SPEC", SK.MageSpec(), "| school of Balefrost:", SK.ImbueSchool({ name = "Scroll of Imbue Balefrost" }),
+    "| Greater Flame:", SK.ImbueSchool({ name = "Scroll of Imbue Greater Flame" }), "| Manablade:", SK.ImbueSchool({ name = "Scroll of Imbue Manablade" }))
+  GetNumTalentTabs, GetTalentTabInfo = realTabs, realInfo
+end
