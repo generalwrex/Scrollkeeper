@@ -150,11 +150,14 @@ end)
 local pendingChecks = {}   -- short real name, lowercased -> the sender name we know them by
 local function CheckKey(name) return (Net.ShortName(name or "")):lower() end
 
+-- Kept apart from the peer: their answer (a hello) replaces the peer, and
+-- the tooltip asking again right away made a whisper loop.
+local checkedAt = {}
 function SK.CheckOnline(sender)
     local peer = SK.peers[sender]
     if not peer or peer.demo or Net.IsMe(sender) then return end
-    if peer.checkedAt and time() - peer.checkedAt < 30 then return end
-    peer.checkedAt = time()
+    if checkedAt[sender] and time() - checkedAt[sender] < 30 then return end
+    checkedAt[sender] = time()
     local target = SK.ContactName(sender)
     local key = CheckKey(target)
     pendingChecks[key] = sender
@@ -318,14 +321,28 @@ local function MyRealms()
         local kind = RealmKind(name)
         if kind then realms.kind = kind end
     end
+    -- Realm name empty right now: the ruleset we saw last time.
+    if not realms.kind and SK.ServerKind then
+        local label = SK.ServerKind()
+        realms.kind = label and Plain(label)
+    end
     return realms
 end
 
 -- Your ruleset as people say it: "PvE", "PvP", "RP" or "RP-PvP"
 -- (nil if the realm name doesn't say).
 local KIND_LABELS = { pve = "PvE", pvp = "PvP", rp = "RP", rppvp = "RP-PvP", hardcore = "Hardcore" }
+-- The realm name is sometimes empty (seen right after logging in), so
+-- the last one we got is remembered for this character.
 function SK.ServerKind()
-    local kind = GetRealmName and RealmKind(Plain(GetRealmName()))
+    local kind = GetRealmName and RealmKind(Plain(SK.Try(GetRealmName)))
+    if not kind and GetNormalizedRealmName then kind = RealmKind(Plain(SK.Try(GetNormalizedRealmName))) end
+    local guid = UnitGUID and SK.Known(UnitGUID("player"))
+    local saved = SK.db and type(guid) == "string" and SK.db
+    if saved then
+        saved.rulesetOf = type(saved.rulesetOf) == "table" and saved.rulesetOf or {}
+        if kind then saved.rulesetOf[guid] = kind else kind = saved.rulesetOf[guid] end
+    end
     return kind and KIND_LABELS[kind]
 end
 
