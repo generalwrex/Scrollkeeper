@@ -89,7 +89,6 @@ Nothing is automatic: every cast is one click from the player.
 | `/sk swap` | the Scroll Swap window |
 | `/sk doors` | Doorways: get somewhere with Scroll of Liminal Passage |
 | `/sk mail` | who could use your spare scrolls |
-| `/sk export` | copy your scroll data to share |
 | `/sk backup` / `/sk restore` | save or bring back all your Scrollkeeper data |
 | `/sk bug` | copy a bug report |
 | `/sk about` | version and links |
@@ -102,11 +101,6 @@ Nothing is automatic: every cast is one click from the player.
 
 - **Found a bug?** Type `/sk bug` in game, copy the report, and open a
   [bug report](https://github.com/generalwrex/scrollkeeper/issues/new?template=bug_report.yml).
-- **Share your data.** Type `/sk export`, copy it, and paste it in a
-  [data issue](https://github.com/generalwrex/scrollkeeper/issues/new?template=share_data.yml).
-  It's scroll data only, with no character or account names. Everyone's exports are combined
-  (`tools/community/merge.py`) into real odds, skill-up rates and drop spots
-  that ship with future releases.
 - **Like it?** You can [buy me a coffee](https://donorbox.org/generalwrex). Totally optional.
 - **Have an idea?** Open a
   [feature idea](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
@@ -144,7 +138,7 @@ Network/              talking to other players' Scrollkeeper (protocol notes in 
 Map/                  world map pins
 UI/                   everything you can see, plus optional links to other addons
 Dev/                  /sk scan data collection tool (not in the released addon)
-tools/community/      merges /sk export data from players (not loaded by the game)
+tools/community/      builds the shipped community data (not loaded by the game)
 tools/test/           runs the addon in a fake WoW (not loaded by the game)
                       cd tools/test, npm install, npm test
 ```

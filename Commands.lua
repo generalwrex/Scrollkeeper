@@ -72,7 +72,6 @@ commands.advanced = function() SK.db.viewMode = "full"; SK.ApplyPanelSettings() 
 commands.net = function() SK.ToggleNetwork() end
 commands.network = commands.net
 commands.demo = function() SK.ToggleDemo() end
-commands.export = function() SK.ShowExport() end
 -- /sk mail: who could use your spare scrolls (same list as the mailbox).
 commands.mail = function()
     local plan = SK.MailPlan and SK.MailPlan() or {}
@@ -107,7 +106,7 @@ commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk export, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 ------------------------------------------------------------------------
@@ -126,6 +125,7 @@ local DEV_COMMANDS = {
     { "places", "Doorways towns: map ID, the zone name /who searches, and your faction's" },
     { "netdev", "everything about the network, live (Export saves it for /reload)" },
     { "realms", "your realm, connected realms, and every player heard with their realm (copy box)" },
+    { "export", "your scroll data as text (also saved on logout for sync-my-data)" },
     { "scan", "dump game data to the saved file (Dev/Scan.lua)" },
     { "show", "show the latest scan to copy" },
     { "eventlog", "start or stop recording game events" },
@@ -188,6 +188,8 @@ commands.realms = DevOnly(function()
     if #senders == 0 then Add("  nobody heard yet") end
     SK.ShowTextBox("Realms", table.concat(lines, "\n"))
 end)
+
+commands.export = DevOnly(function() SK.ShowExport() end)
 
 commands.places = DevOnly(function()
     local mine = UnitFactionGroup and UnitFactionGroup("player")

@@ -169,10 +169,8 @@ local function AddAboutPage()
     helpText:SetWidth(560)
     helpText:SetJustifyH("LEFT")
     helpText:SetSpacing(3)
-    helpText:SetText(L["|cffffd100/sk export|r  copy your scroll data to share. Everyone's shared data "]
-        .. L["ships with the next version.\n"]
-        .. L["|cffffd100/sk bug|r  copy a bug report if something goes wrong.\n"]
-        .. L["Paste either one on the GitHub page above (Report a bug)."])
+    helpText:SetText(L["|cffffd100/sk bug|r  copy a bug report if something goes wrong.\n"]
+        .. L["Paste it on the GitHub page above (Report a bug)."])
 
     local thanks = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     thanks:SetPoint("TOPLEFT", helpText, "BOTTOMLEFT", -8, -18)

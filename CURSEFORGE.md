@@ -70,14 +70,13 @@ Titan Panel and ElvUI data bars, Auctionator, TSM, and Zygor or TomTom waypoint 
 *   `/sk scan` scan the auction house for scroll prices
 *   `/sk options` settings
 *   `/sk backup` and `/sk restore` save or bring back all your data
-*   `/sk export` share your scroll data
 *   `/sk bug` copy a bug report
 *   `/sk reset` put the window (and scroll icon) back in the middle
 *   `/sk about` version and links
 
 ## Helping out
 
-It's new, so stuff will break. If it does, type `/sk bug` and drop it in a [bug report](https://github.com/generalwrex/scrollkeeper/issues/new?template=bug_report.yml). If you want to make the odds better for everyone, `/sk export` your data into a [share your data](https://github.com/generalwrex/scrollkeeper/issues/new?template=share_data.yml) post and I'll add it to the next update. Ideas are welcome [here](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
+It's new, so stuff will break. If it does, type `/sk bug` and drop it in a [bug report](https://github.com/generalwrex/scrollkeeper/issues/new?template=bug_report.yml). Ideas are welcome [here](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
 
 Made by a mage, for mages. Say hi to Archmage Naage in game. Source is on [GitHub](https://github.com/generalwrex/scrollkeeper).
 

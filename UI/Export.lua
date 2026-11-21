@@ -358,8 +358,14 @@ end
 -- Keep your latest export in the saved data, so the share script
 -- (share-scrollkeeper-data.ps1) can open a ready-to-send GitHub issue
 -- without you copying anything. Saved when you log out or reload.
+-- Only in a dev copy (sync-my-data reads it); everyone else's saved data
+-- stays small.
 SK.On("PLAYER_LOGOUT", function()
     if not SK.db then return end
+    if not SK.devCopy then
+        SK.db.lastExport, SK.db.lastExportTitle, SK.db.lastExportAt = nil, nil, nil
+        return
+    end
     local ok, text = pcall(SK.ExportText)
     if not ok or type(text) ~= "string" then return end
     local skill = SK.GetComprehension and SK.GetComprehension()

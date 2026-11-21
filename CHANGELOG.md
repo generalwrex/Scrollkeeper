@@ -16,6 +16,7 @@
 - Less network traffic: when a guildie or group member logs in, your data goes only to your guild or group, not to the whole public channel too. Friends are pinged at most every 2 minutes.
 - Your level shows up for others right after you level, not up to 5 minutes later.
 - So much community data has come in that it's now stored packed: the shipped data is less than half the size.
+- /sk export is gone: Fellow Mages already share everything over the network, so there's nothing to paste anymore. Thanks to everyone who sent theirs!
 
 ## 1.2.1
 
