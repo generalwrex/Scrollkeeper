@@ -57,7 +57,7 @@ English, Spanish, French, German, and Simplified and Traditional Chinese. The no
 
 ## Works with
 
-Titan Panel and ElvUI data bars, Auctionator, TSM, and TomTom waypoints from the map pins. None of them are required.
+Titan Panel and ElvUI data bars, Auctionator, TSM, and Zygor or TomTom waypoint arrows from the map pins. None of them are required.
 
 ## Commands
 

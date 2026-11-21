@@ -82,19 +82,14 @@ function ScrollkeeperMapPinMixin:OnMouseLeave()
     GameTooltip:Hide()
 end
 
--- Click a library pin: set a waypoint there (TomTom if you have it,
--- otherwise the game's own map pin).
+-- Click a library pin: set a waypoint there (Zygor's or TomTom's arrow
+-- if you have one, otherwise the game's own map pin).
 function ScrollkeeperMapPinMixin:OnClick(button)
     local data = self.data
     if button ~= "LeftButton" or not data or data.kind ~= "library" then return end
-    local mapID = self:GetMap():GetMapID()
-    if _G.TomTom and TomTom.AddWaypoint then
-        TomTom:AddWaypoint(mapID, data.x, data.y, { title = data.name, from = "Scrollkeeper" })
-    elseif C_Map.CanSetUserWaypointOnMap and C_Map.CanSetUserWaypointOnMap(mapID) and UiMapPoint then
-        C_Map.SetUserWaypoint(UiMapPoint.CreateFromCoordinates(mapID, data.x, data.y))
-        if C_SuperTrack then C_SuperTrack.SetSuperTrackedUserWaypoint(true) end
+    if SK.SetWaypoint(self:GetMap():GetMapID(), data.x, data.y, data.name) then
+        SK.Print(L["waypoint set: "] .. data.name)
     end
-    SK.Print(L["waypoint set: "] .. data.name)
 end
 
 ------------------------------------------------------------------------

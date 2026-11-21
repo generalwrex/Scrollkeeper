@@ -708,6 +708,11 @@ do
   GetNormalizedRealmName = function() return "" end
   print("RULESET empty realm", SK.ServerKind(), "realm", SK.RealmName())
   GetRealmName, GetNormalizedRealmName = realRealm, realNorm
+  -- Waypoints go to Zygor's arrow when it's there.
+  local got
+  ZygorGuidesViewer = { Pointer = { SetWaypoint = function(self, m, x, y, data) got = { m, x, y, data.title } return {} end } }
+  print("WAYPOINT zygor", SK.SetWaypoint(1454, 0.38, 0.78, "Library"), got and table.concat({ got[1], got[2], got[3], got[4] }, " "))
+  ZygorGuidesViewer = nil
 end
 
 -- On a priest with a mage: listed and mailed as the mage.

@@ -67,8 +67,34 @@ function SK.HowToLearnStudy()
         L[library.librarian], L[library.city], L[library.name], L[library.firstBook], L[library.firstBookName], library.firstBookSpot)
 end
 
+-- A waypoint with an arrow: Zygor's if you have it, then TomTom's, else
+-- the game's own map pin. x and y are 0 to 1. True if one was set.
+function SK.SetWaypoint(mapID, x, y, title)
+    if not (mapID and x and y) then return false end
+    local zygor = _G.ZygorGuidesViewer
+    local pointer = type(zygor) == "table" and type(zygor.Pointer) == "table" and zygor.Pointer
+    if pointer and type(pointer.SetWaypoint) == "function" then
+        local ok, way = pcall(pointer.SetWaypoint, pointer, mapID, x, y, {
+            title = title, type = "manual", cleartype = true, onminimap = "always",
+            overworld = true, showonedge = true, findpath = true,
+        })
+        if ok and way then return true end
+    end
+    if _G.TomTom and TomTom.AddWaypoint then
+        local ok = pcall(TomTom.AddWaypoint, TomTom, mapID, x, y, { title = title, from = "Scrollkeeper" })
+        if ok then return true end
+    end
+    if C_Map and C_Map.SetUserWaypoint and UiMapPoint then
+        if C_Map.CanSetUserWaypointOnMap and not SK.Try(C_Map.CanSetUserWaypointOnMap, mapID) then return false end
+        SK.Try(C_Map.SetUserWaypoint, UiMapPoint.CreateFromCoordinates(mapID, x, y))
+        if C_SuperTrack then SK.Try(C_SuperTrack.SetSuperTrackedUserWaypoint, true) end
+        return true
+    end
+    return false
+end
+
 -- Not in a library? Open the world map on your faction's library and put
--- a waypoint on it (TomTom if you have it, else the game's own pin).
+-- a waypoint on it (Zygor or TomTom if you have one, else the game's pin).
 function SK.ShowLibraryOnMap()
     local library = SK.MyLibrary()
     local x, y = SK.WorldToMap(library.inst, library.x, library.y, library.map)
@@ -78,14 +104,7 @@ function SK.ShowLibraryOnMap()
         if ShowUIPanel then ShowUIPanel(WorldMapFrame) end
         if WorldMapFrame.SetMapID then SK.Try(WorldMapFrame.SetMapID, WorldMapFrame, library.map) end
     end
-    if x and y then
-        if _G.TomTom and TomTom.AddWaypoint then
-            TomTom:AddWaypoint(library.map, x, y, { title = L[library.name], from = "Scrollkeeper" })
-        elseif C_Map and C_Map.SetUserWaypoint and UiMapPoint then
-            SK.Try(C_Map.SetUserWaypoint, UiMapPoint.CreateFromCoordinates(library.map, x, y))
-            if C_SuperTrack then SK.Try(C_SuperTrack.SetSuperTrackedUserWaypoint, true) end
-        end
-    end
+    if x and y then SK.SetWaypoint(library.map, x, y, L[library.name]) end
     if SK.KnowsStudy and not SK.KnowsStudy() then
         SK.Print(SK.HowToLearnStudy() .. " " .. L["It's on your map."])
     else

@@ -7,6 +7,7 @@
 - Fixed: the game sometimes gives no realm name for a whole session, so Fellow Mages lost its ruleset ("Fellow PvE Mages"), others weren't told yours, and your mage was saved a second time without a realm. Scrollkeeper now remembers each character's realm.
 - Fellow Mages: someone playing another class shows in that class's color ("on Warrior" in warrior brown).
 - Community odds: scroll icons and colors are loaded after you log in, so the list no longer shows plain names first.
+- Waypoints (library pins, the Study button) use Zygor's arrow if you have Zygor, then TomTom, then the game's own pin.
 
 ## 1.2.1
 
