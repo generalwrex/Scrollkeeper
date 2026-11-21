@@ -39,10 +39,12 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
         self:SetAlpha(1)
     else
         local total = data.mine + data.others
-        local size = math.min(24, 12 + total * 2)
-        self.Icon:SetTexture(data.kind == "book" and ICON_BOOK or ICON_SCROLL)
+        local book = data.kind == "book"
+        -- A book is one book however often it was found: no number on it.
+        local size = book and 18 or math.min(24, 12 + total * 2)
+        self.Icon:SetTexture(book and ICON_BOOK or ICON_SCROLL)
         self:SetSize(size, size)
-        self.Count:SetText(total > 1 and total or "")
+        self.Count:SetText((not book and total > 1) and total or "")
         -- Spots only others reported are a little faded.
         self:SetAlpha(data.mine > 0 and 1 or 0.75)
     end
@@ -65,10 +67,11 @@ function ScrollkeeperMapPinMixin:OnMouseEnter()
             GameTooltip:AddLine(L["Known library. Stand near the librarian."], 0.7, 0.7, 0.7)
         end
     elseif data.kind == "book" then
-        GameTooltip:SetText(data.name or "Books")
-        GameTooltip:AddLine(L["Book for the librarians."], 1, 1, 1)
-        if data.mine > 0 then GameTooltip:AddLine(L["You found %d here."]:format(data.mine), 1, 1, 1) end
-        if data.others > 0 then GameTooltip:AddLine(L["Others found %d here."]:format(data.others), 0.7, 0.7, 0.7) end
+        GameTooltip:SetText(data.name or L["Book for the librarians."])
+        GameTooltip:AddLine(L["A book for the librarians sits here."], 1, 1, 1)
+        if data.mine > 0 then GameTooltip:AddLine(L["You found it here."], 0.25, 1, 0.25) end
+        local found = data.mine + data.others
+        if found > 1 then GameTooltip:AddLine(L["Found %d times."]:format(found), 0.7, 0.7, 0.7) end
     else
         GameTooltip:SetText(L["Untranslated scrolls"])
         if data.mine > 0 then GameTooltip:AddLine(L["You looted %d here."]:format(data.mine), 1, 1, 1) end
@@ -170,8 +173,22 @@ local function CreateProvider()
         local height = canvas and canvas:GetHeight() or 0
         for _, group in ipairs(Clusters(cells)) do
             local mine, others = 0, 0
+            local best, bestCount
             for _, spot in ipairs(group) do
                 mine, others = mine + (spot.counts.mine or 0), others + (spot.counts.others or 0)
+                local n = (spot.counts.mine or 0) + (spot.counts.others or 0)
+                if not bestCount or n > bestCount then best, bestCount = spot, n end
+            end
+            -- Books for the librarians sit in one place in the world: spots
+            -- close together are that same book (looted from a step away),
+            -- so it's one pin where it was found most, no circle, no count.
+            if kind == "book" then
+                local x, y = SK.CellCenter(best.cell)
+                if x then
+                    map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others,
+                        name = nameFor and nameFor(best.cell) })
+                end
+                group = {}
             end
             -- Middle weighted by count; radius reaches the farthest spot.
             local cx, cy, radius

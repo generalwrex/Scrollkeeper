@@ -855,14 +855,15 @@ do
     provider.GetMap = function() return map end
     SK.db.mapPins = true
     SK.db.drops = { [1429] = { ["10.10"] = 2, ["11.10"] = 3, ["12.11"] = 1, ["40.40"] = 1 } }
-    SK.db.bookDrops = {}
+    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1 } }
     local ok, err = pcall(provider.DrawPins, provider)
-    local areas, pins = 0, 0
+    local areas, pins, books = 0, 0, 0
     for _, a in ipairs(acquired) do
       if a[1] == "ScrollkeeperMapAreaTemplate" then areas = areas + 1
-      elseif a[2].kind == "drop" then pins = pins + 1 end
+      elseif a[2].kind == "drop" then pins = pins + 1
+      elseif a[2].kind == "book" then books = books + 1 end
     end
-    print("MAP CIRCLES", ok, err or "", "areas", areas, "drop pins", pins)
+    print("MAP CIRCLES", ok, err or "", "areas", areas, "drop pins", pins, "book pins", books)
   else
     print("MAP CIRCLES no provider")
   end
