@@ -56,11 +56,10 @@ local function BuildQuestions()
         } }
     end
     list[#list + 1] = { key = "sharing", version = 2, account = true, question = L["How much should Scrollkeeper share?"],
-        hint = L["Only scroll info is shared: your Comprehension skill, what your scrolls became and where they dropped. Never your chat, gold, bags or where you are. Full is what makes Fellow Mages, community odds and drop spots work."], options = {
+        hint = L["Only scroll info is shared: your Comprehension skill, what your scrolls became and where they dropped. Never your chat, gold, bags or where you are."], options = {
         { "full", L["Full"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."], ICON .. "Spell_Holy_PrayerOfHealing02" },
         { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
-        { "simple", L["Simple"], L["Only your guild, group and friends. You'll miss most Fellow Mages and live community odds. To stay private, pick Anonymous: it shares everything without your name."], ICON .. "INV_Shirt_GuildTabard_01" },
-        { "none", L["None"], L["Turns off the whole network: no shared odds, swap board, or guildies at the mailbox."], ICON .. "Ability_Rogue_Feint" },
+        { "none", L["None"], L["Turns off the network: nothing sent, no Fellow Mages or swap board. Odds that come with each update still show."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
     for _, language in ipairs(SK.LANGUAGES or {}) do
@@ -114,6 +113,19 @@ local function SeenAccount()
 end
 
 local function SeenFor(q) return q.account and SeenAccount() or Seen() end
+
+-- Simple (guild, group and friends only) is no longer offered. Anyone
+-- still on it keeps it until they answer the sharing question again,
+-- which setup asks once.
+local function AskSimpleAgain()
+    if SK.db.sharing == "simple" and not SK.db.simpleAskedAgain then
+        SK.db.simpleAskedAgain = true
+        SeenAccount().sharing = 0
+        for _, field in ipairs({ "setupSeen", "setupSeenOther" }) do
+            if SK.db[field] then SK.db[field].sharing = nil end
+        end
+    end
+end
 
 local function MarkSeen(list)
     for _, q in ipairs(list) do SeenFor(q)[q.key] = q.version or 1 end
@@ -320,10 +332,13 @@ function SK.RefreshSetupPage()
     -- rows without the description, so they all fit.
     local short = #q.options > 5
     local height, gap = short and 34 or OPTION_HEIGHT, short and 4 or OPTION_GAP
+    -- Below the question and its hint (a long hint pushes the rows down).
+    local top = 66 + (window.question:GetStringHeight() or 16) + 6 + (window.hint:GetStringHeight() or 0) + 10
+    top = math.max(112, top)
     for i, option in ipairs(window.options) do
         option:SetHeight(height)
         option:ClearAllPoints()
-        option:SetPoint("TOPLEFT", 24, -112 - (i - 1) * (height + gap))
+        option:SetPoint("TOPLEFT", 24, -top - (i - 1) * (height + gap))
         option:SetPoint("RIGHT", window, "RIGHT", -24, 0)
         option.icon:SetSize(height - 12, height - 12)
         option.description:SetShown(not short)
@@ -378,6 +393,7 @@ end
 -- since they get different questions. After that, only new questions are
 -- shown, once.
 SK.Listen("READY", function()
+    AskSimpleAgain()
     local doneKey = SK.isMage and "setupDone" or "setupDoneOther"
     -- Did setup before questions were tracked (1.1.2/1.1.3): everything
     -- that existed then counts as answered.

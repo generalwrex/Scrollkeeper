@@ -453,7 +453,7 @@ do
   else
     pick(2) nextPage()      -- tooltips: no
     nextPage()              -- mailbox: keep
-    pick(3) nextPage()      -- share: simple
+    pick(1) nextPage()      -- share: full
   end
   print("SETUP last page", f.next._text)
   nextPage()                -- language: keep, Done
@@ -959,4 +959,13 @@ do
   local realShow = SK.RefreshSetupPage
   SK.ShowSetup(false, true)
   print("SETUP account seen", SK.db.setupSeenAccount and SK.db.setupSeenAccount.sharing, SK.db.setupSeenAccount and SK.db.setupSeenAccount.language)
+end
+
+-- Simple is gone: someone still on it gets the sharing question once more.
+do
+  SK.db.sharing, SK.db.simpleAskedAgain = "simple", nil
+  SK.db.setupSeenAccount = { sharing = 2, language = 1 }
+  SK.Send("READY")
+  local seen = SK.db.setupSeenAccount and SK.db.setupSeenAccount.sharing
+  print("SIMPLE asked again", seen == 0, "still simple until they pick", SK.db.sharing)
 end
