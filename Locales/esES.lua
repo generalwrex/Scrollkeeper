@@ -721,6 +721,7 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "Las lecciones de Ta'zo"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "Archimago Antonidas: la autobiografía íntegra"
 L["(recommended)"] = "(recomendado)"
+L["you found it"] = "lo encontraste"
 L["Codex"] = "Códice"
 L["Every scroll and what it does, your picks, and where all 40 library books are."] = "Cada pergamino y lo que hace, tus favoritos y dónde están los 40 libros de la biblioteca."
 L["Scrollkeeper: Codex"] = "Scrollkeeper: Códice"

@@ -718,6 +718,7 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "塔佐的教誨"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "大法師安東尼達斯：未刪節自傳"
 L["(recommended)"] = "（推薦）"
+L["you found it"] = "你找到過"
 L["Codex"] = "典籍"
 L["Every scroll and what it does, your picks, and where all 40 library books are."] = "每種卷軸及其作用、你的常用選擇，以及全部 40 本圖書館書籍的位置。"
 L["Scrollkeeper: Codex"] = "Scrollkeeper：典籍"

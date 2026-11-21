@@ -104,9 +104,20 @@ local function BookRows()
         return a.name < b.name
     end)
     local ids = SK.BookIDsByName()
+    -- Found it yourself (any of your characters looted it at its spot)?
+    local function FoundByYou(spot)
+        for cell, counts in pairs(SK.db.bookDrops and SK.db.bookDrops[spot.map] or {}) do
+            local x, y = SK.CellCenter(cell)
+            if x and math.abs(x - spot.x / 100) <= 0.03 and math.abs(y - spot.y / 100) <= 0.03 and (counts or 0) > 0 then return true end
+        end
+        for key, name in pairs(SK.db.bookNames or {}) do
+            if type(name) == "string" and name:lower() == spot.name:lower() then return true end
+        end
+        return false
+    end
     for _, spot in ipairs(list) do
         rows[#rows + 1] = { book = spot, itemID = ids[spot.name:lower()], handed = SK.BookHanded and SK.BookHanded(spot.name) or false,
-            by = SK.BookHandedBy and SK.BookHandedBy(spot.name) or {} }
+            by = SK.BookHandedBy and SK.BookHandedBy(spot.name) or {}, found = FoundByYou(spot) }
     end
     return rows
 end
@@ -236,7 +247,8 @@ local function BookRow(row, entry)
     local id = entry.itemID
     local name = (entry.handed and "|cff808080" or "|cffffffff") .. spot.name .. "|r"
     if id and SK.ScrollLink then name = SK.ScrollLink(id, spot.name) end
-    row.label:SetText(mark .. name)
+    local found = (entry.found and not entry.handed) and ("  |cff66bbff" .. L["you found it"] .. "|r") or ""
+    row.label:SetText(mark .. name .. found)
     local where = ("%s  %.1f, %.1f"):format(ZoneName(spot.map), spot.x, spot.y)
     if spot.note then where = where .. "  (" .. L[spot.note] .. ")" end
     row.sub:SetText("|cffbbbbbb" .. where .. "|r")
