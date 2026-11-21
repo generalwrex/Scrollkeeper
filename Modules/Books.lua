@@ -73,6 +73,34 @@ SK.Listen("READY", function()
     end
 end)
 
+-- Books this character has handed in, by name (lowercase), for the map:
+-- SK.db.handedBooks[character][name] = true.
+local function HandedSet()
+    SK.db.handedBooks = SK.db.handedBooks or {}
+    local key = SK.CharKey and SK.CharKey() or "?"
+    SK.db.handedBooks[key] = SK.db.handedBooks[key] or {}
+    return SK.db.handedBooks[key]
+end
+
+function SK.MarkBookHanded(name)
+    if type(name) == "string" and name ~= "" then HandedSet()[name:lower()] = true end
+end
+
+function SK.BookHanded(name)
+    return type(name) == "string" and HandedSet()[name:lower()] or false
+end
+
+-- Which of your characters handed this book in: their names (no realm).
+function SK.BookHandedBy(name)
+    local list = {}
+    if type(name) ~= "string" then return list end
+    for key, books in pairs(SK.db.handedBooks or {}) do
+        if books[name:lower()] then list[#list + 1] = (key:gsub("%-.*$", "")) end
+    end
+    table.sort(list)
+    return list
+end
+
 function SK.LearnBook(itemID, name)
     if not itemID then return end
     SK.db.bookIDs = SK.db.bookIDs or {}
@@ -140,6 +168,7 @@ SK.On("BAG_UPDATE_DELAYED", function()
         if (now[itemID] or 0) < count and itemID ~= SK.ITEM_LIGHT_FEATHER then
             local name = C_Item and SK.Try(C_Item.GetItemNameByID, itemID)
             SK.LearnBook(itemID, name)
+            SK.MarkBookHanded(name)
             SK.Print(L["learned a book: "] .. (name or ("item " .. itemID)))
         end
     end
@@ -196,6 +225,9 @@ SK.On("QUEST_TURNED_IN", function(questID)
     if not questID or not (talking or TalkingToLibrarian()) then return end
     SK.db.bookQuests = SK.db.bookQuests or {}
     SK.db.bookQuests[questID] = true
+    -- Each book's quest is named after the book.
+    local title = C_QuestLog and C_QuestLog.GetTitleForQuestID and SK.Try(C_QuestLog.GetTitleForQuestID, questID)
+    SK.MarkBookHanded(SK.Known(title))
     local mage = SK.MyMage and SK.MyMage()
     if mage then
         mage.booksHanded = mage.booksHanded or {}
@@ -238,4 +270,13 @@ SK.On("CHAT_MSG_LOOT", function(message)
     if SK.LogLoot then SK.Safely("loot log", SK.LogLoot, "book", itemID, nil, 1) end
     SK.Send("DROPS_CHANGED")
     SK.Send("MY_DATA_CHANGED")
+end)
+
+-- Books handed in before the map knew: look up each one's quest title.
+SK.Listen("READY", function()
+    if not (C_QuestLog and C_QuestLog.GetTitleForQuestID) then return end
+    local mage = SK.MyMage and SK.MyMage()
+    for questID in pairs(mage and mage.booksHanded or {}) do
+        SK.MarkBookHanded(SK.Known(SK.Try(C_QuestLog.GetTitleForQuestID, questID)))
+    end
 end)

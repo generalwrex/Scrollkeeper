@@ -878,6 +878,23 @@ do
     local here = SK.TiersAt(1429, { "10.10", "11.10" })
     local zone = SK.TiersInZone(1429)
     print("MAP TIERS here", here and here[15], here and here[50], "zone 15:", zone and zone[15] or 0)
+    -- Tier filter: only tier 50 spots, then back to all.
+    SK.db.drops = { [1429] = { ["10.10"] = 2, ["11.10"] = 3, ["40.40"] = 1 } }
+    SK.db.mapTiers = 50
+    acquired = {}
+    provider:DrawPins()
+    local drops50 = 0
+    for _, a in ipairs(acquired) do if a[2].kind == "drop" then drops50 = drops50 + 1 end end
+    SK.db.mapTiers = "all"
+    -- Open doors on the map.
+    SK.doors = { ["Doory"] = { place = "Goldshire, Elwynn Forest", map = 1429, x = 44, y = 66, at = time(), scrolls = 1 } }
+    SK.peers["Doory"] = { class = "MAGE", tiers = {}, upgrades = {}, seen = time(), level = 20, skill = 10 }
+    acquired = {}
+    provider:DrawPins()
+    local doors = 0
+    for _, a in ipairs(acquired) do if a[2].kind == "door" then doors = doors + 1 end end
+    SK.peers["Doory"], SK.doors = nil, {}
+    print("MAP FILTER tier 50 drop pins", drops50, "door pins", doors)
   else
     print("MAP CIRCLES no provider")
   end

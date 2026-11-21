@@ -13,9 +13,10 @@
 --   bottom  one button that does the next step: Ask, Teleport, Leave group
 --
 -- Network (doors are opt-in: "Be a door"):
---   G|place|scrolls|mapID|auto   my door: where I rest ("" = not one now),
+--   G|place|scrolls|mapID|auto|x|y  my door: where I rest ("" = not one now),
 --                                Liminal Passage scrolls carried, the
---                                zone's map ID, "1" if I invite by myself
+--                                zone's map ID, "1" if I invite by myself,
+--                                and where on that map (0-100, 1.2.2+)
 --   DA                           whisper: "can I come to you?"
 --   DY / DN                      whisper: "inviting you" / "not right now"
 
@@ -130,14 +131,23 @@ local function MyMapID()
     return C_Map and C_Map.GetBestMapForUnit and SK.Try(C_Map.GetBestMapForUnit, "player") or ""
 end
 
+-- Where I am on my zone's map, rounded to 1% (only sent while a door).
+local function MyMapSpot()
+    local _, x, y = SK.PlayerMapPosition and SK.PlayerMapPosition()
+    if not (x and y) then return "", "" end
+    return ("%d"):format(x * 100 + 0.5), ("%d"):format(y * 100 + 0.5)
+end
+
 local lastSent
 local function SendDoor(force)
     local place = SK.MyDoorPlace() or ""
     local auto = SK.db.doorAutoInvite and "1" or ""
-    local text = table.concat({ place, SK.LiminalCount(), tostring(MyMapID()), auto }, "#")
+    local x, y = "", ""
+    if place ~= "" then x, y = MyMapSpot() end
+    local text = table.concat({ place, SK.LiminalCount(), tostring(MyMapID()), auto, x, y }, "#")
     if text == lastSent and not force then return end
     lastSent = text
-    Net.Send("G", place, SK.LiminalCount(), place ~= "" and MyMapID() or "", auto)
+    Net.Send("G", place, SK.LiminalCount(), place ~= "" and MyMapID() or "", auto, x, y)
 end
 SK.SendDoor = SendDoor
 
@@ -179,14 +189,18 @@ Net.Handle("G", function(sender, f)
     SK.doors[sender] = {
         place = place ~= "" and place or nil, scrolls = math.min(tonumber(f[2]) or 0, 99),
         map = tonumber(f[3]), auto = f[4] == "1", at = time(),
+        x = tonumber(f[5]), y = tonumber(f[6]),
     }
+    local door = SK.doors[sender]
+    if door.x and (door.x < 0 or door.x > 100) then door.x = nil end
+    if door.y and (door.y < 0 or door.y > 100) then door.y = nil end
     SK.Send("DOORS_CHANGED")
 end)
 
 local DEMO_DOORS = {
-    { name = "Kaelith", place = "Booty Bay, Stranglethorn Vale", map = 1434, auto = true },
-    { name = "Brannoc", place = "Gadgetzan, Tanaris", map = 1446 },
-    { name = "Mirelle", place = "Goldshire, Elwynn Forest", map = 1429, auto = true },
+    { name = "Kaelith", place = "Booty Bay, Stranglethorn Vale", map = 1434, auto = true, x = 27, y = 77 },
+    { name = "Brannoc", place = "Gadgetzan, Tanaris", map = 1446, x = 52, y = 28 },
+    { name = "Mirelle", place = "Goldshire, Elwynn Forest", map = 1429, auto = true, x = 44, y = 66 },
 }
 
 -- Every open door you can reach: list of { sender, short, place, scrolls, map, auto, demo }.
@@ -196,13 +210,13 @@ function SK.OpenDoors()
     for sender, door in pairs(SK.doors) do
         if door.place and fresh[sender] and not Net.IsMe(sender) and time() - door.at < 15 * 60 then
             list[#list + 1] = { sender = sender, short = Net.ShortName(sender), place = door.place,
-                scrolls = door.scrolls, map = door.map, auto = door.auto }
+                scrolls = door.scrolls, map = door.map, auto = door.auto, x = door.x, y = door.y }
         end
     end
     if SK.demoCommunity then
         for _, demo in ipairs(DEMO_DOORS) do
             list[#list + 1] = { sender = demo.name, short = demo.name, place = demo.place, scrolls = 0,
-                map = demo.map, auto = demo.auto, demo = true }
+                map = demo.map, auto = demo.auto, demo = true, x = demo.x, y = demo.y }
         end
     end
     return list
@@ -1027,6 +1041,20 @@ function SK.RefreshDoors()
     end
     UpdateMine()
     UpdateAction()
+end
+
+-- Open Doorways on a door's place (clicking a door on the map).
+function SK.ShowDoor(sender)
+    if SK.InCombat() then
+        SK.Print(L["Doorways can be opened after combat."])
+        return
+    end
+    if not window then Build() end
+    for _, door in ipairs(SK.OpenDoors()) do
+        if door.sender == sender then selected = PlaceOfDoor(door) or "all" end
+    end
+    window:Show()
+    SK.RefreshDoors()
 end
 
 function SK.ToggleDoors()

@@ -15,6 +15,11 @@ local TEMPLATE = "ScrollkeeperMapPinTemplate"
 local ICON_LIBRARY = "Interface\\Icons\\INV_Misc_Book_09"
 local ICON_SCROLL = "Interface\\Icons\\INV_Scroll_03"
 local ICON_BOOK = "Interface\\Icons\\INV_Misc_Book_11"
+-- Doors use the Scroll of Liminal Passage icon.
+local function ICON_DOOR()
+    return (C_Item and SK.LIMINAL_PASSAGE and SK.Try(C_Item.GetItemIconByID, SK.LIMINAL_PASSAGE))
+        or "Interface\\Icons\\Spell_Arcane_Blink"
+end
 
 ------------------------------------------------------------------------
 -- One pin (the frame comes from Map/Pins.xml). The world map calls these
@@ -32,11 +37,24 @@ end
 function ScrollkeeperMapPinMixin:OnAcquired(data)
     self.data = data
     self:SetPosition(data.x, data.y)
+    if self.Icon.SetDesaturated then self.Icon:SetDesaturated(false) end
     if data.kind == "library" then
         self.Icon:SetTexture(ICON_LIBRARY)
         self:SetSize(20, 20)
         self.Count:SetText("")
         self:SetAlpha(1)
+    elseif data.kind == "door" then
+        -- A Scrollkeeper user who's a door right now (Doorways).
+        self.Icon:SetTexture(ICON_DOOR())
+        self:SetSize(16 * (tonumber(SK.db and SK.db.mapPinScale) or 1), 16 * (tonumber(SK.db and SK.db.mapPinScale) or 1))
+        self.Count:SetText("")
+        self:SetAlpha(1)
+    elseif data.kind == "zone" then
+        -- Continent map: one faint marker per zone with its scroll total.
+        self.Icon:SetTexture((SK.db and SK.db.untranslatedIcon) or ICON_SCROLL)
+        self:SetSize(11, 11)
+        self.Count:SetText(data.total)
+        self:SetAlpha(0.6)
     else
         local total = data.mine + data.others
         local book = data.kind == "book"
@@ -49,8 +67,9 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
         self.Count:SetText((not book and total > 1) and total or "")
         -- Spots only others reported are a little faded; a book found away
         -- from every known book spot (it may have moved) is grey.
-        self:SetAlpha((data.mine > 0 or data.listed) and 1 or 0.75)
-        if self.Icon.SetDesaturated then self.Icon:SetDesaturated((data.stale or data.outdated) and true or false) end
+        -- Books you've handed in fade out: you don't need them anymore.
+        self:SetAlpha(data.handed and 0.45 or (data.mine > 0 or data.listed) and 1 or 0.75)
+        if self.Icon.SetDesaturated then self.Icon:SetDesaturated((data.stale or data.outdated or data.handed) and true or false) end
     end
 end
 
@@ -72,9 +91,31 @@ local function AddPinLines(data, first)
         elseif data.known and not data.mine then
             GameTooltip:AddLine(L["Known library. Stand near the librarian."], 0.7, 0.7, 0.7)
         end
+    elseif data.kind == "door" then
+        Title(data.short)
+        GameTooltip:AddLine(L["A door: resting in %s."]:format(data.place or "?"), 1, 1, 1, true)
+        GameTooltip:AddLine(data.auto and L["Invites you by itself."] or L["Gets a pop-up to invite you."], 0.7, 0.7, 0.7)
+        GameTooltip:AddLine(L["Click to open Doorways on them."], 0.6, 0.6, 0.6)
+    elseif data.kind == "zone" then
+        Title(data.name or L["Untranslated scrolls"])
+        GameTooltip:AddLine(L["%d untranslated scrolls found here."]:format(data.total), 1, 1, 1)
+        if data.tiers then
+            local parts = {}
+            for _, tier in ipairs(SK.TIERS) do
+                if data.tiers[tier] then parts[#parts + 1] = L["Tier %d: %d"]:format(tier, data.tiers[tier]) end
+            end
+            if #parts > 0 then GameTooltip:AddLine(table.concat(parts, "   "), 0.4, 0.73, 1) end
+        end
+        GameTooltip:AddLine(L["Open the zone's map for the spots."], 0.6, 0.6, 0.6)
     elseif data.kind == "book" then
         Title(data.name or L["Book for the librarians."])
         GameTooltip:AddLine(L["A book for the librarians sits here."], 1, 1, 1)
+        if data.handed then GameTooltip:AddLine(L["You've handed this one in."], 0.25, 1, 0.25) end
+        -- Your other characters who handed it in.
+        local by = SK.BookHandedBy and SK.BookHandedBy(data.listedName or data.name) or {}
+        if #by > 0 and not (data.handed and #by == 1) then
+            GameTooltip:AddLine(L["Handed in by: %s"]:format(table.concat(by, ", ")), 0.6, 0.85, 0.6, true)
+        end
         if data.note then GameTooltip:AddLine(L[data.note], 1, 1, 1) end
         if data.mine > 0 then GameTooltip:AddLine(L["You found it here."], 0.25, 1, 0.25) end
         local found = data.mine + data.others
@@ -114,7 +155,7 @@ end
 
 -- Other Scrollkeeper pins drawn over this one (their centers closer than
 -- the two pins' half sizes), libraries first, then books, then scrolls.
-local KIND_ORDER = { library = 1, book = 2, drop = 3 }
+local KIND_ORDER = { door = 0, library = 1, book = 2, drop = 3 }
 local function StackedWith(pin)
     local list = {}
     local map = pin.GetMap and pin:GetMap()
@@ -160,6 +201,15 @@ local WAYPOINT_KINDS = { library = true, book = true }
 function ScrollkeeperMapPinMixin:OnClick(button)
     local data = self.data
     if button ~= "LeftButton" or not data then return end
+    if data.kind == "door" then
+        if SK.ShowDoor then SK.ShowDoor(data.sender) end
+        return
+    end
+    if data.kind == "zone" then
+        local map = self:GetMap()
+        if map and map.SetMapID and data.mapID then map:SetMapID(data.mapID) end
+        return
+    end
     -- A library or book under a scroll pin still gets its waypoint.
     if not WAYPOINT_KINDS[data.kind] then
         local ok, stacked = pcall(StackedWith, self)
@@ -198,7 +248,7 @@ function ScrollkeeperMapAreaMixin:OnAcquired(data)
     self:SetScale(1)
     if self.EnableMouse then self:EnableMouse(false) end
     local c = data.color
-    self.Fill:SetVertexColor(c[1], c[2], c[3], 0.22)
+    self.Fill:SetVertexColor(c[1], c[2], c[3], data.alpha or 0.22)
 end
 
 -- Spots no more than 2 cells (4% of the map) apart join one area.
@@ -234,8 +284,89 @@ end
 -- The data provider: tells the map which pins to draw
 ------------------------------------------------------------------------
 
-local provider
-local waitingBooks = {}   -- book item IDs whose names the game is still loading
+local provider, FilteredCells
+local waitingBooks = {}
+
+------------------------------------------------------------------------
+-- Tier filter: which scroll spots the map shows.
+--   SK.db.mapTiers = "all", "mine" (tiers you still level from) or a tier
+------------------------------------------------------------------------
+
+local FILTERS = { "all", "mine", 1, 15, 50, 175 }
+
+-- The tiers to show, as a set, or nil for all.
+local function WantedTiers()
+    local filter = SK.db and SK.db.mapTiers or "all"
+    if filter == "all" then return nil end
+    if type(filter) == "number" then return { [filter] = true } end
+    -- "mine": tiers that still give you skill-ups (on a mage).
+    if not SK.isMage then return nil end
+    local skill = SK.GetComprehension()
+    local wanted = {}
+    for _, tier in ipairs(SK.TIERS) do
+        local chance = SK.SkillUpChance(tier, skill.rank)
+        if skill.effective >= tier and chance and chance.gives then wanted[tier] = true end
+    end
+    if not skill.known then wanted[1] = true end
+    return wanted
+end
+
+-- Only the spots whose tiers are wanted. A spot without its own tiers goes
+-- by its zone's mix.
+FilteredCells = function(mapID, cells)
+    local wanted = WantedTiers()
+    if not wanted then return cells end
+    local zone = SK.TiersInZone and SK.TiersInZone(mapID) or {}
+    local kept = {}
+    for cell, counts in pairs(cells) do
+        local tiers = SK.TiersAt and SK.TiersAt(mapID, { cell }) or zone
+        for tier in pairs(tiers) do
+            if wanted[tier] then kept[cell] = counts break end
+        end
+    end
+    return kept
+end
+
+local function FilterLabel()
+    local filter = SK.db and SK.db.mapTiers or "all"
+    if filter == "all" then return L["Scrolls: all"] end
+    if filter == "mine" then return L["Scrolls: my tiers"] end
+    return L["Scrolls: tier %d"]:format(filter)
+end
+
+local filterButton
+local function MakeFilterButton()
+    if filterButton or type(WorldMapFrame) ~= "table" or not WorldMapFrame.GetFrameLevel then return end
+    local parent = WorldMapFrame.ScrollContainer or WorldMapFrame
+    filterButton = CreateFrame("Button", "ScrollkeeperMapFilter", parent, "UIPanelButtonTemplate")
+    filterButton:SetSize(118, 20)
+    filterButton:SetPoint("TOPRIGHT", parent, "TOPRIGHT", -6, -6)
+    filterButton:SetFrameLevel(parent:GetFrameLevel() + 20)
+    if filterButton.GetFontString and filterButton:GetFontString() then filterButton:GetFontString():SetFontObject(GameFontHighlightSmall) end
+    filterButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    filterButton:SetScript("OnClick", function(self, button)
+        local now = SK.db.mapTiers or "all"
+        local at = 1
+        for i, value in ipairs(FILTERS) do if value == now then at = i end end
+        at = button == "RightButton" and (at - 2) % #FILTERS + 1 or at % #FILTERS + 1
+        SK.db.mapTiers = FILTERS[at]
+        self:SetText(FilterLabel())
+        if provider then provider:RefreshAllData() end
+    end)
+    filterButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+        GameTooltip:AddLine(L["Scrollkeeper: which scroll spots to show"])
+        GameTooltip:AddLine(L["Click: next. Right-click: back. My tiers = the ones you still get skill-ups from."], 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    filterButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+end
+
+local function UpdateFilterButton()
+    if not filterButton then return end
+    filterButton:SetText(FilterLabel())
+    filterButton:SetShown(SK.db.mapPins and true or false)
+end   -- book item IDs whose names the game is still loading
 
 -- Is this one of the books on the list (Data/BookSpots.lua)? Its spot, or nil.
 local listedNames
@@ -341,7 +472,9 @@ local function CreateProvider()
                     end
                 end
             else
-                map:AcquirePin(AREA_TEMPLATE, { x = cx, y = cy, size = radius * 2, color = color })
+                -- Heat: the more found here, the stronger the circle.
+                local heat = 0.12 + math.min(0.33, (mine + others) / 40)
+                map:AcquirePin(AREA_TEMPLATE, { x = cx, y = cy, size = radius * 2, color = color, alpha = heat })
                 local groupCells = {}
                 for _, spot in ipairs(group) do groupCells[#groupCells + 1] = spot.cell end
                 map:AcquirePin(TEMPLATE, { kind = kind, x = cx, y = cy, mine = mine, others = others,
@@ -367,7 +500,15 @@ local function CreateProvider()
         if not mapID then return end
         self.mapID = mapID
 
-        self:DrawSpots(SK.DropCells(mapID), "drop", { 1, 0.82, 0 })
+        -- Continent (or world) map: one faint marker per zone instead.
+        local info = C_Map and C_Map.GetMapInfo and SK.Try(C_Map.GetMapInfo, mapID)
+        local mapType = type(info) == "table" and info.mapType
+        if mapType and mapType <= 2 then
+            self:DrawZones(mapID)
+            return
+        end
+
+        self:DrawSpots(FilteredCells(mapID, SK.DropCells(mapID)), "drop", { 1, 0.82, 0 })
         -- Every known book spot in this zone (Data/BookSpots.lua). Player
         -- finds next to one are added to it.
         self.listedBooks, self.movedNames = {}, {}
@@ -393,12 +534,42 @@ local function CreateProvider()
             -- Players find this book somewhere else more often: our data
             -- beats the list, so its listed spot goes grey.
             book.outdated = self.movedNames[book.name:lower()] or nil
+            book.handed = SK.BookHanded and SK.BookHanded(book.name) or nil
+            book.listedName = book.name
             book.name = book.foundName or book.name
             self:GetMap():AcquirePin(TEMPLATE, book)
         end
         for _, library in ipairs(SK.LibraryPins(mapID)) do
             library.kind = "library"
             self:GetMap():AcquirePin(TEMPLATE, library)
+        end
+        -- Open doors (Doorways): Scrollkeeper users resting here right now.
+        for _, door in ipairs(SK.OpenDoors and SK.OpenDoors() or {}) do
+            if door.map == mapID and door.x and door.y then
+                self:GetMap():AcquirePin(TEMPLATE, { kind = "door", x = door.x / 100, y = door.y / 100,
+                    sender = door.sender, short = door.short, place = door.place, auto = door.auto })
+            end
+        end
+    end
+
+    -- A continent: each zone with scroll drops gets one small marker at
+    -- its middle, with the total (nothing else, to keep it quiet).
+    function provider:DrawZones(continentID)
+        if not (C_Map and C_Map.GetMapRectOnMap) then return end
+        for zoneID in pairs(SK.DropZones and SK.DropZones() or {}) do
+            local ok, left, right, top, bottom = pcall(C_Map.GetMapRectOnMap, zoneID, continentID)
+            if ok and left and right and top and bottom and right > left then
+                local total = 0
+                for _, counts in pairs(SK.DropCells(zoneID) or {}) do
+                    total = total + (counts.mine or 0) + (counts.others or 0)
+                end
+                if total > 0 then
+                    local zoneInfo = SK.Try(C_Map.GetMapInfo, zoneID)
+                    self:GetMap():AcquirePin(TEMPLATE, { kind = "zone", x = (left + right) / 2, y = (top + bottom) / 2,
+                        total = total, mapID = zoneID, name = type(zoneInfo) == "table" and zoneInfo.name or nil,
+                        tiers = SK.TiersInZone and SK.TiersInZone(zoneID) })
+                end
+            end
         end
     end
 
@@ -410,6 +581,9 @@ local function Attach()
     if provider or not (WorldMapFrame and WorldMapFrame.AddDataProvider and MapCanvasDataProviderMixin) then return end
     SK.Safely("map pins", function()
         WorldMapFrame:AddDataProvider(CreateProvider())
+        MakeFilterButton()
+        UpdateFilterButton()
+        if WorldMapFrame.HookScript then WorldMapFrame:HookScript("OnShow", UpdateFilterButton) end
     end)
 end
 
@@ -437,5 +611,10 @@ end)
 SK.On("GET_ITEM_INFO_RECEIVED", function(itemID)
     if not (itemID and waitingBooks[itemID]) then return end
     waitingBooks[itemID] = nil
+    if provider and WorldMapFrame and WorldMapFrame:IsShown() then provider:RefreshAllData() end
+end)
+
+-- Doors come and go: redraw while the map is open.
+SK.Listen("DOORS_CHANGED", function()
     if provider and WorldMapFrame and WorldMapFrame:IsShown() then provider:RefreshAllData() end
 end)

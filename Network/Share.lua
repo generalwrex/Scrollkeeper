@@ -297,6 +297,19 @@ function SK.TiersInZone(mapID)
     return any and totals or nil
 end
 
+-- Every zone (map ID) with scroll drops, yours or anyone's: a set.
+function SK.DropZones()
+    local zones = {}
+    for mapID in pairs(SK.db.drops or {}) do zones[mapID] = true end
+    for _, entry in pairs(SK.db.community or {}) do
+        for mapID in pairs(entry.drops or {}) do zones[mapID] = true end
+    end
+    for _, entry in ipairs(SK.ShippedCommunity()) do
+        for mapID in pairs(entry.drops or {}) do zones[mapID] = true end
+    end
+    return zones
+end
+
 -- Which book sits at a book spot: its item ID, from your finds or anyone's
 -- (shared, or shipped with the addon). nil if nobody said.
 function SK.BookAt(mapID, cell)
