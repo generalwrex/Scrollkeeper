@@ -855,9 +855,10 @@ do
     provider.GetMap = function() return map end
     SK.db.mapPins = true
     SK.db.drops = { [1429] = { ["10.10"] = 2, ["11.10"] = 3, ["12.11"] = 1, ["40.40"] = 1 } }
-    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1, ["32.35"] = 2, ["10.40"] = 1 } }
+    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1, ["32.35"] = 2, ["10.40"] = 1, ["5.5"] = 3 } }
     -- A find named after a listed book but far from its spot: hidden.
-    SK.db.bookNames = { ["1429:10.40"] = "Archmage Theocritus' Research Journal" }
+    -- Named after it, found 3 times (more than the 2 at its spot): shown as moved.
+    SK.db.bookNames = { ["1429:10.40"] = "Archmage Theocritus' Research Journal", ["1429:5.5"] = "Archmage Theocritus' Research Journal" }
     local ok, err = pcall(provider.DrawPins, provider)
     local areas, pins, books = 0, 0, 0
     for _, a in ipairs(acquired) do
@@ -867,8 +868,9 @@ do
     end
     print("MAP CIRCLES", ok, err or "", "areas", areas, "drop pins", pins, "book pins", books)
     for _, a in ipairs(acquired) do
-      if a[2].listed then print("MAP KNOWN BOOK", a[2].name, "found here", a[2].mine) end
-      if a[2].stale then print("MAP MOVED BOOK", a[2].mine) end
+      if a[2].listed then print("MAP KNOWN BOOK", a[2].name, "found here", a[2].mine, a[2].outdated and "OUTDATED" or "") end
+      if a[2].stale then print("MAP GREY BOOK", a[2].mine) end
+      if a[2].movedHere then print("MAP MOVED HERE", a[2].name, a[2].mine) end
     end
   else
     print("MAP CIRCLES no provider")

@@ -15,7 +15,7 @@
 - Map: scroll and book spots are smaller, scrolls use the untranslated scroll's own icon, and there's a Map pin size setting (Options > Map).
 - Map: when pins sit on top of each other (a library, a book, scrolls), one tooltip shows them all, and clicking still sets the library's waypoint.
 - Map: book spots say which book it is, for anyone's finds (shared by item ID, so it's in your language).
-- Map: all 40 books for the librarians are on the map (from Wowhead's list). Click one for a waypoint. Book spots players found away from the list are grey: that book may have moved. A find named after a listed book but far from its spot is left off as wrong.
+- Map: all 40 books for the librarians are on the map (from Wowhead's list). Click one for a waypoint. Book spots players found away from the list are grey: that book may have moved. A find named after a listed book but far from its spot is left off as wrong, unless players find it there more often than at the listed spot (then it probably moved).
 - Fixed: on Forever, a few places used only your first name: Doorways could list you as someone to whisper, the mail note was signed with your first name, and {me} in a custom whisper was short.
 - Fixed (non-English clients): the "a Scroll of Comprehension would let you read more" hint and weapon-upgrade scrolls (Saber, Blade, Wit) weren't recognized.
 - Less network traffic: when a guildie or group member logs in, your data goes only to your guild or group, not to the whole public channel too. Friends are pinged at most every 2 minutes.

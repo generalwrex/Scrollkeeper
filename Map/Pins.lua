@@ -50,7 +50,7 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
         -- Spots only others reported are a little faded; a book found away
         -- from every known book spot (it may have moved) is grey.
         self:SetAlpha((data.mine > 0 or data.listed) and 1 or 0.75)
-        if self.Icon.SetDesaturated then self.Icon:SetDesaturated(data.stale and true or false) end
+        if self.Icon.SetDesaturated then self.Icon:SetDesaturated((data.stale or data.outdated) and true or false) end
     end
 end
 
@@ -79,6 +79,12 @@ local function AddPinLines(data, first)
         if data.mine > 0 then GameTooltip:AddLine(L["You found it here."], 0.25, 1, 0.25) end
         local found = data.mine + data.others
         if found > 1 then GameTooltip:AddLine(L["Found %d times."]:format(found), 0.7, 0.7, 0.7) end
+        if data.outdated then
+            GameTooltip:AddLine(L["Players find this book somewhere else more often: it has probably moved."], 0.6, 0.6, 0.6, true)
+        end
+        if data.movedHere then
+            GameTooltip:AddLine(L["Players find it here more often than at its listed spot: it probably moved here."], 1, 0.82, 0, true)
+        end
         if data.stale then
             GameTooltip:AddLine(L["Found by players, but not on the list of book spots: it may have moved."], 0.6, 0.6, 0.6, true)
         end
@@ -216,14 +222,26 @@ end
 local provider
 local waitingBooks = {}   -- book item IDs whose names the game is still loading
 
--- Is this one of the books on the list (Data/BookSpots.lua)?
+-- Is this one of the books on the list (Data/BookSpots.lua)? Its spot, or nil.
 local listedNames
 local function ListedName(name)
     if not listedNames then
         listedNames = {}
-        for _, spot in ipairs(SK.BOOK_SPOTS or {}) do listedNames[spot.name:lower()] = true end
+        for _, spot in ipairs(SK.BOOK_SPOTS or {}) do listedNames[spot.name:lower()] = spot end
     end
-    return type(name) == "string" and listedNames[name:lower()] or false
+    return type(name) == "string" and listedNames[name:lower()] or nil
+end
+
+-- How often players found a book at (or right next to) its listed spot.
+local function FoundAtListed(spot)
+    local total = 0
+    for cell, counts in pairs(SK.DropCells(spot.map, "books") or {}) do
+        local x, y = SK.CellCenter(cell)
+        if x and math.abs(x - spot.x / 100) <= 0.03 and math.abs(y - spot.y / 100) <= 0.03 then
+            total = total + (counts.mine or 0) + (counts.others or 0)
+        end
+    end
+    return total
 end
 
 local function CreateProvider()
@@ -265,14 +283,18 @@ local function CreateProvider()
                     if x and math.abs(listed.x - x) <= 0.03 and math.abs(listed.y - y) <= 0.03 then known = listed break end
                 end
                 -- Named after a book on the list but far from its spot: that
-                -- report is wrong (the book is where the list says), so skip it.
-                local wrong = not known and name and ListedName(name)
+                -- report is wrong (the book is where the list says), so skip
+                -- it. Unless players found it here more often than at the
+                -- listed spot: then the list is probably out of date.
+                local listedSpot = not known and name and ListedName(name)
+                local foundHereMore = listedSpot and (mine + others) > FoundAtListed(listedSpot)
                 if known then
                     known.mine, known.others = known.mine + mine, known.others + others
                     known.foundName = known.foundName or name
-                elseif x and not wrong then
+                elseif x and (not listedSpot or foundHereMore) then
+                    if foundHereMore then self.movedNames[listedSpot.name:lower()] = true end
                     map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others, name = name,
-                        stale = SK.BOOK_SPOTS ~= nil })
+                        stale = SK.BOOK_SPOTS ~= nil and not foundHereMore, movedHere = foundHereMore or nil })
                 end
                 group = {}
             end
@@ -329,7 +351,7 @@ local function CreateProvider()
         self:DrawSpots(SK.DropCells(mapID), "drop", { 1, 0.82, 0 })
         -- Every known book spot in this zone (Data/BookSpots.lua). Player
         -- finds next to one are added to it.
-        self.listedBooks = {}
+        self.listedBooks, self.movedNames = {}, {}
         for _, spot in ipairs(SK.BOOK_SPOTS or {}) do
             if spot.map == mapID then
                 self.listedBooks[#self.listedBooks + 1] = { kind = "book", listed = true, x = spot.x / 100, y = spot.y / 100,
@@ -349,6 +371,9 @@ local function CreateProvider()
         end)
         for _, book in ipairs(self.listedBooks) do
             -- A player's find names it in your language when it can.
+            -- Players find this book somewhere else more often: our data
+            -- beats the list, so its listed spot goes grey.
+            book.outdated = self.movedNames[book.name:lower()] or nil
             book.name = book.foundName or book.name
             self:GetMap():AcquirePin(TEMPLATE, book)
         end
