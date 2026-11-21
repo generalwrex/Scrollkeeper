@@ -56,10 +56,10 @@ local function BuildQuestions()
         } }
     end
     list[#list + 1] = { key = "sharing", version = 2, account = true, question = L["How much should Scrollkeeper share?"],
-        hint = L["Sharing is what powers community odds, drop spots, the swap board and the mailbox list. Only scroll data is sent."], options = {
-        { "full", L["Full"], L["Share with every Scrollkeeper user online, with your name."], ICON .. "Spell_Holy_PrayerOfHealing02" },
+        hint = L["Only scroll info is shared: your Comprehension skill, what your scrolls became and where they dropped. Never your chat, gold, bags or where you are. Full is what makes Fellow Mages, community odds and drop spots work."], options = {
+        { "full", L["Full"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."], ICON .. "Spell_Holy_PrayerOfHealing02" },
         { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
-        { "simple", L["Simple"], L["Only your guild, group and friends."], ICON .. "INV_Shirt_GuildTabard_01" },
+        { "simple", L["Simple"], L["Only your guild, group and friends. You'll miss most Fellow Mages and live community odds."], ICON .. "INV_Shirt_GuildTabard_01" },
         { "none", L["None"], L["Turns off the whole network: no shared odds, swap board, or guildies at the mailbox."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
