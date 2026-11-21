@@ -679,7 +679,7 @@ end
 do
   SK.db.mageHistory = {}
   local realRealm = GetRealmName
-  GetRealmName = function() return "Realm" end
+  GetRealmName = function() return "CAMWOW US1 Realm 1 PvE" end
   fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.1.9|MAGE|30|80|150|15.50||", "GUILD", "Histo-Realm")
   print("HISTORY saved:", SK.db.mageHistory["Histo"] and SK.db.mageHistory["Histo"].level)
   SK.peers["Histo-Realm"].seen = 0   -- gone stale

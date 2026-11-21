@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.2.3
+
+- Fixed: Fellow Mages could show grayed-out mages from other rulesets (players on older versions who don't say their ruleset). Someone the online check can't reach and whose ruleset is unknown now leaves the list right away, and the offline history only shows mages from your own ruleset.
+
 ## 1.2.2
 
 - Thanks to Fellow Mage network user **Lofi Frostbeats** (RP-PvP Horde), who shared most of the community's tier 175 odds. Every mage reading tier 175 scrolls benefits from those deciphers!

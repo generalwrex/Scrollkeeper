@@ -422,6 +422,10 @@ local function Fresh(peer)
     if peer.demo then return true end
     local keep = (tonumber(SK.db and SK.db.offlineMinutes) or 5) * 60
     if peer.offline and peer.offlineAt and time() - peer.offlineAt >= keep then return false end
+    -- Their ruleset is unknown (old version, or the empty-realm bug) and a
+    -- whisper can't reach them: most likely another ruleset. Gone at once
+    -- instead of grayed out for a while.
+    if peer.offline and not peer.ruleset then return false end
     return (time() - peer.seen) < STALE_SECONDS
 end
 
@@ -514,7 +518,8 @@ function SK.MageHistory()
     local faction = UnitFactionGroup and UnitFactionGroup("player") or nil
     for key, entry in pairs(SK.db.mageHistory or {}) do
         -- Only mages this character can reach: same ruleset and faction.
-        local reachable = entry.ruleset == ruleset and entry.faction == faction
+        -- (Both sides must be known: nil matching nil let other rulesets in.)
+        local reachable = ruleset ~= nil and entry.ruleset == ruleset and entry.faction == faction
         if reachable and not online[key:lower()] then
             local tiers = {}
             for _, tier in ipairs(entry.tiers or {}) do tiers[tier] = true end
