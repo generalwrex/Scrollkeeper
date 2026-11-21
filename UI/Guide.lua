@@ -139,37 +139,39 @@ local function Build()
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
 
-    -- Tabs hanging off the bottom, like the game's own windows (Character,
-    -- Spellbook). Plain buttons if the tab template isn't there.
+    -- Side tabs: square icons down the right edge, like the game's own
+    -- windows on Forever (Professions, Spellbook). Hover for the name.
     local TAB_KEYS = { "scrolls", "books" }
-    local function MakeTab(i, text)
-        local ok, button = pcall(CreateFrame, "Button", "ScrollkeeperGuideFrameTab" .. i, window, "PanelTabButtonTemplate")
-        if not (ok and button) then
-            button = CreateFrame("Button", "ScrollkeeperGuideFrameTab" .. i, window, "UIPanelButtonTemplate")
-            button:SetSize(110, 22)
-            button.plain = true
-        end
+    local function MakeTab(i, icon, text)
+        local button = CreateFrame("CheckButton", "ScrollkeeperGuideFrameTab" .. i, window)
+        button:SetSize(32, 32)
+        button:SetPoint("TOPLEFT", window, "TOPRIGHT", 0, -48 - (i - 1) * 48)
+        local frame = button:CreateTexture(nil, "BACKGROUND")
+        frame:SetTexture("Interface\\SpellBook\\SpellBook-SkillLineTab")
+        frame:SetSize(64, 64)
+        frame:SetPoint("TOPLEFT", -3, 11)
+        button:SetNormalTexture(icon)
+        button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        button:SetCheckedTexture("Interface\\Buttons\\CheckButtonHilight", "ADD")
         button:SetID(i)
-        button:SetText(text)
-        if i == 1 then
-            button:SetPoint("TOPLEFT", window, "BOTTOMLEFT", 11, button.plain and -2 or 2)
-        else
-            button:SetPoint("LEFT", window.tabs[i - 1], "RIGHT", button.plain and 4 or -15, 0)
-        end
-        if PanelTemplates_TabResize and not button.plain then SK.Try(PanelTemplates_TabResize, button, 0) end
         button:SetScript("OnClick", function(self)
             tab = TAB_KEYS[self:GetID()]
             if PlaySound and SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then SK.Try(PlaySound, SOUNDKIT.IG_CHARACTER_INFO_TAB) end
             SK.RefreshGuide()
         end)
+        button:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(text)
+            GameTooltip:Show()
+        end)
+        button:SetScript("OnLeave", function() GameTooltip:Hide() end)
         return button
     end
-    window.tabs = {}
-    window.tabs[1] = MakeTab(1, L["Scrolls"])
-    window.tabs[2] = MakeTab(2, L["Books"])
+    window.tabs = {
+        MakeTab(1, "Interface\\Icons\\INV_Scroll_03", L["Scrolls"]),
+        MakeTab(2, "Interface\\Icons\\INV_Misc_Book_09", L["Books"]),
+    }
     window.scrollsTab, window.booksTab = window.tabs[1], window.tabs[2]
-    window.numTabs = 2
-    if PanelTemplates_SetNumTabs then SK.Try(PanelTemplates_SetNumTabs, window, 2) end
 
     window.top = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     window.top:SetPoint("TOPLEFT", 64, -38)
@@ -229,15 +231,9 @@ end
 
 function SK.RefreshGuide()
     if not (window and window:IsShown()) then return end
-    -- The picked tab looks picked (the game's tab look), or is greyed out
-    -- (plain buttons).
-    local index = tab == "books" and 2 or 1
-    if PanelTemplates_SetTab and not window.tabs[1].plain then
-        SK.Try(PanelTemplates_SetTab, window, index)
-    else
-        window.scrollsTab:SetEnabled(index ~= 1)
-        window.booksTab:SetEnabled(index ~= 2)
-    end
+    -- The picked tab glows.
+    window.scrollsTab:SetChecked(tab ~= "books")
+    window.booksTab:SetChecked(tab == "books")
     if tab == "books" then
         local handed, reward = 0, nil
         if SK.BookProgress then handed, reward = SK.BookProgress() end
