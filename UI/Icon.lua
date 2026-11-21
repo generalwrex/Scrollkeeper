@@ -217,7 +217,35 @@ do
             secure and "SecureActionButtonTemplate,BackdropTemplate" or "BackdropTemplate")
         toast.secure = secure
         toast:SetSize(300, 58)   -- height grows to fit the text (see Fit)
-        toast:SetPoint("TOP", UIParent, "TOP", 0, -150)
+        -- Where you put it last (Alt-drag), else near the top of the screen.
+        local point = SK.db.toastPoint
+        if type(point) == "table" and point[1] then
+            toast:SetPoint(point[1], UIParent, point[2] or point[1], point[3] or 0, point[4] or 0)
+        else
+            toast:SetPoint("TOP", UIParent, "TOP", 0, -150)
+        end
+        -- Alt-drag moves it (a plain click uses the scroll, so Alt-click mustn't).
+        toast:SetMovable(true)
+        toast:RegisterForDrag("LeftButton")
+        if secure then toast:SetAttribute("alt-type1", "none") end
+        toast:SetScript("OnDragStart", function(self)
+            if not (IsAltKeyDown and IsAltKeyDown()) or SK.db.locked then return end
+            if self.secure and InCombatLockdown and InCombatLockdown() then return end
+            self.age = 0
+            self:StartMoving()
+        end)
+        toast:SetScript("OnDragStop", function(self)
+            self:StopMovingOrSizing()
+            local from, _, to, x, y = self:GetPoint()
+            SK.db.toastPoint = { from, to, x, y }
+            -- Keep the other pop-up (plain/secure) in the same spot.
+            for _, other in ipairs({ secureToast, plainToast }) do
+                if other and other ~= self and not (other.secure and InCombatLockdown and InCombatLockdown()) then
+                    other:ClearAllPoints()
+                    other:SetPoint(from, UIParent, to, x, y)
+                end
+            end
+        end)
         toast:SetFrameStrata("HIGH")
         toast:SetClampedToScreen(true)
         -- The secure one hears press and release: the game uses items on
@@ -285,6 +313,7 @@ do
         -- Fade out after a few seconds. (No pausing on mouse-over: the
         -- cursor often just sits there while you play, so it'd never go.)
         toast:SetScript("OnUpdate", function(self, elapsed)
+            if self.IsDragging and self:IsDragging() then self.age = 0 return end
             self.age = (self.age or 0) + elapsed
             if self.age > SHOW_SECONDS + FADE_SECONDS then
                 HideToast(self)
@@ -316,7 +345,7 @@ do
 
     -- The hint line: what clicking does (or, in combat, your key).
     local function Hint(kind)
-        if toast.secure then return L["Click: use it  ·  Right-click: close  ·  Shift-right-click: off"] end
+        if toast.secure then return L["Click: use it  ·  Right-click: close  ·  Shift-right-click: off"] .. "  ·  " .. L["Alt-drag: move"] end
         local key = SK.RenewKey and SK.RenewKey(kind)
         if key then return L["In combat: press %s to use it."]:format(key) end
         return L["In combat: set a key in Key Bindings > Scrollkeeper to use it mid-fight."]

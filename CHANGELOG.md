@@ -33,6 +33,7 @@
 - Setup and settings say plainly what sharing sends (only scroll info, never chat, gold, bags or where you are), and Full is marked recommended (None: not recommended). The Simple choice (guild and friends only) is gone: if you had it, you're now on Anonymous, which keeps your name private and still helps everyone.
 - With sharing set to None, Scrollkeeper still tells your guild and group which version you run (nothing else) and hears about newer versions, and the update message mentions Wago and WowUp too.
 - The imbue and familiar pop-up does it for you: click it to summon your familiar or imbue your weapon. New key bindings (Key Bindings > Scrollkeeper) do the same, even mid-fight.
+- The imbue and familiar pop-up can be moved: Alt-drag it where you like (it remembers).
 - Setup helps you set keys for summoning a familiar, imbuing your weapon and Khadgar's Unlocking. It never takes a key you already use. (Mages who did setup before see this page once, if none of those keys are set.)
 - Setup asks new mages about the imbue and familiar reminders (wore off, running out, and also in combat). The in-combat choice is in the settings too, off by default.
 - Setup: sharing and language are set once for your whole account, so a new character (mage or not) doesn't ask again.

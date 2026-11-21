@@ -718,6 +718,7 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "塔佐的教诲"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "大法师安东尼达斯：未删节自传"
 L["(recommended)"] = "（推荐）"
+L["Alt-drag: move"] = "Alt+拖动：移动"
 L["Set some keys?"] = "设置几个按键？"
 L["Click one, then press the key you want. Keys you already use are left alone. Escape cancels."] = "点一项，然后按下想要的键。你已经在用的键不会被改动。Esc 取消。"
 L["Summon a familiar"] = "召唤使魔"

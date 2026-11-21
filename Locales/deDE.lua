@@ -720,6 +720,7 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "Die Lehren von Ta'zo"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "Erzmagier Antonidas: Die ungekürzte Autobiografie"
 L["(recommended)"] = "(empfohlen)"
+L["Alt-drag: move"] = "Alt-Ziehen: verschieben"
 L["Set some keys?"] = "Ein paar Tasten festlegen?"
 L["Click one, then press the key you want. Keys you already use are left alone. Escape cancels."] = "Klick eine an und drück dann die gewünschte Taste. Tasten, die du schon benutzt, bleiben unangetastet. Escape bricht ab."
 L["Summon a familiar"] = "Begleiter beschwören"
