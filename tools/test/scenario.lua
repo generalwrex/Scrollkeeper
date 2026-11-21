@@ -855,7 +855,7 @@ do
     provider.GetMap = function() return map end
     SK.db.mapPins = true
     SK.db.drops = { [1429] = { ["10.10"] = 2, ["11.10"] = 3, ["12.11"] = 1, ["40.40"] = 1 } }
-    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1 } }
+    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1, ["32.35"] = 2 } }
     local ok, err = pcall(provider.DrawPins, provider)
     local areas, pins, books = 0, 0, 0
     for _, a in ipairs(acquired) do
@@ -864,6 +864,10 @@ do
       elseif a[2].kind == "book" then books = books + 1 end
     end
     print("MAP CIRCLES", ok, err or "", "areas", areas, "drop pins", pins, "book pins", books)
+    for _, a in ipairs(acquired) do
+      if a[2].listed then print("MAP KNOWN BOOK", a[2].name, "found here", a[2].mine) end
+      if a[2].stale then print("MAP MOVED BOOK", a[2].mine) end
+    end
   else
     print("MAP CIRCLES no provider")
   end

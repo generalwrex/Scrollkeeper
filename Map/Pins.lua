@@ -47,8 +47,10 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
         self.Icon:SetTexture(book and ICON_BOOK or (SK.db and SK.db.untranslatedIcon) or ICON_SCROLL)
         self:SetSize(size, size)
         self.Count:SetText((not book and total > 1) and total or "")
-        -- Spots only others reported are a little faded.
-        self:SetAlpha(data.mine > 0 and 1 or 0.75)
+        -- Spots only others reported are a little faded; a book found away
+        -- from every known book spot (it may have moved) is grey.
+        self:SetAlpha((data.mine > 0 or data.listed) and 1 or 0.75)
+        if self.Icon.SetDesaturated then self.Icon:SetDesaturated(data.stale and true or false) end
     end
 end
 
@@ -73,9 +75,14 @@ local function AddPinLines(data, first)
     elseif data.kind == "book" then
         Title(data.name or L["Book for the librarians."])
         GameTooltip:AddLine(L["A book for the librarians sits here."], 1, 1, 1)
+        if data.note then GameTooltip:AddLine(L[data.note], 1, 1, 1) end
         if data.mine > 0 then GameTooltip:AddLine(L["You found it here."], 0.25, 1, 0.25) end
         local found = data.mine + data.others
         if found > 1 then GameTooltip:AddLine(L["Found %d times."]:format(found), 0.7, 0.7, 0.7) end
+        if data.stale then
+            GameTooltip:AddLine(L["Found by players, but not on the list of book spots: it may have moved."], 0.6, 0.6, 0.6, true)
+        end
+        GameTooltip:AddLine(L["Click for a waypoint."], 0.6, 0.6, 0.6)
     else
         Title(L["Untranslated scrolls"])
         if data.mine > 0 then GameTooltip:AddLine(L["You looted %d here."]:format(data.mine), 1, 1, 1) end
@@ -126,22 +133,24 @@ function ScrollkeeperMapPinMixin:OnMouseLeave()
     GameTooltip:Hide()
 end
 
--- Click a library pin: set a waypoint there (Zygor's or TomTom's arrow
--- if you have one, otherwise the game's own map pin).
+-- Click a library or a book: set a waypoint there (Zygor's or TomTom's
+-- arrow if you have one, otherwise the game's own map pin).
+local WAYPOINT_KINDS = { library = true, book = true }
 function ScrollkeeperMapPinMixin:OnClick(button)
     local data = self.data
     if button ~= "LeftButton" or not data then return end
-    -- A library under another pin still gets its waypoint.
-    if data.kind ~= "library" then
+    -- A library or book under a scroll pin still gets its waypoint.
+    if not WAYPOINT_KINDS[data.kind] then
         local ok, stacked = pcall(StackedWith, self)
         data = nil
         for _, other in ipairs(ok and stacked or {}) do
-            if other.kind == "library" then data = other break end
+            if WAYPOINT_KINDS[other.kind] then data = other break end
         end
         if not data then return end
     end
-    if SK.SetWaypoint(self:GetMap():GetMapID(), data.x, data.y, data.name) then
-        SK.Print(L["waypoint set: "] .. data.name)
+    local title = data.name or L["Book for the librarians."]
+    if SK.SetWaypoint(self:GetMap():GetMapID(), data.x, data.y, title) then
+        SK.Print(L["waypoint set: "] .. title)
     end
 end
 
@@ -240,8 +249,17 @@ local function CreateProvider()
                     if name then break end
                     name = nameFor and nameFor(spot.cell)
                 end
-                if x then
-                    map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others, name = name })
+                -- Next to a known book spot: it's that book (counted there).
+                local known
+                for _, listed in ipairs(self.listedBooks or {}) do
+                    if x and math.abs(listed.x - x) <= 0.03 and math.abs(listed.y - y) <= 0.03 then known = listed break end
+                end
+                if known then
+                    known.mine, known.others = known.mine + mine, known.others + others
+                    known.foundName = known.foundName or name
+                elseif x then
+                    map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others, name = name,
+                        stale = SK.BOOK_SPOTS ~= nil })
                 end
                 group = {}
             end
@@ -296,6 +314,15 @@ local function CreateProvider()
         if not mapID then return end
 
         self:DrawSpots(SK.DropCells(mapID), "drop", { 1, 0.82, 0 })
+        -- Every known book spot in this zone (Data/BookSpots.lua). Player
+        -- finds next to one are added to it.
+        self.listedBooks = {}
+        for _, spot in ipairs(SK.BOOK_SPOTS or {}) do
+            if spot.map == mapID then
+                self.listedBooks[#self.listedBooks + 1] = { kind = "book", listed = true, x = spot.x / 100, y = spot.y / 100,
+                    name = spot.name, note = spot.note, mine = 0, others = 0 }
+            end
+        end
         self:DrawSpots(SK.DropCells(mapID, "books"), "book", { 1, 0.3, 0.3 }, function(cell)
             -- Which book: by its item ID (anyone's find, in your language),
             -- else the name you saw when you looted it.
@@ -307,6 +334,11 @@ local function CreateProvider()
             end
             return name or (SK.db.bookNames and SK.db.bookNames[mapID .. ":" .. cell])
         end)
+        for _, book in ipairs(self.listedBooks) do
+            -- A player's find names it in your language when it can.
+            book.name = book.foundName or book.name
+            self:GetMap():AcquirePin(TEMPLATE, book)
+        end
         for _, library in ipairs(SK.LibraryPins(mapID)) do
             library.kind = "library"
             self:GetMap():AcquirePin(TEMPLATE, library)
