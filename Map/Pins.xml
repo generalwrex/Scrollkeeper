@@ -20,4 +20,14 @@
              OnMouseEnter, OnMouseLeave and OnMouseUp itself, and refuses
              pins that set their own OnEnter/OnLeave. -->
     </Frame>
+    <!-- A shaded circle around an area where many drops were found. It
+         grows and shrinks with the map; mouse goes through it. -->
+    <Frame name="ScrollkeeperMapAreaTemplate" mixin="ScrollkeeperMapAreaMixin" virtual="true" enableMouse="false">
+        <Size x="40" y="40"/>
+        <Layers>
+            <Layer level="BACKGROUND">
+                <Texture parentKey="Fill" file="Interface\CHARACTERFRAME\TempPortraitAlphaMask" setAllPoints="true"/>
+            </Layer>
+        </Layers>
+    </Frame>
 </Ui>

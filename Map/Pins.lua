@@ -74,6 +74,7 @@ function ScrollkeeperMapPinMixin:OnMouseEnter()
         if data.mine > 0 then GameTooltip:AddLine(L["You looted %d here."]:format(data.mine), 1, 1, 1) end
         if data.others > 0 then GameTooltip:AddLine(L["Others looted %d here."]:format(data.others), 0.7, 0.7, 0.7) end
     end
+    if data.spots then GameTooltip:AddLine(L["All around this circle (%d spots)."]:format(data.spots), 1, 0.82, 0) end
     GameTooltip:AddLine(L["Scrollkeeper"], 0.41, 0.8, 0.94)
     GameTooltip:Show()
 end
@@ -93,6 +94,61 @@ function ScrollkeeperMapPinMixin:OnClick(button)
 end
 
 ------------------------------------------------------------------------
+-- Area circles: drop spots close together are drawn as one shaded
+-- circle with a single pin (the total) in the middle.
+------------------------------------------------------------------------
+
+local AREA_TEMPLATE = "ScrollkeeperMapAreaTemplate"
+
+ScrollkeeperMapAreaMixin = (CreateFromMixins and MapCanvasPinMixin)
+    and CreateFromMixins(MapCanvasPinMixin) or {}
+
+function ScrollkeeperMapAreaMixin:OnLoad()
+    if self.UseFrameLevelType then self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") end
+end
+
+-- Keep the map's own scale, so the circle covers the same ground at any zoom.
+function ScrollkeeperMapAreaMixin:ApplyCurrentScale() self:SetScale(1) end
+
+function ScrollkeeperMapAreaMixin:OnAcquired(data)
+    self:SetPosition(data.x, data.y)
+    self:SetSize(data.size, data.size)
+    self:SetScale(1)
+    if self.EnableMouse then self:EnableMouse(false) end
+    local c = data.color
+    self.Fill:SetVertexColor(c[1], c[2], c[3], 0.22)
+end
+
+-- Spots no more than 2 cells (4% of the map) apart join one area.
+local JOIN = 2
+local function Clusters(cells)
+    local list = {}
+    for cell, counts in pairs(cells) do
+        local gx, gy = cell:match("^(%d+)%.(%d+)$")
+        if gx then list[#list + 1] = { gx = tonumber(gx), gy = tonumber(gy), cell = cell, counts = counts } end
+    end
+    local groups, done = {}, {}
+    for i, start in ipairs(list) do
+        if not done[i] then
+            local group, queue = {}, { i }
+            done[i] = true
+            while #queue > 0 do
+                local a = list[table.remove(queue)]
+                group[#group + 1] = a
+                for j, b in ipairs(list) do
+                    if not done[j] and math.abs(a.gx - b.gx) <= JOIN and math.abs(a.gy - b.gy) <= JOIN then
+                        done[j] = true
+                        queue[#queue + 1] = j
+                    end
+                end
+            end
+            groups[#groups + 1] = group
+        end
+    end
+    return groups
+end
+
+------------------------------------------------------------------------
 -- The data provider: tells the map which pins to draw
 ------------------------------------------------------------------------
 
@@ -103,6 +159,52 @@ local function CreateProvider()
 
     function provider:RemoveAllData()
         self:GetMap():RemoveAllPinsByTemplate(TEMPLATE)
+        self:GetMap():RemoveAllPinsByTemplate(AREA_TEMPLATE)
+    end
+
+    -- Drop spots: lone ones as pins, groups as a circle with one pin.
+    function provider:DrawSpots(cells, kind, color, nameFor)
+        local map = self:GetMap()
+        local canvas = map.GetCanvas and map:GetCanvas()
+        local width = canvas and canvas:GetWidth() or 0
+        local height = canvas and canvas:GetHeight() or 0
+        for _, group in ipairs(Clusters(cells)) do
+            local mine, others = 0, 0
+            for _, spot in ipairs(group) do
+                mine, others = mine + (spot.counts.mine or 0), others + (spot.counts.others or 0)
+            end
+            -- Middle weighted by count; radius reaches the farthest spot.
+            local cx, cy, radius
+            if #group > 1 and width > 0 and height > 0 then
+                local sx, sy, total = 0, 0, 0
+                for _, spot in ipairs(group) do
+                    local x, y = SK.CellCenter(spot.cell)
+                    local n = (spot.counts.mine or 0) + (spot.counts.others or 0)
+                    sx, sy, total = sx + x * n, sy + y * n, total + n
+                end
+                cx, cy, radius = sx / math.max(1, total), sy / math.max(1, total), 0
+                for _, spot in ipairs(group) do
+                    local x, y = SK.CellCenter(spot.cell)
+                    radius = math.max(radius, math.sqrt(((x - cx) * width) ^ 2 + ((y - cy) * height) ^ 2))
+                end
+                radius = radius + width / SK.DROP_GRID   -- room around the outer spots
+                -- A chain of spots across half the zone isn't one area.
+                if radius > width * 0.15 then radius = nil end
+            end
+            if not radius then
+                for _, spot in ipairs(group) do
+                    local x, y = SK.CellCenter(spot.cell)
+                    if x then
+                        map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = spot.counts.mine,
+                            others = spot.counts.others, name = nameFor and nameFor(spot.cell) })
+                    end
+                end
+            else
+                map:AcquirePin(AREA_TEMPLATE, { x = cx, y = cy, size = radius * 2, color = color })
+                map:AcquirePin(TEMPLATE, { kind = kind, x = cx, y = cy, mine = mine, others = others,
+                    spots = #group, name = nameFor and nameFor(group[1].cell) })
+            end
+        end
     end
 
     function provider:RefreshAllData()
@@ -121,23 +223,10 @@ local function CreateProvider()
         local mapID = self:GetMap():GetMapID()
         if not mapID then return end
 
-        for cell, counts in pairs(SK.DropCells(mapID)) do
-            local x, y = SK.CellCenter(cell)
-            if x then
-                self:GetMap():AcquirePin(TEMPLATE, {
-                    kind = "drop", x = x, y = y, mine = counts.mine, others = counts.others,
-                })
-            end
-        end
-        for cell, counts in pairs(SK.DropCells(mapID, "books")) do
-            local x, y = SK.CellCenter(cell)
-            if x then
-                local name = SK.db.bookNames and SK.db.bookNames[mapID .. ":" .. cell]
-                self:GetMap():AcquirePin(TEMPLATE, {
-                    kind = "book", x = x, y = y, mine = counts.mine, others = counts.others, name = name,
-                })
-            end
-        end
+        self:DrawSpots(SK.DropCells(mapID), "drop", { 1, 0.82, 0 })
+        self:DrawSpots(SK.DropCells(mapID, "books"), "book", { 1, 0.3, 0.3 }, function(cell)
+            return SK.db.bookNames and SK.db.bookNames[mapID .. ":" .. cell]
+        end)
         for _, library in ipairs(SK.LibraryPins(mapID)) do
             library.kind = "library"
             self:GetMap():AcquirePin(TEMPLATE, library)

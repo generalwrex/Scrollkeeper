@@ -10,6 +10,7 @@
 - Waypoints (library pins, the Study button) use Zygor's arrow if you have Zygor, then TomTom, then the game's own pin.
 - The map only pins your own faction's library.
 - Farming plan: with Zygor or TomTom, each zone in Where to farm gets an Arrow button that points you at the spot where the most scrolls dropped.
+- Map: scroll (and book) spots close together are grouped into one shaded circle with the total in the middle, instead of a pile of little pins.
 
 ## 1.2.1
 

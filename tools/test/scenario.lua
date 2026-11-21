@@ -837,3 +837,33 @@ if SK.commands.netdev and SK.NetDevSample then
   print("GRAPHS ok")
   SK.devCopy = dev
 end
+
+-- Map: drops close together become one circle with one pin.
+do
+  local acquired, provider = {}, nil
+  CreateFromMixins = CreateFromMixins or function(...) local t = {} for _, m in ipairs({ ... }) do for k, v in pairs(m) do t[k] = v end end return t end
+  MapCanvasDataProviderMixin = MapCanvasDataProviderMixin or {}
+  local canvas = { GetWidth = function() return 1000 end, GetHeight = function() return 700 end }
+  local map = {
+    GetMapID = function() return 1429 end, GetCanvas = function() return canvas end,
+    RemoveAllPinsByTemplate = function() end,
+    AcquirePin = function(_, template, data) acquired[#acquired + 1] = { template, data } end,
+  }
+  WorldMapFrame = { AddDataProvider = function(_, p) provider = p end, IsShown = function() return false end }
+  fire("ADDON_LOADED", "Blizzard_WorldMap")
+  if provider then
+    provider.GetMap = function() return map end
+    SK.db.mapPins = true
+    SK.db.drops = { [1429] = { ["10.10"] = 2, ["11.10"] = 3, ["12.11"] = 1, ["40.40"] = 1 } }
+    SK.db.bookDrops = {}
+    local ok, err = pcall(provider.DrawPins, provider)
+    local areas, pins = 0, 0
+    for _, a in ipairs(acquired) do
+      if a[1] == "ScrollkeeperMapAreaTemplate" then areas = areas + 1
+      elseif a[2].kind == "drop" then pins = pins + 1 end
+    end
+    print("MAP CIRCLES", ok, err or "", "areas", areas, "drop pins", pins)
+  else
+    print("MAP CIRCLES no provider")
+  end
+end
