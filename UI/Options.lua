@@ -254,6 +254,15 @@ SK.Listen("READY", function()
             Settings.CreateDropdown(category, setting, Options, L["How much the panel shows. The size button on the panel switches between these too."])
         end)
         SK.Safely("settings slider", AddScaleSlider)
+        SK.Safely("settings own layout", function()
+            if not SK.charDB then return end
+            if SK.charDB.own == nil then SK.charDB.own = false end
+            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_ownLayout", "own", SK.charDB,
+                "boolean", L["This character's own layout"], false)
+            setting:SetValueChangedCallback(function() SK.SetCharacterLayout(SK.charDB.own) end)
+            Settings.CreateCheckbox(category, setting,
+                L["Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters."])
+        end)
         AddCheckbox("minimapButton", L["Minimap button"],
             L["The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around."], true)
         AddCheckbox("scrollIcon", L["Scroll icon"],

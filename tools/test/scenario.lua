@@ -1010,3 +1010,16 @@ do
   GetCurrentBindingSet = function() return 1 end
   print("KEYS F before", bound["F"], "| G free", bound["G"] == nil)
 end
+
+-- This character's own layout: its panel size is saved apart from the account's.
+do
+  SK.db.scale = 1
+  SK.SetCharacterLayout(true)
+  SK.db.scale = 1.3
+  fire("PLAYER_LOGOUT")
+  local accountAfterLogout, charSaved = SK.db.scale, SK.charDB.layout.scale
+  SK.LoadCharacterLayout()
+  print("CHARLAYOUT account", accountAfterLogout, "char saved", charSaved, "back in game", SK.db.scale)
+  SK.SetCharacterLayout(false)
+  print("CHARLAYOUT off ->", SK.db.scale)
+end

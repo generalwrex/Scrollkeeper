@@ -718,6 +718,8 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "塔佐的教誨"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "大法師安東尼達斯：未刪節自傳"
 L["(recommended)"] = "（推薦）"
+L["This character's own layout"] = "此角色專屬版面"
+L["Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters."] = "面板位置、大小和檢視，小地圖按鈕、卷軸圖示和提醒彈窗的位置只對此角色儲存。其他設定在所有角色上保持一致。"
 L["Alt-drag: move"] = "Alt+拖曳：移動"
 L["Set some keys?"] = "設定幾個按鍵？"
 L["Click one, then press the key you want. Keys you already use are left alone. Escape cancels."] = "點一項，然後按下想要的鍵。你已經在用的鍵不會被改動。Esc 取消。"

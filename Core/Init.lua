@@ -181,6 +181,71 @@ end
 -- Saved settings
 ------------------------------------------------------------------------
 
+------------------------------------------------------------------------
+-- This character's own layout (optional). With it on, these settings come
+-- from ScrollkeeperCharDB (this character only) instead of the account:
+-- swapped in at login, swapped back out at logout, so the rest of the
+-- addon just uses SK.db as always.
+------------------------------------------------------------------------
+
+SK.LAYOUT_KEYS = { "showPanel", "viewMode", "scale", "panelPoint", "collapsed", "showScrollBar", "locked",
+    "hideInCombat", "minimapButton", "minimapAngle", "scrollIcon", "iconPos", "toastPoint" }
+
+local accountLayout   -- the account's values while this character uses its own
+
+local function Copy(value)
+    if type(value) ~= "table" then return value end
+    local out = {}
+    for k, v in pairs(value) do out[k] = Copy(v) end
+    return out
+end
+
+function SK.LoadCharacterLayout()
+    ScrollkeeperCharDB = ScrollkeeperCharDB or {}
+    SK.charDB = ScrollkeeperCharDB
+    if not SK.charDB.own then return end
+    SK.charDB.layout = SK.charDB.layout or {}
+    accountLayout = {}
+    for _, key in ipairs(SK.LAYOUT_KEYS) do
+        accountLayout[key] = Copy(SK.db[key])
+        if SK.charDB.layout[key] ~= nil then SK.db[key] = Copy(SK.charDB.layout[key]) end
+    end
+end
+
+-- Logout: this character's layout goes to its own file, the account's back.
+local function SaveCharacterLayout()
+    if not (SK.charDB and SK.charDB.own and accountLayout) then return end
+    SK.charDB.layout = {}
+    for _, key in ipairs(SK.LAYOUT_KEYS) do
+        SK.charDB.layout[key] = Copy(SK.db[key])
+        SK.db[key] = accountLayout[key]
+    end
+end
+
+-- The setting. On: starts from the layout you have now. Off: back to the
+-- account's layout (fully after a /reload).
+function SK.SetCharacterLayout(on)
+    if not SK.charDB then return end
+    if on and not SK.charDB.own then
+        SK.charDB.own = true
+        accountLayout = {}
+        SK.charDB.layout = {}
+        for _, key in ipairs(SK.LAYOUT_KEYS) do
+            accountLayout[key] = Copy(SK.db[key])
+            SK.charDB.layout[key] = Copy(SK.db[key])
+        end
+    elseif not on and SK.charDB.own then
+        SK.charDB.own = false
+        for _, key in ipairs(SK.LAYOUT_KEYS) do
+            if accountLayout then SK.db[key] = accountLayout[key] end
+        end
+        accountLayout = nil
+        if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
+        if SK.RefreshIcon then SK.RefreshIcon() end
+        if SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
+    end
+end
+
 local DEFAULTS = {
     showPanel = true,        -- show the panel on mages
     showTooltips = true,     -- add a line to scroll tooltips
@@ -228,6 +293,7 @@ SK.On("ADDON_LOADED", function(loaded)
         end
     end
     SK.db = ScrollkeeperDB
+    SK.LoadCharacterLayout()
     if SK.ApplyLanguage then SK.ApplyLanguage() end
 
     -- Hide in combat became the default in 1.0.0; switch it on once for
@@ -273,3 +339,5 @@ SK.On("ADDON_LOADED", function(loaded)
     SK.isMage = (class == "MAGE")
     SK.Send("READY")
 end)
+
+SK.On("PLAYER_LOGOUT", function() SaveCharacterLayout() end)

@@ -4,6 +4,7 @@
 ## Author: generalwrex
 ## Version: @project-version@
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
+## SavedVariablesPerCharacter: ScrollkeeperCharDB
 ## Category: Class
 ## X-License: MIT
 ## X-Curse-Project-ID: 1808722

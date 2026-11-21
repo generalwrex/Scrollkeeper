@@ -720,6 +720,8 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "Les leçons de Ta'zo"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "Archimage Antonidas : l'autobiographie intégrale"
 L["(recommended)"] = "(recommandé)"
+L["This character's own layout"] = "Disposition propre à ce personnage"
+L["Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters."] = "Position, taille et vue du panneau, bouton de la minicarte, icône de parchemins et place de la fenêtre de rappel sont gardés pour ce personnage seulement. Le reste est pareil sur tous tes personnages."
 L["Alt-drag: move"] = "Alt+glisser : déplacer"
 L["Set some keys?"] = "Choisir quelques touches ?"
 L["Click one, then press the key you want. Keys you already use are left alone. Escape cancels."] = "Clique sur une ligne, puis appuie sur la touche voulue. Les touches que tu utilises déjà ne sont pas touchées. Échap annule."
