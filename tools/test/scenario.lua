@@ -702,6 +702,11 @@ do
     print("REALM", sender, SK.IsUnreachable(sender) and "unreachable" or "reachable")
     SK.peers[sender] = nil
   end
+  -- The game gives an empty realm name: the remembered one is used.
+  print("RULESET known", SK.ServerKind())
+  GetRealmName = function() return "" end
+  GetNormalizedRealmName = function() return "" end
+  print("RULESET empty realm", SK.ServerKind(), "realm", SK.RealmName())
   GetRealmName, GetNormalizedRealmName = realRealm, realNorm
 end
 

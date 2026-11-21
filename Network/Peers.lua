@@ -303,7 +303,7 @@ end
 
 local function MyRealms()
     local realms = {}
-    if GetRealmName then realms[Plain(GetRealmName())] = true end
+    realms[Plain(SK.RealmName())] = true
     if GetNormalizedRealmName then
         local normalized = SK.Try(GetNormalizedRealmName)
         if type(normalized) == "string" then realms[Plain(normalized)] = true end
@@ -335,7 +335,7 @@ local KIND_LABELS = { pve = "PvE", pvp = "PvP", rp = "RP", rppvp = "RP-PvP", har
 -- The realm name is sometimes empty (seen right after logging in), so
 -- the last one we got is remembered for this character.
 function SK.ServerKind()
-    local kind = GetRealmName and RealmKind(Plain(SK.Try(GetRealmName)))
+    local kind = RealmKind(Plain(SK.RealmName()))
     if not kind and GetNormalizedRealmName then kind = RealmKind(Plain(SK.Try(GetNormalizedRealmName))) end
     local guid = UnitGUID and SK.Known(UnitGUID("player"))
     local saved = SK.db and type(guid) == "string" and SK.db
@@ -354,7 +354,7 @@ function SK.RulesetOf(sender)
     local realm = sender:match("%-([^%-]+)$")
     if not realm and peer and peer.guid and GetPlayerInfoByGUID then
         local ok, _, _, _, _, _, _, guidRealm = pcall(GetPlayerInfoByGUID, peer.guid)
-        if ok and type(guidRealm) == "string" then realm = guidRealm ~= "" and guidRealm or (GetRealmName and GetRealmName()) end
+        if ok and type(guidRealm) == "string" then realm = guidRealm ~= "" and guidRealm or SK.RealmName() end
     end
     local kind = realm and RealmKind(Plain(realm))
     return kind and KIND_LABELS[kind]

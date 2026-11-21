@@ -249,7 +249,7 @@ end
 local function IsAuthor(sender)
     -- "Name-Server" for players on another server, just "Name" on yours.
     local short, realm = sender:match("^(.-)%-([^%-]+)$")
-    if not short then short, realm = sender, GetRealmName and GetRealmName() end
+    if not short then short, realm = sender, SK.RealmName() end
     for _, author in ipairs(AUTHOR_CHARACTERS) do
         if author.names[short] and (not author.realm or SameRealm(realm, author.realm)) then return true end
     end

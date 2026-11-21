@@ -4,7 +4,7 @@
 
 - Thanks to Fellow Mage network user **Lofi Frostbeats** (RP-PvP Horde), who shared most of the community's tier 175 odds. Every mage reading tier 175 scrolls benefits from those deciphers!
 - Fixed: hovering a Fellow Mage to check they're online kept whispering them over and over while the tooltip was up.
-- Fixed: right after logging in, the game sometimes doesn't say your realm yet, so Scrollkeeper didn't know your ruleset and told others nothing. It now remembers it.
+- Fixed: the game sometimes gives no realm name for a whole session, so Fellow Mages lost its ruleset ("Fellow PvE Mages"), others weren't told yours, and your mage was saved a second time without a realm. Scrollkeeper now remembers each character's realm.
 - Fellow Mages: someone playing another class shows in that class's color ("on Warrior" in warrior brown).
 - Community odds: scroll icons and colors are loaded after you log in, so the list no longer shows plain names first.
 

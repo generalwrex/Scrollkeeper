@@ -20,9 +20,31 @@ function SK.PlayerFullName()
     return first
 end
 
+-- This character's realm. The game sometimes gives an empty realm name
+-- for a whole session, so the last one we saw for this character is
+-- remembered (or taken from its saved mage entry).
+function SK.RealmName()
+    local realm = GetRealmName and SK.Try(GetRealmName)
+    local name = SK.PlayerFullName and SK.PlayerFullName()
+    local db = SK.db
+    if type(realm) == "string" and realm ~= "" then
+        if db and name then
+            db.realmOf = type(db.realmOf) == "table" and db.realmOf or {}
+            db.realmOf[name] = realm
+        end
+        return realm
+    end
+    if not (db and name) then return "" end
+    if type(db.realmOf) == "table" and db.realmOf[name] then return db.realmOf[name] end
+    for _, entry in pairs(db.mages or {}) do
+        if entry.name == name and type(entry.realm) == "string" and entry.realm ~= "" then return entry.realm end
+    end
+    return ""
+end
+
 -- "Archmage Naage-Realm": this character's key in SK.db.mages.
 function SK.CharKey()
-    local realm = GetRealmName and GetRealmName() or ""
+    local realm = SK.RealmName()
     return (SK.PlayerFullName() or "?") .. "-" .. (realm or "")
 end
 
@@ -35,7 +57,7 @@ function SK.MyMage()
     if not entry then
         -- Saved before surnames were read? Pick up that entry ("Test-Realm").
         local first = (SK.PlayerFullName() or ""):match("^(%S+) ")
-        local oldKey = first and (first .. "-" .. (GetRealmName and GetRealmName() or ""))
+        local oldKey = first and (first .. "-" .. SK.RealmName())
         entry = (oldKey and SK.db.mages[oldKey]) or { }
         if oldKey then SK.db.mages[oldKey] = nil end
         entry.name = SK.PlayerFullName()
@@ -61,7 +83,7 @@ local function Save()
     entry.max = skill.max
     entry.knowsStudy = SK.KnowsStudy() and true or false
     entry.faction = UnitFactionGroup and UnitFactionGroup("player") or entry.faction
-    entry.realm = GetRealmName and GetRealmName() or entry.realm
+    entry.realm = SK.RealmName() ~= "" and SK.RealmName() or entry.realm
     entry.seen = time()
 
     -- Forever names have a first name and a surname ("Test Sheep"). Older
@@ -70,10 +92,13 @@ local function Save()
     local full = entry.name or ""
     local first = full:match("^(%S+) ")
     if first then
-        local realm = GetRealmName and GetRealmName() or ""
+        local realm = SK.RealmName()
         local oldKey = first .. "-" .. realm
         if oldKey ~= SK.CharKey() and SK.db.mages[oldKey] then SK.db.mages[oldKey] = nil end
     end
+    -- Saved while the game gave no realm name ("Archmage Naage-"): drop it.
+    local noRealm = full .. "-"
+    if noRealm ~= SK.CharKey() and SK.db.mages[noRealm] then SK.db.mages[noRealm] = nil end
 end
 
 SK.Listen("READY", Save)
@@ -121,7 +146,7 @@ end
 -- the character you're on.
 function SK.MailableMages()
     local list = {}
-    local realm = GetRealmName and GetRealmName()
+    local realm = SK.RealmName()
     local faction = UnitFactionGroup and UnitFactionGroup("player")
     for _, mage in ipairs(SK.MyOtherMages()) do
         local entry = SK.db.mages[mage.key] or {}
