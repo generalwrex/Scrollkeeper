@@ -85,11 +85,19 @@ local function AddScrollLines(tooltip, needs, itemID)
     end
 end
 
+-- The scroll tooltip we last added lines to, and what it was showing for.
+-- Shift only redraws that one: redrawing any other tooltip from our code
+-- (a map pin, a unit) can hit secret values and break it.
+local shiftTooltip, shiftOwner
+
 local function OnItemTooltip(tooltip, data)
     if not (SK.db and SK.db.showTooltips) then return end
     if type(data) ~= "table" or not tooltip or not tooltip.AddLine then return end
     local needs = SK.RequirementFromLines(data.lines)
-    if needs then AddScrollLines(tooltip, needs, data.id) end
+    if needs then
+        AddScrollLines(tooltip, needs, data.id)
+        shiftTooltip, shiftOwner = tooltip, tooltip.GetOwner and tooltip:GetOwner()
+    end
     -- Any scroll Scrollkeeper saw on the auction house: the price the plan
     -- goes by, which is Auctionator's or TSM's when installed, else our scan's.
     if not (data.id and GetMoneyString and SK.AuctionPrice) then return end
@@ -116,5 +124,11 @@ end)
 -- appear without moving the mouse.
 SK.On("MODIFIER_STATE_CHANGED", function(key)
     if not (key == "LSHIFT" or key == "RSHIFT") then return end
-    if GameTooltip:IsShown() and GameTooltip.RefreshData then GameTooltip:RefreshData() end
+    if not (shiftTooltip == GameTooltip and GameTooltip:IsShown() and GameTooltip.RefreshData) then return end
+    local owner = GameTooltip.GetOwner and GameTooltip:GetOwner()
+    if not owner or owner ~= shiftOwner then shiftTooltip = nil; return end
+    -- Still showing a scroll? (The same owner can show something else.)
+    local item = GameTooltip.GetItem and select(2, GameTooltip:GetItem())
+    if type(item) ~= "string" or (issecretvalue and issecretvalue(item)) then shiftTooltip = nil; return end
+    GameTooltip:RefreshData()
 end)

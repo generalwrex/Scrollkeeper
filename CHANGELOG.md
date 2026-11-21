@@ -2,6 +2,7 @@
 
 ## 1.2.3
 
+- Fixed: pressing Shift while a player or another addon's map pin (like Questie's) had its tooltip open could cause a Lua error. Shift now only redraws Scrollkeeper's own scroll tooltips.
 - Familiar pop-ups now only show in dungeons and raids (flight paths make your familiar vanish). Want them everywhere? Turn on "Familiar pop-ups outside dungeons and raids" in /sk options.
 - Fixed: Fellow Mages could show grayed-out mages from other rulesets (players on older versions who don't say their ruleset). Someone the online check can't reach and whose ruleset is unknown now leaves the list right away, and the offline history only shows mages from your own ruleset.
 
