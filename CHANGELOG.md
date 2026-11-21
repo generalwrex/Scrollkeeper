@@ -30,6 +30,7 @@
 - So much community data has come in that it's now stored packed: the shipped data is less than half the size.
 - Fixed: the panel's Skill, Ready, Cooldown and "none" labels stayed in English in other languages.
 - Doorways says it can be opened after combat, instead of the game blocking it.
+- Setup: sharing and language are set once for your whole account, so a new character (mage or not) doesn't ask again.
 - /sk export is gone: Fellow Mages already share everything over the network, so there's nothing to paste anymore. Thanks to everyone who sent theirs!
 
 ## 1.2.1

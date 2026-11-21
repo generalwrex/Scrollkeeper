@@ -949,3 +949,14 @@ do
   print("LIBRARIES Horde:", Names("Horde"), "| Alliance:", Names("Alliance"))
   UnitFactionGroup, SK.WorldToMap = realFaction, realPlace
 end
+
+-- Setup: sharing and language answered on a mage aren't asked again elsewhere.
+do
+  SK.db.setupSeenAccount = nil
+  SK.db.setupSeen = { sharing = 2, language = 1 }
+  SK.db.setupSeenOther = {}
+  local asked = {}
+  local realShow = SK.RefreshSetupPage
+  SK.ShowSetup(false, true)
+  print("SETUP account seen", SK.db.setupSeenAccount and SK.db.setupSeenAccount.sharing, SK.db.setupSeenAccount and SK.db.setupSeenAccount.language)
+end

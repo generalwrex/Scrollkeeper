@@ -55,7 +55,7 @@ local function BuildQuestions()
             { false, L["No"], L["Just the normal mailbox."], ICON .. "INV_Misc_QuestionMark" },
         } }
     end
-    list[#list + 1] = { key = "sharing", version = 2, question = L["How much should Scrollkeeper share?"],
+    list[#list + 1] = { key = "sharing", version = 2, account = true, question = L["How much should Scrollkeeper share?"],
         hint = L["Sharing is what powers community odds, drop spots, the swap board and the mailbox list. Only scroll data is sent."], options = {
         { "full", L["Full"], L["Share with every Scrollkeeper user online, with your name."], ICON .. "Spell_Holy_PrayerOfHealing02" },
         { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
@@ -68,7 +68,7 @@ local function BuildQuestions()
         languages[#languages + 1] = { language[1], auto and L["Auto (game language)"] or language[2],
             auto and L["Use the same language as the game."] or nil, ICON .. "INV_Misc_Book_11" }
     end
-    list[#list + 1] = { key = "language", question = L["Language"],
+    list[#list + 1] = { key = "language", account = true, question = L["Language"],
         hint = L["Spanish, French, German and Chinese were translated with AI, so fixes are welcome on GitHub."], options = languages }
     return list
 end
@@ -99,15 +99,30 @@ local function Seen()
     return SK.db[field]
 end
 
+-- Sharing and language are one setting for the whole account: answered
+-- once (on any character, mage or not), never asked again elsewhere.
+local function SeenAccount()
+    SK.db.setupSeenAccount = SK.db.setupSeenAccount or {}
+    local seen = SK.db.setupSeenAccount
+    -- Answered before this was account-wide: on either kind of character.
+    for _, field in ipairs({ "setupSeen", "setupSeenOther" }) do
+        for key, version in pairs(SK.db[field] or {}) do
+            if (key == "sharing" or key == "language") and (seen[key] or 0) < version then seen[key] = version end
+        end
+    end
+    return seen
+end
+
+local function SeenFor(q) return q.account and SeenAccount() or Seen() end
+
 local function MarkSeen(list)
-    local seen = Seen()
-    for _, q in ipairs(list) do seen[q.key] = q.version or 1 end
+    for _, q in ipairs(list) do SeenFor(q)[q.key] = q.version or 1 end
 end
 
 local function Unseen(list)
-    local seen, out = Seen(), {}
+    local out = {}
     for _, q in ipairs(list) do
-        if (seen[q.key] or 0) < (q.version or 1) then out[#out + 1] = q end
+        if (SeenFor(q)[q.key] or 0) < (q.version or 1) then out[#out + 1] = q end
     end
     return out
 end
@@ -335,13 +350,22 @@ function SK.RefreshSetupPage()
 end
 
 -- onlyNew: just the questions this character hasn't answered yet.
-function SK.ShowSetup(onlyNew)
+-- skipAccount: leave out account-wide questions (sharing, language)
+-- already answered on another character (the first-login setup).
+function SK.ShowSetup(onlyNew, skipAccount)
     if SK.InCombat() then
         SK.Print(L["the setup can be opened after combat."])
         return
     end
     questions = BuildQuestions()
     if onlyNew then questions = Unseen(questions) end
+    if skipAccount then
+        local kept = {}
+        for _, q in ipairs(questions) do
+            if not (q.account and (SeenAccount()[q.key] or 0) >= (q.version or 1)) then kept[#kept + 1] = q end
+        end
+        questions = kept
+    end
     if #questions == 0 then return end
     page, answers = 1, {}
     if not window then Build() end
@@ -364,7 +388,7 @@ SK.Listen("READY", function()
     if SK.db[doneKey] and #Unseen(BuildQuestions()) == 0 then return end
     C_Timer.After(4, function()
         if SK.InCombat() then return end
-        if not SK.db[doneKey] then SK.ShowSetup()
+        if not SK.db[doneKey] then SK.ShowSetup(false, true)
         elseif #Unseen(BuildQuestions()) > 0 then SK.ShowSetup(true) end
     end)
 end)
