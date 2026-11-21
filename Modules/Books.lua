@@ -203,6 +203,10 @@ SK.On("CHAT_MSG_LOOT", function(message)
     SK.db.bookDrops[mapID][cell] = (SK.db.bookDrops[mapID][cell] or 0) + 1
     SK.db.bookNames = SK.db.bookNames or {}
     SK.db.bookNames[mapID .. ":" .. cell] = name
+    -- Which book (by item ID, the same in every language), to share.
+    SK.db.bookItems = SK.db.bookItems or {}
+    SK.db.bookItems[mapID] = SK.db.bookItems[mapID] or {}
+    SK.db.bookItems[mapID][cell] = itemID
     SK.Send("DROPS_CHANGED")
     SK.Send("MY_DATA_CHANGED")
 end)

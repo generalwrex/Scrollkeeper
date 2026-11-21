@@ -205,6 +205,7 @@ end
 ------------------------------------------------------------------------
 
 local provider
+local waitingBooks = {}   -- book item IDs whose names the game is still loading
 
 local function CreateProvider()
     provider = CreateFromMixins(MapCanvasDataProviderMixin)
@@ -233,9 +234,14 @@ local function CreateProvider()
             -- so it's one pin where it was found most, no circle, no count.
             if kind == "book" then
                 local x, y = SK.CellCenter(best.cell)
+                -- Its name from whichever spot of the group knows it.
+                local name = nameFor and nameFor(best.cell)
+                for _, spot in ipairs(group) do
+                    if name then break end
+                    name = nameFor and nameFor(spot.cell)
+                end
                 if x then
-                    map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others,
-                        name = nameFor and nameFor(best.cell) })
+                    map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others, name = name })
                 end
                 group = {}
             end
@@ -291,7 +297,15 @@ local function CreateProvider()
 
         self:DrawSpots(SK.DropCells(mapID), "drop", { 1, 0.82, 0 })
         self:DrawSpots(SK.DropCells(mapID, "books"), "book", { 1, 0.3, 0.3 }, function(cell)
-            return SK.db.bookNames and SK.db.bookNames[mapID .. ":" .. cell]
+            -- Which book: by its item ID (anyone's find, in your language),
+            -- else the name you saw when you looted it.
+            local itemID = SK.BookAt and SK.BookAt(mapID, cell)
+            local name = itemID and C_Item and SK.Try(C_Item.GetItemNameByID, itemID)
+            if itemID and not name and C_Item and C_Item.RequestLoadItemDataByID then
+                waitingBooks[itemID] = true
+                SK.Try(C_Item.RequestLoadItemDataByID, itemID)
+            end
+            return name or (SK.db.bookNames and SK.db.bookNames[mapID .. ":" .. cell])
         end)
         for _, library in ipairs(SK.LibraryPins(mapID)) do
             library.kind = "library"
@@ -327,5 +341,12 @@ end)
 
 -- Redraw when the data or the setting changes.
 SK.Listen("DROPS_CHANGED", function()
+    if provider and WorldMapFrame and WorldMapFrame:IsShown() then provider:RefreshAllData() end
+end)
+
+-- A book's name finished loading: redraw so its pin says which book.
+SK.On("GET_ITEM_INFO_RECEIVED", function(itemID)
+    if not (itemID and waitingBooks[itemID]) then return end
+    waitingBooks[itemID] = nil
     if provider and WorldMapFrame and WorldMapFrame:IsShown() then provider:RefreshAllData() end
 end)

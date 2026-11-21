@@ -8,6 +8,7 @@
 --   K|mapID#part|cell:count,...      where you've looted books for the librarians
 --   D|mapID#part|tier:count,...      untranslated scrolls looted per zone, by tier (1.1.5)
 --   I|0#part|itemID,...              item IDs you've learned are books
+--   J|mapID#part|cell:itemID,...     which book was found at each book spot (1.2.2)
 --   W|instance|x|y|name              a library spot as a world position
 --
 -- Each player's totals REPLACE their previous ones, so hearing the same
@@ -36,6 +37,7 @@ local function Entry(sender)
     end
     entry.books = entry.books or {}
     entry.dropTiers = entry.dropTiers or {}
+    entry.bookItems = entry.bookItems or {}
     entry.at = time()
     local peer = SK.peers and SK.peers[sender]
     if peer and peer.exportID then entry.exportID = peer.exportID end
@@ -104,6 +106,17 @@ Net.Handle("K", function(sender, f)
     for cell, count in (f[2] or ""):gmatch("(%d+%.%d+):(%d+)") do
         count = tonumber(count)
         if count > 0 and count <= MAX_COUNT and SK.CellCenter(cell) then cells[cell] = count end
+    end
+    SK.Send("DROPS_CHANGED")
+end)
+
+Net.Handle("J", function(sender, f)
+    local mapID, part = Head(f[1])
+    if not (mapID and part) then return end
+    local cells = Target(Entry(sender).bookItems, mapID, part)
+    for cell, itemID in (f[2] or ""):gmatch("(%d+%.%d+):(%d+)") do
+        itemID = tonumber(itemID)
+        if itemID and itemID > 0 and SK.CellCenter(cell) then cells[cell] = itemID end
     end
     SK.Send("DROPS_CHANGED")
 end)
@@ -238,6 +251,21 @@ function SK.DropCells(mapID, kind)
     return cells
 end
 
+-- Which book sits at a book spot: its item ID, from your finds or anyone's
+-- (shared, or shipped with the addon). nil if nobody said.
+function SK.BookAt(mapID, cell)
+    local mine = SK.db.bookItems and SK.db.bookItems[mapID]
+    if mine and mine[cell] then return mine[cell] end
+    for _, entry in pairs(SK.db.community or {}) do
+        local cells = entry.bookItems and entry.bookItems[mapID]
+        if cells and cells[cell] then return cells[cell] end
+    end
+    for _, entry in ipairs(SK.ShippedCommunity()) do
+        local cells = entry.bookItems and entry.bookItems[mapID]
+        if cells and cells[cell] then return cells[cell] end
+    end
+end
+
 -- Libraries to pin on a map: list of { x, y, name, mine, known, count }.
 -- Library spots are kept as world positions and placed on whichever
 -- map is open (city, zone or continent).
@@ -328,6 +356,11 @@ function SK.SendMyData()
         local items = {}
         for tier, count in pairs(tiers) do items[#items + 1] = tier .. ":" .. count end
         if #items > 0 then Net.SendList("D", mapID, items) end
+    end
+    for mapID, cells in pairs(db.bookItems or {}) do
+        local items = {}
+        for cell, itemID in pairs(cells) do items[#items + 1] = cell .. ":" .. itemID end
+        if #items > 0 then Net.SendList("J", mapID, items) end
     end
     local backfires = {}
     for tier, seen in pairs(db.backfires or {}) do

@@ -17,6 +17,7 @@
 --   U|tier|color:ups/tries,...       skill-ups by color at that tier
 --   P|mapID|cell:count,...           untranslated scroll drops
 --   K|mapID|cell:count,...           book drops
+--   J|mapID|cell:itemID,...          which book was at each book spot
 --   D|mapID|tier:count,...           untranslated scroll drops by tier, per zone (1.1.5)
 --   I|itemID,...                     items learned as books
 --   B|tier:backfires/tries,...       how often Comprehend Scroll backfired
@@ -214,6 +215,9 @@ function SK.ExportText()
     for mapID, tiers in pairs(db.dropTiers or {}) do
         if next(tiers) then Add("D", mapID, Pairs(tiers)) end
     end
+    for mapID, cells in pairs(db.bookItems or {}) do
+        if next(cells) then Add("J", mapID, Pairs(cells)) end
+    end
 
     local books = {}
     for id, name in pairs(db.bookIDs or {}) do
@@ -263,6 +267,9 @@ function SK.ExportText()
             end
             for mapID, tiers in pairs(entry.dropTiers or {}) do
                 if next(tiers) then Put("D", mapID, Pairs(tiers)) end
+            end
+            for mapID, cells in pairs(entry.bookItems or {}) do
+                if next(cells) then Put("J", mapID, Pairs(cells)) end
             end
             local theirs = Backfires(entry.backfires)
             if theirs then Put("B", theirs) end

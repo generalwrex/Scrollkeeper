@@ -11,6 +11,7 @@
 --   D|mapID|tier:count,...             drops by tier
 --   B|tier:backfires/tries,...         sheep backfires
 --   I|itemID,...                       book item IDs
+--   J|mapID|cell:itemID,...            which book was at each book spot
 --   N|itemID|name                      English item names
 
 local _, SK = ...
@@ -43,7 +44,7 @@ local function Parse(text)
     local data, player = {}, nil
     for line in text:gmatch("[^\n]+") do
         if line:sub(1, 1) == "@" then
-            player = { results = {}, skillups = {}, drops = {}, books = {}, dropTiers = {}, backfires = {}, bookIDs = {}, names = {} }
+            player = { results = {}, skillups = {}, drops = {}, books = {}, dropTiers = {}, backfires = {}, bookIDs = {}, names = {}, bookItems = {} }
             data[line:sub(2)] = player
         elseif player then
             local kind, a, b = line:match("^(%a)|([^|]*)|?(.*)$")
@@ -59,6 +60,10 @@ local function Parse(text)
                 local cells = {}
                 for cell, count in b:gmatch("([%d%.]+):(%d+)") do cells[cell] = tonumber(count) end
                 player[kind == "P" and "drops" or "books"][tonumber(a)] = cells
+            elseif kind == "J" then
+                local cells = {}
+                for cell, id in b:gmatch("([%d%.]+):(%d+)") do cells[cell] = tonumber(id) end
+                player.bookItems[tonumber(a)] = cells
             elseif kind == "D" then
                 local tiers = {}
                 for tier, count in b:gmatch("(%d+):(%d+)") do tiers[tonumber(tier)] = tonumber(count) end
