@@ -46,7 +46,8 @@ local function MyUpgrades()
     local held = {}
     for _, upgrade in ipairs(SK.WEAPON_UPGRADES) do
         for _, scroll in ipairs(SK.bags.translated) do
-            if scroll.name == upgrade.scroll then held[#held + 1] = upgrade.short end
+            local english = SK.EnglishScrollName and SK.EnglishScrollName(scroll.itemID) or scroll.name
+            if english == upgrade.scroll or scroll.name == upgrade.scroll then held[#held + 1] = upgrade.short end
         end
     end
     return table.concat(held, ".")

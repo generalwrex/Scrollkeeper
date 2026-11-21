@@ -131,7 +131,12 @@ end
 -- { upgrade, hasScroll, hasWeapon, ready }
 function SK.UpgradeStatus()
     local bagNames = {}
-    for _, name in pairs(SK.bags.names or {}) do bagNames[name] = true end
+    -- By English name too, so it works in every language.
+    for id, name in pairs(SK.bags.names or {}) do
+        bagNames[name] = true
+        local english = SK.EnglishScrollName and SK.EnglishScrollName(id)
+        if english then bagNames[english] = true end
+    end
     for name in pairs(EquippedNames()) do bagNames[name] = true end
 
     local list = {}
@@ -179,7 +184,7 @@ function SK.Reminders()
     local skill = SK.GetComprehension()
     local hasBoost = false
     for _, scroll in ipairs(SK.bags.translated) do
-        if scroll.name == "Scroll of Comprehension" then hasBoost = true end
+        if scroll.itemID == 215257 or scroll.name == "Scroll of Comprehension" then hasBoost = true end
     end
     if hasBoost and skill.bonus == 0 then
         local unlocked = 0
