@@ -855,7 +855,9 @@ do
     provider.GetMap = function() return map end
     SK.db.mapPins = true
     SK.db.drops = { [1429] = { ["10.10"] = 2, ["11.10"] = 3, ["12.11"] = 1, ["40.40"] = 1 } }
-    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1, ["32.35"] = 2 } }
+    SK.db.bookDrops = { [1429] = { ["20.20"] = 3, ["21.20"] = 1, ["21.21"] = 1, ["32.35"] = 2, ["10.40"] = 1 } }
+    -- A find named after a listed book but far from its spot: hidden.
+    SK.db.bookNames = { ["1429:10.40"] = "Archmage Theocritus' Research Journal" }
     local ok, err = pcall(provider.DrawPins, provider)
     local areas, pins, books = 0, 0, 0
     for _, a in ipairs(acquired) do

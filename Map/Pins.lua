@@ -216,6 +216,16 @@ end
 local provider
 local waitingBooks = {}   -- book item IDs whose names the game is still loading
 
+-- Is this one of the books on the list (Data/BookSpots.lua)?
+local listedNames
+local function ListedName(name)
+    if not listedNames then
+        listedNames = {}
+        for _, spot in ipairs(SK.BOOK_SPOTS or {}) do listedNames[spot.name:lower()] = true end
+    end
+    return type(name) == "string" and listedNames[name:lower()] or false
+end
+
 local function CreateProvider()
     provider = CreateFromMixins(MapCanvasDataProviderMixin)
 
@@ -254,10 +264,13 @@ local function CreateProvider()
                 for _, listed in ipairs(self.listedBooks or {}) do
                     if x and math.abs(listed.x - x) <= 0.03 and math.abs(listed.y - y) <= 0.03 then known = listed break end
                 end
+                -- Named after a book on the list but far from its spot: that
+                -- report is wrong (the book is where the list says), so skip it.
+                local wrong = not known and name and ListedName(name)
                 if known then
                     known.mine, known.others = known.mine + mine, known.others + others
                     known.foundName = known.foundName or name
-                elseif x then
+                elseif x and not wrong then
                     map:AcquirePin(TEMPLATE, { kind = kind, x = x, y = y, mine = mine, others = others, name = name,
                         stale = SK.BOOK_SPOTS ~= nil })
                 end
