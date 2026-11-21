@@ -543,12 +543,16 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                     needs = "|cff808080" .. L["not learned yet"] .. "|r  ·  " .. needs
                 end
                 local upgrade = #peer.upgrades > 0 and ("  ·  |cffa335ee" .. table.concat(peer.upgrades, ", ") .. "|r") or ""
-                local on = ""
+                local on, nameColor = "", CLASS_COLOR
                 if peer.altName then
                     local className = (LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[entry.onClass]) or entry.onClass or ""
-                    on = "  |cff808080" .. L["on %s"]:format(className) .. "|r"
+                    -- Playing another class: their name and "on Warrior" in that class's color.
+                    local color = RAID_CLASS_COLORS and RAID_CLASS_COLORS[entry.onClass]
+                    local colorStr = type(color) == "table" and type(color.colorStr) == "string" and color.colorStr
+                    if colorStr then nameColor = "|c" .. colorStr end
+                    on = "  " .. (peer.offline and "|cff808080" or nameColor) .. L["on %s"]:format(className) .. "|r"
                 end
-                row.label:SetText((peer.offline and "|cff808080" or CLASS_COLOR) .. entry.name .. "|r" .. on)
+                row.label:SetText((peer.offline and "|cff808080" or nameColor) .. entry.name .. "|r" .. on)
                 local who = peer.altName and (L["mage %s"]:format(peer.altName) .. "  ·  ") or ""
                 row.sub:SetText(who .. L["|cffffd100%d|r skill"]:format(peer.skill or 0) .. "  ·  " .. needs .. upgrade)
             end

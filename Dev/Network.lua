@@ -40,6 +40,12 @@ end
 -- Colors for the window (the export strips them).
 local GOLD, GREY, WHITE, GREEN, RED, BLUE, ORANGE = "ffd100", "9d9d9d", "ffffff", "40ff40", "ff5555", "66bbff", "ff9933"
 local function C(color, text) return "|cff" .. color .. tostring(text) .. "|r" end
+-- A class's color as 6 hex digits (white if unknown).
+local function ClassHex(class)
+    local color = RAID_CLASS_COLORS and class and RAID_CLASS_COLORS[class]
+    local str = type(color) == "table" and type(color.colorStr) == "string" and color.colorStr
+    return str and str:sub(-6) or "ffffff"
+end
 local function Label(text, value) return C(GREY, text .. ": ") .. C(WHITE, value) end
 
 -- Newer first: "1.2.1" > "1.2.0" > "1.1.4"; "dev" last.
@@ -171,7 +177,7 @@ function SK.NetReport()
         Add(C(color, "* " .. name) .. "  " .. C(color, why))
         Add("     " .. C(GREY, ("%d msgs, last %s ago (%s via %s)"):format(heard.count or 0, Ago(heard.last), tostring(heard.kind), tostring(heard.source)))
             .. "   " .. C(versionColor, "v" .. tostring(peer and peer.version or "?"))
-            .. "  " .. C(WHITE, ("%s lvl %s skill %s"):format(tostring(peer and peer.class), tostring(peer and peer.level), tostring(peer and peer.skill)))
+            .. "  " .. C(ClassHex(peer and peer.class), ("%s lvl %s skill %s"):format(tostring(peer and peer.class), tostring(peer and peer.level), tostring(peer and peer.skill)))
             .. "  " .. C(GREY, ("ruleset %s  realm %s  %s %s"):format(tostring(peer and peer.ruleset or "-"), realm ~= "" and realm or "-", race, faction))
             .. (peer and peer.offline and C(GREY, "  (offline)") or "") .. (peer and peer.alt and C(BLUE, "  alt mage " .. peer.alt.name) or ""))
     end
