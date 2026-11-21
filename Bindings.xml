@@ -1,6 +1,8 @@
 <!-- Scrollkeeper key bindings (Options > Key Bindings > AddOns > Scrollkeeper).
-     Each one clicks a secure button made in UI/Unlock.lua: addon code can't
+     Each one clicks a secure button made in UI/Unlock.lua or UI/Renew.lua: addon code can't
      use items itself, but a key that clicks a secure button can. -->
 <Bindings>
     <Binding name="CLICK ScrollkeeperUnlockButton:LeftButton" header="SCROLLKEEPER" category="ADDONS"/>
+    <Binding name="CLICK ScrollkeeperImbueButton:LeftButton" category="ADDONS"/>
+    <Binding name="CLICK ScrollkeeperFamiliarButton:LeftButton" category="ADDONS"/>
 </Bindings>

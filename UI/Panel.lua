@@ -97,6 +97,7 @@ local function SetScrollUse(button, itemID, imbue)
         button:SetAttribute("macrotext", nil)
     end
 end
+SK.SetScrollUse = SetScrollUse   -- the toast and key bindings use it too (UI/Renew.lua)
 
 -- A small square button drawn with one of the game's button icons.
 local function IconButton(texture, size, tooltip, onClick)

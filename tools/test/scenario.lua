@@ -992,3 +992,9 @@ end
 
 -- Reminder pop-ups in combat only when asked for.
 print("REMINDER in combat default", SK.db.reminderInCombat)
+
+-- Renew keys: pointed at the best imbue and familiar scrolls.
+do
+  if SK.PointRenewButtons then SK.PointRenewButtons() end
+  print("RENEW imbue", ScrollkeeperImbueButton and ScrollkeeperImbueButton.itemID, "familiar", ScrollkeeperFamiliarButton and ScrollkeeperFamiliarButton.itemID)
+end

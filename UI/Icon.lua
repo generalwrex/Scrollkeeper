@@ -183,10 +183,12 @@ SK.Listen("STUDY_CHANGED", SK.RefreshIcon)
 ------------------------------------------------------------------------
 -- A small pop-up near the top of the screen when your weapon imbue or
 -- familiar drops off and you have a scroll for it. Mages only.
---   Left-click: open the panel (the Imbue / Familiar buttons are there).
---   Right-click: close it.
--- Never in combat or while dead, and the same reminder waits at least
--- five minutes before it can pop up again. Setting: reminderToast.
+--   Left-click: use the scroll (imbue or familiar), right there.
+--   Right-click: close it.  Shift-right-click: turn these off.
+-- In combat only with the "in combat too" setting, and then it can't use
+-- the scroll (the game blocks addons from showing a clickable "use"
+-- button mid-fight): it names your key binding instead (UI/Renew.lua).
+-- The same reminder waits at least five minutes before popping up again.
 ------------------------------------------------------------------------
 
 do
@@ -194,16 +196,33 @@ do
     local FADE_SECONDS = 1.5
     local REPEAT_SECONDS = 300
 
-    local toast
+    local toast              -- the one showing now (secureToast or plainToast)
+    local secureToast, plainToast
     local lastShown = {}     -- kind -> GetTime() it was last shown
 
-    local function Build()
-        toast = CreateFrame("Button", "ScrollkeeperToast", UIParent, "BackdropTemplate")
+    -- Hide it, unless that's not allowed right now (a secure one in combat:
+    -- then it just goes invisible and really hides after the fight).
+    local function HideToast(frame)
+        if not frame then return end
+        if frame.secure and InCombatLockdown and InCombatLockdown() then
+            frame:SetAlpha(0)
+            frame.hideAfterCombat = true
+            return
+        end
+        frame:Hide()
+    end
+
+    local function Build(secure)
+        local toast = CreateFrame("Button", secure and "ScrollkeeperToast" or "ScrollkeeperToastPlain", UIParent,
+            secure and "SecureActionButtonTemplate,BackdropTemplate" or "BackdropTemplate")
+        toast.secure = secure
         toast:SetSize(300, 58)   -- height grows to fit the text (see Fit)
         toast:SetPoint("TOP", UIParent, "TOP", 0, -150)
         toast:SetFrameStrata("HIGH")
         toast:SetClampedToScreen(true)
         toast:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        -- Right-click never uses the scroll.
+        if secure then toast:SetAttribute("type2", "none") end
         if toast.SetBackdrop then
             toast:SetBackdrop({
                 bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
@@ -239,8 +258,9 @@ do
             self:SetHeight(math.max(58, textHeight + 20))
         end
 
-        toast:SetScript("OnClick", function(self, button)
-            self:Hide()
+        -- (HookScript: the secure template's own click uses the scroll first.)
+        toast:HookScript("OnClick", function(self, button)
+            HideToast(self)
             -- Shift-right-click: turn these reminders off (same as the setting).
             if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() and self.expiring then
                 SK.db.expiringReminder = false
@@ -252,7 +272,8 @@ do
                 SK.Print(L["imbue and familiar pop-ups are off. Turn them back on in /sk options (Panel)."])
                 return
             end
-            if button == "LeftButton" and SK.TogglePanel and not SK.InCombat()
+            -- The plain (in-combat) one can't use anything: open the panel after.
+            if button == "LeftButton" and not self.secure and SK.TogglePanel and not SK.InCombat()
                 and not (ScrollkeeperPanel and ScrollkeeperPanel:IsShown()) then
                 SK.TogglePanel()
             end
@@ -263,12 +284,39 @@ do
         toast:SetScript("OnUpdate", function(self, elapsed)
             self.age = (self.age or 0) + elapsed
             if self.age > SHOW_SECONDS + FADE_SECONDS then
-                self:Hide()
+                HideToast(self)
             elseif self.age > SHOW_SECONDS then
                 self:SetAlpha(1 - (self.age - SHOW_SECONDS) / FADE_SECONDS)
             end
         end)
         toast:Hide()
+        return toast
+    end
+
+    -- The toast to use now: the clickable one, or in combat the plain one.
+    -- scroll + imbue: what a left-click on the clickable one uses.
+    local function Take(scroll, imbue)
+        local inCombat = InCombatLockdown and InCombatLockdown()
+        if toast and toast:IsShown() then HideToast(toast) end
+        if inCombat then
+            plainToast = plainToast or Build(false)
+            toast = plainToast
+        else
+            secureToast = secureToast or Build(true)
+            toast = secureToast
+            if SK.SetScrollUse then SK.SetScrollUse(toast, scroll and scroll.itemID, imbue) end
+            toast:SetAttribute("type2", "none")
+            toast.hideAfterCombat = nil
+        end
+        return toast
+    end
+
+    -- The hint line: what clicking does (or, in combat, your key).
+    local function Hint(kind)
+        if toast.secure then return L["Click: use it  ·  Right-click: close  ·  Shift-right-click: off"] end
+        local key = SK.RenewKey and SK.RenewKey(kind)
+        if key then return L["In combat: press %s to use it."]:format(key) end
+        return L["In combat: set a key in Key Bindings > Scrollkeeper to use it mid-fight."]
     end
 
     -- Which reminders apply right now: { imbue = scroll or nil, familiar = scroll or nil }
@@ -284,7 +332,7 @@ do
         local imbue, familiar = Missing()
 
         -- Fixed it? Then the pop-up goes away by itself.
-        if toast and toast:IsShown() and not imbue and not familiar then toast:Hide() end
+        if toast and toast:IsShown() and not imbue and not familiar then HideToast(toast) end
 
         -- In combat only if you asked for it (it can run out mid-fight).
         if not SK.db.reminderToast or (SK.InCombat() and not SK.db.reminderInCombat) then return end
@@ -298,7 +346,8 @@ do
         if imbue then lastShown.imbue = now end
         if familiar then lastShown.familiar = now end
 
-        if not toast then Build() end
+        -- A click summons the familiar first (then the imbue pop-up comes next).
+        Take(familiar or imbue, not familiar)
         local title
         if imbue and familiar then
             title = L["No weapon imbue and no familiar out"]
@@ -308,7 +357,7 @@ do
             title = L["No familiar out"]
         end
         toast.title:SetText(title)
-        toast.hint:SetText(L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"])
+        toast.hint:SetText(Hint(familiar and "familiar" or "imbue"))
         toast.expiring = nil
 
         local scroll = familiar or imbue
@@ -353,7 +402,8 @@ do
         if #due == 0 then return end
         for _, entry in ipairs(due) do warned[entry.kind] = true end
 
-        if not toast then Build() end
+        local pick = due[#due]
+        Take(pick.scroll, pick.kind == "imbue")
         local function Minutes(seconds) return math.max(1, math.ceil(seconds / 60)) end
         local title
         if #due == 2 then
@@ -364,7 +414,7 @@ do
             title = L["Familiar runs out in %d min"]:format(Minutes(due[1].seconds))
         end
         toast.title:SetText(title)
-        toast.hint:SetText(L["Click: panel  ·  Right-click: close  ·  Shift-right-click: off"])
+        toast.hint:SetText(Hint(pick.kind))
         toast.expiring = true
         local scroll = due[#due].scroll
         local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)
@@ -380,7 +430,13 @@ do
     end)
 
     SK.Listen("REMINDERS_CHANGED", UpdateSoon)
-    SK.On("PLAYER_REGEN_ENABLED", UpdateSoon)
+    SK.On("PLAYER_REGEN_ENABLED", function()
+        if secureToast and secureToast.hideAfterCombat then
+            secureToast.hideAfterCombat = nil
+            secureToast:Hide()
+        end
+        UpdateSoon()
+    end)
     SK.On("PLAYER_UNGHOST", UpdateSoon)
     SK.On("PLAYER_ALIVE", UpdateSoon)
 end
