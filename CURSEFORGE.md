@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.2.1):** big network fix! With 150+ Scrollkeeper users online, every login set off thousands of messages and the game throttled almost all of them, so you'd only see 2 or 3 fellow mages. Now "I'm online" goes first and everyone stays under the game's limit. Update so the whole network can hear you!
+**Latest (1.2.2):** the **Codex** (`/sk codex`): every mage scroll and what it does, plus all 40 library books with waypoints. A much smarter map: scroll tiers per spot, every book, open doors, a tier filter. Click the imbue/familiar reminder to use the scroll, or bind a key that works mid-fight. Now on Wago and WowUp too!
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 
@@ -65,6 +65,7 @@ Titan Panel and ElvUI data bars, Auctionator, TSM, and Zygor or TomTom waypoint 
 *   `/sk mail` who could use your spare scrolls
 *   `/sk swap` the scroll swap board
 *   `/sk doors` Doorways: get somewhere with Scroll of Liminal Passage
+*   `/sk codex` the Codex: every scroll and all 40 library books
 *   `/sk plan` your farming plan
 *   `/sk log` your luck log (`/sk logchat` prints it in chat)
 *   `/sk scan` scan the auction house for scroll prices
