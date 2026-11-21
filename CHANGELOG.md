@@ -12,6 +12,7 @@
 - Farming plan: with Zygor or TomTom, each zone in Where to farm gets an Arrow button that points you at the spot where the most scrolls dropped.
 - Map: scroll (and book) spots close together are grouped into one shaded circle with the total in the middle, instead of a pile of little pins.
 - Map: a book for the librarians shows as one book (it sits in one place), not a count of how often it was found. Spots right next to each other are that same book.
+- Map: scroll and book spots are smaller, scrolls use the untranslated scroll's own icon, and there's a Map pin size setting (Options > Map).
 - Fixed: on Forever, a few places used only your first name: Doorways could list you as someone to whisper, the mail note was signed with your first name, and {me} in a custom whisper was short.
 - Fixed (non-English clients): the "a Scroll of Comprehension would let you read more" hint and weapon-upgrade scrolls (Saber, Blade, Wit) weren't recognized.
 - Less network traffic: when a guildie or group member logs in, your data goes only to your guild or group, not to the whole public channel too. Friends are pinged at most every 2 minutes.

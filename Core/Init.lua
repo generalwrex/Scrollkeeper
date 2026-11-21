@@ -206,6 +206,7 @@ local DEFAULTS = {
     shareChannel = true,     -- also use the public Scrollkeeper channel
     anonymous = false,       -- share without showing your name in other players' lists
     mapPins = true,          -- show libraries and scroll drop spots on the world map
+    mapPinScale = 1,         -- size of the scroll and book spots on the map
     locked = false,          -- stop the panel from being dragged
     viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
     scale = 1,               -- panel size

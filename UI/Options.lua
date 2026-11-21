@@ -354,8 +354,22 @@ SK.Listen("READY", function()
 
         -- Map ------------------------------------------------------------------
         AddHeader(L["Map"])
-        AddCheckbox("mapPins", L["Map pins"],
+        local mapPins = AddCheckbox("mapPins", L["Map pins"],
             L["Show libraries and the spots where untranslated scrolls dropped on the world map."], true)
+        SK.Safely("settings pin size", function()
+            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_mapPinScale", "mapPinScale", SK.db,
+                "number", L["Map pin size"], 1)
+            setting:SetValueChangedCallback(function() SK.Send("DROPS_CHANGED") end)
+            local options = Settings.CreateSliderOptions(0.5, 2, 0.1)
+            if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
+                options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+                    return ("%d%%"):format(value * 100 + 0.5)
+                end)
+            end
+            local slider = Settings.CreateSlider(category, setting, options,
+                L["How big the scroll and book spots are on the map (libraries keep their size)."])
+            if slider and DependsOn then DependsOn(slider, mapPins, "mapPins") end
+        end)
 
         SK.Safely("settings backup", AddBackupPage)
         SK.Safely("settings about", AddAboutPage)

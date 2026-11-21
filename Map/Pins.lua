@@ -41,8 +41,10 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
         local total = data.mine + data.others
         local book = data.kind == "book"
         -- A book is one book however often it was found: no number on it.
-        local size = book and 18 or math.min(24, 12 + total * 2)
-        self.Icon:SetTexture(book and ICON_BOOK or ICON_SCROLL)
+        -- Kept small so they don't cover the map.
+        local size = (book and 13 or math.min(16, 10 + total)) * (tonumber(SK.db and SK.db.mapPinScale) or 1)
+        -- Scrolls look like the untranslated scroll in your bags.
+        self.Icon:SetTexture(book and ICON_BOOK or (SK.db and SK.db.untranslatedIcon) or ICON_SCROLL)
         self:SetSize(size, size)
         self.Count:SetText((not book and total > 1) and total or "")
         -- Spots only others reported are a little faded.

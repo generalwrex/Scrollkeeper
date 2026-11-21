@@ -178,6 +178,8 @@ L["Show a Scan scrolls button on the auction house. Prices you see are saved for
 L["Chat notes"] = "聊天备注"
 L["When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages."] = "有人在聊天里链接卷轴并问谁需要时，加一条只有你能看到的备注：对你或你的法师是否能提升技能。"
 L["Map pins"] = "地图标记"
+L["Map pin size"] = "地图标记大小"
+L["How big the scroll and book spots are on the map (libraries keep their size)."] = "地图上卷轴和书本地点的大小（图书馆不变）。"
 L["Show libraries and the spots where untranslated scrolls dropped on the world map."] = "在世界地图上显示图书馆和未翻译卷轴的掉落点。"
 L["Panel view"] = "面板视图"
 L["Simple"] = "简单"

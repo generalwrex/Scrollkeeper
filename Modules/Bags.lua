@@ -140,6 +140,10 @@ function SK.ScanBags()
                 elseif IsScrollItem(id) then
                     local needs, mageOnly, level, imbueFor = ReadSlotTooltip(bag, slot)
                     if needs then
+                        -- Remember what an untranslated scroll looks like (for the map pins).
+                        if SK.db and item.iconFileID and SK.db.untranslatedIcon ~= item.iconFileID then
+                            SK.db.untranslatedIcon = item.iconFileID
+                        end
                         table.insert(found.untranslated, {
                             bag = bag, slot = slot, itemID = id, name = name, needs = needs,
                         })

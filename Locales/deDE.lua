@@ -180,6 +180,8 @@ L["Show a Scan scrolls button on the auction house. Prices you see are saved for
 L["Chat notes"] = "Chat-Hinweise"
 L["When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages."] = "Wenn jemand eine Schriftrolle im Chat verlinkt und fragt, wer sie braucht, bekommst nur du einen Hinweis: bringt sie dir oder deinen Magiern einen Aufstieg."
 L["Map pins"] = "Kartenmarkierungen"
+L["Map pin size"] = "Größe der Kartenmarkierungen"
+L["How big the scroll and book spots are on the map (libraries keep their size)."] = "Wie groß die Schriftrollen- und Buchstellen auf der Karte sind (Bibliotheken behalten ihre Größe)."
 L["Show libraries and the spots where untranslated scrolls dropped on the world map."] = "Zeigt Bibliotheken und die Orte, an denen unübersetzte Schriftrollen gedroppt sind, auf der Weltkarte."
 L["Panel view"] = "Fensteransicht"
 L["Simple"] = "Einfach"
