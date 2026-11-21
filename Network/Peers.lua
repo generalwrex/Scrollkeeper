@@ -105,8 +105,13 @@ end
 
 -- Friends who aren't in your guild or group: ask each online friend
 -- directly. Only ones running Scrollkeeper answer.
+-- At most once every 2 minutes (it runs on login, every 10 minutes and
+-- at every mailbox visit; each whisper spends the sending budget).
+local lastPingAt = 0
 local function PingFriends()
     if not (C_FriendList and C_FriendList.GetNumFriends and C_FriendList.GetFriendInfoByIndex) then return end
+    if time() - lastPingAt < 120 then return end
+    lastPingAt = time()
     for i = 1, C_FriendList.GetNumFriends() or 0 do
         local friend = C_FriendList.GetFriendInfoByIndex(i)
         if friend and friend.connected and friend.name then Net.Whisper(friend.name, "Q") end
@@ -598,4 +603,5 @@ SK.Listen("NET_READY", function()
     C_Timer.NewTicker(5 * 60, SK.SendHello)
 end)
 SK.Listen("SKILL_CHANGED", HelloSoon)
+SK.On("PLAYER_LEVEL_UP", HelloSoon)
 SK.On("GROUP_JOINED", function() Net.Send("Q") HelloSoon() end)

@@ -71,8 +71,10 @@ end
 
 function Net.IsMe(sender)
     if mySenderNames[sender] then return true end
+    -- (On Forever UnitName gives only the first name: check the full one too.)
     local mine = UnitName("player")
-    return sender == mine or sender == Net.MyName()
+    local full = SK.PlayerFullName and SK.PlayerFullName()
+    return sender == mine or sender == full or sender == Net.MyName()
 end
 
 ------------------------------------------------------------------------
@@ -182,17 +184,19 @@ function Net.Send(kind, ...)
     end
     -- Replace an older queued message of the same kind and first field,
     -- so a burst of updates becomes one message.
-    local key = kind .. "|" .. tostring((select(1, ...)) or "")
+    -- Net.onlyTo (set around a call) sends just to one place, e.g. "GUILD".
+    local only = Net.onlyTo and { { Net.onlyTo } } or nil
+    local key = kind .. "|" .. tostring((select(1, ...)) or "") .. (Net.onlyTo and ("@" .. Net.onlyTo) or "")
     local priority = PRIORITY[kind] or 3
     for i, queued in ipairs(queue) do
-        if queued.key == key then queue[i] = { key = key, text = text, priority = priority } return end
+        if queued.key == key then queue[i] = { key = key, text = text, priority = priority, only = only } return end
     end
     -- Behind everything of the same or higher priority, ahead of the rest.
     local at = #queue + 1
     for i, queued in ipairs(queue) do
         if queued.priority > priority then at = i break end
     end
-    table.insert(queue, at, { key = key, text = text, priority = priority })
+    table.insert(queue, at, { key = key, text = text, priority = priority, only = only })
 end
 
 -- How many messages are waiting (for /sk who).

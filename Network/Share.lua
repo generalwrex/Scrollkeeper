@@ -372,7 +372,13 @@ Net.Handle("Q", function(_, _, source)
         C_Timer.After(20 + math.random() * 100, SK.SendMyData)
         return
     end
-    C_Timer.After(5 + math.random() * 20, SK.SendMyData)
+    -- Only to where they asked (their guild or group): not the public
+    -- channel too, or every guildie's login would flood it.
+    C_Timer.After(5 + math.random() * 20, function()
+        Net.onlyTo = source
+        SK.Safely("send data", SK.SendMyData)
+        Net.onlyTo = nil
+    end)
 end)
 
 SK.Listen("NET_READY", function()

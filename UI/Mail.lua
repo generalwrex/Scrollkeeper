@@ -160,7 +160,7 @@ local function MailBody(person)
         if not seen[scroll.needs] then seen[scroll.needs] = true; tiers[#tiers + 1] = scroll.needs end
     end
     table.sort(tiers)
-    local me = UnitName and UnitName("player") or ""
+    local me = SK.PlayerFullName and SK.PlayerFullName() or ""
     local first = (person.name or ""):match("^(%S+)") or person.name or ""
     return L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill-ups. If you don't need them, feel free to send them back. Have fun!"]:format(first, table.concat(tiers, "/"))
         .. "\n\n- " .. me .. L[" (sent with Scrollkeeper)"]

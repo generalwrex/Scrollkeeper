@@ -399,7 +399,7 @@ SK.On("WHO_LIST_UPDATE", function()
         return
     end
 
-    local me = UnitName("player")
+    local me = SK.PlayerFullName and SK.PlayerFullName() or UnitName("player")
     local people = {}
     for i = 1, (C_FriendList.GetNumWhoResults and C_FriendList.GetNumWhoResults()) or 0 do
         local info = C_FriendList.GetWhoInfo and C_FriendList.GetWhoInfo(i)
@@ -448,7 +448,7 @@ function SK.DoorWhisper(place, info)
             place = place or L["an inn or a city"],
             zone = info.zone or place or "",
             name = info.name or "",
-            me = UnitName and UnitName("player") or "",
+            me = SK.PlayerFullName and SK.PlayerFullName() or "",
             scroll = link or L["Scroll of Liminal Passage"],
         }
         return (custom:gsub("{(%a+)}", function(key) return values[key:lower()] end))
