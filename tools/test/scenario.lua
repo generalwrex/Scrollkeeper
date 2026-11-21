@@ -899,3 +899,6 @@ do
   local text = Dump(SK.COMMUNITY_DATA or {})
   print("COMMUNITY players", players, "size", #text)
 end
+
+-- Books: only real ones count (no more "any Journal or Tome").
+print("ISBOOK listed", SK.IsBook(nil, "Goaz Scrolls"), "quest item", SK.IsBook(99999, "Torn Journal Page"), "old word", SK.IsBook(nil, "Tome of Something"))

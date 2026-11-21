@@ -2,10 +2,10 @@
 -- Books you hand in to the librarians (Owen Thadd in Undercity, Garion
 -- Wendell in Stormwind), and where they're found.
 --
--- The addon doesn't ship a list of books. It learns them:
+-- Which items are books:
+--   * the 40 books by name (Data/BookSpots.lua, from Wowhead)
 --   * hand an item to a librarian, and that item is remembered as a book
 --   * other Scrollkeeper users share the books they've learned
---   * until then, names like "Journal", "Volume" or "Tome" count too
 -- Every time you loot a book, the spot is saved for the map:
 -- bookDrops[mapID][cell] = count (same grid as scroll drops).
 
@@ -29,7 +29,11 @@ local function Lists()
     end
 end
 
--- Learned book item IDs: SK.db.bookIDs[itemID] = name.
+-- Is this item a book for the librarians? Yes if it was handed to a
+-- librarian (yours or anyone's: SK.db.bookIDs[itemID] = name), or it's
+-- named like one of the 40 books (Data/BookSpots.lua). Words like
+-- "Journal" or "Tome" alone aren't enough: quest items use them too.
+local bookNames
 function SK.IsBook(itemID, name)
     if itemID and SK.db.bookIDs and SK.db.bookIDs[itemID] then return true end
     for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
@@ -37,13 +41,37 @@ function SK.IsBook(itemID, name)
             if id == itemID then return true end
         end
     end
-    if type(name) ~= "string" then return false end
-    Lists()
-    for _, word in ipairs(BOOK_WORDS) do
-        if name:find(word, 1, true) then return true end
+    for _, entry in pairs(SK.db.community or {}) do
+        for _, id in ipairs(entry.bookIDs or {}) do
+            if id == itemID then return true end
+        end
     end
-    return false
+    if type(name) ~= "string" then return false end
+    if not bookNames then
+        bookNames = {}
+        for _, spot in ipairs(SK.BOOK_SPOTS or {}) do bookNames[spot.name:lower()] = true end
+    end
+    return bookNames[name:lower()] or false
 end
+
+-- Book spots saved by the old guess (any "Journal" or "Tome") that aren't
+-- real books: forget them, once per load.
+SK.Listen("READY", function()
+    local names = SK.db.bookNames or {}
+    local items = SK.db.bookItems or {}
+    for mapID, cells in pairs(SK.db.bookDrops or {}) do
+        for cell in pairs(cells) do
+            local name = names[mapID .. ":" .. cell]
+            local itemID = items[mapID] and items[mapID][cell]
+            if (name or itemID) and not SK.IsBook(itemID, name) then
+                cells[cell] = nil
+                names[mapID .. ":" .. cell] = nil
+                if items[mapID] then items[mapID][cell] = nil end
+            end
+        end
+        if not next(cells) then SK.db.bookDrops[mapID] = nil end
+    end
+end)
 
 function SK.LearnBook(itemID, name)
     if not itemID then return end
