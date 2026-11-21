@@ -1033,3 +1033,9 @@ do
     "| Greater Flame:", SK.ImbueSchool({ name = "Scroll of Imbue Greater Flame" }), "| Manablade:", SK.ImbueSchool({ name = "Scroll of Imbue Manablade" }))
   GetNumTalentTabs, GetTalentTabInfo = realTabs, realInfo
 end
+
+-- Favorites: the imbue you use most wins.
+do
+  SK.charDB.scrollUses = { [277485] = 3 }
+  print("FAVORITE uses of 277485:", SK.ScrollUses(277485), "| unknown:", SK.ScrollUses(1))
+end

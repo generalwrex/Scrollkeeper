@@ -33,7 +33,7 @@
 - Setup and settings say plainly what sharing sends (only scroll info, never chat, gold, bags or where you are), and Full is marked recommended (None: not recommended). The Simple choice (guild and friends only) is gone: if you had it, you're now on Anonymous, which keeps your name private and still helps everyone.
 - With sharing set to None, Scrollkeeper still tells your guild and group which version you run (nothing else) and hears about newer versions, and the update message mentions Wago and WowUp too.
 - The imbue and familiar pop-up does it for you: click it to summon your familiar or imbue your weapon. New key bindings (Key Bindings > Scrollkeeper) do the same, even mid-fight.
-- Imbues follow your spec: a Fire mage's best imbue is a flame one, Frost a frost one, Arcane an arcane one (by your talent tree with the most points). The panel, the pop-up and the imbue key all use it.
+- Imbues follow your spec: a Fire mage's best imbue is a flame one, Frost a frost one, Arcane an arcane one (by your talent tree with the most points). The panel, the pop-up and the imbue key all use it. Once you've used an imbue or familiar a couple of times, the one you use most becomes your best one (each character learns its own).
 - New setting: This character's own layout (Options > Panel). Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot can be different on each character.
 - The imbue and familiar pop-up can be moved: Alt-drag it where you like (it remembers).
 - Setup helps you set keys for summoning a familiar, imbuing your weapon and Khadgar's Unlocking. It never takes a key you already use. (Mages who did setup before see this page once, if none of those keys are set.)

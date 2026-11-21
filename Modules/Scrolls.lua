@@ -124,6 +124,34 @@ function SK.ImbueSchool(scroll)
     return nil
 end
 
+------------------------------------------------------------------------
+-- Your favorites: which imbue and familiar this character actually uses.
+-- Counted when the scroll is used (its spell goes off), per character:
+-- SK.charDB.scrollUses[itemID] = times. The most used (2+ times) beats the
+-- spec guess; at 60 everyone has their own pick.
+------------------------------------------------------------------------
+
+local function Uses()
+    if not SK.charDB then return {} end
+    SK.charDB.scrollUses = SK.charDB.scrollUses or {}
+    return SK.charDB.scrollUses
+end
+function SK.ScrollUses(itemID) return itemID and Uses()[itemID] or 0 end
+
+SK.On("UNIT_SPELLCAST_SUCCEEDED", function(unit, _, spellID)
+    unit, spellID = SK.Known(unit), SK.Known(spellID)
+    if unit ~= "player" or not spellID or not SK.bags then return end
+    for _, scroll in ipairs(SK.bags.translated or {}) do
+        if scroll.category == "imbues" or scroll.category == "familiars" then
+            local _, itemSpell = SK.Try(C_Item and C_Item.GetItemSpell or GetItemSpell, scroll.itemID)
+            if itemSpell and itemSpell == spellID then
+                Uses()[scroll.itemID] = (Uses()[scroll.itemID] or 0) + 1
+                return
+            end
+        end
+    end
+end)
+
 -- Returns a list of { key, label, scrolls = { ... } } for the categories
 -- you have scrolls in, in display order. Each scroll gets .usable and .best.
 function SK.ScrollGroups()
@@ -147,10 +175,16 @@ function SK.ScrollGroups()
     for _, category in ipairs(SK.SCROLL_CATEGORIES) do
         local scrolls = byKey[category.key]
         if scrolls then
-            -- Usable first; then (imbues) the ones for your spec; then
-            -- highest level.
+            -- Usable first; then your favorite (used most, at least twice);
+            -- then (imbues) the ones for your spec; then highest level.
+            local function Favorite(scroll)
+                local n = SK.ScrollUses(scroll.itemID)
+                return n >= 2 and n or 0
+            end
             table.sort(scrolls, function(a, b)
                 if a.usable ~= b.usable then return a.usable end
+                local fa, fb = Favorite(a), Favorite(b)
+                if fa ~= fb then return fa > fb end
                 if (a.forSpec or false) ~= (b.forSpec or false) then return a.forSpec or false end
                 if a.level ~= b.level then return a.level > b.level end
                 return a.name < b.name
