@@ -121,7 +121,7 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(WIDTH, 470)
+    window:SetSize(WIDTH, 444)
     window:SetPoint("CENTER", -150, 0)
     window:SetToplevel(true)
     window:SetClampedToScreen(true)
@@ -139,25 +139,45 @@ local function Build()
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
 
-    -- Tabs: two buttons under the title.
-    local function TabButton(key, text, x)
-        local button = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
-        button:SetSize(110, 22)
-        button:SetPoint("TOPLEFT", x, -34)
+    -- Tabs hanging off the bottom, like the game's own windows (Character,
+    -- Spellbook). Plain buttons if the tab template isn't there.
+    local TAB_KEYS = { "scrolls", "books" }
+    local function MakeTab(i, text)
+        local ok, button = pcall(CreateFrame, "Button", "ScrollkeeperGuideFrameTab" .. i, window, "PanelTabButtonTemplate")
+        if not (ok and button) then
+            button = CreateFrame("Button", "ScrollkeeperGuideFrameTab" .. i, window, "UIPanelButtonTemplate")
+            button:SetSize(110, 22)
+            button.plain = true
+        end
+        button:SetID(i)
         button:SetText(text)
-        button:SetScript("OnClick", function() tab = key SK.RefreshGuide() end)
+        if i == 1 then
+            button:SetPoint("TOPLEFT", window, "BOTTOMLEFT", 11, button.plain and -2 or 2)
+        else
+            button:SetPoint("LEFT", window.tabs[i - 1], "RIGHT", button.plain and 4 or -15, 0)
+        end
+        if PanelTemplates_TabResize and not button.plain then SK.Try(PanelTemplates_TabResize, button, 0) end
+        button:SetScript("OnClick", function(self)
+            tab = TAB_KEYS[self:GetID()]
+            if PlaySound and SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then SK.Try(PlaySound, SOUNDKIT.IG_CHARACTER_INFO_TAB) end
+            SK.RefreshGuide()
+        end)
         return button
     end
-    window.scrollsTab = TabButton("scrolls", L["Scrolls"], 64)
-    window.booksTab = TabButton("books", L["Books"], 178)
+    window.tabs = {}
+    window.tabs[1] = MakeTab(1, L["Scrolls"])
+    window.tabs[2] = MakeTab(2, L["Books"])
+    window.scrollsTab, window.booksTab = window.tabs[1], window.tabs[2]
+    window.numTabs = 2
+    if PanelTemplates_SetNumTabs then SK.Try(PanelTemplates_SetNumTabs, window, 2) end
 
     window.top = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    window.top:SetPoint("TOPLEFT", 21, -66)
+    window.top:SetPoint("TOPLEFT", 64, -38)
     window.top:SetWidth(INNER - 12)
     window.top:SetJustifyH("LEFT")
 
     window.list = SK.UI.CreateScrollList(window, INNER, ROWS, true)
-    window.list:SetPoint("TOPLEFT", 15, -96)
+    window.list:SetPoint("TOPLEFT", 15, -70)
 
     window.note = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     window.note:SetPoint("BOTTOMLEFT", 16, 14)
@@ -209,8 +229,15 @@ end
 
 function SK.RefreshGuide()
     if not (window and window:IsShown()) then return end
-    window.scrollsTab:SetEnabled(tab ~= "scrolls")
-    window.booksTab:SetEnabled(tab ~= "books")
+    -- The picked tab looks picked (the game's tab look), or is greyed out
+    -- (plain buttons).
+    local index = tab == "books" and 2 or 1
+    if PanelTemplates_SetTab and not window.tabs[1].plain then
+        SK.Try(PanelTemplates_SetTab, window, index)
+    else
+        window.scrollsTab:SetEnabled(index ~= 1)
+        window.booksTab:SetEnabled(index ~= 2)
+    end
     if tab == "books" then
         local handed, reward = 0, nil
         if SK.BookProgress then handed, reward = SK.BookProgress() end
