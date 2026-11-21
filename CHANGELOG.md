@@ -3,6 +3,8 @@
 ## 1.2.2
 
 - Thanks to Fellow Mage network user **Lofi Frostbeats** (RP-PvP Horde), who shared most of the community's tier 175 odds. Every mage reading tier 175 scrolls benefits from those deciphers!
+- Fixed: hovering a Fellow Mage to check they're online kept whispering them over and over while the tooltip was up.
+- Fixed: right after logging in, the game sometimes doesn't say your realm yet, so Scrollkeeper didn't know your ruleset and told others nothing. It now remembers it.
 
 ## 1.2.1
 
