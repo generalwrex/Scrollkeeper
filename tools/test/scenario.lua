@@ -450,6 +450,7 @@ do
     pick(2) nextPage()      -- turn on the scroll icon
     nextPage()              -- combat: keep
     nextPage()              -- reminders: keep
+    nextPage()              -- keys: none
     pick(2) nextPage()      -- share: anonymous
   else
     pick(2) nextPage()      -- tooltips: no
@@ -997,4 +998,15 @@ print("REMINDER in combat default", SK.db.reminderInCombat)
 do
   if SK.PointRenewButtons then SK.PointRenewButtons() end
   print("RENEW imbue", ScrollkeeperImbueButton and ScrollkeeperImbueButton.itemID, "familiar", ScrollkeeperFamiliarButton and ScrollkeeperFamiliarButton.itemID)
+end
+
+-- Setup keys page: a key already used elsewhere is refused.
+do
+  local bound = { ["F"] = "JUMP" }
+  GetBindingAction = function(key) return bound[key] or "" end
+  GetBindingKey = function(command) for k, v in pairs(bound) do if v == command then return k end end end
+  SetBinding = function(key, command) bound[key] = command end
+  SaveBindings = function() end
+  GetCurrentBindingSet = function() return 1 end
+  print("KEYS F before", bound["F"], "| G free", bound["G"] == nil)
 end

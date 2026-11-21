@@ -51,6 +51,12 @@ local function BuildQuestions()
             { "expiringReminder", L["Running-out pop-up"], L["A few minutes before it runs out (set how many in the settings)."], ICON .. "INV_Misc_PocketWatch_01" },
             { "reminderInCombat", L["Also in combat"], L["So you know if it runs out mid-fight."], ICON .. "Ability_DualWield" },
         } }
+        list[#list + 1] = { key = "keys", keys = true, question = L["Set some keys?"],
+            hint = L["Click one, then press the key you want. Keys you already use are left alone. Escape cancels."], options = {
+            { "CLICK ScrollkeeperFamiliarButton:LeftButton", L["Summon a familiar"], nil, ICON .. "Ability_Hunter_BeastCall" },
+            { "CLICK ScrollkeeperImbueButton:LeftButton", L["Imbue your weapon"], nil, ICON .. "Spell_Fire_FlameTounge" },
+            { "CLICK ScrollkeeperUnlockButton:LeftButton", L["Khadgar's Unlocking (locked chests)"], nil, ICON .. "INV_Misc_Key_03" },
+        } }
     else
         list[#list + 1] = { key = "showTooltips", question = L["Add Scrollkeeper lines to scroll tooltips?"], options = {
             { true, L["Yes"], L["See which of your mages can use a scroll, and what it sells for."], ICON .. "INV_Scroll_03" },
@@ -162,6 +168,89 @@ end
 -- The window
 ------------------------------------------------------------------------
 
+------------------------------------------------------------------------
+-- Key bindings page: click a row, press a key. A key that's already bound
+-- to something else is refused (with what it's used for), never replaced.
+------------------------------------------------------------------------
+
+local capturing   -- the binding command waiting for a key, or nil
+local keyNote     -- a message under the rows ("F is already used for Jump")
+
+local MODIFIER_KEYS = { LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true, LALT = true, RALT = true,
+    LMETA = true, RMETA = true, UNKNOWN = true }
+
+-- "CTRL-SHIFT-F" style, the way bindings are written.
+local function FullKey(key)
+    local prefix = ""
+    if IsAltKeyDown and IsAltKeyDown() then prefix = prefix .. "ALT-" end
+    if IsControlKeyDown and IsControlKeyDown() then prefix = prefix .. "CTRL-" end
+    if IsShiftKeyDown and IsShiftKeyDown() then prefix = prefix .. "SHIFT-" end
+    return prefix .. key
+end
+
+-- What a binding command is called in the Key Bindings window.
+local function ActionName(action)
+    return _G["BINDING_NAME_" .. action] or action
+end
+
+local function StopCapture()
+    capturing = nil
+    if window then
+        window:EnableKeyboard(false)
+        window:SetScript("OnKeyDown", nil)
+    end
+end
+
+local function OnKey(_, key)
+    if not capturing then return end
+    if window.SetPropagateKeyboardInput then window:SetPropagateKeyboardInput(false) end
+    if key == "ESCAPE" then
+        StopCapture()
+        keyNote = nil
+        SK.RefreshSetupPage()
+        return
+    end
+    if MODIFIER_KEYS[key] then return end   -- wait for the real key
+    local full = FullKey(key)
+    local used = GetBindingAction and GetBindingAction(full, true) or ""
+    if used ~= "" and used ~= capturing then
+        keyNote = "|cffff6666" .. L["%s is already used for: %s. Pick another key."]:format(full, ActionName(used)) .. "|r"
+        SK.RefreshSetupPage()
+        return
+    end
+    if SK.InCombat() or not (SetBinding and SaveBindings) then
+        keyNote = "|cffff6666" .. L["Keys can't be set in combat."] .. "|r"
+    else
+        -- One key per action: the old one (if any) goes.
+        local old1, old2 = GetBindingKey(capturing)
+        if old1 then SetBinding(old1) end
+        if old2 then SetBinding(old2) end
+        SetBinding(full, capturing)
+        SaveBindings(GetCurrentBindingSet and GetCurrentBindingSet() or 1)
+        keyNote = "|cff40ff40" .. L["%s set to %s."]:format(ActionName(capturing), full) .. "|r"
+    end
+    StopCapture()
+    SK.RefreshSetupPage()
+end
+
+local function StartCapture(command)
+    capturing = command
+    keyNote = nil
+    window:EnableKeyboard(true)
+    if window.SetPropagateKeyboardInput then window:SetPropagateKeyboardInput(false) end
+    window:SetScript("OnKeyDown", OnKey)
+    SK.RefreshSetupPage()
+end
+
+-- Is any of the page's keys set yet? (Existing players see the page once
+-- only if none are.)
+local function AnyKeySet(q)
+    for _, data in ipairs(q.options) do
+        if GetBindingKey and GetBindingKey(data[1]) then return true end
+    end
+    return false
+end
+
 local function MakeOption(i)
     local option = CreateFrame("Button", nil, window)
     option:SetSize(WIDTH - 48, OPTION_HEIGHT)
@@ -206,6 +295,10 @@ local function MakeOption(i)
     option.index = i
     option:SetScript("OnClick", function(self)
         local q = questions[page]
+        if q.keys then
+            StartCapture(self.value)
+            return
+        end
         if q.multi then
             answers[self.value] = not Selected(q, self.value)
         else
@@ -247,10 +340,10 @@ local function Build()
 
     -- Little dots, one per question.
     window.dots = {}
-    for i = 1, 6 do
+    for i = 1, 8 do
         local dot = window:CreateTexture(nil, "OVERLAY")
         dot:SetSize(8, 8)
-        dot:SetPoint("TOPRIGHT", window, "TOPRIGHT", -20 - (6 - i) * 12, -36)
+        dot:SetPoint("TOPRIGHT", window, "TOPRIGHT", -20 - (8 - i) * 12, -36)
         dot:SetColorTexture(1, 1, 1, 0.2)
         window.dots[i] = dot
     end
@@ -268,10 +361,19 @@ local function Build()
     window.options = {}
     for i = 1, MAX_OPTIONS do window.options[i] = MakeOption(i) end
 
+    -- Under the key rows: "F is already used for Jump" and such.
+    window.keyNote = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    window.keyNote:SetPoint("BOTTOMLEFT", 24, 48)
+    window.keyNote:SetPoint("RIGHT", window, "RIGHT", -24, 0)
+    window.keyNote:SetJustifyH("LEFT")
+    window:HookScript("OnHide", function() StopCapture() keyNote = nil end)
+
     window.next = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
     window.next:SetSize(110, 24)
     window.next:SetPoint("BOTTOMRIGHT", -16, 14)
     window.next:SetScript("OnClick", function()
+        StopCapture()
+        keyNote = nil
         if page < #questions then
             page = page + 1
             SK.RefreshSetupPage()
@@ -289,6 +391,8 @@ local function Build()
     window.back:SetPoint("RIGHT", window.next, "LEFT", -8, 0)
     window.back:SetText(L["Back"])
     window.back:SetScript("OnClick", function()
+        StopCapture()
+        keyNote = nil
         if page > 1 then page = page - 1 SK.RefreshSetupPage() end
     end)
 
@@ -345,6 +449,17 @@ function SK.RefreshSetupPage()
             option.description:SetText(data[3] or "")
             option.icon:SetTexture(data[4] or (ICON .. "INV_Misc_QuestionMark"))
             local on = Selected(q, data[1])
+            if q.keys then
+                local key = GetBindingKey and GetBindingKey(data[1])
+                on = key ~= nil
+                if capturing == data[1] then
+                    option.description:SetText("|cffffd100" .. L["Press a key... (Escape to cancel)"] .. "|r")
+                elseif key then
+                    option.description:SetText(L["Key: %s  (click to change)"]:format("|cffffffff" .. key .. "|r"))
+                else
+                    option.description:SetText(L["No key yet: click, then press one."])
+                end
+            end
             option.selected:SetShown(on)
             option.bar:SetShown(on)
             option.check:SetShown(on)
@@ -354,6 +469,7 @@ function SK.RefreshSetupPage()
             option:Hide()
         end
     end
+    window.keyNote:SetText(q.keys and keyNote or "")
     window.back:SetEnabled(page > 1)
     window.next:SetText(page < #questions and L["Next"] or L["Done"])
 end
@@ -397,6 +513,11 @@ SK.Listen("READY", function()
     -- The reminders page (1.2.2) is only for new setups: everyone else
     -- keeps both reminders on, as they were, without being asked.
     if SK.db[doneKey] and SK.isMage and Seen().reminders == nil then Seen().reminders = 1 end
+    if SK.db[doneKey] and SK.isMage and Seen().keys == nil then
+        for _, q in ipairs(BuildQuestions()) do
+            if q.keys and AnyKeySet(q) then Seen().keys = 1 end
+        end
+    end
     if SK.db[doneKey] and #Unseen(BuildQuestions()) == 0 then return end
     C_Timer.After(4, function()
         if SK.InCombat() then return end
