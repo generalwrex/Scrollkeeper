@@ -1049,3 +1049,9 @@ do
   print("GUIDE books top", f and f.top and f.top._text)
   if f then f.scrollsTab:GetScript("OnClick")(f.scrollsTab) end
 end
+
+-- Codex books tab: a known book shows as a link.
+do
+  SK.db.bookIDs = { [207972] = "The Lessons of Ta'zo" }
+  print("CODEX book id", SK.BookIDsByName()["the lessons of ta'zo"])
+end

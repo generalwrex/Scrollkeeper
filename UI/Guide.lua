@@ -103,8 +103,9 @@ local function BookRows()
         if za ~= zb then return za < zb end
         return a.name < b.name
     end)
+    local ids = SK.BookIDsByName()
     for _, spot in ipairs(list) do
-        rows[#rows + 1] = { book = spot, handed = SK.BookHanded and SK.BookHanded(spot.name) or false,
+        rows[#rows + 1] = { book = spot, itemID = ids[spot.name:lower()], handed = SK.BookHanded and SK.BookHanded(spot.name) or false,
             by = SK.BookHandedBy and SK.BookHandedBy(spot.name) or {} }
     end
     return rows
@@ -211,11 +212,31 @@ local function ScrollRow(row, entry)
     row.tipCount = #tags > 0 and table.concat(tags, "  ") or nil
 end
 
+-- Book item IDs by name (lowercase), from books handed in or shared, so a
+-- book can show as an item link. (Wowhead's list only has names.)
+function SK.BookIDsByName()
+    local ids = {}
+    local function Add(id, name)
+        id = tonumber(id)
+        if not id then return end
+        name = type(name) == "string" and name or (C_Item and SK.Try(C_Item.GetItemNameByID, id))
+        if type(name) == "string" then ids[name:lower()] = id end
+    end
+    for id, name in pairs(SK.db.bookIDs or {}) do Add(id, name) end
+    for _, entry in pairs(SK.COMMUNITY_DATA or {}) do
+        for _, id in ipairs(entry.bookIDs or {}) do Add(id) end
+    end
+    return ids
+end
+
 local function BookRow(row, entry)
     row.itemID, row.tipTitle, row.tipLines, row.tipFunc, row.onClick, row.tipCount = nil, nil, nil, nil, nil, nil
     local spot = entry.book
     local mark = entry.handed and "|cff40ff40✓|r " or ""
-    row.label:SetText(mark .. (entry.handed and "|cff808080" or "|cffffffff") .. spot.name .. "|r")
+    local id = entry.itemID
+    local name = (entry.handed and "|cff808080" or "|cffffffff") .. spot.name .. "|r"
+    if id and SK.ScrollLink then name = SK.ScrollLink(id, spot.name) end
+    row.label:SetText(mark .. name)
     local where = ("%s  %.1f, %.1f"):format(ZoneName(spot.map), spot.x, spot.y)
     if spot.note then where = where .. "  (" .. L[spot.note] .. ")" end
     row.sub:SetText("|cffbbbbbb" .. where .. "|r")
