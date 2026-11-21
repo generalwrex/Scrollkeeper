@@ -357,11 +357,27 @@ do
         return which .. L["In combat: set a key in Key Bindings > Scrollkeeper to use it mid-fight."]
     end
 
+    -- Flying a flight path: nothing can be used, and the familiar drops off
+    -- anyway. The landing (PLAYER_CONTROL_GAINED) checks again.
+    local function OnTaxi()
+        return type(UnitOnTaxi) == "function" and SK.Known(UnitOnTaxi("player")) == true
+    end
+
+    -- Familiars are only worth a scroll in a dungeon or raid (they also drop
+    -- off on every flight path), so the familiar pop-ups stay there unless
+    -- the familiarAnywhere option is on.
+    function SK.WantFamiliar()
+        if SK.db and SK.db.familiarAnywhere then return true end
+        if type(IsInInstance) ~= "function" then return false end
+        local inside, kind = IsInInstance()
+        return SK.Known(inside) == true and (kind == "party" or kind == "raid")
+    end
+
     -- Which reminders apply right now: { imbue = scroll or nil, familiar = scroll or nil }
     local function Missing()
         local state = SK.WeaponState and SK.WeaponState() or {}
         local imbue = not state.imbued and SK.BestScroll and SK.BestScroll("imbues") or nil
-        local familiar = not state.familiar and SK.BestScroll and SK.BestScroll("familiars") or nil
+        local familiar = not state.familiar and SK.WantFamiliar() and SK.BestScroll and SK.BestScroll("familiars") or nil
         return imbue, familiar
     end
 
@@ -375,6 +391,7 @@ do
         -- In combat only if you asked for it (it can run out mid-fight).
         if not SK.db.reminderToast or (SK.InCombat() and not SK.db.reminderInCombat) then return end
         if UnitIsDeadOrGhost and SK.Known(UnitIsDeadOrGhost("player")) then return end
+        if OnTaxi() then return end
 
         local now = GetTime()
         local function Due(kind, scroll)
@@ -425,11 +442,13 @@ do
         if SK.InCombat() and not SK.db.reminderInCombat then return end
         if not SK.BuffTimeLeft then return end
         if UnitIsDeadOrGhost and SK.Known(UnitIsDeadOrGhost("player")) then return end
+        if OnTaxi() then return end
         local limit = (tonumber(SK.db.expiringMinutes) or 5) * 60
         local left = SK.BuffTimeLeft()
         local due = {}
         for _, kind in ipairs({ "imbue", "familiar" }) do
             local seconds = left[kind]
+            if kind == "familiar" and not SK.WantFamiliar() then seconds = nil end
             if not seconds or seconds > limit then
                 warned[kind] = nil            -- renewed (or gone): warn again next time
             elseif not warned[kind] then
@@ -473,6 +492,13 @@ do
             secureToast.hideAfterCombat = nil
             secureToast:Hide()
         end
+        UpdateSoon()
+    end)
+    -- Landed, or walked into a dungeon/raid: check right away (a fresh
+    -- dungeon gets its familiar pop-up even if one showed a moment ago).
+    SK.On("PLAYER_CONTROL_GAINED", UpdateSoon)
+    SK.On("PLAYER_ENTERING_WORLD", function()
+        if SK.WantFamiliar() then lastShown.familiar = nil end
         UpdateSoon()
     end)
     SK.On("PLAYER_UNGHOST", UpdateSoon)
