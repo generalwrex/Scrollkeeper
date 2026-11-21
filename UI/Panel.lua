@@ -437,6 +437,8 @@ local function Build()
     -- Small window buttons where the "0 ready" line was (the Decipher
     -- button already says how many are ready), left of the toggles.
     local WINDOW_BUTTONS = {
+        { icon = "Interface\\Icons\\INV_Misc_Book_09", open = function() SK.ToggleGuide() end,
+          title = "Scroll Guide", text = "Every scroll and what it does, your picks, and where all 40 library books are." },
         { icon = "Interface\\Icons\\INV_Misc_Note_01", open = function() SK.TogglePlan() end,
           title = "Farming Plan", text = "Your next goal, where to farm, and scroll prices at the auction house." },
         { icon = "Interface\\Icons\\INV_Misc_Dice_01", open = function() SK.ToggleLog() end,

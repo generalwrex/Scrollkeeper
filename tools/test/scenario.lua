@@ -1039,3 +1039,13 @@ do
   SK.charDB.scrollUses = { [277485] = 3 }
   print("FAVORITE uses of 277485:", SK.ScrollUses(277485), "| unknown:", SK.ScrollUses(1))
 end
+
+-- Scroll Guide: both tabs open without errors.
+do
+  SlashCmdList.SCROLLKEEPER("guide")
+  local f = ScrollkeeperGuideFrame
+  print("GUIDE shown", f and f:IsShown(), "top", f and f.top and f.top._text)
+  if f then f.booksTab:GetScript("OnClick")(f.booksTab) end
+  print("GUIDE books top", f and f.top and f.top._text)
+  if f then f.scrollsTab:GetScript("OnClick")(f.scrollsTab) end
+end

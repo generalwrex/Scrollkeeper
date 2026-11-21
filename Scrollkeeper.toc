@@ -70,6 +70,7 @@ UI\Swap.lua
 UI\Log.lua
 UI\Doors.lua
 UI\Plan.lua
+UI\Guide.lua
 UI\Icon.lua
 UI\Unlock.lua
 UI\Renew.lua
