@@ -52,12 +52,14 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
     end
 end
 
-function ScrollkeeperMapPinMixin:OnMouseEnter()
-    local data = self.data
-    if not data then return end
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+-- One pin's lines. The first pin's title is the tooltip's title; the
+-- others (pins under the mouse too) get a gap and a gold title.
+local function AddPinLines(data, first)
+    local function Title(text)
+        if first then GameTooltip:SetText(text) else GameTooltip:AddLine(" ") GameTooltip:AddLine(text, 1, 0.82, 0) end
+    end
     if data.kind == "library" then
-        GameTooltip:SetText(data.name)
+        Title(data.name)
         GameTooltip:AddLine(L["Library: Study works here."], 1, 1, 1)
         GameTooltip:AddLine(L["Click for a waypoint."], 0.6, 0.6, 0.6)
         if data.mine then
@@ -69,17 +71,53 @@ function ScrollkeeperMapPinMixin:OnMouseEnter()
             GameTooltip:AddLine(L["Known library. Stand near the librarian."], 0.7, 0.7, 0.7)
         end
     elseif data.kind == "book" then
-        GameTooltip:SetText(data.name or L["Book for the librarians."])
+        Title(data.name or L["Book for the librarians."])
         GameTooltip:AddLine(L["A book for the librarians sits here."], 1, 1, 1)
         if data.mine > 0 then GameTooltip:AddLine(L["You found it here."], 0.25, 1, 0.25) end
         local found = data.mine + data.others
         if found > 1 then GameTooltip:AddLine(L["Found %d times."]:format(found), 0.7, 0.7, 0.7) end
     else
-        GameTooltip:SetText(L["Untranslated scrolls"])
+        Title(L["Untranslated scrolls"])
         if data.mine > 0 then GameTooltip:AddLine(L["You looted %d here."]:format(data.mine), 1, 1, 1) end
         if data.others > 0 then GameTooltip:AddLine(L["Others looted %d here."]:format(data.others), 0.7, 0.7, 0.7) end
     end
     if data.spots then GameTooltip:AddLine(L["All around this circle (%d spots)."]:format(data.spots), 1, 0.82, 0) end
+end
+
+-- Other Scrollkeeper pins drawn over this one (their centers closer than
+-- the two pins' half sizes), libraries first, then books, then scrolls.
+local KIND_ORDER = { library = 1, book = 2, drop = 3 }
+local function StackedWith(pin)
+    local list = {}
+    local map = pin.GetMap and pin:GetMap()
+    if not (map and map.EnumeratePinsByTemplate) then return list end
+    local x, y = pin:GetCenter()
+    local scale = pin:GetEffectiveScale()
+    if not (x and scale) then return list end
+    x, y = x * scale, y * scale
+    local reach = pin:GetWidth() * scale / 2
+    for other in map:EnumeratePinsByTemplate("ScrollkeeperMapPinTemplate") do
+        if other ~= pin and other.data and other:IsShown() then
+            local ox, oy = other:GetCenter()
+            local oscale = other:GetEffectiveScale()
+            if ox and oscale then
+                local distance = math.sqrt((ox * oscale - x) ^ 2 + (oy * oscale - y) ^ 2)
+                if distance <= reach + other:GetWidth() * oscale / 2 then list[#list + 1] = other.data end
+            end
+        end
+    end
+    table.sort(list, function(a, b) return (KIND_ORDER[a.kind] or 9) < (KIND_ORDER[b.kind] or 9) end)
+    return list
+end
+
+function ScrollkeeperMapPinMixin:OnMouseEnter()
+    local data = self.data
+    if not data then return end
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    AddPinLines(data, true)
+    -- Pins stacked on this one: all in the same tooltip.
+    local ok, stacked = pcall(StackedWith, self)
+    for _, other in ipairs(ok and stacked or {}) do AddPinLines(other, false) end
     GameTooltip:AddLine(L["Scrollkeeper"], 0.41, 0.8, 0.94)
     GameTooltip:Show()
 end
@@ -92,7 +130,16 @@ end
 -- if you have one, otherwise the game's own map pin).
 function ScrollkeeperMapPinMixin:OnClick(button)
     local data = self.data
-    if button ~= "LeftButton" or not data or data.kind ~= "library" then return end
+    if button ~= "LeftButton" or not data then return end
+    -- A library under another pin still gets its waypoint.
+    if data.kind ~= "library" then
+        local ok, stacked = pcall(StackedWith, self)
+        data = nil
+        for _, other in ipairs(ok and stacked or {}) do
+            if other.kind == "library" then data = other break end
+        end
+        if not data then return end
+    end
     if SK.SetWaypoint(self:GetMap():GetMapID(), data.x, data.y, data.name) then
         SK.Print(L["waypoint set: "] .. data.name)
     end
