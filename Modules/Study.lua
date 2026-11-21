@@ -67,6 +67,24 @@ function SK.HowToLearnStudy()
         L[library.librarian], L[library.city], L[library.name], L[library.firstBook], L[library.firstBookName], library.firstBookSpot)
 end
 
+-- Do you have an addon with a waypoint arrow (Zygor or TomTom)?
+function SK.HasArrowAddon()
+    local zygor = _G.ZygorGuidesViewer
+    if type(zygor) == "table" and type(zygor.Pointer) == "table" and type(zygor.Pointer.SetWaypoint) == "function" then return true end
+    return (_G.TomTom and TomTom.AddWaypoint) and true or false
+end
+
+-- The busiest drop spot on a map (yours and everyone's): x, y (0 to 1), or nil.
+function SK.BusiestDropSpot(mapID)
+    if not (SK.DropCells and SK.CellCenter) then return nil end
+    local best, bestCount
+    for cell, counts in pairs(SK.DropCells(mapID) or {}) do
+        local count = (counts.mine or 0) + (counts.others or 0)
+        if not bestCount or count > bestCount then best, bestCount = cell, count end
+    end
+    if best then return SK.CellCenter(best) end
+end
+
 -- A waypoint with an arrow: Zygor's if you have it, then TomTom's, else
 -- the game's own map pin. x and y are 0 to 1. True if one was set.
 function SK.SetWaypoint(mapID, x, y, title)

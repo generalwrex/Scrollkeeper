@@ -264,11 +264,37 @@ local function RefreshWorld()
             or L["|cffffffffTier %d|r: none logged yet, so all tiers:"]):format(tier)
             or L["All tiers:"])
     end
+    local arrows = SK.HasArrowAddon and SK.HasArrowAddon()
     world.zones:SetRows(zones, function(row, zone)
         row.itemID = nil
         row.label:SetText(zone.name)
         row.value:SetText(L["%d |4scroll:scrolls; found"]:format(zone.count))
         row:SetScript("OnMouseUp", function() ShowZone(zone.mapID) end)
+        -- With Zygor or TomTom: an Arrow button to the zone's busiest drop spot.
+        if arrows and type(row.skArrow) ~= "table" then
+            row.skArrow = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+            row.skArrow:SetSize(48, 16)
+            row.skArrow:SetPoint("RIGHT", -4, 0)
+            row.skArrow:SetText(L["Arrow"])
+            if row.skArrow.GetFontString and row.skArrow:GetFontString() then row.skArrow:GetFontString():SetFontObject(GameFontHighlightSmall) end
+            row.skArrow:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        end
+        if type(row.skArrow) == "table" then
+            row.skArrow:SetShown(arrows and true or false)
+            row.value:ClearAllPoints()
+            row.value:SetPoint("RIGHT", arrows and -56 or -6, 0)
+            row.skArrow:SetScript("OnEnter", function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:AddLine(L["Point an arrow at the spot in %s where the most scrolls dropped."]:format(zone.name), 1, 1, 1, true)
+                GameTooltip:Show()
+            end)
+            row.skArrow:SetScript("OnClick", function()
+                local x, y = SK.BusiestDropSpot(zone.mapID)
+                if x and SK.SetWaypoint(zone.mapID, x, y, L["Scroll drops: %s"]:format(zone.name)) then
+                    SK.Print(L["waypoint set: "] .. zone.name)
+                end
+            end)
+        end
     end, L["No drops logged yet. Loot some untranslated scrolls and the zones show up here."])
 
     local textHeight = world.text:GetStringHeight() or 60

@@ -9,6 +9,7 @@
 - Community odds: scroll icons and colors are loaded after you log in, so the list no longer shows plain names first.
 - Waypoints (library pins, the Study button) use Zygor's arrow if you have Zygor, then TomTom, then the game's own pin.
 - The map only pins your own faction's library.
+- Farming plan: with Zygor or TomTom, each zone in Where to farm gets an Arrow button that points you at the spot where the most scrolls dropped.
 
 ## 1.2.1
 
