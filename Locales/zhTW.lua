@@ -406,7 +406,7 @@ L["What Scrollkeeper shares with other players: what scrolls became, where they 
 L["Sharing is what powers community odds, drop spots, the swap board and the mailbox list. Only scroll data is sent."] = "分享是社群機率、掉落點、交換板和郵箱列表的基礎。只傳送卷軸資料。"
 L["Only scroll info is shared: your Comprehension skill, what your scrolls became and where they dropped. Never your chat, gold, bags or where you are. Full is what makes Fellow Mages, community odds and drop spots work."] = "只分享卷軸資訊：你的領悟技能、卷軸變成了什麼、在哪裡掉落。從不分享你的聊天、金幣、背包或你的位置。完整模式才能讓法師同伴、社群機率和掉落地點正常運作。"
 L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."] = "所有功能都可用。其他使用 Scrollkeeper 的法師能看到你的名字和技能，可以把你需要的卷軸寄給你。"
-L["Only your guild, group and friends. You'll miss most Fellow Mages and live community odds."] = "只有你的公會、隊伍和好友。你會錯過大部分法師同伴和即時社群機率。"
+L["Only your guild, group and friends. You'll miss most Fellow Mages and live community odds. To stay private, pick Anonymous: it shares everything without your name."] = "只有你的公會、隊伍和好友。你會錯過大部分法師同伴和即時社群機率。想保持隱私？選匿名：分享所有內容但不顯示你的名字。"
 L["+%d |4player:players;"] = "+%d 名玩家"
 L["No weapon imbue and no familiar out"] = "沒有武器灌注，也沒有召喚魔寵"
 L["No weapon imbue"] = "沒有武器灌注"

@@ -304,7 +304,7 @@ SK.Listen("READY", function()
                 local container = Settings.CreateControlTextContainer()
                 container:Add("full", L["Full"] .. " " .. L["(recommended)"], L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."])
                 container:Add("anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."])
-                container:Add("simple", L["Simple"], L["Only your guild, group and friends. You'll miss most Fellow Mages and live community odds."])
+                container:Add("simple", L["Simple"], L["Only your guild, group and friends. You'll miss most Fellow Mages and live community odds. To stay private, pick Anonymous: it shares everything without your name."])
                 container:Add("none", L["None"], L["Turns off the whole network: no shared odds, swap board, or guildies at the mailbox."])
                 return container:GetData()
             end
