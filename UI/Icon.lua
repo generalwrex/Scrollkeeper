@@ -220,7 +220,9 @@ do
         toast:SetPoint("TOP", UIParent, "TOP", 0, -150)
         toast:SetFrameStrata("HIGH")
         toast:SetClampedToScreen(true)
-        toast:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        -- The secure one hears press and release: the game uses items on
+        -- whichever its "cast on key down" setting says (like the panel's buttons).
+        if secure then toast:RegisterForClicks("AnyUp", "AnyDown") else toast:RegisterForClicks("LeftButtonUp", "RightButtonUp") end
         -- Right-click never uses the scroll.
         if secure then toast:SetAttribute("type2", "none") end
         if toast.SetBackdrop then
@@ -259,7 +261,8 @@ do
         end
 
         -- (HookScript: the secure template's own click uses the scroll first.)
-        toast:HookScript("OnClick", function(self, button)
+        toast:HookScript("OnClick", function(self, button, down)
+            if down then return end   -- act once, on release
             HideToast(self)
             -- Shift-right-click: turn these reminders off (same as the setting).
             if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() and self.expiring then
