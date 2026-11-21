@@ -262,16 +262,34 @@ function SK.LibraryPins(mapID)
         if pin.mapID == mapID then return pin.x, pin.y end   -- older saved format
     end
 
+    -- Only your faction's library: the other one is no use to you. Saved
+    -- and shared spots near the other faction's library are left out too.
+    local faction = UnitFactionGroup and SK.Known(UnitFactionGroup("player"))
+    local others = {}
     for _, library in ipairs(SK.KnownLibraries and SK.KnownLibraries() or {}) do
-        Add({ name = library.name, known = true }, Place(library))
+        if faction and library.side and library.side ~= faction then others[#others + 1] = library end
+    end
+    local function OtherSide(pin)
+        for _, library in ipairs(others) do
+            if pin.name and pin.name == library.name then return true end
+            if pin.inst and pin.inst == library.inst and pin.x and pin.y
+                and (pin.x - library.x) ^ 2 + (pin.y - library.y) ^ 2 < 150 ^ 2 then return true end
+        end
+        return false
+    end
+
+    for _, library in ipairs(SK.KnownLibraries and SK.KnownLibraries() or {}) do
+        if not OtherSide(library) then Add({ name = library.name, known = true }, Place(library)) end
     end
     for _, pin in pairs(SK.db.libraryPins or {}) do
-        Add({ name = pin.name, mine = true }, Place(pin))
+        if not OtherSide(pin) then Add({ name = pin.name, mine = true }, Place(pin)) end
     end
     for _, pin in pairs(SK.db.sharedLibraries or {}) do
-        local count = 0
-        for _ in pairs(pin.from or {}) do count = count + 1 end
-        Add({ name = pin.name, count = count }, Place(pin))
+        if not OtherSide(pin) then
+            local count = 0
+            for _ in pairs(pin.from or {}) do count = count + 1 end
+            Add({ name = pin.name, count = count }, Place(pin))
+        end
     end
     return pins
 end
