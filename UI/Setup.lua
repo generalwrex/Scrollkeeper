@@ -45,6 +45,11 @@ local function BuildQuestions()
             { true, L["Yes"], L["It hides when a fight starts and comes back after."], ICON .. "Ability_Stealth" },
             { false, L["No"], L["It stays up. The X still closes it in combat."], ICON .. "Ability_Warrior_BattleShout" },
         } }
+        list[#list + 1] = { key = "reminders", question = L["Remind you about your imbue and familiar?"], multi = true,
+            hint = L["Pick any, or none. Only when you have a scroll to fix it, never in combat."], options = {
+            { "reminderToast", L["Imbue and familiar pop-up"], L["When your weapon imbue or familiar wears off."], ICON .. "Spell_Fire_FlameTounge" },
+            { "expiringReminder", L["Running-out pop-up"], L["A few minutes before it runs out (set how many in the settings)."], ICON .. "INV_Misc_PocketWatch_01" },
+        } }
     else
         list[#list + 1] = { key = "showTooltips", question = L["Add Scrollkeeper lines to scroll tooltips?"], options = {
             { true, L["Yes"], L["See which of your mages can use a scroll, and what it sells for."], ICON .. "INV_Scroll_03" },
@@ -388,6 +393,9 @@ SK.Listen("READY", function()
         local seen = Seen()
         for _, q in ipairs(BuildQuestions()) do seen[q.key] = 1 end
     end
+    -- The reminders page (1.2.2) is only for new setups: everyone else
+    -- keeps both reminders on, as they were, without being asked.
+    if SK.db[doneKey] and SK.isMage and Seen().reminders == nil then Seen().reminders = 1 end
     if SK.db[doneKey] and #Unseen(BuildQuestions()) == 0 then return end
     C_Timer.After(4, function()
         if SK.InCombat() then return end

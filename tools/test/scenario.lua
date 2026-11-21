@@ -449,6 +449,7 @@ do
     pick(2) nextPage()      -- Advanced
     pick(2) nextPage()      -- turn on the scroll icon
     nextPage()              -- combat: keep
+    nextPage()              -- reminders: keep
     pick(2) nextPage()      -- share: anonymous
   else
     pick(2) nextPage()      -- tooltips: no
@@ -978,4 +979,13 @@ do
   SK.Print = realPrint
   print("NONE update notice", printed:find("9.9.9", 1, true) ~= nil, "peer added", SK.peers["Newer-Realm"] ~= nil)
   SK.SetSharing("full")
+end
+
+-- Did setup before the reminders page: not asked about it.
+do
+  SK.db.setupDone = true
+  SK.db.setupSeen = { viewMode = 1, open = 1, hideInCombat = 1 }
+  SK.db.setupSeenAccount = { sharing = 2, language = 1 }
+  SK.Send("READY")
+  print("REMINDERS page skipped for old setups", SK.isMage and SK.db.setupSeen.reminders or "not a mage")
 end
