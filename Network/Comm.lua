@@ -137,7 +137,14 @@ SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
         end
         Net.Log({ dir = "in", kind = kind, where = source, who = sender, size = #text })
     end
-    if not (SK.db and SK.db.share) then return end
+    if not (SK.db and SK.db.share) then
+        -- Sharing off: nothing else is read, but a newer version is still
+        -- worth knowing about (from guild and group hellos).
+        if kind == "H" and tonumber(fields[1]) == Net.PROTOCOL and not Net.IsMe(sender) and SK.NoteVersion then
+            SK.Safely("version", SK.NoteVersion, fields[2])
+        end
+        return
+    end
     if kind == "H" and fields[9] and fields[9] == UnitGUID("player") then
         Net.RememberMyself(sender)
         return

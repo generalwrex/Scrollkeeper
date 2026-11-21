@@ -25,6 +25,16 @@ local function VersionNumber(text)
     return tonumber(a) * 10000 + tonumber(b) * 100 + (tonumber(c) or 0)
 end
 
+-- Someone runs a newer Scrollkeeper: say so once per session. (Also with
+-- sharing set to None: Network/Comm.lua passes just the version along.)
+function SK.NoteVersion(version)
+    if warnedNewer or not (SK.db and SK.db.updateNotice ~= false) then return end
+    if VersionNumber(version) > VersionNumber(SK.version) then
+        warnedNewer = true
+        SK.Print(L["a newer version (%s) is out. You have %s. Update it on CurseForge, Wago or WowUp."]:format(tostring(version), SK.version))
+    end
+end
+
 ------------------------------------------------------------------------
 -- Telling others about me
 ------------------------------------------------------------------------
@@ -235,10 +245,7 @@ Net.Handle("H", function(sender, f, source)
         SK.db.community[sender].exportID = exportID
     end
 
-    if not warnedNewer and SK.db.updateNotice ~= false and VersionNumber(peer.version) > VersionNumber(SK.version) then
-        warnedNewer = true
-        SK.Print(L["a newer version (%s) is out. You have %s. Update it on CurseForge."]:format(peer.version, SK.version))
-    end
+    SK.NoteVersion(peer.version)
     SK.Safely("mage history", SK.RememberMage, sender, peer)
     SK.Send("PEERS_CHANGED")
 end)

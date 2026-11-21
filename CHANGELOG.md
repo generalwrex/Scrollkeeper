@@ -31,6 +31,7 @@
 - Fixed: the panel's Skill, Ready, Cooldown and "none" labels stayed in English in other languages.
 - Doorways says it can be opened after combat, instead of the game blocking it.
 - Setup and settings say plainly what sharing sends (only scroll info, never chat, gold, bags or where you are), and Full is marked recommended. The Simple choice (guild and friends only) is gone: Anonymous keeps you private and still helps everyone. If you were on Simple, setup asks you once to pick again.
+- With sharing set to None you still hear when a newer version is out (from your guild and group), and the message mentions Wago and WowUp too.
 - Setup: sharing and language are set once for your whole account, so a new character (mage or not) doesn't ask again.
 - /sk export is gone: Fellow Mages already share everything over the network, so there's nothing to paste anymore. Thanks to everyone who sent theirs!
 

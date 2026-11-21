@@ -969,3 +969,15 @@ do
   local seen = SK.db.setupSeenAccount and SK.db.setupSeenAccount.sharing
   print("SIMPLE asked again", seen == 0, "still simple until they pick", SK.db.sharing)
 end
+
+-- Sharing None still hears about a newer version.
+do
+  SK.SetSharing("none")
+  local printed = ""
+  local realPrint = SK.Print
+  SK.Print = function(text) printed = printed .. tostring(text) end
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|9.9.9|MAGE|30|80|150|15||", "GUILD", "Newer-Realm")
+  SK.Print = realPrint
+  print("NONE update notice", printed:find("9.9.9", 1, true) ~= nil, "peer added", SK.peers["Newer-Realm"] ~= nil)
+  SK.SetSharing("full")
+end
