@@ -14,7 +14,8 @@ local ADDON_NAME, SK = ...
 function SK.SetSharing(mode)
     local db = SK.db or ScrollkeeperDB
     if not db then return end
-    if mode ~= "full" and mode ~= "anon" and mode ~= "simple" and mode ~= "none" then mode = "full" end
+    if mode == "simple" then mode = "anon" end   -- Simple is gone (1.2.2)
+    if mode ~= "full" and mode ~= "anon" and mode ~= "none" then mode = "full" end
     db.sharing = mode
     db.share = mode ~= "none"
     db.shareChannel = mode == "full" or mode == "anon"
@@ -244,9 +245,11 @@ SK.On("ADDON_LOADED", function(loaded)
     -- 1.1.4: sharing is one choice now (full, anon, simple or none).
     if ScrollkeeperDB.sharing == nil then
         if ScrollkeeperDB.share == false then ScrollkeeperDB.sharing = "none"
-        elseif ScrollkeeperDB.shareChannel == false then ScrollkeeperDB.sharing = "simple"
+        elseif ScrollkeeperDB.shareChannel == false then ScrollkeeperDB.sharing = "anon"
         else ScrollkeeperDB.sharing = "full" end
     end
+    -- 1.2.2: Simple (guild and friends only) is gone; it became Anonymous.
+    if ScrollkeeperDB.sharing == "simple" then ScrollkeeperDB.sharing = "anon" end
     SK.SetSharing(ScrollkeeperDB.sharing)
 
     -- Early 1.1.0 test builds saved ordinary scroll prices too; start clean.

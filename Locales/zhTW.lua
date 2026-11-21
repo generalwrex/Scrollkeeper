@@ -718,5 +718,6 @@ L["Learn Study: hand a library book to %s in %s (%s). One is always waiting in %
 L["The Lessons of Ta'zo"] = "塔佐的教誨"
 L["Archmage Antonidas: The Unabridged Autobiography"] = "大法師安東尼達斯：未刪節自傳"
 L["(recommended)"] = "（推薦）"
+L["(not recommended)"] = "（不推薦）"
 L["the scroll icon idea, and the idea for Doorways"] = "卷軸圖示的點子，以及傳送門的點子"
 L["Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds"] = "網路中的同道法師（RP-PvP 部落），分享了社群大部分 175 級機率資料"

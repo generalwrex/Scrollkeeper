@@ -961,13 +961,11 @@ do
   print("SETUP account seen", SK.db.setupSeenAccount and SK.db.setupSeenAccount.sharing, SK.db.setupSeenAccount and SK.db.setupSeenAccount.language)
 end
 
--- Simple is gone: someone still on it gets the sharing question once more.
+-- Simple is gone: anyone on it becomes Anonymous.
 do
-  SK.db.sharing, SK.db.simpleAskedAgain = "simple", nil
-  SK.db.setupSeenAccount = { sharing = 2, language = 1 }
-  SK.Send("READY")
-  local seen = SK.db.setupSeenAccount and SK.db.setupSeenAccount.sharing
-  print("SIMPLE asked again", seen == 0, "still simple until they pick", SK.db.sharing)
+  SK.SetSharing("simple")
+  print("SIMPLE becomes", SK.db.sharing, "channel", SK.db.shareChannel, "anonymous", SK.db.anonymous)
+  SK.SetSharing("full")
 end
 
 -- Sharing None still hears about a newer version.

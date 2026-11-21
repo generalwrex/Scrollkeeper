@@ -304,7 +304,7 @@ SK.Listen("READY", function()
                 local container = Settings.CreateControlTextContainer()
                 container:Add("full", L["Full"] .. " " .. L["(recommended)"], L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."])
                 container:Add("anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."])
-                container:Add("none", L["None"], L["Turns off the network: nothing sent, no Fellow Mages or swap board. Odds that come with each update still show."])
+                container:Add("none", L["None"] .. " " .. L["(not recommended)"], L["Turns off the network: nothing sent, no Fellow Mages or swap board. Odds that come with each update still show."])
                 return container:GetData()
             end
             Settings.CreateDropdown(category, setting, Options,

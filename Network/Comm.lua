@@ -143,6 +143,7 @@ SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
         if kind == "H" and tonumber(fields[1]) == Net.PROTOCOL and not Net.IsMe(sender) and SK.NoteVersion then
             SK.Safely("version", SK.NoteVersion, fields[2])
         end
+        if kind == "V" and not Net.IsMe(sender) and SK.NoteVersion then SK.Safely("version", SK.NoteVersion, fields[1]) end
         return
     end
     if kind == "H" and fields[9] and fields[9] == UnitGUID("player") then
@@ -359,6 +360,21 @@ function Net.UpdateChannel()
     end
 end
 
+-- Sharing set to None: the only thing sent is your version ("V|1.2.2"),
+-- to your guild and group, so update checks work both ways.
+function Net.SendVersionOnly()
+    if not (SK.db and not SK.db.share and C_ChatInfo and C_ChatInfo.SendAddonMessage) or SK.InCombat() then return end
+    local text = "V|" .. (SK.devCopy and "dev" or SK.version)
+    for _, destination in ipairs(Destinations()) do
+        if destination[1] ~= "CHANNEL" then pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, text, destination[1]) end
+    end
+end
+
+-- Version from someone on None (V|version).
+Net.Handle("V", function(sender, f)
+    if SK.NoteVersion then SK.NoteVersion(f[1]) end
+end)
+
 SK.Listen("READY", function()
     if not (C_ChatInfo and C_ChatInfo.RegisterAddonMessagePrefix) then return end
     C_ChatInfo.RegisterAddonMessagePrefix(Net.PREFIX)
@@ -367,5 +383,6 @@ SK.Listen("READY", function()
     C_Timer.After(8, function()
         Net.UpdateChannel()
         SK.Send("NET_READY")
+        Net.SendVersionOnly()
     end)
 end)

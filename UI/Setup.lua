@@ -59,7 +59,7 @@ local function BuildQuestions()
         hint = L["Only scroll info is shared: your Comprehension skill, what your scrolls became and where they dropped. Never your chat, gold, bags or where you are."], options = {
         { "full", L["Full"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."], ICON .. "Spell_Holy_PrayerOfHealing02" },
         { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
-        { "none", L["None"], L["Turns off the network: nothing sent, no Fellow Mages or swap board. Odds that come with each update still show."], ICON .. "Ability_Rogue_Feint" },
+        { "none", L["None"] .. " |cffff6666" .. L["(not recommended)"] .. "|r", L["Turns off the network: nothing sent, no Fellow Mages or swap board. Odds that come with each update still show."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
     for _, language in ipairs(SK.LANGUAGES or {}) do
@@ -114,18 +114,6 @@ end
 
 local function SeenFor(q) return q.account and SeenAccount() or Seen() end
 
--- Simple (guild, group and friends only) is no longer offered. Anyone
--- still on it keeps it until they answer the sharing question again,
--- which setup asks once.
-local function AskSimpleAgain()
-    if SK.db.sharing == "simple" and not SK.db.simpleAskedAgain then
-        SK.db.simpleAskedAgain = true
-        SeenAccount().sharing = 0
-        for _, field in ipairs({ "setupSeen", "setupSeenOther" }) do
-            if SK.db[field] then SK.db[field].sharing = nil end
-        end
-    end
-end
 
 local function MarkSeen(list)
     for _, q in ipairs(list) do SeenFor(q)[q.key] = q.version or 1 end
@@ -393,7 +381,6 @@ end
 -- since they get different questions. After that, only new questions are
 -- shown, once.
 SK.Listen("READY", function()
-    AskSimpleAgain()
     local doneKey = SK.isMage and "setupDone" or "setupDoneOther"
     -- Did setup before questions were tracked (1.1.2/1.1.3): everything
     -- that existed then counts as answered.
