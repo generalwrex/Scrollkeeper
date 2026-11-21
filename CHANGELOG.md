@@ -15,6 +15,7 @@
 - Fixed (non-English clients): the "a Scroll of Comprehension would let you read more" hint and weapon-upgrade scrolls (Saber, Blade, Wit) weren't recognized.
 - Less network traffic: when a guildie or group member logs in, your data goes only to your guild or group, not to the whole public channel too. Friends are pinged at most every 2 minutes.
 - Your level shows up for others right after you level, not up to 5 minutes later.
+- So much community data has come in that it's now stored packed: the shipped data is less than half the size.
 
 ## 1.2.1
 

@@ -867,3 +867,20 @@ do
     print("MAP CIRCLES no provider")
   end
 end
+
+-- Shipped community data: dump it in a fixed order (compare packed vs old).
+do
+  local function Dump(v)
+    if type(v) ~= "table" then return tostring(v) end
+    local keys = {}
+    for k in pairs(v) do keys[#keys + 1] = k end
+    table.sort(keys, function(a, b) return tostring(a) < tostring(b) end)
+    local parts = {}
+    for _, k in ipairs(keys) do parts[#parts + 1] = tostring(k) .. "=" .. Dump(v[k]) end
+    return "{" .. table.concat(parts, ",") .. "}"
+  end
+  local players = 0
+  for _ in pairs(SK.COMMUNITY_DATA or {}) do players = players + 1 end
+  local text = Dump(SK.COMMUNITY_DATA or {})
+  print("COMMUNITY players", players, "size", #text)
+end
