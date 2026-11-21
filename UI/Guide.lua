@@ -1,5 +1,5 @@
 -- Scrollkeeper: UI/Guide.lua
--- The Scroll Guide (/sk guide): everything in one place.
+-- The Codex (/sk codex, also /sk guide): everything in one place.
 --   Scrolls  every mage scroll, tier by tier: what it does (the game's own
 --            tooltip text, so it's in your language), how many you have,
 --            and why it's your pick (your usual, your spec, a skill-up).
@@ -130,7 +130,7 @@ local function Build()
     window:RegisterForDrag("LeftButton")
     window:SetScript("OnDragStart", window.StartMoving)
     window:SetScript("OnDragStop", window.StopMovingOrSizing)
-    window:SetTitle(L["Scrollkeeper: Scroll Guide"])
+    window:SetTitle(L["Scrollkeeper: Codex"])
     if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Misc_Book_09") end
     tinsert(UISpecialFrames, "ScrollkeeperGuideFrame")   -- Escape closes it
 

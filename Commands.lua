@@ -93,7 +93,8 @@ commands.door = commands.doors
 commands.setup = function() SK.ShowSetup() end
 commands.scan = function() SK.ScanAuctionScrolls() end
 commands.plan = function() SK.TogglePlan() end
-commands.guide = function() SK.ToggleGuide() end
+commands.codex = function() SK.ToggleGuide() end
+commands.guide = commands.codex
 commands.about = function()
     SK.Print(L["version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."]:format(SK.version))
     print("  " .. L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER or "Archmage Naage"))
@@ -107,7 +108,7 @@ commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk guide, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk codex, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 ------------------------------------------------------------------------
