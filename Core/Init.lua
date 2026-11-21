@@ -200,6 +200,7 @@ local DEFAULTS = {
     minimapButton = true,    -- the round button on the minimap's edge
     reminderToast = true,    -- pop-up when your imbue or familiar drops off (UI/Icon.lua)
     expiringReminder = true, -- ...and when one is about to run out
+    reminderInCombat = false, -- ...also during a fight
     expiringMinutes = 5,     -- ...this many minutes before
     language = "auto",       -- "auto" (the game's language) or enUS, deDE, esES, frFR
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel

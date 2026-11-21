@@ -286,7 +286,8 @@ do
         -- Fixed it? Then the pop-up goes away by itself.
         if toast and toast:IsShown() and not imbue and not familiar then toast:Hide() end
 
-        if not SK.db.reminderToast or SK.InCombat() then return end
+        -- In combat only if you asked for it (it can run out mid-fight).
+        if not SK.db.reminderToast or (SK.InCombat() and not SK.db.reminderInCombat) then return end
         if UnitIsDeadOrGhost and SK.Known(UnitIsDeadOrGhost("player")) then return end
 
         local now = GetTime()
@@ -333,7 +334,8 @@ do
     -- it. Once per buff: renewing it resets that.
     local warned = {}
     local function CheckExpiring()
-        if not (SK.isMage and SK.db and SK.db.expiringReminder ~= false) or SK.InCombat() then return end
+        if not (SK.isMage and SK.db and SK.db.expiringReminder ~= false) then return end
+        if SK.InCombat() and not SK.db.reminderInCombat then return end
         if not SK.BuffTimeLeft then return end
         if UnitIsDeadOrGhost and SK.Known(UnitIsDeadOrGhost("player")) then return end
         local limit = (tonumber(SK.db.expiringMinutes) or 5) * 60

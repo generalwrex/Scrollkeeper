@@ -46,9 +46,10 @@ local function BuildQuestions()
             { false, L["No"], L["It stays up. The X still closes it in combat."], ICON .. "Ability_Warrior_BattleShout" },
         } }
         list[#list + 1] = { key = "reminders", question = L["Remind you about your imbue and familiar?"], multi = true,
-            hint = L["Pick any, or none. Only when you have a scroll to fix it, never in combat."], options = {
+            hint = L["Pick any, or none. Only when you have a scroll to fix it."], options = {
             { "reminderToast", L["Imbue and familiar pop-up"], L["When your weapon imbue or familiar wears off."], ICON .. "Spell_Fire_FlameTounge" },
             { "expiringReminder", L["Running-out pop-up"], L["A few minutes before it runs out (set how many in the settings)."], ICON .. "INV_Misc_PocketWatch_01" },
+            { "reminderInCombat", L["Also in combat"], L["So you know if it runs out mid-fight."], ICON .. "Ability_DualWield" },
         } }
     else
         list[#list + 1] = { key = "showTooltips", question = L["Add Scrollkeeper lines to scroll tooltips?"], options = {

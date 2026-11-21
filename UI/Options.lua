@@ -264,6 +264,8 @@ SK.Listen("READY", function()
             L["A small pop-up when your weapon imbue or familiar wears off and you have a scroll for it. Click it to open the panel. Not in combat, and at most once every five minutes."], true)
         local expiring = AddCheckbox("expiringReminder", L["Running-out pop-up"],
             L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."], true)
+        AddCheckbox("reminderInCombat", L["Pop-ups in combat too"],
+            L["Show the imbue and familiar pop-ups during a fight as well, in case one runs out mid-fight."], false)
         SK.Safely("settings expiring slider", function()
             local slider = AddExpiringSlider()
             if slider and DependsOn then DependsOn(slider, expiring, "expiringReminder") end

@@ -989,3 +989,6 @@ do
   SK.Send("READY")
   print("REMINDERS page skipped for old setups", SK.isMage and SK.db.setupSeen.reminders or "not a mage")
 end
+
+-- Reminder pop-ups in combat only when asked for.
+print("REMINDER in combat default", SK.db.reminderInCombat)
