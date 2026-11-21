@@ -902,3 +902,16 @@ end
 
 -- Books: only real ones count (no more "any Journal or Tome").
 print("ISBOOK listed", SK.IsBook(nil, "Goaz Scrolls"), "quest item", SK.IsBook(99999, "Torn Journal Page"), "old word", SK.IsBook(nil, "Tome of Something"))
+
+-- Loot log: where a scroll came from (the mob), saved with the details.
+do
+  GetNumLootItems = function() return 1 end
+  GetLootSlotLink = function() return "|cffffffff|Hitem:277600::::::::20:::::|h[Scroll: TEST]|h|r" end
+  GetLootSourceInfo = function() return "Creature-0-1-2-3-2240-0000ABCD", 1 end
+  fire("LOOT_OPENED")
+  SK.LogLoot("scroll", 277600, 15, 1)
+  local e = SK.db.lootLog[#SK.db.lootLog]
+  print("LOOTLOG", e.kind, e.item, e.tier, e.src, e.srcID, e.lvl ~= nil, #SK.db.lootLog)
+  local text = SK.ExportText()
+  print("LOOTLOG export has Z", text:find("\nZ|", 1, true) ~= nil)
+end

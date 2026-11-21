@@ -30,6 +30,63 @@ local function UntranslatedTier(link)
 end
 SK.UntranslatedTier = UntranslatedTier
 
+------------------------------------------------------------------------
+-- Loot log: every untranslated scroll and book looted, with everything
+-- we can tell about it, in case it's useful later. Kept on this computer
+-- (and in a dev copy's export). At most LOG_MAX entries, oldest dropped.
+--   SK.db.lootLog = { { t, kind, item, tier, map, x, y, zone, sub,
+--                       src, srcID, srcName, lvl, class, count }, ... }
+--   kind "scroll" or "book"; src "npc", "object" or "item"; x, y in 0-100.
+------------------------------------------------------------------------
+
+local LOG_MAX = 1500
+-- What each loot window slot came from, by item ID (set when it opens).
+local sources = {}
+
+local function ParseGUID(guid)
+    if type(guid) ~= "string" then return nil end
+    -- "Creature-0-1234-0-5678-2240-0000ABCD": the 6th part is the NPC or object ID.
+    local parts = {}
+    for part in (guid .. "-"):gmatch("(.-)%-") do parts[#parts + 1] = part end
+    local kind, id = parts[1], parts[6]
+    if kind == "Creature" or kind == "Vehicle" then return "npc", tonumber(id) end
+    if kind == "GameObject" then return "object", tonumber(id) end
+    if kind == "Item" then return "item", nil end
+    return kind and kind:lower() or nil, tonumber(id)
+end
+
+SK.On("LOOT_OPENED", function()
+    sources = {}
+    if not (GetNumLootItems and GetLootSlotLink and GetLootSourceInfo) then return end
+    local targetName = SK.Known(UnitName and UnitName("target"))
+    local targetGUID = SK.Known(UnitGUID and UnitGUID("target"))
+    for slot = 1, GetNumLootItems() or 0 do
+        local link = SK.Try(GetLootSlotLink, slot)
+        local itemID = type(link) == "string" and tonumber(link:match("item:(%d+)"))
+        if itemID then
+            local guid = SK.Known(SK.Try(GetLootSourceInfo, slot))
+            local src, srcID = ParseGUID(guid)
+            sources[itemID] = { src = src, srcID = srcID,
+                srcName = (guid and guid == targetGUID) and targetName or nil }
+        end
+    end
+end)
+
+function SK.LogLoot(kind, itemID, tier, count)
+    SK.db.lootLog = SK.db.lootLog or {}
+    local mapID, x, y = SK.PlayerMapPosition()
+    local source = itemID and sources[itemID] or {}
+    local _, class = UnitClass and UnitClass("player")
+    table.insert(SK.db.lootLog, {
+        t = time(), kind = kind, item = itemID, tier = tier, count = count or 1,
+        map = mapID, x = x and math.floor(x * 1000 + 0.5) / 10, y = y and math.floor(y * 1000 + 0.5) / 10,
+        zone = GetRealZoneText and GetRealZoneText() or nil, sub = GetSubZoneText and GetSubZoneText() or nil,
+        src = source.src, srcID = source.srcID, srcName = source.srcName,
+        lvl = UnitLevel and UnitLevel("player") or nil, class = class,
+    })
+    while #SK.db.lootLog > LOG_MAX do table.remove(SK.db.lootLog, 1) end
+end
+
 -- "You receive loot: [Scroll: CWAL]" (deciphering says "You receive item:",
 -- and never produces an untranslated scroll, so it can't be counted here).
 SK.On("CHAT_MSG_LOOT", function(message, _, _, _, looter)
@@ -67,6 +124,7 @@ SK.On("CHAT_MSG_LOOT", function(message, _, _, _, looter)
         SK.db.cellItems[mapID][cell] = SK.db.cellItems[mapID][cell] or {}
         SK.db.cellItems[mapID][cell][itemID] = (SK.db.cellItems[mapID][cell][itemID] or 0) + count
     end
+    SK.Safely("loot log", SK.LogLoot, "scroll", itemID, tier, count)
     SK.Send("SCROLL_LOOTED", count)
     SK.Send("DROPS_CHANGED")
     SK.Send("MY_DATA_CHANGED")

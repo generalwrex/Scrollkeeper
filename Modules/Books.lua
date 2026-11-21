@@ -235,6 +235,7 @@ SK.On("CHAT_MSG_LOOT", function(message)
     SK.db.bookItems = SK.db.bookItems or {}
     SK.db.bookItems[mapID] = SK.db.bookItems[mapID] or {}
     SK.db.bookItems[mapID][cell] = itemID
+    if SK.LogLoot then SK.Safely("loot log", SK.LogLoot, "book", itemID, nil, 1) end
     SK.Send("DROPS_CHANGED")
     SK.Send("MY_DATA_CHANGED")
 end)

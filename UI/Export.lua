@@ -20,6 +20,7 @@
 --   J|mapID|cell:itemID,...          which book was at each book spot
 --   E|mapID|cell:tier:count,...      which tier dropped at each scroll spot
 --   F|mapID|cell:itemID:count,...    which untranslated scroll dropped there (not shipped yet)
+--   Z|time|kind|item|tier|map|x|y|src|srcID|level|class|count|zone|subzone|source name   the loot log
 --   D|mapID|tier:count,...           untranslated scroll drops by tier, per zone (1.1.5)
 --   I|itemID,...                     items learned as books
 --   B|tier:backfires/tries,...       how often Comprehend Scroll backfired
@@ -234,6 +235,12 @@ function SK.ExportText()
             for itemID, count in pairs(items) do out[#out + 1] = cell .. ":" .. itemID .. ":" .. count end
         end
         if #out > 0 then Add("F", mapID, table.concat(out, ",")) end
+    end
+    -- The loot log: every scroll and book looted, with where it came from.
+    for _, e in ipairs(db.lootLog or {}) do
+        Add("Z", e.t or "", e.kind or "", e.item or "", e.tier or "", e.map or "", e.x or "", e.y or "",
+            e.src or "", e.srcID or "", e.lvl or "", e.class or "", e.count or 1,
+            Clean(e.zone or ""), Clean(e.sub or ""), Clean(e.srcName or ""))
     end
 
     local books = {}
