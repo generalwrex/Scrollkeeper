@@ -121,7 +121,7 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(WIDTH, 444)
+    window:SetSize(WIDTH, 470)
     window:SetPoint("CENTER", -150, 0)
     window:SetToplevel(true)
     window:SetClampedToScreen(true)
@@ -152,7 +152,8 @@ local function Build()
         frame:SetPoint("TOPLEFT", -3, 11)
         button:SetNormalTexture(icon)
         button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
-        button:SetCheckedTexture("Interface\\Buttons\\CheckButtonHilight", "ADD")
+        -- (The usual "checked" glow isn't on Forever: the hover glow is.)
+        button:SetCheckedTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
         button:SetID(i)
         button:SetScript("OnClick", function(self)
             tab = TAB_KEYS[self:GetID()]
