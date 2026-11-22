@@ -181,6 +181,24 @@ function SK.CheckOnline(sender)
     C_Timer.After(6, function() if pendingChecks[key] == sender then pendingChecks[key] = nil end end)
 end
 
+-- Opening the panel or Fellow Mages: check everyone listed who hasn't been
+-- heard from in a minute, a few at a time, so the list is right without
+-- hovering each name. Each mage at most every 2 minutes.
+local listCheckedAt = {}
+function SK.CheckListedOnline()
+    if not SK.PeerList then return end
+    local now, delay = time(), 0
+    for _, entry in ipairs(SK.PeerList()) do
+        local sender, peer = entry.sender, entry.peer
+        if not peer.offline and not peer.demo and now - (peer.seen or 0) > 60
+            and (not listCheckedAt[sender] or now - listCheckedAt[sender] >= 120) then
+            listCheckedAt[sender] = now
+            C_Timer.After(delay, function() SK.Safely("online check", SK.CheckOnline, sender) end)
+            delay = delay + 0.25
+        end
+    end
+end
+
 -- "No player named '%s' is currently playing." as a pattern.
 local function NotFoundPattern()
     local text = ERR_CHAT_PLAYER_NOT_FOUND_S

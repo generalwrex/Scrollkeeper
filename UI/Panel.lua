@@ -361,6 +361,12 @@ local function Build()
         end
     end
     panel:HookScript("OnShow", function() C_Timer.After(0, function() SK.Safely("title", AlignTitle) end) end)
+    -- Fellow Mages is up to date the moment the panel opens (it used to
+    -- change only once you hovered a name).
+    panel:HookScript("OnShow", function()
+        if SK.RefreshNetwork then SK.Safely("fellow mages", SK.RefreshNetwork) end
+        if SK.CheckListedOnline then SK.Safely("online checks", SK.CheckListedOnline) end
+    end)
     C_Timer.After(0, function() SK.Safely("title", AlignTitle) end)
     parts.summary:SetWordWrap(false)
     -- Not shown any more (the window buttons sit there now), but the title

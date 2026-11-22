@@ -673,7 +673,10 @@ local function Build()
     window.footer:SetPoint("RIGHT", window, "RIGHT", -12, 0)
     window.footer:SetJustifyH("LEFT")
 
-    window:SetScript("OnShow", function() SK.RefreshNetwork() end)
+    window:SetScript("OnShow", function()
+        SK.RefreshNetwork()
+        if SK.CheckListedOnline then SK.CheckListedOnline() end
+    end)
     window:Hide()
 end
 
