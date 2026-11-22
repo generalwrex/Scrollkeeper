@@ -184,14 +184,14 @@ end)
 
 SK.BOOKS_TOTAL = 40
 -- Rewards at these counts (you pick one). ids = the items' IDs, in the
--- same order (Wowhead). unknown = nobody knows yet how many books the
--- last set takes (35 is a guess, only used for the order; until then
--- it counts as reached at all 40).
+-- same order (Wowhead). level = the character level it needs too
+-- (40 books + level 50: reddit.com/r/classicwow/comments/1xusbxl).
+-- unknown = how many books it takes isn't known (then it counts as all 40).
 SK.BOOK_REWARDS = {
     { books = 10, title = "Friend of the Library", items = { "Scholarly Pendant", "Erudite's Amulet" }, ids = { 277203, 277204 } },
     { books = 20, title = "Greater Friend of the Library", items = { "Field Researcher's Loop", "Philanthropist's Ring" }, ids = { 281634, 281635 } },
     { books = 25, items = { "Truthseeker's Bow", "Crest of Elucidation", "Researcher's Night Light" }, ids = { 277254, 277258, 277260 } },
-    { books = 35, unknown = true, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" }, ids = { 281637, 281636, 277202 } },
+    { books = 40, level = 50, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" }, ids = { 281637, 281636, 277202 } },
 }
 
 local function QuestDone(questID)

@@ -173,6 +173,11 @@ local function RewardRow(row, entry)
         local reward = entry.reward
         local text = reward.unknown and L["? books"] or L["%d books"]:format(reward.books)
         if reward.title then text = text .. ": " .. L[reward.title] end
+        if reward.level then
+            local level = UnitLevel and SK.Known(UnitLevel("player"))
+            local color = (type(level) == "number" and level >= reward.level) and "|cffbbbbbb" or "|cffff6666"
+            text = text .. "  " .. color .. L["needs level %d"]:format(reward.level) .. "|r"
+        end
         row.label:SetText((entry.reached and "|cff40ff40ng|r " or "") .. "|cffffd100" .. text .. "|r")
         row.sub:SetText(entry.status .. "  |cff808080" .. L["(pick one)"] .. "|r")
         return

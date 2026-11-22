@@ -2,7 +2,7 @@
 
 ## 1.2.3
 
-- New in the Codex: a **Book rewards** tab with every librarian reward as an item link (hover to see it), which ones you've reached, and how many books until the next. (How many books the last set takes isn't known yet; it says so.)
+- New in the Codex: a **Book rewards** tab with every librarian reward as an item link (hover to see it), which ones you've reached, and how many books until the next. The last set takes all 40 books and needs level 50.
 - Fellow Mages is up to date as soon as you open the panel: it checks who's still online right away, instead of only when you hover a name.
 - Fixed: pressing Shift while a player or another addon's map pin (like Questie's) had its tooltip open could cause a Lua error. Shift now only redraws Scrollkeeper's own scroll tooltips.
 - Familiar pop-ups now only show in dungeons and raids (flight paths make your familiar vanish). Want them everywhere? Turn on "Familiar pop-ups outside dungeons and raids" in /sk options.
