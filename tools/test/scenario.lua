@@ -774,7 +774,8 @@ do
   local realRealm, realFaction = GetRealmName, UnitFactionGroup
   GetRealmName = function() return "CAMWOW US1 Realm 1 PvE" end
   UnitFactionGroup = function() return "Horde" end
-  SK.db.mageHistory = { Turbo = { name = "Turbo", seen = time(), tiers = { 15 }, ruleset = "PvE", faction = "Horde" } }
+  SK.db.mageHistory = { Turbo = { name = "Turbo", seen = time(), tiers = { 15 }, ruleset = "PvE", faction = "Horde", reached = true },
+    Far = { name = "Far", seen = time(), tiers = { 15 }, ruleset = "PvE", faction = "Horde" } }   -- never reached: maybe another realm
   print("RULESET history on PvE Horde:", #SK.MageHistory())
   GetRealmName = function() return "CAMWOW US2 Realm 2 PvP" end
   UnitFactionGroup = function() return "Alliance" end
@@ -794,7 +795,9 @@ do
   fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.1.9|MAGE|20|64|100|15.50||Player-1-AB", "CHANNEL", "Oldie")
   print("RULESET old client, realm unknown:", SK.IsUnreachable("Oldie") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["Oldie"] ~= nil)
   fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.2.0|MAGE|20|64|100|15.50||Player-1-AC||||||RP", "CHANNEL", "Rper")
-  print("RULESET RP seen from RP:", SK.IsUnreachable("Rper") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["X"] ~= nil)
+  print("RULESET RP heard on the channel:", SK.IsUnreachable("Rper") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["X"] ~= nil)
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.2.0|MAGE|20|64|100|15.50||Player-1-AC||||||RP", "GUILD", "Rper")
+  print("RULESET RP seen from RP (guild):", SK.IsUnreachable("Rper") and "unreachable" or "reachable", "| saved:", SK.db.mageHistory["X"] ~= nil)
   SK.peers["Turbo"], SK.peers["Oldie"], SK.peers["Rper"] = nil, nil, nil
   SK.db.mageHistory = nil
   GetRealmName, GetPlayerInfoByGUID = realRealm, realInfo
@@ -1059,4 +1062,19 @@ end
 do
   SK.db.bookIDs = { [207972] = "The Lessons of Ta'zo" }
   print("CODEX book id", SK.BookIDsByName()["the lessons of ta'zo"])
+end
+
+-- Mail only offers people a whisper reached (the channel spans other realms).
+do
+  local function InPlan(name)
+    for _, p in ipairs(SK.MailPlan()) do if p.name == name then return true end end
+    return false
+  end
+  local hello = "H|1|1.2.3|MAGE|20|20|100|1.15.50||Player-1-ZZ||||||"
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", hello, "CHANNEL", "Faraway")
+  print("REACH channel only, in mail:", InPlan("Faraway"))
+  SK.CheckOnline("Faraway")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", hello, "WHISPER", "Faraway")
+  print("REACH answered a whisper, in mail:", InPlan("Faraway"), "| reached:", SK.peers["Faraway"].reached ~= nil)
+  SK.peers["Faraway"] = nil
 end

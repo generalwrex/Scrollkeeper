@@ -190,7 +190,9 @@ function SK.CheckListedOnline()
     local now, delay = time(), 0
     for _, entry in ipairs(SK.PeerList()) do
         local sender, peer = entry.sender, entry.peer
-        if not peer.offline and not peer.demo and now - (peer.seen or 0) > 60
+        -- Not yet reached by a whisper: checked even if heard just now (the
+        -- channel spans realms), so mail only offers people it can reach.
+        if not peer.offline and not peer.demo and (not peer.reached or now - (peer.seen or 0) > 60)
             and (not listCheckedAt[sender] or now - listCheckedAt[sender] >= 120) then
             listCheckedAt[sender] = now
             C_Timer.After(delay, function() SK.Safely("online check", SK.CheckOnline, sender) end)
@@ -229,6 +231,8 @@ Net.Handle("H", function(sender, f, source)
     if checked and SK.peers[checked] and checked ~= sender then
         pendingChecks[CheckKey(sender)] = nil
         SK.peers[checked].seen, SK.peers[checked].offline, SK.peers[checked].offlineAt = time(), nil, nil
+        SK.peers[checked].reached = time()
+        SK.Safely("mage history", SK.RememberMage, checked, SK.peers[checked])
         SK.Send("PEERS_CHANGED")
         return
     end
@@ -247,6 +251,12 @@ Net.Handle("H", function(sender, f, source)
     peer.exportID = exportID
     -- Their character's unique ID, for their real name (see SK.ContactName).
     peer.guid = tostring(f[9] or ""):match("^Player%-[%x%-]+$")
+    -- Reached: a whisper got through to them (their answer to an online
+    -- check), or they're in our guild or group. The public channel spans
+    -- realms we can't mail, so hearing them there proves nothing.
+    -- (Kept from before: the peer is rebuilt on every hello.)
+    local direct = checked or source == "GUILD" or source == "PARTY" or source == "RAID" or source == "INSTANCE_CHAT"
+    peer.reached = direct and time() or (old and old.reached) or nil
     SK.peers[sender] = peer
     -- Anonymous players still count, but never show up by name.
     peer.anonymous = f[11] == "1"
@@ -487,19 +497,10 @@ local function PruneHistory()
     for i = HISTORY_MAX + 1, #list do history[list[i]] = nil end
 end
 
--- Do we really know where they are? Their ruleset, a realm on their name,
--- or a realm from their ID (the game often doesn't know far-away players).
-local function WhereKnown(sender, peer)
-    if peer.ruleset or sender:find("%-") then return true end
-    if not (peer.guid and GetPlayerInfoByGUID) then return false end
-    local ok, _, _, _, _, _, _, realm = pcall(GetPlayerInfoByGUID, peer.guid)
-    return ok and type(realm) == "string" and realm ~= ""
-end
-
 function SK.RememberMage(sender, peer)
     if peer.anonymous or peer.demo or Net.IsMe(sender) or Unreachable(sender, peer) then return end
-    -- The history is only for people we're sure about.
-    if not WhereKnown(sender, peer) then return end
+    -- The history is only for people we're sure about: mail must reach them.
+    if not peer.reached then return end
     local mage, name, level = peer, SK.ContactName(sender), peer.level
     if peer.class ~= "MAGE" then
         if not peer.alt then return end
@@ -511,7 +512,7 @@ function SK.RememberMage(sender, peer)
     SK.db.mageHistory = SK.db.mageHistory or {}
     -- Saved account-wide: note the ruleset and faction, so only characters
     -- who can reach them list them.
-    SK.db.mageHistory[name] = { name = name, level = level, skill = mage.skill, tiers = tiers, seen = time(),
+    SK.db.mageHistory[name] = { name = name, level = level, skill = mage.skill, tiers = tiers, seen = time(), reached = true,
         ruleset = SK.ServerKind and SK.ServerKind() or nil, faction = UnitFactionGroup and UnitFactionGroup("player") or nil }
     PruneHistory()
 end
@@ -537,7 +538,9 @@ function SK.MageHistory()
     for key, entry in pairs(SK.db.mageHistory or {}) do
         -- Only mages this character can reach: same ruleset and faction.
         -- (Both sides must be known: nil matching nil let other rulesets in.)
-        local reachable = ruleset ~= nil and entry.ruleset == ruleset and entry.faction == faction
+        -- And only ones a whisper reached (older entries could be from
+        -- other realms the public channel spans).
+        local reachable = entry.reached and ruleset ~= nil and entry.ruleset == ruleset and entry.faction == faction
         if reachable and not online[key:lower()] then
             local tiers = {}
             for _, tier in ipairs(entry.tiers or {}) do tiers[tier] = true end
@@ -557,12 +560,13 @@ function SK.FreshMages(includeAnonymous)
         if Fresh(peer) and peer.class == "MAGE" and not Net.IsMe(name) and not Unreachable(name, peer)
             and (includeAnonymous or not peer.anonymous) then
             list[#list + 1] = { name = SK.ContactName(name), short = Net.ShortName(name), skill = peer.skill or 0,
-                tiers = peer.tiers or {}, kind = KindOf(name, peer) }
+                tiers = peer.tiers or {}, kind = KindOf(name, peer), reached = peer.reached and true or false }
         elseif Fresh(peer) and peer.alt and not Net.IsMe(name) and not Unreachable(name, peer)
             and (includeAnonymous or not peer.anonymous) then
             -- On another class, but has a mage: mail goes to the mage.
             list[#list + 1] = { name = SK.AltMailName(name), short = peer.alt.name, skill = peer.alt.skill,
-                tiers = peer.alt.tiers, kind = KindOf(name, peer), altOf = Net.ShortName(name) }
+                tiers = peer.alt.tiers, kind = KindOf(name, peer), altOf = Net.ShortName(name),
+                reached = peer.reached and true or false }
         end
     end
     return list

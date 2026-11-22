@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.2.4
+
+- Fixed: the mail list ("Who could use your scrolls") could offer mages on other realms, whom mail can't reach. It now only offers mages a whisper gets through to (or your guild and group): opening the mailbox checks everyone, and whoever answers shows up within a few seconds. The same goes for the offline "seen this week" mages.
+
 ## 1.2.3
 
 - New in the Codex: a **Book rewards** tab with every librarian reward as an item link (hover to see it), which ones you've reached, and how many books until the next. The last set takes all 40 books and needs level 50.

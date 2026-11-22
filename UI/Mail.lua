@@ -83,8 +83,11 @@ function SK.MailPlan()
         end
         for _, mage in ipairs(others) do
             local up = mage.tiers[scroll.needs] and true or false
+            -- Only people mail can reach (a whisper got through, or guild/group):
+            -- the public channel spans other realms.
+            if not mage.reached then up = nil end
             -- Strangers from the public channel only when it's a skill-up for them.
-            if up or (mage.kind ~= "public" and mage.skill >= scroll.needs) then
+            if up or (up ~= nil and mage.kind ~= "public" and mage.skill >= scroll.needs) then
                 Offer(mage.name, mage.short, mage.kind, scroll, up)
             end
         end
@@ -316,6 +319,8 @@ SK.RefreshMailHelper = Refresh
 SK.On("MAIL_SHOW", function()
     C_Timer.After(0.1, Refresh)
     if SK.PingFriends then SK.PingFriends() end
+    -- Whisper everyone not yet reached: whoever answers shows up here.
+    if SK.CheckListedOnline then SK.Safely("online checks", SK.CheckListedOnline) end
     if SendMailFrame and not SendMailFrame.scrollkeeperHooked then
         SendMailFrame.scrollkeeperHooked = true
         SendMailFrame:HookScript("OnShow", Refresh)
