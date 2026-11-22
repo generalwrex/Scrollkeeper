@@ -791,7 +791,8 @@ local function Build()
                     GameTooltip:AddLine(L["Found: %d"]:format(self.found or 0), 1, 1, 1)
                     if reward then
                         GameTooltip:AddLine(" ")
-                        GameTooltip:AddLine(L["Next reward at %d books (pick one):"]:format(reward.books), 1, 0.82, 0)
+                        GameTooltip:AddLine(reward.unknown and L["Next rewards (pick one, how many books isn't known yet):"]
+                            or L["Next reward at %d books (pick one):"]:format(reward.books), 1, 0.82, 0)
                         GameTooltip:AddLine(SK.BookRewardText(reward), 1, 1, 1, true)
                     end
                     GameTooltip:AddLine(L["All rewards: /sk codex"], 0.4, 0.73, 1)

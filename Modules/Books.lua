@@ -183,18 +183,33 @@ end)
 ------------------------------------------------------------------------
 
 SK.BOOKS_TOTAL = 40
--- Rewards at these counts (you pick one). 35 is from the wiki only so far
--- (Wowhead doesn't say). ids = the items' IDs, in the same order (Wowhead).
+-- Rewards at these counts (you pick one). ids = the items' IDs, in the
+-- same order (Wowhead). unknown = nobody knows yet how many books the
+-- last set takes (35 is a guess, only used for the order; until then
+-- it counts as reached at all 40).
 SK.BOOK_REWARDS = {
     { books = 10, title = "Friend of the Library", items = { "Scholarly Pendant", "Erudite's Amulet" }, ids = { 277203, 277204 } },
     { books = 20, title = "Greater Friend of the Library", items = { "Field Researcher's Loop", "Philanthropist's Ring" }, ids = { 281634, 281635 } },
     { books = 25, items = { "Truthseeker's Bow", "Crest of Elucidation", "Researcher's Night Light" }, ids = { 277254, 277258, 277260 } },
-    { books = 35, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" }, ids = { 281637, 281636, 277202 } },
+    { books = 35, unknown = true, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" }, ids = { 281637, 281636, 277202 } },
 }
 
 local function QuestDone(questID)
     local check = (C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) or IsQuestFlaggedCompleted
     return check and SK.Try(check, questID) and true or false
+end
+
+-- How many books a reward surely takes (all 40 while it's not known).
+function SK.RewardBooks(reward)
+    return reward.unknown and SK.BOOKS_TOTAL or reward.books
+end
+
+-- "Next reward at 20 books: A or B." (or "...books needed not known yet").
+function SK.NextRewardText(reward)
+    if reward.unknown then
+        return L["Next rewards (how many books isn't known yet): %s."]:format(SK.BookRewardText(reward))
+    end
+    return L["Next reward at %d: %s."]:format(reward.books, SK.BookRewardText(reward))
 end
 
 -- Books this character has handed in, and the next reward (or nil).
@@ -209,7 +224,7 @@ function SK.BookProgress()
     for _ in pairs(mage and mage.booksHanded or {}) do seen = seen + 1 end
     handed = math.min(math.max(handed, seen), SK.BOOKS_TOTAL)
     for _, reward in ipairs(SK.BOOK_REWARDS) do
-        if handed < reward.books then return handed, reward end
+        if handed < SK.RewardBooks(reward) then return handed, reward end
     end
     return handed, nil
 end
@@ -235,7 +250,11 @@ SK.On("QUEST_TURNED_IN", function(questID)
     end
     local handed, reward = SK.BookProgress()
     if reward then
-        SK.Print(L["book handed in: %d of %d. Next reward at %d books: %s."]:format(handed, SK.BOOKS_TOTAL, reward.books, SK.BookRewardText(reward)))
+        if reward.unknown then
+            SK.Print(L["book handed in: %d of %d."]:format(handed, SK.BOOKS_TOTAL) .. " " .. SK.NextRewardText(reward))
+        else
+            SK.Print(L["book handed in: %d of %d. Next reward at %d books: %s."]:format(handed, SK.BOOKS_TOTAL, reward.books, SK.BookRewardText(reward)))
+        end
     else
         SK.Print(L["book handed in: %d of %d."]:format(handed, SK.BOOKS_TOTAL))
     end

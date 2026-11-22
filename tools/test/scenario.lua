@@ -1051,6 +1051,7 @@ do
   print("GUIDE books top", f and f.top and f.top._text)
   if f then f.tabs[3]:GetScript("OnClick")(f.tabs[3]) end
   print("GUIDE rewards note", f and f.note and f.note._text)
+  print("REWARD unknown", SK.NextRewardText(SK.BOOK_REWARDS[4]), SK.RewardBooks(SK.BOOK_REWARDS[4]))
   if f then f.scrollsTab:GetScript("OnClick")(f.scrollsTab) end
 end
 

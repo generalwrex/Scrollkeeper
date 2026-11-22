@@ -135,18 +135,21 @@ local function RewardRows()
     local rows = {}
     for _, reward in ipairs(SK.BOOK_REWARDS or {}) do
         local status
-        if handed >= reward.books then
+        local reached = handed >= SK.RewardBooks(reward)
+        if reached then
             status = "|cff40ff40" .. L["reached"] .. "|r"
+        elseif reward.unknown then
+            status = "|cffff9933" .. L["data missing: how many books these take isn't known yet"] .. "|r"
         elseif reward == nextReward then
             status = "|cffffd100" .. L["next: %d more |4book:books;"]:format(reward.books - handed) .. "|r"
         else
             status = "|cff808080" .. L["%d more |4book:books;"]:format(reward.books - handed) .. "|r"
         end
-        rows[#rows + 1] = { header = true, reward = reward, status = status, reached = handed >= reward.books }
+        rows[#rows + 1] = { header = true, reward = reward, status = status, reached = reached }
         for i, item in ipairs(reward.items) do
             local id = reward.ids and reward.ids[i]
             if id and C_Item and C_Item.GetItemInfo and not SK.Try(C_Item.GetItemInfo, id) then waiting[id] = true end
-            rows[#rows + 1] = { itemID = id, name = item, reached = handed >= reward.books }
+            rows[#rows + 1] = { itemID = id, name = item, reached = reached }
         end
     end
     return rows
@@ -168,7 +171,7 @@ local function RewardRow(row, entry)
     row.itemID, row.tipTitle, row.tipLines, row.tipFunc, row.onClick, row.tipCount = nil, nil, nil, nil, nil, nil
     if entry.header then
         local reward = entry.reward
-        local text = L["%d books"]:format(reward.books)
+        local text = reward.unknown and L["? books"] or L["%d books"]:format(reward.books)
         if reward.title then text = text .. ": " .. L[reward.title] end
         row.label:SetText((entry.reached and "|cff40ff40ng|r " or "") .. "|cffffd100" .. text .. "|r")
         row.sub:SetText(entry.status .. "  |cff808080" .. L["(pick one)"] .. "|r")
@@ -340,7 +343,7 @@ function SK.RefreshGuide()
         if SK.BookProgress then handed, reward = SK.BookProgress() end
         local top = L["Books handed in: %d of %d."]:format(handed or 0, SK.BOOKS_TOTAL or 40)
         if reward and SK.BookRewardText then
-            top = top .. "  " .. L["Next reward at %d: %s."]:format(reward.books, SK.BookRewardText(reward))
+            top = top .. "  " .. SK.NextRewardText(reward)
         end
         window.top:SetText(top)
         window.list:SetRows(BookRows(), BookRow, "")
