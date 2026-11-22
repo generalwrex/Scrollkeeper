@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.2.2):** the **Codex** (`/sk codex`): every mage scroll and what it does, plus all 40 library books with waypoints. A much smarter map: scroll tiers per spot, every book, open doors, a tier filter. Click the imbue/familiar reminder to use the scroll, or bind a key that works mid-fight. Now on Wago and WowUp too!
+**Latest (1.2.3):** a **Book rewards** tab in the Codex: every librarian reward as an item link, what you've reached and how many books to go. Fellow Mages is up to date the moment you open it, familiar pop-ups stay in dungeons and raids (flight paths make it vanish), and a few bug fixes.
 
 Mage scroll helper for WoW Forever.
 
