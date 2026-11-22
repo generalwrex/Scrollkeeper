@@ -794,6 +794,7 @@ local function Build()
                         GameTooltip:AddLine(L["Next reward at %d books (pick one):"]:format(reward.books), 1, 0.82, 0)
                         GameTooltip:AddLine(SK.BookRewardText(reward), 1, 1, 1, true)
                     end
+                    GameTooltip:AddLine(L["All rewards: /sk codex"], 0.4, 0.73, 1)
                     GameTooltip:AddLine(" ")
                     GameTooltip:AddLine(L["Hand books to Garion Wendell (Stormwind) or Owen Thadd (Undercity). Each one counts once."], 0.6, 0.6, 0.6, true)
                 elseif entry[1] == "deciphered" then

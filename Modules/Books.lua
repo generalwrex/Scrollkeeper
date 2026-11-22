@@ -183,13 +183,13 @@ end)
 ------------------------------------------------------------------------
 
 SK.BOOKS_TOTAL = 40
--- Rewards at these counts (you pick one). 25 and 35 are from the wiki
--- only so far.
+-- Rewards at these counts (you pick one). 35 is from the wiki only so far
+-- (Wowhead doesn't say). ids = the items' IDs, in the same order (Wowhead).
 SK.BOOK_REWARDS = {
-    { books = 10, title = "Friend of the Library", items = { "Scholarly Pendant", "Erudite's Amulet" } },
-    { books = 20, title = "Greater Friend of the Library", items = { "Field Researcher's Loop", "Philanthropist's Ring" } },
-    { books = 25, items = { "Truthseeker's Bow", "Crest of Elucidation", "Researcher's Night Light" } },
-    { books = 35, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" } },
+    { books = 10, title = "Friend of the Library", items = { "Scholarly Pendant", "Erudite's Amulet" }, ids = { 277203, 277204 } },
+    { books = 20, title = "Greater Friend of the Library", items = { "Field Researcher's Loop", "Philanthropist's Ring" }, ids = { 281634, 281635 } },
+    { books = 25, items = { "Truthseeker's Bow", "Crest of Elucidation", "Researcher's Night Light" }, ids = { 277254, 277258, 277260 } },
+    { books = 35, items = { "Antique Bulwark", "Museum Keeper's Chain", "Artifact Seeker's Pendant" }, ids = { 281637, 281636, 277202 } },
 }
 
 local function QuestDone(questID)

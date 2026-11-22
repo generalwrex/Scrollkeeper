@@ -5,6 +5,8 @@
 --            and why it's your pick (your usual, your spec, a skill-up).
 --   Books    the 40 books for the librarians: where each one is (click for
 --            a waypoint), which you've handed in, and your next reward.
+--   Rewards  every librarian reward, as item links: which you've reached
+--            and how many books until the next.
 
 local _, SK = ...
 local L = SK.L
@@ -123,6 +125,62 @@ local function BookRows()
 end
 
 ------------------------------------------------------------------------
+-- The reward rows: a header per step (how many books), then its items.
+------------------------------------------------------------------------
+
+local function RewardRows()
+    local handed, nextReward = 0, nil
+    if SK.BookProgress then handed, nextReward = SK.BookProgress() end
+    handed = handed or 0
+    local rows = {}
+    for _, reward in ipairs(SK.BOOK_REWARDS or {}) do
+        local status
+        if handed >= reward.books then
+            status = "|cff40ff40" .. L["reached"] .. "|r"
+        elseif reward == nextReward then
+            status = "|cffffd100" .. L["next: %d more |4book:books;"]:format(reward.books - handed) .. "|r"
+        else
+            status = "|cff808080" .. L["%d more |4book:books;"]:format(reward.books - handed) .. "|r"
+        end
+        rows[#rows + 1] = { header = true, reward = reward, status = status, reached = handed >= reward.books }
+        for i, item in ipairs(reward.items) do
+            local id = reward.ids and reward.ids[i]
+            if id and C_Item and C_Item.GetItemInfo and not SK.Try(C_Item.GetItemInfo, id) then waiting[id] = true end
+            rows[#rows + 1] = { itemID = id, name = item, reached = handed >= reward.books }
+        end
+    end
+    return rows
+end
+
+-- The item's slot and type ("Neck", "Finger", "Bow"...), in your language.
+local function ItemKind(itemID)
+    if not (itemID and C_Item and C_Item.GetItemInfoInstant) then return "" end
+    local ok, _, _, subType, equipLoc = pcall(C_Item.GetItemInfoInstant, itemID)
+    if not ok then return "" end
+    local slot = type(equipLoc) == "string" and equipLoc ~= "" and _G[equipLoc]
+    local parts = {}
+    if type(slot) == "string" then parts[#parts + 1] = slot end
+    if type(subType) == "string" and subType ~= "" and subType ~= slot and subType ~= "Miscellaneous" then parts[#parts + 1] = subType end
+    return table.concat(parts, ", ")
+end
+
+local function RewardRow(row, entry)
+    row.itemID, row.tipTitle, row.tipLines, row.tipFunc, row.onClick, row.tipCount = nil, nil, nil, nil, nil, nil
+    if entry.header then
+        local reward = entry.reward
+        local text = L["%d books"]:format(reward.books)
+        if reward.title then text = text .. ": " .. L[reward.title] end
+        row.label:SetText((entry.reached and "|cff40ff40ng|r " or "") .. "|cffffd100" .. text .. "|r")
+        row.sub:SetText(entry.status .. "  |cff808080" .. L["(pick one)"] .. "|r")
+        return
+    end
+    row.itemID = entry.itemID
+    local link = entry.itemID and SK.ScrollLink and SK.ScrollLink(entry.itemID, L[entry.name]) or L[entry.name]
+    row.label:SetText("    " .. link)
+    row.sub:SetText("    |cffbbbbbb" .. ItemKind(entry.itemID) .. "|r")
+end
+
+------------------------------------------------------------------------
 -- The window
 ------------------------------------------------------------------------
 
@@ -153,7 +211,7 @@ local function Build()
 
     -- Side tabs: square icons down the right edge, like the game's own
     -- windows on Forever (Professions, Spellbook). Hover for the name.
-    local TAB_KEYS = { "scrolls", "books" }
+    local TAB_KEYS = { "scrolls", "books", "rewards" }
     local function MakeTab(i, icon, text)
         local button = CreateFrame("CheckButton", "ScrollkeeperGuideFrameTab" .. i, window)
         button:SetSize(32, 32)
@@ -183,6 +241,7 @@ local function Build()
     window.tabs = {
         MakeTab(1, "Interface\\Icons\\INV_Scroll_03", L["Scrolls"]),
         MakeTab(2, "Interface\\Icons\\INV_Misc_Book_09", L["Books"]),
+        MakeTab(3, "Interface\\Icons\\INV_Jewelry_Necklace_07", L["Book rewards"]),
     }
     window.scrollsTab, window.booksTab = window.tabs[1], window.tabs[2]
 
@@ -268,9 +327,15 @@ end
 function SK.RefreshGuide()
     if not (window and window:IsShown()) then return end
     -- The picked tab glows.
-    window.scrollsTab:SetChecked(tab ~= "books")
+    window.scrollsTab:SetChecked(tab == "scrolls")
     window.booksTab:SetChecked(tab == "books")
-    if tab == "books" then
+    window.tabs[3]:SetChecked(tab == "rewards")
+    if tab == "rewards" then
+        local handed = SK.BookProgress and SK.BookProgress() or 0
+        window.top:SetText(L["Books handed in: %d of %d."]:format(handed or 0, SK.BOOKS_TOTAL or 40))
+        window.list:SetRows(RewardRows(), RewardRow, "")
+        window.note:SetText(L["The librarians' rewards. Hover an item to see it, Shift-click to link it."])
+    elseif tab == "books" then
         local handed, reward = 0, nil
         if SK.BookProgress then handed, reward = SK.BookProgress() end
         local top = L["Books handed in: %d of %d."]:format(handed or 0, SK.BOOKS_TOTAL or 40)

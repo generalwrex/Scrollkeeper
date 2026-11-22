@@ -1045,8 +1045,12 @@ do
   SlashCmdList.SCROLLKEEPER("guide")
   local f = ScrollkeeperGuideFrame
   print("GUIDE shown", f and f:IsShown(), "top", f and f.top and f.top._text)
+  -- (The mock's GetID doesn't remember SetID.)
+  if f then for i, t in ipairs(f.tabs) do t.GetID = function() return i end end end
   if f then f.booksTab:GetScript("OnClick")(f.booksTab) end
   print("GUIDE books top", f and f.top and f.top._text)
+  if f then f.tabs[3]:GetScript("OnClick")(f.tabs[3]) end
+  print("GUIDE rewards note", f and f.note and f.note._text)
   if f then f.scrollsTab:GetScript("OnClick")(f.scrollsTab) end
 end
 
