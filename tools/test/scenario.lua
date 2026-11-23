@@ -1078,3 +1078,22 @@ do
   print("REACH answered a whisper, in mail:", InPlan("Faraway"), "| reached:", SK.peers["Faraway"].reached ~= nil)
   SK.peers["Faraway"] = nil
 end
+
+-- Scroll icon as an action button: Study in a library, else a bundle, else decipher.
+do
+  local realLib, realKnows, realLeft, realBags = SK.InLibrary, SK.KnowsStudy, SK.StudySecondsLeft, SK.bags
+  SK.db.scrollIcon = true
+  SK.bags = { untranslated = realBags.untranslated, translated = realBags.translated, counts = realBags.counts or {}, names = realBags.names or {},
+    feathers = 2, bundles = 3, bundleBag = 1, bundleSlot = 4 }
+  SK.InLibrary, SK.KnowsStudy, SK.StudySecondsLeft = function() return true end, function() return true end, function() return 0 end
+  SK.RefreshIcon()
+  print("ICONACTION library:", SK.IconAction(), ScrollkeeperIcon:GetAttribute("type1"), ScrollkeeperIcon:GetAttribute("spell1") == SK.SPELL_STUDY)
+  SK.InLibrary = function() return false end
+  SK.RefreshIcon()
+  print("ICONACTION bundle:", SK.IconAction(), ScrollkeeperIcon:GetAttribute("type1"), ScrollkeeperIcon:GetAttribute("item1"))
+  SK.bags.bundles, SK.bags.bundleBag = 0, nil
+  SK.RefreshIcon()
+  print("ICONACTION else:", SK.IconAction())
+  SK.InLibrary, SK.KnowsStudy, SK.StudySecondsLeft, SK.bags = realLib, realKnows, realLeft, realBags
+  SK.RefreshIcon()
+end

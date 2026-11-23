@@ -2,6 +2,7 @@
 
 ## 1.2.4
 
+- The scroll icon is now an action button: in a library with Study ready it casts Study, with a Bundle of Scrolls in your bags it opens it, and otherwise it deciphers your best scroll like before. Its picture and number show which.
 - Fixed: the mail list ("Who could use your scrolls") could offer mages on other realms, whom mail can't reach. It now only offers mages a whisper gets through to (or your guild and group): opening the mailbox checks everyone, and whoever answers shows up within a few seconds. The same goes for the offline "seen this week" mages.
 
 ## 1.2.3

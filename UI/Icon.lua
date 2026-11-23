@@ -4,7 +4,9 @@
 --   the number    how many scrolls you can decipher right now
 --                 (green when some of them still give skill-ups)
 --   a gold glow   Study is ready
---   left-click    decipher your best scroll (skill-ups first), no window needed
+--   left-click    the most useful thing right now: Study when you're in a
+--                 library and it's ready, else open a Bundle of Scrolls,
+--                 else decipher your best scroll (skill-ups first)
 --   right-click   open or close the panel, in the view you picked
 --   shift-drag    move it, or right-drag (unless the panel position is locked)
 --
@@ -87,13 +89,17 @@ local function Build()
             GameTooltip:AddDoubleLine(L["Study"], SK.FormatStudyTime(SK.StudySecondsLeft()), 1, 0.82, 0, 1, 1, 1)
         end
         local nextScroll = SK.NextDecipherable()
-        if nextScroll then
+        if self.action == "study" then
+            GameTooltip:AddLine(L["Click: Study (you're in a library). Makes a Bundle of Scrolls."], 0.25, 1, 0.25, true)
+        elseif self.action == "bundle" then
+            GameTooltip:AddLine(L["Click: open a Bundle of Scrolls (%d left)"]:format(SK.bags.bundles or 0), 0.25, 1, 0.25, true)
+        elseif nextScroll then
             local chance = SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
             GameTooltip:AddLine(L["Click: decipher %s"]:format(SK.ScrollLink(nextScroll.itemID, nextScroll.name))
                 .. (chance and (" (" .. SK.ColoredChance(chance) .. "|cff40ff40)|r") or ""),
                 0.25, 1, 0.25, true)
         end
-        if nextScroll and SK.IsMoving and SK.IsMoving() then
+        if self.action ~= "bundle" and (self.action == "study" or nextScroll) and SK.IsMoving and SK.IsMoving() then
             GameTooltip:AddLine(L["Stand still to decipher"], 1, 0.82, 0)
         end
         GameTooltip:AddLine(L["Right-click: open or close the panel. Shift-drag: move."], 0.6, 0.6, 0.6, true)
@@ -121,6 +127,21 @@ function SK.ResetIconPosition()
     SK.Print(L["scroll icon moved to the middle of the screen."])
 end
 
+-- What the icon's left-click does, most useful first:
+--   "study"     in a library, Study is learned and ready, and you have a
+--               Light Feather: makes a Bundle of Scrolls
+--   "bundle"    you have a Bundle of Scrolls: opens it
+--   "decipher"  otherwise: deciphers your best scroll (as always)
+function SK.IconAction()
+    local bags = SK.bags or {}
+    if SK.KnowsStudy and SK.KnowsStudy() and SK.StudySecondsLeft and SK.StudySecondsLeft() <= 0
+        and (bags.feathers or 0) > 0 and SK.InLibrary and SK.InLibrary() then
+        return "study"
+    end
+    if (bags.bundles or 0) > 0 and bags.bundleBag and bags.bundleSlot then return "bundle" end
+    return "decipher"
+end
+
 function SK.RefreshIcon()
     local toggle = ScrollkeeperPanel and ScrollkeeperPanel.iconToggle
     local texture = toggle and toggle.GetNormalTexture and toggle:GetNormalTexture()
@@ -138,9 +159,23 @@ function SK.RefreshIcon()
         Build()
     end
     local nextScroll, readable, _, skillUps = SK.NextDecipherable()
+    -- What a left-click does right now (see SK.IconAction). In combat the
+    -- button keeps what it had: a secure button can't change mid-fight.
+    local action = locked and (icon.action or "decipher") or SK.IconAction()
     if not locked then
-        -- Left-click: Decipher on the best scroll, like the panel's button.
-        if nextScroll then
+        icon.action = action
+        icon:SetAttribute("target-bag", nil)
+        icon:SetAttribute("target-slot", nil)
+        icon:SetAttribute("spell1", nil)
+        icon:SetAttribute("item1", nil)
+        if action == "study" then
+            icon:SetAttribute("type1", "spell")
+            icon:SetAttribute("spell1", SK.SPELL_STUDY)
+        elseif action == "bundle" then
+            icon:SetAttribute("type1", "item")
+            icon:SetAttribute("item1", SK.bags.bundleBag .. " " .. SK.bags.bundleSlot)
+        elseif nextScroll then
+            -- Decipher on the best scroll, like the panel's button.
             icon:SetAttribute("type1", "spell")
             icon:SetAttribute("spell1", SK.SPELL_COMPREHEND_SCROLL)
             icon:SetAttribute("target-bag", nextScroll.bag)
@@ -149,15 +184,30 @@ function SK.RefreshIcon()
             icon:SetAttribute("type1", nil)
         end
     end
-    icon.count:SetText(readable or 0)
-    if (skillUps or 0) > 0 then
+    -- The picture and number say what the click does: Study (Light
+    -- Feathers left), a bundle (how many), or deciphering (scrolls ready).
+    local texture, count = "Interface\\Icons\\INV_Scroll_03", readable or 0
+    if action == "study" then
+        texture = (C_Spell and C_Spell.GetSpellTexture and SK.Try(C_Spell.GetSpellTexture, SK.SPELL_STUDY)) or "Interface\\Icons\\INV_Misc_Book_09"
+        count = SK.bags.feathers or 0
+    elseif action == "bundle" then
+        texture = (SK.db.bundleID and C_Item and C_Item.GetItemIconByID and SK.Try(C_Item.GetItemIconByID, SK.db.bundleID))
+            or "Interface\\Icons\\INV_Misc_Bag_10"
+        count = SK.bags.bundles or 0
+    end
+    if type(texture) ~= "string" and type(texture) ~= "number" then texture = "Interface\\Icons\\INV_Scroll_03" end
+    icon.texture:SetTexture(texture)
+    icon.count:SetText(count)
+    if action ~= "decipher" then
+        icon.count:SetTextColor(1, 0.82, 0)
+    elseif (skillUps or 0) > 0 then
         icon.count:SetTextColor(0.25, 1, 0.25)
     elseif (readable or 0) > 0 then
         icon.count:SetTextColor(1, 1, 1)
     else
         icon.count:SetTextColor(0.6, 0.6, 0.6)
     end
-    icon.texture:SetDesaturated((readable or 0) == 0)
+    icon.texture:SetDesaturated(action == "decipher" and (readable or 0) == 0)
     local chance = nextScroll and SK.SkillUpChance(nextScroll.needs, SK.GetComprehension().rank)
     if chance then
         local hex = chance.color
@@ -178,6 +228,18 @@ SK.On("PLAYER_REGEN_ENABLED", function() SK.RefreshIcon() end)
 SK.Listen("READY", SK.RefreshIcon)
 SK.Listen("BAGS_CHANGED", SK.RefreshIcon)
 SK.Listen("SKILL_CHANGED", SK.RefreshIcon)
+-- Walking into or out of a library, Study cast, and Study coming off
+-- cooldown (no event for that: checked every few seconds).
+SK.Listen("PLACE_CHANGED", SK.RefreshIcon)
+SK.Listen("STUDY_CHANGED", SK.RefreshIcon)
+SK.Listen("READY", function()
+    if not C_Timer.NewTicker then return end
+    C_Timer.NewTicker(5, function()
+        if icon and icon:IsShown() and not InCombatLockdown() and SK.IconAction() ~= icon.action then
+            SK.Safely("scroll icon", SK.RefreshIcon)
+        end
+    end)
+end)
 SK.Listen("STUDY_CHANGED", SK.RefreshIcon)
 
 ------------------------------------------------------------------------

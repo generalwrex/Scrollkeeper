@@ -266,7 +266,7 @@ SK.Listen("READY", function()
         AddCheckbox("minimapButton", L["Minimap button"],
             L["The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around."], true)
         AddCheckbox("scrollIcon", L["Scroll icon"],
-            L["A small icon you can keep on screen with how many scrolls you can decipher. Click it to decipher your best scroll, no window needed. Right-click it to open or close the panel in the view you picked above."], false)
+            L["A small icon you can keep on screen. Click it for the most useful thing right now: Study when you're in a library, open a Bundle of Scrolls, or decipher your best scroll. Right-click it to open or close the panel in the view you picked above."], false)
         AddCheckbox("hideInCombat", L["Hide the panel in combat"],
             L["The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)"], true)
         AddCheckbox("reminderToast", L["Imbue and familiar pop-up"],
