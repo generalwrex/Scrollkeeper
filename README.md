@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.2.3):** a **Book rewards** tab in the Codex: every librarian reward as an item link, what you've reached and how many books to go. Fellow Mages is up to date the moment you open it, familiar pop-ups stay in dungeons and raids (flight paths make it vanish), and a few bug fixes.
+**Latest (1.2.4):** the scroll icon is now an action button: it Studies in a library, opens your bundles, or deciphers. Imbue picks finally know your spec (Frost mages get Frost imbues), the mail list only offers mages it can reach, and Escape closes the panel.
 
 Mage scroll helper for WoW Forever.
 
