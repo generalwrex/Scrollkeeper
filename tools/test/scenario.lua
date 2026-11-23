@@ -1097,3 +1097,18 @@ if SK.isMage then
   SK.InLibrary, SK.KnowsStudy, SK.StudySecondsLeft, SK.bags = realLib, realKnows, realLeft, realBags
   SK.RefreshIcon()
 end
+
+-- Escape closes the panel (through its stand-in on UISpecialFrames).
+do
+  local panel = ScrollkeeperPanel
+  if panel and ScrollkeeperPanelEscape then
+    panel:Show()
+    print("ESCAPE in combat?", SK.InCombat())
+    ScrollkeeperPanelEscape:Hide()
+    ScrollkeeperPanelEscape:GetScript("OnHide")(ScrollkeeperPanelEscape)   -- (the mock doesn't run scripts)
+    print("ESCAPE closed panel:", not panel:IsShown(), "| showPanel:", SK.db.showPanel)
+    panel:Show(); SK.db.showPanel = true
+  else
+    print("ESCAPE no panel", panel ~= nil, ScrollkeeperPanelEscape ~= nil)
+  end
+end

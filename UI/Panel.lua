@@ -333,6 +333,31 @@ local function Build()
         secureClose:SetScript("OnEnter", function() close:LockHighlight() end)
         secureClose:SetScript("OnLeave", function() close:UnlockHighlight() end)
     end
+
+    -- Escape closes it, like the game's own windows. The game closes those
+    -- by hiding everything in UISpecialFrames, but the panel itself can't
+    -- be on that list (hiding it in combat is blocked, see above). So a
+    -- small stand-in that's shown with the panel goes on the list instead:
+    -- when Escape hides it, the panel closes too (out of combat; in a fight
+    -- Escape leaves it, and the X still works).
+    do
+        local escape = CreateFrame("Frame", "ScrollkeeperPanelEscape", UIParent)
+        escape:Hide()
+        tinsert(UISpecialFrames, "ScrollkeeperPanelEscape")
+        local following
+        escape:SetScript("OnHide", function()
+            if following or not panel:IsShown() then return end
+            if SK.InCombat() then return end   -- shown again after the fight
+            panel:Hide()
+            SK.db.showPanel = false
+        end)
+        panel:HookScript("OnShow", function() following = true; escape:Show(); following = false end)
+        panel:HookScript("OnHide", function() following = true; escape:Hide(); following = false end)
+        SK.On("PLAYER_REGEN_ENABLED", function()
+            if panel:IsShown() and not escape:IsShown() then following = true; escape:Show(); following = false end
+        end)
+        if panel:IsShown() then escape:Show() end
+    end
     close:SetScript("OnClick", function()
         if SK.InCombat() then SK.Print(L["the panel can't be hidden in combat."]) return end
         SK.db.showPanel = false
