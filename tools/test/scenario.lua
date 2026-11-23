@@ -1142,13 +1142,24 @@ if SK.isMage then
   GetNumTalentTabs, GetTalentTabInfo, SK.ImbueFits, SK.bags, SK.charDB.scrollUses = realTabs, realInfo, realFits, realBags, realUses
 end
 
--- Forever's specs (no talent tabs there): C_SpecializationInfo.
+-- Forever's talents (no talent tabs there): C_Traits columns, points per tree.
 if SK.isMage then
-  local realSpecs, realTabs = C_SpecializationInfo, GetNumTalentTabs
+  local realTraits, realClass, realTabs = C_Traits, C_ClassTalents, GetNumTalentTabs
   GetNumTalentTabs = nil
-  C_SpecializationInfo = { GetSpecialization = function() return 3 end, GetSpecializationInfo = function(i) return ({ 62, 63, 64 })[i], "Spec" end }
+  -- 20 points in Frost talents (135310, 135309), 0 elsewhere; one Arcane node unspent.
+  local nodes = { [1] = { def = 135310, rank = 15 }, [2] = { def = 135309, rank = 5 }, [3] = { def = 135345, rank = 0 } }
+  C_ClassTalents = { GetActiveConfigID = function() return 4444013 end }
+  C_Traits = {
+    GetConfigInfo = function() return { treeIDs = { 7 } } end,
+    GetTreeNodes = function() return { 1, 2, 3 } end,
+    GetNodeInfo = function(_, id) return { currentRank = nodes[id].rank, activeEntry = { entryID = id } } end,
+    GetEntryInfo = function(_, id) return { definitionID = nodes[id].def } end,
+  }
+  fire("TRAIT_CONFIG_UPDATED")
   print("FOREVERSPEC frost:", SK.MageSpec(), "| name:", SK.SpecName())
-  C_SpecializationInfo = { GetSpecialization = function() return nil end }
-  print("FOREVERSPEC none yet:", SK.MageSpec())
-  C_SpecializationInfo, GetNumTalentTabs = realSpecs, realTabs
+  nodes[1].rank, nodes[2].rank = 0, 0
+  fire("TRAIT_CONFIG_UPDATED")
+  print("FOREVERSPEC no points:", SK.MageSpec())
+  C_Traits, C_ClassTalents, GetNumTalentTabs = realTraits, realClass, realTabs
+  fire("TRAIT_CONFIG_UPDATED")
 end

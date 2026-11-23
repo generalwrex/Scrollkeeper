@@ -96,24 +96,60 @@ end
 
 local SPEC_TREES = { "arcane", "fire", "frost" }   -- mage talent tabs, in order
 
--- The game's spec IDs for mages.
-local SPEC_IDS = { [62] = "arcane", [63] = "fire", [64] = "frost" }
+-- Forever's talents: one spec for every mage ("Mage"), and the three
+-- classic trees are columns in the modern talent system (C_Traits). Each
+-- talent there has a definition ID; these are the mage trees' IDs (from
+-- WowSimsExporter's Forever talent list, which reads them the same way).
+local TREE_TALENTS = {
+    arcane = { 135345, 135343, 135332, 135342, 135341, 135340, 135339, 135338, 135337, 135336, 135335, 135334, 135333, 145958, 135331, 135330, 135329, 135328 },
+    fire = { 135326, 135325, 135324, 135323, 135322, 135319, 135321, 135320, 135327, 135318, 135317, 135316, 135315, 135314, 135313, 135312, 135311 },
+    frost = { 135310, 135309, 135308, 135307, 135304, 135305, 135306, 135302, 135301, 135297, 135300, 135299, 135298, 135295, 135296, 135294, 135293, 135292 },
+}
+local TREE_OF = {}
+for tree, ids in pairs(TREE_TALENTS) do for _, id in ipairs(ids) do TREE_OF[id] = tree end end
 
--- "arcane", "fire", "frost", or nil (no spec yet, or not a mage).
+-- Points spent in each tree: { arcane = 0, fire = 0, frost = 20 }, or nil
+-- if the game has no talent data (or no C_Traits).
+local function TraitTreePoints()
+    if not (C_Traits and C_ClassTalents and C_ClassTalents.GetActiveConfigID) then return nil end
+    local configID = SK.Try(C_ClassTalents.GetActiveConfigID)
+    local config = configID and SK.Try(C_Traits.GetConfigInfo, configID)
+    if type(config) ~= "table" or type(config.treeIDs) ~= "table" then return nil end
+    local points = { arcane = 0, fire = 0, frost = 0 }
+    for _, treeID in ipairs(config.treeIDs) do
+        for _, nodeID in ipairs(SK.Try(C_Traits.GetTreeNodes, treeID) or {}) do
+            local node = SK.Try(C_Traits.GetNodeInfo, configID, nodeID)
+            local rank = type(node) == "table" and (node.currentRank or node.ranksPurchased) or 0
+            if type(rank) == "number" and rank > 0 and type(node.activeEntry) == "table" then
+                local entry = SK.Try(C_Traits.GetEntryInfo, configID, node.activeEntry.entryID)
+                local tree = type(entry) == "table" and TREE_OF[entry.definitionID]
+                if tree then points[tree] = points[tree] + rank end
+            end
+        end
+    end
+    return points
+end
+
+-- Reading the talents walks every node, so it's kept a little while
+-- (and read again when the talents change).
+local specCache, specCachedAt
+SK.On("TRAIT_CONFIG_UPDATED", function() specCachedAt = nil end)
+SK.On("PLAYER_TALENT_UPDATE", function() specCachedAt = nil end)
+SK.On("CHARACTER_POINTS_CHANGED", function() specCachedAt = nil end)
+
+-- "arcane", "fire", "frost", or nil (no points yet, or not a mage).
 function SK.MageSpec()
     if not SK.isMage then return nil end
-    -- Forever has specs, like the modern game (no talent tabs: those
-    -- functions don't exist there). Zygor reads it the same way.
-    local specs = C_SpecializationInfo
-    local getSpec = (specs and specs.GetSpecialization) or GetSpecialization
-    if type(getSpec) == "function" then
-        local index = SK.Try(getSpec)
-        if type(index) == "number" then
-            local getInfo = (specs and specs.GetSpecializationInfo) or GetSpecializationInfo
-            local id = type(getInfo) == "function" and SK.Try(getInfo, index) or nil
-            if type(id) == "number" and SPEC_IDS[id] then return SPEC_IDS[id] end
-            if SPEC_TREES[index] then return SPEC_TREES[index] end   -- 1 Arcane, 2 Fire, 3 Frost
+    local now = GetTime and GetTime() or 0
+    if specCachedAt and now - specCachedAt < 30 then return specCache or nil end
+    local points = TraitTreePoints()
+    if points then
+        local best, bestPoints = nil, 0
+        for _, tree in ipairs(SPEC_TREES) do
+            if points[tree] > bestPoints then best, bestPoints = tree, points[tree] end
         end
+        specCache, specCachedAt = best or false, now
+        return best
     end
     if not (GetNumTalentTabs and GetTalentTabInfo) then return nil end
     local best, bestPoints = nil, 0

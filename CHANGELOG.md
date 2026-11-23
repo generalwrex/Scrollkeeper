@@ -2,7 +2,7 @@
 
 ## 1.2.4
 
-- Fixed: your spec was never read on Forever (it has specs, not the old talent tabs), so imbue picks ignored it.
+- Fixed: your spec was never read on Forever (its talents are in the new talent system, not the old talent tabs), so imbue picks ignored it. It now goes by the tree you put the most points in.
 - Imbue pick: an imbue for your spec always comes first (a Frost mage gets a Frost imbue, even a lower level one), before the one you've used most, and another school's imbue (Flame for a Frost mage) is never suggested. If none of yours fit, the panel says so. Prefer the one you use most? Turn on "Imbue pick: the one I use most" in /sk options.
 - Fixed: the mail list's title ran off the side of its box.
 - Escape closes the panel, like the game's own windows (out of combat; in a fight the X still closes it).
