@@ -96,9 +96,26 @@ end
 
 local SPEC_TREES = { "arcane", "fire", "frost" }   -- mage talent tabs, in order
 
--- "arcane", "fire", "frost", or nil (no points yet, or not a mage).
+-- The game's spec IDs for mages.
+local SPEC_IDS = { [62] = "arcane", [63] = "fire", [64] = "frost" }
+
+-- "arcane", "fire", "frost", or nil (no spec yet, or not a mage).
 function SK.MageSpec()
-    if not (SK.isMage and GetNumTalentTabs and GetTalentTabInfo) then return nil end
+    if not SK.isMage then return nil end
+    -- Forever has specs, like the modern game (no talent tabs: those
+    -- functions don't exist there). Zygor reads it the same way.
+    local specs = C_SpecializationInfo
+    local getSpec = (specs and specs.GetSpecialization) or GetSpecialization
+    if type(getSpec) == "function" then
+        local index = SK.Try(getSpec)
+        if type(index) == "number" then
+            local getInfo = (specs and specs.GetSpecializationInfo) or GetSpecializationInfo
+            local id = type(getInfo) == "function" and SK.Try(getInfo, index) or nil
+            if type(id) == "number" and SPEC_IDS[id] then return SPEC_IDS[id] end
+            if SPEC_TREES[index] then return SPEC_TREES[index] end   -- 1 Arcane, 2 Fire, 3 Frost
+        end
+    end
+    if not (GetNumTalentTabs and GetTalentTabInfo) then return nil end
     local best, bestPoints = nil, 0
     for tab = 1, math.min(3, GetNumTalentTabs() or 0) do
         local info = { SK.Try(GetTalentTabInfo, tab) }

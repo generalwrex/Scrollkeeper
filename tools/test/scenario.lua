@@ -1141,3 +1141,14 @@ if SK.isMage then
   SK.db.imbueByUse = false
   GetNumTalentTabs, GetTalentTabInfo, SK.ImbueFits, SK.bags, SK.charDB.scrollUses = realTabs, realInfo, realFits, realBags, realUses
 end
+
+-- Forever's specs (no talent tabs there): C_SpecializationInfo.
+if SK.isMage then
+  local realSpecs, realTabs = C_SpecializationInfo, GetNumTalentTabs
+  GetNumTalentTabs = nil
+  C_SpecializationInfo = { GetSpecialization = function() return 3 end, GetSpecializationInfo = function(i) return ({ 62, 63, 64 })[i], "Spec" end }
+  print("FOREVERSPEC frost:", SK.MageSpec(), "| name:", SK.SpecName())
+  C_SpecializationInfo = { GetSpecialization = function() return nil end }
+  print("FOREVERSPEC none yet:", SK.MageSpec())
+  C_SpecializationInfo, GetNumTalentTabs = realSpecs, realTabs
+end
