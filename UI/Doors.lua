@@ -42,6 +42,9 @@ local PLACES = {
     { town = "Everlook", map = 1452, side = "both" },
     { town = "Cenarion Hold", map = 1451, side = "both" },
     { town = "Nighthaven", map = 1450, side = "both" },
+    -- Elderwild, in Forever's new Hyjal (its map ID isn't known yet: zone =
+    -- its name for /who). Thanks Curnil.
+    { town = "Elderwild", zone = "Hyjal", side = "both" },
     -- Alliance
     { town = "Goldshire", map = 1429, side = "Alliance" },
     { town = "Sentinel Hill", map = 1436, side = "Alliance" },
@@ -94,6 +97,12 @@ SK.DOOR_PLACES = PLACES
 local function ZoneName(mapID)
     local info = C_Map and C_Map.GetMapInfo and SK.Try(C_Map.GetMapInfo, mapID)
     return type(info) == "table" and info.name or nil
+end
+
+-- A place's zone name: from its map ID (in your language), else the
+-- name it was listed with.
+local function PlaceZone(place)
+    return place and (place.map and ZoneName(place.map) or place.zone) or nil
 end
 
 local function KnowsSpell(id)
@@ -233,7 +242,7 @@ local function PlaceOfDoor(door)
     if not first then
         -- An old door message without a map ID: match the zone by name.
         for _, place in ipairs(PLACES) do
-            local zone = ZoneName(place.map)
+            local zone = PlaceZone(place)
             if zone and door.place:find(zone, 1, true) then return place end
         end
     end
@@ -347,7 +356,7 @@ end
 
 local function SearchWho(place)
     if not (C_FriendList and C_FriendList.SendWho) or not SK.DoorWhoReady() then return end
-    local zone = ZoneName(place.map)
+    local zone = PlaceZone(place)
     if not zone then return end
     lastWho = time()
     whoPending = { kind = "zone", place = place }
@@ -361,7 +370,7 @@ end
 -- checked) runs with what the game says; if it doesn't answer in a few
 -- seconds (/who is throttled), done runs anyway with checked = false.
 function SK.DoorRecheck(person, place, done)
-    local zone = ZoneName(place.map)
+    local zone = PlaceZone(place)
     if not (C_FriendList and C_FriendList.SendWho and zone) or whoPending then return done(person, false) end
     local pending = { kind = "check", name = person.name, place = place, done = done }
     whoPending = pending
@@ -378,7 +387,7 @@ SK.On("WHO_LIST_UPDATE", function()
     whoPending = nil
     CloseWhoWindows()
     local place = pending.place
-    local zone = ZoneName(place.map)
+    local zone = PlaceZone(place)
 
     if pending.kind == "check" then
         local found
@@ -540,10 +549,10 @@ local Ask
 function Ask(host)
     -- Someone the zone search found: check they're still there first.
     if host.kind == "who" and not host.rechecked and type(selected) == "table" then
-        SK.Print(L["checking %s is still in %s..."]:format(host.short, ZoneName(selected.map) or selected.town))
+        SK.Print(L["checking %s is still in %s..."]:format(host.short, PlaceZone(selected) or selected.town))
         SK.DoorRecheck(host.who, selected, function(person, checked)
             if checked and not person then
-                SK.Print(L["%s isn't in %s anymore. Pick someone else."]:format(host.short, ZoneName(selected.map) or selected.town))
+                SK.Print(L["%s isn't in %s anymore. Pick someone else."]:format(host.short, PlaceZone(selected) or selected.town))
                 return
             end
             local again = { kind = "who", short = host.short, target = host.target, rechecked = true,
@@ -567,8 +576,8 @@ function Ask(host)
         -- own words for it, so it's right in any language). Someone
         -- elsewhere in the zone gets the general version.
         trip.where = host.who and host.who.inTown
-            and (trip.place and trip.place.capital and (ZoneName(trip.place.map) or trip.place.town) or host.who.area)
-        trip.info = { name = trip.short, zone = trip.place and (ZoneName(trip.place.map) or trip.place.town) }
+            and (trip.place and trip.place.capital and (PlaceZone(trip.place) or trip.place.town) or host.who.area)
+        trip.info = { name = trip.short, zone = trip.place and (PlaceZone(trip.place) or trip.place.town) }
         -- Ask first, never invite out of the blue: the whisper offers both
         -- ways (they invite you, or they say ok and you click Invite).
         OpenWhisper(target, SK.DoorWhisper(trip.where, trip.info))
@@ -722,7 +731,7 @@ end
 -- The search button: its text, with the seconds left while it cools down.
 local function UpdateWhoButton()
     if not (window and type(selected) == "table") then return end
-    local zone = ZoneName(selected.map) or selected.town
+    local zone = PlaceZone(selected) or selected.town
     local left = WHO_COOLDOWN - (time() - lastWho)
     window.who:SetEnabled(left <= 0)
     window.who:SetText(left > 0 and L["Find players in %s (%ds)"]:format(zone, left) or L["Find players in %s"]:format(zone))
@@ -998,7 +1007,7 @@ function SK.RefreshDoors()
         row.tipFunc = function(tip)
             tip:AddLine(name)
             if not entry.all then
-                tip:AddLine(ZoneName(entry.place.map) or "", 1, 1, 1)
+                tip:AddLine(PlaceZone(entry.place) or "", 1, 1, 1)
                 if entry.place.capital then
                     tip:AddLine(L["A city: resting everywhere in it, so anyone found here works."], 0.4, 0.73, 1, true)
                 end

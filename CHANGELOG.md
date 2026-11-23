@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## 1.2.5
+
+- Liminal Passage: Elderwild in Hyjal is a place you can rest and be a door (thanks Curnil!).
+
 ## 1.2.4
 
 - Fixed: your spec was never read on Forever (its talents are in the new talent system, not the old talent tabs), so imbue picks ignored it. It now goes by the tree you put the most points in.
