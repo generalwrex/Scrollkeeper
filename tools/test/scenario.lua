@@ -1080,7 +1080,7 @@ do
 end
 
 -- Scroll icon as an action button: Study in a library, else a bundle, else decipher.
-do
+if SK.isMage then
   local realLib, realKnows, realLeft, realBags = SK.InLibrary, SK.KnowsStudy, SK.StudySecondsLeft, SK.bags
   SK.db.scrollIcon = true
   SK.bags = { untranslated = realBags.untranslated, translated = realBags.translated, counts = realBags.counts or {}, names = realBags.names or {},
