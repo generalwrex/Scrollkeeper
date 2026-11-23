@@ -242,6 +242,11 @@ local function Build()
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     title:SetPoint("LEFT", icon, "RIGHT", 6, 0)
     title:SetText(L["Scrollkeeper: Who could use your scrolls"])
+    -- Wide enough for the title (it ran off the edge, longer still in
+    -- other languages): icon, gap, text and the border.
+    local titleWidth = title.GetStringWidth and tonumber(title:GetStringWidth()) or 0
+    WIDTH = math.max(WIDTH, math.ceil(titleWidth) + 56)
+    frame:SetWidth(WIDTH)
     frame.note = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     frame.note:SetPoint("TOPLEFT", 14, -38)
     frame.note:SetWidth(WIDTH - 28)
