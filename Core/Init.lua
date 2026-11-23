@@ -267,6 +267,7 @@ local DEFAULTS = {
     expiringReminder = true, -- ...and when one is about to run out
     reminderInCombat = false, -- ...also during a fight
     familiarAnywhere = false, -- familiar pop-ups outside dungeons/raids too
+    imbueByUse = false,      -- imbue pick: the one you use most before your spec's
     expiringMinutes = 5,     -- ...this many minutes before
     language = "auto",       -- "auto" (the game's language) or enUS, deDE, esES, frFR
     showScrollBar = true,    -- show your usable scrolls as buttons in the panel

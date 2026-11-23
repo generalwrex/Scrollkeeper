@@ -275,6 +275,8 @@ SK.Listen("READY", function()
             L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."], true)
         AddCheckbox("reminderInCombat", L["Pop-ups in combat too"],
             L["Show the imbue and familiar pop-ups during a fight as well, in case one runs out mid-fight."], false)
+        AddCheckbox("imbueByUse", L["Imbue pick: the one I use most"],
+            L["Suggest the weapon imbue you use most, even if it's not for your spec. Off: an imbue for your spec always comes first (a Frost mage gets a Frost imbue)."], false)
         AddCheckbox("familiarAnywhere", L["Familiar pop-ups outside dungeons and raids"],
             L["Also remind you about your familiar out in the world. Flight paths make it vanish, so you may see this a lot."], false)
         SK.Safely("settings expiring slider", function()

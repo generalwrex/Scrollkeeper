@@ -127,8 +127,9 @@ end
 ------------------------------------------------------------------------
 -- Your favorites: which imbue and familiar this character actually uses.
 -- Counted when the scroll is used (its spell goes off), per character:
--- SK.charDB.scrollUses[itemID] = times. The most used (2+ times) beats the
--- spec guess; at 60 everyone has their own pick.
+-- SK.charDB.scrollUses[itemID] = times. For imbues your spec comes first
+-- (a Frost mage gets a Frost imbue, even a lower level one); among those,
+-- or with none for your spec, the most used (2+ times) wins.
 ------------------------------------------------------------------------
 
 local function Uses()
@@ -158,12 +159,13 @@ local SPEC_NAMES = { arcane = "Arcane", fire = "Fire", frost = "Frost" }
 function SK.ScrollReason(scroll)
     if not scroll then return nil end
     local uses = SK.ScrollUses(scroll.itemID)
-    if uses >= 2 then return L["your usual (used %d times)"]:format(uses) end
+    local usual = uses >= 2 and L["your usual (used %d times)"]:format(uses) or nil
+    if usual and SK.db and SK.db.imbueByUse then return usual end
     if scroll.category == "imbues" and scroll.forSpec then
         local spec = SK.MageSpec and SK.MageSpec()
         if spec then return L["for your %s spec"]:format(L[SPEC_NAMES[spec]]) end
     end
-    return nil
+    return usual
 end
 
 -- Returns a list of { key, label, scrolls = { ... } } for the categories
@@ -189,8 +191,11 @@ function SK.ScrollGroups()
     for _, category in ipairs(SK.SCROLL_CATEGORIES) do
         local scrolls = byKey[category.key]
         if scrolls then
-            -- Usable first; then your favorite (used most, at least twice);
-            -- then (imbues) the ones for your spec; then highest level.
+            -- Usable first; then (imbues) the ones for your spec, even a
+            -- lower level one; then your favorite (used most, at least
+            -- twice); then highest level. The imbueByUse option swaps the
+            -- first two: your favorite, then your spec.
+            local byUse = SK.db and SK.db.imbueByUse
             local function Favorite(scroll)
                 local n = SK.ScrollUses(scroll.itemID)
                 return n >= 2 and n or 0
@@ -198,8 +203,9 @@ function SK.ScrollGroups()
             table.sort(scrolls, function(a, b)
                 if a.usable ~= b.usable then return a.usable end
                 local fa, fb = Favorite(a), Favorite(b)
-                if fa ~= fb then return fa > fb end
+                if byUse and fa ~= fb then return fa > fb end
                 if (a.forSpec or false) ~= (b.forSpec or false) then return a.forSpec or false end
+                if fa ~= fb then return fa > fb end
                 if a.level ~= b.level then return a.level > b.level end
                 return a.name < b.name
             end)

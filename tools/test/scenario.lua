@@ -1112,3 +1112,29 @@ do
     print("ESCAPE no panel", panel ~= nil, ScrollkeeperPanelEscape ~= nil)
   end
 end
+
+-- Spec beats the one you use most: a Frost mage gets the (lower) Frost imbue.
+if SK.isMage then
+  local realTabs, realInfo, realFits, realBags, realUses = GetNumTalentTabs, GetTalentTabInfo, SK.ImbueFits, SK.bags, SK.charDB.scrollUses
+  GetNumTalentTabs = function() return 3 end
+  GetTalentTabInfo = function(tab) return "Tree" .. tab, "icon", tab == 3 and 20 or 0 end   -- Frost
+  SK.ImbueFits = function() return true end
+  SK.bags = { translated = {
+    { itemID = 277500, name = "Scroll of Imbue Greater Flame", category = "imbues", level = 20, count = 1 },
+    { itemID = 277485, name = "Scroll of Imbue Frost", category = "imbues", level = 5, count = 1 },
+  }, untranslated = {}, counts = {}, names = {} }
+  SK.charDB.scrollUses = { [277500] = 9 }
+  local pick
+  for _, group in ipairs(SK.ScrollGroups()) do
+    if group.key == "imbues" then for _, s in ipairs(group.scrolls) do if s.best then pick = s.name end end end
+  end
+  print("SPECFIRST frost mage picks:", pick, "| reason:", SK.ScrollReason({ itemID = 277485, category = "imbues", forSpec = true }))
+  SK.db.imbueByUse = true
+  pick = nil
+  for _, group in ipairs(SK.ScrollGroups()) do
+    if group.key == "imbues" then for _, s in ipairs(group.scrolls) do if s.best then pick = s.name end end end
+  end
+  print("SPECFIRST option on, picks:", pick)
+  SK.db.imbueByUse = false
+  GetNumTalentTabs, GetTalentTabInfo, SK.ImbueFits, SK.bags, SK.charDB.scrollUses = realTabs, realInfo, realFits, realBags, realUses
+end

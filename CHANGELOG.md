@@ -2,6 +2,7 @@
 
 ## 1.2.4
 
+- Imbue pick: an imbue for your spec always comes first (a Frost mage gets a Frost imbue, even a lower level one), before the one you've used most. Prefer the one you use most? Turn on "Imbue pick: the one I use most" in /sk options.
 - Fixed: the mail list's title ran off the side of its box.
 - Escape closes the panel, like the game's own windows (out of combat; in a fight the X still closes it).
 - The scroll icon is now an action button: in a library with Study ready it casts Study, with a Bundle of Scrolls in your bags it opens it, and otherwise it deciphers your best scroll like before. Its picture and number show which.
