@@ -1253,6 +1253,10 @@ local function UpdateText()
     elseif knowsStudy and studyLeft == 0 and inLibrary then
         notes[#notes + 1] = GREEN .. L["Study is ready and you're in a library.|r"]
     end
+    -- Imbues in the bags, but none for your spec: say so (no star is shown).
+    if SK.isMage and SK.NoImbueForSpec and SK.NoImbueForSpec() then
+        notes[#notes + 1] = "|cffff9933" .. L["None of your imbues fit your %s spec, so none is suggested."]:format(SK.SpecName()) .. "|r"
+    end
     for _, line in ipairs(SK.Reminders()) do notes[#notes + 1] = line end
     while #notes > 4 do table.remove(notes) end
     parts.warning:SetText(table.concat(notes, "\n"))

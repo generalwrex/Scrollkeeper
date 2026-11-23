@@ -1136,5 +1136,8 @@ if SK.isMage then
   end
   print("SPECFIRST option on, picks:", pick)
   SK.db.imbueByUse = false
+  table.remove(SK.bags.translated, 2)   -- no Frost imbue left: Flame isn't suggested
+  print("SPECFIRST only Flame, frost mage best:", SK.BestScroll("imbues") and SK.BestScroll("imbues").name or "none", "| says why:", SK.NoImbueForSpec())
+  SK.db.imbueByUse = false
   GetNumTalentTabs, GetTalentTabInfo, SK.ImbueFits, SK.bags, SK.charDB.scrollUses = realTabs, realInfo, realFits, realBags, realUses
 end

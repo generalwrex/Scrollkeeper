@@ -156,6 +156,22 @@ end)
 -- Why a scroll is your pick, in words: "your usual (used 5 times)",
 -- "for your Fire spec", or nil.
 local SPEC_NAMES = { arcane = "Arcane", fire = "Fire", frost = "Frost" }
+-- Your spec's name ("Frost"), in your language, or nil.
+function SK.SpecName()
+    local spec = SK.MageSpec and SK.MageSpec()
+    return spec and L[SPEC_NAMES[spec]] or nil
+end
+
+-- You carry imbues, but none fit your spec (only another school's):
+-- nothing is suggested, and the panel says why.
+function SK.NoImbueForSpec()
+    if SK.db and SK.db.imbueByUse then return false end
+    local any = false
+    for _, scroll in ipairs(SK.bags and SK.bags.translated or {}) do
+        if scroll.category == "imbues" then any = true end
+    end
+    return any and SK.BestScroll("imbues") == nil and SK.SpecName() ~= nil
+end
 function SK.ScrollReason(scroll)
     if not scroll then return nil end
     local uses = SK.ScrollUses(scroll.itemID)
@@ -184,7 +200,12 @@ function SK.ScrollGroups()
 
     local spec = SK.MageSpec and SK.MageSpec()
     for _, scroll in ipairs(byKey.imbues or {}) do
-        scroll.forSpec = spec ~= nil and SK.ImbueSchool(scroll) == spec
+        local school = SK.ImbueSchool(scroll)
+        scroll.forSpec = spec ~= nil and school == spec
+        -- Another school's imbue (fire or arcane for a Frost mage) is never
+        -- suggested; neutral ones (Accuracy, Striking...) still can be.
+        -- Unless you asked for the one you use most.
+        scroll.offSpec = spec ~= nil and school ~= nil and school ~= spec and not (SK.db and SK.db.imbueByUse) or nil
     end
 
     local groups = {}
@@ -205,12 +226,13 @@ function SK.ScrollGroups()
                 local fa, fb = Favorite(a), Favorite(b)
                 if byUse and fa ~= fb then return fa > fb end
                 if (a.forSpec or false) ~= (b.forSpec or false) then return a.forSpec or false end
+                if (a.offSpec or false) ~= (b.offSpec or false) then return not a.offSpec end
                 if fa ~= fb then return fa > fb end
                 if a.level ~= b.level then return a.level > b.level end
                 return a.name < b.name
             end)
             local ranked = category.key == "imbues" or category.key == "familiars"
-            if ranked and scrolls[1].usable then
+            if ranked and scrolls[1].usable and not scrolls[1].offSpec then
                 scrolls[1].best = true
             end
             groups[#groups + 1] = { key = category.key, label = category.label, scrolls = scrolls }
@@ -224,7 +246,7 @@ function SK.BestScroll(categoryKey)
     for _, group in ipairs(SK.ScrollGroups()) do
         if group.key == categoryKey then
             for _, scroll in ipairs(group.scrolls) do
-                if scroll.usable then return scroll end
+                if scroll.usable and not scroll.offSpec then return scroll end
             end
         end
     end

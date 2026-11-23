@@ -164,6 +164,9 @@ function SK.UI.CreateItemButton(parent, name, size)
             local reason = SK.UI.WhyNotUsable(scroll)
             if reason then GameTooltip:AddLine("|cffff6666" .. SK.KeepLinksWhole(reason) .. "|r", 1, 1, 1, true) end
         end
+        if scroll and scroll.offSpec and SK.SpecName and SK.SpecName() then
+            GameTooltip:AddLine(L["Not for your %s spec, so it isn't suggested."]:format(SK.SpecName()), 1, 0.6, 0.2, true)
+        end
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", function() GameTooltip:Hide() end)
