@@ -30,6 +30,7 @@ local function Build(categoryKey)
             edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", tile = true, tileSize = 16, edgeSize = 14,
             insets = { left = 4, right = 4, top = 4, bottom = 4 } })
         row:SetBackdropBorderColor(1, 0.82, 0, 1)
+        SK.UI.SkinBox(row, "accent")
     end
     row:Hide()
     row.categoryKey = categoryKey

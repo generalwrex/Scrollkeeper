@@ -195,7 +195,7 @@ end
 ------------------------------------------------------------------------
 
 SK.LAYOUT_KEYS = { "showPanel", "viewMode", "scale", "panelPoint", "collapsed", "showScrollBar", "locked",
-    "hideInCombat", "minimapButton", "minimapAngle", "scrollIcon", "iconPos", "toastPoint" }
+    "hideInCombat", "minimapButton", "minimapAngle", "scrollIcon", "iconPos", "toastPoint", "theme" }
 
 local accountLayout   -- the account's values while this character uses its own
 
@@ -305,6 +305,7 @@ local DEFAULTS = {
     locked = false,          -- stop the panel from being dragged
     viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
     scale = 1,               -- panel size
+    theme = "classic",       -- how the windows look: "classic", "dark" or "dusk" (Darker classic) (UI/Theme.lua)
     panelPoint = nil,        -- saved panel position
     mages = {},              -- your mages across the account (Modules/Alts.lua), incl. Study timers
     results = {},            -- luck log: results[tier][scroll name] = count

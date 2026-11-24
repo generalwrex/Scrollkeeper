@@ -52,7 +52,7 @@ local function Build()
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
-    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+    SK.UI.Background(background)
 
     if type(window.CloseButton) == "table" then
         window.CloseButton:SetScript("OnClick", function()
@@ -77,7 +77,7 @@ local function Build()
         if i % 2 == 1 then
             local stripe = row:CreateTexture(nil, "BACKGROUND")
             stripe:SetAllPoints()
-            stripe:SetColorTexture(0.45, 0.32, 0.12, 0.18)
+            SK.UI.Stripe(stripe)
         end
         row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         row.label:SetPoint("LEFT", 6, 0)

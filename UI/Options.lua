@@ -50,6 +50,7 @@ local function Changed(key)
     if (key == "oddsStandard" or key == "offlineMinutes") and SK.RefreshNetwork then SK.RefreshNetwork() end
     if key == "language" then SK.Print(L["language changed. Type /reload to switch."]) end
     if key == "own" then SK.SetCharacterLayout(SK.charDB.own) end
+    if key == "theme" and SK.UI.ApplyTheme then SK.UI.ApplyTheme() end
     if key:find("^bag") or key:find("^liminal") or key:find("^module") then
         SK.Send("STASH_CHANGED")
         SK.Send("REMINDERS_CHANGED")
@@ -88,6 +89,10 @@ local SECTIONS = {
             { "compact", "Simple", "Buttons, bars and your scrolls." },
             { "full", "Advanced", "Everything: all the numbers, sections and weapon upgrades." },
             { "mini", "Title only", "Just the title and your skill bar." } } },
+        { "choice", "theme", "Theme", "How Scrollkeeper's windows look. Changes right away.", choices = {
+            { "classic", "Classic", "The game's own windows: gold and stone frames, bronze section bars." },
+            { "dark", "Dark", "Flat charcoal panels with thin gray borders and muted headers. No gold." },
+            { "dusk", "Darker classic", "The game's window shapes, darkened: gray borders and charcoal section bars." } } },
         { "slider", "scale", "Panel size", "How big the panel is.", 0.7, 1.5, 0.05, Percent },
         { "check", "own", "This character's own layout", "Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters.", char = true },
         { "check", "minimapButton", "Minimap button", "The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around." },
@@ -491,14 +496,14 @@ local function Build()
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
-    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+    SK.UI.Background(background)
 
     -- Sections down the left.
     local navBg = window:CreateTexture(nil, "BACKGROUND", nil, -6)
     navBg:SetPoint("TOPLEFT", 8, -62)
     navBg:SetPoint("BOTTOMLEFT", 8, 10)
     navBg:SetWidth(NAV - 8)
-    navBg:SetColorTexture(0.35, 0.22, 0.08, 0.25)
+    SK.UI.NavBg(navBg)
     window.nav = {}
     for i, section in ipairs(SECTIONS) do
         local b = CreateFrame("Button", nil, window)

@@ -233,6 +233,7 @@ local function Build()
             tile = true, tileSize = 32, edgeSize = 24,
             insets = { left = 6, right = 6, top = 6, bottom = 6 },
         })
+        SK.UI.SkinBox(frame, "dialog")
     end
 
     local icon = frame:CreateTexture(nil, "ARTWORK")

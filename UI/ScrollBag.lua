@@ -325,6 +325,7 @@ local function BuildPresetMenu(box)
         edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
     list:SetBackdropColor(0.05, 0.05, 0.06, 0.97)
     list:SetBackdropBorderColor(0.6, 0.5, 0.3, 1)
+    SK.UI.SkinBox(list, "box")
     list:Hide()
     list.buttons = {}
 
@@ -457,7 +458,7 @@ local function Build()
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
-    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+    SK.UI.Background(background)
 
     -- Preset
     local label = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -470,6 +471,7 @@ local function Build()
         edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
     box:SetBackdropColor(0, 0, 0, 0.8)
     box:SetBackdropBorderColor(0.6, 0.5, 0.3, 1)
+    SK.UI.SkinBox(box, "box")
     box.text = box:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     box.text:SetPoint("LEFT", 8, 0)
     box.text:SetPoint("RIGHT", -22, 0)
@@ -584,7 +586,7 @@ local function Header(i)
     h:SetSize(INNER - 22, ROW)
     local bg = h:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.35, 0.22, 0.08, 0.85)
+    SK.UI.HeaderBg(bg)
     h.label = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     h.label:SetPoint("LEFT", 8, 0)
     h.right = h:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -731,7 +733,7 @@ end
 
 local function FillRow(r, e, striped)
     r.entry, r.itemID, r.total = e, e.itemID, e.total
-    r.stripe:SetColorTexture(0.45, 0.32, 0.12, striped and 0.18 or 0)
+    SK.UI.Stripe(r.stripe, striped)
     local c = COLORS[e.status] or COLORS.keep
     r.border:SetColorTexture(c[1], c[2], c[3], 1)
     r.icon:SetTexture((C_Item and SK.Try(C_Item.GetItemIconByID, e.itemID)) or "Interface\\Icons\\INV_Scroll_03")

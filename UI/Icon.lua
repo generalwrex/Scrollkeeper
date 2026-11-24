@@ -323,6 +323,7 @@ do
                 insets = { left = 4, right = 4, top = 4, bottom = 4 },
             })
             toast:SetBackdropBorderColor(1, 0.82, 0, 1)
+            SK.UI.SkinBox(toast, "accent")
         end
 
         local icon = toast:CreateTexture(nil, "ARTWORK")

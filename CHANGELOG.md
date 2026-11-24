@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## Unreleased: Themes
+
+- New: **Theme** in /sk options > Panel. **Classic** (the game's own gold and stone windows, as always), **Dark** (flat charcoal panels, thin gray borders, no gold) and **Darker classic** (the game's window shapes, darkened, with gray borders and charcoal section bars). It changes every Scrollkeeper window, section bar, row stripe, pop-up and dropdown right away. With "This character's own layout" on, each character can have its own theme.
+
 ## Unreleased: Settings window
 
 - Scrollkeeper has **its own settings window** now (/sk options, the gear on the panel, or right-click the minimap button): sections down the left (Panel, Pop-ups, Tooltips and chat, Sharing, Mailbox and auction house, Scroll Bag, Modules, Map, Language, Backup, About), the settings on the right with what each one does. The game's Options > AddOns > Scrollkeeper page has a button that opens it.

@@ -1263,3 +1263,13 @@ if SK.isMage then
   print("OPTIONS sections:", #SK.OPTION_SECTIONS, "window:", ScrollkeeperOptionsFrame ~= nil, "errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- THEMES: switch and back, nothing breaks
+if SK.isMage then
+  for _, name in ipairs({ "dark", "dusk", "classic" }) do
+    SK.db.theme = name; SK.OptionChanged("theme")
+    print("THEME", SK.UI.ThemeName(), "stripe alpha", SK.UI.Palette().stripe[4])
+  end
+  print("THEME errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end

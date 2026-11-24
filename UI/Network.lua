@@ -32,12 +32,13 @@ function SK.UI.CreateHeader(host, text, width)
         header = CreateFrame("Frame", nil, host)
         local background = header:CreateTexture(nil, "BACKGROUND")
         background:SetAllPoints()
-        background:SetColorTexture(0.35, 0.22, 0.08, 0.85)
+        SK.UI.HeaderBg(background)
         header.Title = header:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         header.Title:SetPoint("CENTER")
     end
     header.Title:SetText(text)
     header:SetSize(width, 22)
+    SK.UI.SkinHeader(header)
     return header
 end
 
@@ -84,7 +85,7 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
         if i % 2 == 1 then
             local stripe = row:CreateTexture(nil, "BACKGROUND")
             stripe:SetAllPoints()
-            stripe:SetColorTexture(0.45, 0.32, 0.12, 0.18)
+            SK.UI.Stripe(stripe)
         end
         row.label = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         row.label:SetPoint("LEFT", 6, 0)
@@ -659,7 +660,7 @@ local function Build()
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
-    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+    SK.UI.Background(background)
 
     window.summary = window:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     window.summary:SetPoint("TOPLEFT", 62, -32)

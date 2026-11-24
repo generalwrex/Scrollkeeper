@@ -82,7 +82,7 @@ local function Build()
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
-    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+    SK.UI.Background(background)
 
     -- Your Comprehension, at the top in both modes.
     window.skill = window:CreateFontString(nil, "OVERLAY", "GameFontNormal")

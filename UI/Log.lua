@@ -102,7 +102,7 @@ local function Build()
     local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
-    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
+    SK.UI.Background(background)
 
     -- Totals at the top: "57 scrolls deciphered" and the skill-up rate.
     window.total = window:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
