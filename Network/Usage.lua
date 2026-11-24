@@ -2,9 +2,12 @@
 -- Anonymous usage stats: which windows and buttons people use, and which
 -- settings they change, so Scrollkeeper can get better where it matters.
 --
--- What's counted: window opens, button uses, settings changed, slash
--- commands, and the settings that differ from the defaults. Just names
--- and numbers.
+-- What's counted: window opens and how long they stay open, button and
+-- row clicks, settings changed, slash commands, pop-ups shown, tooltips
+-- shown, which parts hit an error (never the message), and the settings
+-- that differ from the defaults. Plus a little about the install: class,
+-- faction, game language, Comprehension in steps of 25, how many mages,
+-- panel view, and which bag/map/bar addons are loaded. Just names and numbers.
 -- Never: names, realms, guilds, chat, gold, bags, where you are, or when
 -- (beyond "this install has counted since ...").
 --
@@ -58,6 +61,49 @@ function SK.Track(name)
     usage.counts[name] = (usage.counts[name] or 0) + 1
 end
 
+-- Count something at most once per key every few seconds (tooltips fire
+-- over and over while you hover).
+local lastOnce = {}
+function SK.TrackOnce(name, key, seconds)
+    local id = name .. ":" .. tostring(key)
+    local now = GetTime and GetTime() or time()
+    if lastOnce[id] and now - lastOnce[id] < (seconds or 60) then return end
+    lastOnce[id] = now
+    SK.Track(name)
+end
+
+-- Count seconds added to a counter ("secs.bag"), for how long windows stay open.
+local function AddSeconds(name, seconds)
+    local usage = Store()
+    if not usage or not seconds or seconds <= 0 then return end
+    usage.counts[name] = (usage.counts[name] or 0) + math.floor(seconds + 0.5)
+end
+
+-- How long each window stays open. Windows are built the first time they
+-- open, so this looks for them again after every open.
+local WINDOWS = {
+    ScrollkeeperPanel = "panel", ScrollkeeperBagFrame = "bag", ScrollkeeperGuideFrame = "codex",
+    ScrollkeeperPlanFrame = "plan", ScrollkeeperLogFrame = "log", ScrollkeeperSwapFrame = "swap",
+    ScrollkeeperDoorsFrame = "doors", ScrollkeeperNetworkFrame = "fellowmages", ScrollkeeperOptionsFrame = "options",
+    ScrollkeeperAltFrame = "alts", ScrollkeeperMailFrame = "mailhelper", ScrollkeeperSetupFrame = "setup",
+}
+local timedWindows = {}
+local function HookWindows()
+    for frameName, short in pairs(WINDOWS) do
+        local frame = _G[frameName]
+        if type(frame) == "table" and frame.HookScript and not timedWindows[frameName] then
+            timedWindows[frameName] = true
+            local openedAt = frame.IsShown and frame:IsShown() and GetTime and GetTime() or nil
+            frame:HookScript("OnShow", function() openedAt = GetTime and GetTime() end)
+            frame:HookScript("OnHide", function()
+                if openedAt and GetTime then AddSeconds("secs." .. short, GetTime() - openedAt) end
+                openedAt = nil
+            end)
+        end
+    end
+end
+SK.UsageHookWindows = HookWindows
+
 -- Count clicks on a button (on release, once), and on rows clicked with
 -- OnMouseUp. A hook runs after the button's own click, so secure buttons
 -- (scrolls, Study, Decipher) work exactly as before.
@@ -86,7 +132,10 @@ local function Wrap(fnName, event)
     if type(original) ~= "function" then return end
     SK[fnName] = function(...)
         SK.Track(event)
-        return original(...)
+        return (function(...)
+            SK.Quietly("usage windows", HookWindows)
+            return ...
+        end)(original(...))
     end
 end
 
@@ -103,6 +152,8 @@ SK.Listen("READY", function()
         ScanAuctionScrolls = "ah.scan", ShowBackup = "backup", ShowSetup = "setup",
     }
     for fnName, event in pairs(wraps) do Wrap(fnName, event) end
+    SK.Track("session")
+    SK.Quietly("usage windows", HookWindows)
     for action, run in pairs(SK.ScrollBagActions or {}) do
         SK.ScrollBagActions[action] = function(...)
             SK.Track("bag." .. action)
@@ -145,6 +196,44 @@ local function ChangedSettings()
     return list
 end
 
+-- About the install, sent as "info.<what>.<value>" (no names, no places):
+-- class, faction, game language, Comprehension in steps of 25, how many
+-- mages on the account (1, 2, 3, 4-5, 6+), panel view, and which bag, map
+-- and bar addons are loaded (so we know which ones to support best).
+local KNOWN_ADDONS = {
+    "AdiBags", "Baganator", "Bagnon", "BetterBags", "ArkInventory", "TomTom", "Zygor Guides Viewer", "ZygorGuidesViewer",
+    "ElvUI", "Titan", "Bazooka", "ChocolateBar", "Questie", "Auctionator", "TradeSkillMaster", "WeakAuras", "Details",
+}
+local function Clean(value) return (tostring(value or "?"):lower():gsub("[^%w%-]", "")) end
+function SK.UsageInfo()
+    local list = {}
+    local function Add(what, value)
+        local clean = Clean(value)
+        if clean ~= "" then list[#list + 1] = "info." .. what .. "." .. clean end
+    end
+    local _, classToken = UnitClass and UnitClass("player")
+    Add("class", classToken)
+    Add("faction", UnitFactionGroup and UnitFactionGroup("player"))
+    Add("locale", GetLocale and GetLocale())
+    Add("version", tostring(SK.version):gsub("%.", "-"))
+    if SK.isMage and SK.GetComprehension then
+        local ok, skill = pcall(SK.GetComprehension)
+        if ok and skill and skill.known then Add("skill", math.floor((skill.rank or 0) / 25) * 25) end
+    end
+    local mages = 0
+    for _ in pairs(SK.db.mages or {}) do mages = mages + 1 end
+    Add("mages", mages >= 6 and "6plus" or mages >= 4 and "4to5" or mages)
+    if SK.isMage and SK.ViewMode then Add("view", SK.ViewMode()) end
+    local isLoaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
+    if isLoaded then
+        for _, name in ipairs(KNOWN_ADDONS) do
+            local ok, loaded = pcall(isLoaded, name)
+            if ok and loaded then Add("addon", name) end
+        end
+    end
+    return list
+end
+
 function SK.UsageWanted()
     return SK.db and SK.db.shareUsage == true and SK.db.share and SK.db.sharing ~= "none"
 end
@@ -161,8 +250,7 @@ local function SendUsage(force)
     table.sort(keys)
     for _, key in ipairs(keys) do items[#items + 1] = key .. ":" .. usage.counts[key] end
     for _, setting in ipairs(ChangedSettings()) do items[#items + 1] = setting end
-    items[#items + 1] = "class." .. (SK.isMage and "mage" or "other") .. ":1"
-    items[#items + 1] = "version." .. tostring(SK.version):gsub("[^%w%.%-]", "") .. ":1"
+    for _, info in ipairs(SK.UsageInfo()) do items[#items + 1] = info .. ":1" end
     if #items > 0 then Net.SendList("UZ", InstallID(), items) end
 end
 SK.SendUsage = SendUsage

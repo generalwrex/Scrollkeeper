@@ -484,6 +484,7 @@ do
         toast.title:SetText(title)
         toast.hint:SetText(Hint(familiar and "familiar" or "imbue", familiar or imbue))
         toast.expiring = nil
+        SK.Track(familiar and "toast.shown.familiar" or "toast.shown.imbue")
 
         local scroll = familiar or imbue
         local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)
@@ -543,6 +544,7 @@ do
         toast.title:SetText(title)
         toast.hint:SetText(Hint(pick.kind, pick.scroll))
         toast.expiring = true
+        SK.Track("toast.shown.expiring")
         local scroll = due[#due].scroll
         local iconTexture = scroll.itemID and C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(scroll.itemID)
         toast.icon:SetTexture(iconTexture or "Interface\\Icons\\INV_Scroll_03")

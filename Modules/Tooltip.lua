@@ -96,6 +96,7 @@ local function OnItemTooltip(tooltip, data)
     local needs = SK.RequirementFromLines(data.lines)
     if needs then
         AddScrollLines(tooltip, needs, data.id)
+        if SK.TrackOnce then SK.TrackOnce("tooltip.scroll", data.id, 60) end
         shiftTooltip, shiftOwner = tooltip, tooltip.GetOwner and tooltip:GetOwner()
     elseif SK.isMage and data.id and SK.db.bagTooltip ~= false and SK.ModuleOn("Bag") and SK.StashEntry and SK.IsMageScroll(data.id) then
         -- A deciphered scroll: how many you have, where, and keep or extra.

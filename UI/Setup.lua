@@ -77,7 +77,7 @@ local function BuildQuestions()
     -- closeValue: Escape or the X on this page counts as this answer ("no").
     list[#list + 1] = { key = "shareUsage", version = 1, account = true, required = true, closeValue = false,
         question = L["Help make Scrollkeeper better?"],
-        hint = L["Why: knowing which features people really use tells us where to spend our time, so the ones you rely on get fixed first, keep working as the game changes, and get better. It's opt-in: nothing is sent unless you pick Yes. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Change it any time in /sk options > Sharing."],
+        hint = L["Why: knowing which features people really use tells us where to spend our time, so the ones you rely on get fixed first, keep working as the game changes, and get better. It's opt-in: nothing is sent unless you pick Yes. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID, plus your class, faction, game language, rough Comprehension skill and which bag and map addons you use. Never your name, realm, guild, chat, gold, bags or where you are. Change it any time in /sk options > Sharing."],
         options = {
         { true, L["Yes, share anonymous counts"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["The features you use get fixed first and improved next."], ICON .. "INV_Misc_Note_01" },
         { false, L["No thanks"], L["Nothing about how you use Scrollkeeper is sent (the default)."], ICON .. "Ability_Rogue_Feint" },

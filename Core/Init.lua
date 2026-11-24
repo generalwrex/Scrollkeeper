@@ -77,6 +77,7 @@ local shownErrors = {}
 function SK.Quietly(label, fn, ...)
     local ok, err = pcall(fn, ...)
     if ok then return true end
+    if SK.Track then SK.Track("error." .. tostring(label)) end   -- which part broke (never the message)
     if ScrollkeeperDB then
         ScrollkeeperDB.errors = ScrollkeeperDB.errors or {}
         local list = ScrollkeeperDB.errors
@@ -89,6 +90,7 @@ end
 function SK.Safely(label, fn, ...)
     local ok, err = pcall(fn, ...)
     if ok then return true end
+    if SK.Track then SK.Track("error." .. tostring(label)) end   -- which part broke (never the message)
     err = tostring(err)
     if ScrollkeeperDB then
         ScrollkeeperDB.errors = ScrollkeeperDB.errors or {}

@@ -1318,6 +1318,11 @@ do
     RunHooks(ScrollkeeperDecipherButton, "OnClick", "LeftButton", false)
   end
   if ScrollkeeperFamiliarButton then RunHooks(ScrollkeeperFamiliarButton, "OnClick", "RightButton", false) end
+  local infoList = table.concat(SK.UsageInfo(), " ")
+  print("USAGE info:", infoList)
+  SK.Safely("test break", function() error("boom") end)
+  print("USAGE error counted:", SK.db.usage.counts["error.testbreak"], "session:", SK.db.usage.counts["session"])
+  table.remove(ScrollkeeperDB.errors)
   print("USAGE decipher button clicks:", SK.db.usage.counts["panel.decipher"], "familiar right:", SK.db.usage.counts["panel.familiar.right"])
   print("USAGE errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end

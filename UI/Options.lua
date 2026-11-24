@@ -122,7 +122,7 @@ local SECTIONS = {
             { "full", "Full (recommended)", "Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need." },
             { "anon", "Anonymous", "Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them." },
             { "none", "None (not recommended)", "Nothing is sent. No Fellow Mages or swap board, but each update's odds still show." } } },
-        { "check", "shareUsage", "Share anonymous usage stats (recommended)", "Opt-in, off unless you turn it on. Counts which windows, buttons and settings get used, so we know which features people rely on most and can fix and improve those first. Totally anonymous: just counts under a random ID, never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None." },
+        { "check", "shareUsage", "Share anonymous usage stats (recommended)", "Opt-in, off unless you turn it on. Counts which windows, buttons and settings get used, so we know which features people rely on most and can fix and improve those first. Totally anonymous: just counts under a random ID, plus your class, faction, game language, rough Comprehension skill and which bag and map addons you use, never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None." },
         { "check", "liminalDoor", "Doorways: be a door", "While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways." },
         { "check", "doorAutoInvite", "Doorways: invite by myself", "Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes.", dependsOn = "liminalDoor" },
         { "check", "oddsStandard", "Odds: list standard scrolls", "Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row." },
@@ -423,6 +423,7 @@ end
 local function ShowSection(index)
     current = index
     local section = SECTIONS[index]
+    if section and SK.Track then SK.Track("options.section." .. section.name:lower()) end
     for i, button in ipairs(window.nav) do
         if i == index then button:LockHighlight() else button:UnlockHighlight() end
         button.text:SetTextColor(i == index and 1 or 0.85, i == index and 1 or 0.75, i == index and 1 or 0.5)
