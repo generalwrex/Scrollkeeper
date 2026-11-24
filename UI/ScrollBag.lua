@@ -484,6 +484,20 @@ local function Build()
     box:SetScript("OnClick", function() box.menu:Fill(); box.menu:SetShown(not box.menu:IsShown()) end)
     window.preset = box
 
+    -- Its settings, in the settings window.
+    local gear = CreateFrame("Button", nil, window)
+    gear:SetSize(18, 18)
+    gear:SetPoint("TOPRIGHT", -12, -32)
+    gear:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    gear:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    gear:SetScript("OnClick", function() SK.OpenOptions("Scroll Bag") end)
+    gear:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["Scroll Bag settings"])
+        GameTooltip:Show()
+    end)
+    gear:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     window.counting = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     window.counting:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -10)
 

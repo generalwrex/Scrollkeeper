@@ -1,5 +1,10 @@
 # Scrollkeeper
 
+## Unreleased: Settings window
+
+- Scrollkeeper has **its own settings window** now (/sk options, the gear on the panel, or right-click the minimap button): sections down the left (Panel, Pop-ups, Tooltips and chat, Sharing, Mailbox and auction house, Scroll Bag, Modules, Map, Language, Backup, About), the settings on the right with what each one does. The game's Options > AddOns > Scrollkeeper page has a button that opens it.
+- The Scroll Bag has a gear that opens its settings.
+
 ## Unreleased: Modules
 
 - New in /sk options: **Modules**. Turn off what you don't use (Scroll Bag, Codex, Farming Plan, Luck Log, Scroll Swap, Doorways, Fellow Mages) and its button leaves the panel; the rest close up. The Scroll Bag off also stops its bag marks, tooltip and chat notes, and Doorways off stops the Liminal Passage warning.

@@ -99,7 +99,7 @@ commands.bag = function() SK.ToggleScrollBag() end
 commands.bags = commands.bag
 commands.guide = commands.codex
 commands.about = function()
-    SK.Print(L["version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."]:format(SK.version))
+    SK.Print(L["version %s by generalwrex. Links are in /sk options > About."]:format(SK.version))
     print("  " .. L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER or "Archmage Naage"))
     for _, link in ipairs(SK.LINKS or {}) do
         print(("  |cffffd100%s|r  %s"):format(L[link[1]], link[2]))

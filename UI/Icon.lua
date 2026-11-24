@@ -357,12 +357,12 @@ do
             -- Shift-right-click: turn these reminders off (same as the setting).
             if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() and self.expiring then
                 SK.db.expiringReminder = false
-                SK.Print(L["running-out pop-ups are off. Turn them back on in /sk options (Panel)."])
+                SK.Print(L["running-out pop-ups are off. Turn them back on in /sk options (Pop-ups)."])
                 return
             end
             if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() then
                 SK.db.reminderToast = false
-                SK.Print(L["imbue and familiar pop-ups are off. Turn them back on in /sk options (Panel)."])
+                SK.Print(L["imbue and familiar pop-ups are off. Turn them back on in /sk options (Pop-ups)."])
                 return
             end
             -- Right-click: pick another scroll of that kind (out of combat).

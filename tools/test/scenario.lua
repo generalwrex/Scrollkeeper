@@ -76,7 +76,7 @@ if SK.isMage then
   print("translated:", #SK.bags.translated, SK.bags.translated[1] and SK.bags.translated[1].name, SK.bags.translated[1] and SK.bags.translated[1].count)
   local sb = ScrollkeeperScrollButton1; print("scroll button", sb._shown, sb._attrs.type, sb._attrs.item)
   SK.db.collapsed = true; SK.RefreshPanel(); print("collapsed button shown", sb._shown)
-  SK.db.collapsed = false; SK.RefreshPanel(); SETTING_CB(); SlashCmdList.SCROLLKEEPER("options")
+  SK.db.collapsed = false; SK.RefreshPanel(); SK.OptionChanged("viewMode"); SlashCmdList.SCROLLKEEPER("options")
   SlashCmdList.SCROLLKEEPER("log")
   SlashCmdList.SCROLLKEEPER("")
   SlashCmdList.SCROLLKEEPER("")
@@ -1249,4 +1249,17 @@ if SK.isMage then
   SK.RefreshPanel()
   print("MODULES errors:", #ScrollkeeperDB.errors)
   SK.db.moduleBag = true; SK.db.moduleCodex = true
+end
+
+-- OPTIONS WINDOW: every section builds, and a change sticks
+if SK.isMage then
+  SK.OpenOptions()
+  for i, section in ipairs(SK.OPTION_SECTIONS) do
+    SK.OpenOptions(section.name)
+  end
+  SK.OpenOptions("Scroll Bag")
+  SK.db.scale = 1
+  SK.OptionChanged("scale")
+  print("OPTIONS sections:", #SK.OPTION_SECTIONS, "window:", ScrollkeeperOptionsFrame ~= nil, "errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end

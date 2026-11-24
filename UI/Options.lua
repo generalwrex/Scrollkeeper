@@ -1,49 +1,20 @@
 -- Scrollkeeper: UI/Options.lua
--- The settings page in the game's own Options > AddOns list.
--- Open it with /sk options or the * button on the panel.
+-- Scrollkeeper's own settings window (/sk options, the gear on the panel,
+-- right-click the minimap button). Sections down the left, their settings
+-- on the right:
+--
+--   Panel, Pop-ups, Tooltips and chat, Sharing, Mailbox and auction house,
+--   Scroll Bag, Modules, Map, Language, Backup, About
+--
+-- The game's Options > AddOns > Scrollkeeper page is a short note with a
+-- button that opens this window.
+--
+-- Every setting is one entry in SECTIONS below: a checkbox, a choice, a
+-- slider (- value +) or a button. Changing one runs Changed(key), which
+-- tells the rest of the addon.
 
 local _, SK = ...
 local L = SK.L
-
-local category
-
--- One checkbox. `key` is the name of the setting in the saved table.
-local function AddCheckbox(key, label, tooltip, default)
-    local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_" .. key, key, SK.db,
-        "boolean", label, default)
-    setting:SetValueChangedCallback(function()
-        if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
-        if key == "hideInCombat" and SK.UpdateCombatHiding then SK.UpdateCombatHiding() end
-        if SK.Net and (key == "share" or key == "shareChannel") then SK.Net.UpdateChannel() end
-        if key == "anonymous" and SK.SendHello then SK.SendHello() end
-        if key == "scrollIcon" and SK.RefreshIcon then SK.RefreshIcon() end
-        if key == "minimapButton" and SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
-        if (key == "liminalDoor" or key == "doorAutoInvite") and SK.SendDoor then SK.SendDoor(true) end
-        if key == "oddsStandard" and SK.RefreshNetwork then SK.RefreshNetwork() end
-        SK.Send("DROPS_CHANGED")
-    end)
-    return Settings.CreateCheckbox(category, setting, tooltip)
-end
-
-local layout
-
--- A section title, like the game's own settings pages have.
-local function AddHeader(text)
-    if layout and CreateSettingsListSectionHeaderInitializer then
-        layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(text))
-    end
-end
-
--- Grey out a setting unless another one is on.
-local function DependsOn(child, parent, key)
-    if child and parent and child.SetParentInitializer then
-        child:SetParentInitializer(parent, function() return SK.db[key] and true or false end)
-    end
-end
-
-------------------------------------------------------------------------
--- About page (Options > AddOns > Scrollkeeper > About)
-------------------------------------------------------------------------
 
 SK.AUTHOR_CHARACTER = "Archmage Naage"
 
@@ -60,400 +31,560 @@ SK.LINKS = {
     { "Buy me a coffee", "https://donorbox.org/generalwrex" },
 }
 
+------------------------------------------------------------------------
+-- What changing a setting does
+------------------------------------------------------------------------
+
+local function Changed(key)
+    if SK.ApplyPanelSettings then SK.ApplyPanelSettings() end
+    if key == "hideInCombat" and SK.UpdateCombatHiding then SK.UpdateCombatHiding() end
+    if key == "sharing" then
+        SK.SetSharing(SK.db.sharing)
+        if SK.Net and SK.Net.UpdateChannel then SK.Net.UpdateChannel() end
+        if SK.db.share and SK.SendHello then SK.SendHello() end
+    end
+    if key == "anonymous" and SK.SendHello then SK.SendHello() end
+    if key == "scrollIcon" and SK.RefreshIcon then SK.RefreshIcon() end
+    if key == "minimapButton" and SK.RefreshMinimapButton then SK.RefreshMinimapButton() end
+    if (key == "liminalDoor" or key == "doorAutoInvite") and SK.SendDoor then SK.SendDoor(true) end
+    if (key == "oddsStandard" or key == "offlineMinutes") and SK.RefreshNetwork then SK.RefreshNetwork() end
+    if key == "language" then SK.Print(L["language changed. Type /reload to switch."]) end
+    if key == "own" then SK.SetCharacterLayout(SK.charDB.own) end
+    if key:find("^bag") or key:find("^liminal") or key:find("^module") then
+        SK.Send("STASH_CHANGED")
+        SK.Send("REMINDERS_CHANGED")
+    end
+    SK.Send("DROPS_CHANGED")
+end
+SK.OptionChanged = Changed
+
+------------------------------------------------------------------------
+-- The settings, section by section
+--   { "check", key, label, tip, dependsOn = key }
+--   { "choice", key, label, tip, choices = { { value, label, tip } } }
+--   { "slider", key, label, tip, min, max, step, format }
+--   { "button", label, buttonText, tip, run }
+--   { "page", builder }   (Backup and About: their own layout)
+-- `char = true` stores the setting for this character (SK.charDB).
+------------------------------------------------------------------------
+
+local function Percent(value) return ("%d%%"):format(math.floor(value * 100 + 0.5)) end
+local function Minutes(value) return L["%d min"]:format(value) end
+
+local MODULES = {
+    { "Bag", "Scroll Bag", "Every deciphered scroll you own, keep or extra, and selling, mailing and banking the extras. Off: no window, bag marks, tooltip or chat notes." },
+    { "Codex", "Codex", "Every scroll and what it does, and the 40 library books." },
+    { "Plan", "Farming Plan", "Your next goal, where to farm, and auction house prices." },
+    { "Log", "Luck Log", "What your deciphers turned into, next to everyone's odds." },
+    { "Swap", "Scroll Swap", "Who has spare scrolls you'd level from, and who'd want yours." },
+    { "Doors", "Doorways", "Getting around with Scroll of Liminal Passage, and the running-low warning." },
+    { "Network", "Fellow Mages", "The Fellow Mages window (the Advanced view still shows them)." },
+}
+
+local SECTIONS = {
+    { name = "Panel", icon = "Interface\\Icons\\INV_Scroll_03", items = {
+        { "check", "showPanel", "Show the panel", "The window with your Comprehension, scrolls and Study timer. Mages only." },
+        { "choice", "viewMode", "Panel view", "How much the panel shows. The size button on the panel switches between these too.", choices = {
+            { "compact", "Simple", "Buttons, bars and your scrolls." },
+            { "full", "Advanced", "Everything: all the numbers, sections and weapon upgrades." },
+            { "mini", "Title only", "Just the title and your skill bar." } } },
+        { "slider", "scale", "Panel size", "How big the panel is.", 0.7, 1.5, 0.05, Percent },
+        { "check", "own", "This character's own layout", "Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters.", char = true },
+        { "check", "minimapButton", "Minimap button", "The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around." },
+        { "check", "scrollIcon", "Scroll icon", "A small icon you can keep on screen. Click it for the most useful thing right now: Study when you're in a library, open a Bundle of Scrolls, or decipher your best scroll. Right-click it to open or close the panel in the view you picked above." },
+        { "check", "hideInCombat", "Hide the panel in combat", "The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)" },
+        { "check", "locked", "Lock position", "Stops the panel (and the scroll icon) from being dragged." },
+        { "check", "showScrollBar", "Scroll buttons", "Adds a button to the panel for each kind of translated scroll in your bags. Click one to use it.", dependsOn = "showPanel" },
+        { "button", "Panel position", "Move to middle", "Lost the panel off screen? This puts it back in the middle at normal size.",
+            function() if SlashCmdList.SCROLLKEEPER then SlashCmdList.SCROLLKEEPER("reset") end end },
+    } },
+    { name = "Pop-ups", icon = "Interface\\Icons\\Spell_Fire_FlameTounge", items = {
+        { "check", "reminderToast", "Imbue and familiar pop-up", "A small pop-up when your weapon imbue or familiar wears off and you have a scroll for it. Click it to use the scroll, right-click to pick another. Not in combat, and at most once every five minutes." },
+        { "check", "expiringReminder", "Running-out pop-up", "A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat." },
+        { "slider", "expiringMinutes", "Warn this long before", "How many minutes before your imbue or familiar runs out the running-out pop-up shows.", 1, 15, 1, Minutes, dependsOn = "expiringReminder" },
+        { "check", "reminderInCombat", "Pop-ups in combat too", "Show the imbue and familiar pop-ups during a fight as well, in case one runs out mid-fight." },
+        { "check", "imbueByUse", "Imbue pick: the one I use most", "Suggest the weapon imbue you use most, even if it's not for your spec. Off: an imbue for your spec always comes first (a Frost mage gets a Frost imbue). A pinned scroll always wins." },
+        { "check", "familiarAnywhere", "Familiar pop-ups outside dungeons and raids", "Also remind you about your familiar out in the world. Flight paths make it vanish, so you may see this a lot." },
+    } },
+    { name = "Tooltips and chat", icon = "Interface\\Icons\\INV_Letter_15", items = {
+        { "check", "showTooltips", "Tooltip lines", "Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll." },
+        { "check", "announce", "Decipher messages", "Prints a chat line such as \"deciphered: Scroll of Frog Familiar\"." },
+        { "check", "updateNotice", "Update messages", "Say in chat (once per session) when another player has a newer Scrollkeeper than you." },
+        { "check", "chatHelper", "Chat notes", "When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages." },
+    } },
+    { name = "Sharing", icon = "Interface\\Icons\\INV_Misc_GroupLooking", items = {
+        { "choice", "sharing", "Sharing", "What Scrollkeeper shares with other players: what scrolls became, where they drop, which libraries work and who needs which scrolls. Only scroll data is sent, never chat or gold.", choices = {
+            { "full", "Full (recommended)", "Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need." },
+            { "anon", "Anonymous", "Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them." },
+            { "none", "None (not recommended)", "Nothing is sent. No Fellow Mages or swap board, but each update's odds still show." } } },
+        { "check", "liminalDoor", "Doorways: be a door", "While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways." },
+        { "check", "doorAutoInvite", "Doorways: invite by myself", "Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes.", dependsOn = "liminalDoor" },
+        { "check", "oddsStandard", "Odds: list standard scrolls", "Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row." },
+        { "slider", "offlineMinutes", "Keep offline mages for", "When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long.", 1, 15, 1, Minutes },
+    } },
+    { name = "Mailbox and auction house", icon = "Interface\\Icons\\INV_Misc_Coin_01", items = {
+        { "check", "mailHelper", "Mailbox helper", "At the mailbox, list your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail." },
+        { "check", "mailIncludeMine", "Mailbox: offer scrolls I'd use too", "Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use.", dependsOn = "mailHelper" },
+        { "check", "guildBankMarks", "Guild bank marks", "Put a colored dot on guild bank scrolls that you, your mages or a guildie would get a skill-up from." },
+        { "check", "ahScanButton", "Auction house scan button", "Show a Scan scrolls button on the auction house. Prices you see are saved for tooltips either way." },
+    } },
+    { name = "Scroll Bag", icon = "Interface\\Icons\\INV_Misc_Bag_10", items = {
+        { "check", "bagCountBank", "Count my bank", "The Scroll Bag counts what's in your bank too, as of your last visit." },
+        { "check", "bagCountMail", "Count my mail", "The Scroll Bag counts scrolls in your mailbox too, as of the last time you opened it." },
+        { "check", "bagSetAside", "Set aside imbues for weapons I don't have", "An imbue for a weapon you don't own (in your bags, bank or hands) is set aside instead of extra. Bank them with Deposit set aside." },
+        { "check", "bagWeaponAlert", "Tell me about imbues for a new weapon", "When you equip or loot a kind of weapon you didn't have, say which imbues for it are waiting in your bank or mail." },
+        { "check", "bagChatStatus", "Keep or extra in the decipher message", "The \"deciphered:\" chat line also says whether the new scroll is a keep, an extra or set aside." },
+        { "check", "bagTooltip", "Keep or extra on scroll tooltips", "Deciphered scroll tooltips say how many you have, where, and whether they're extra." },
+        { "check", "bagMarks", "Marks on scrolls in my bags", "A small colored corner on mage scrolls in your bags: green keep, red extra, orange part of the stack is extra, blue set aside. Works with the game's bags, AdiBags, Baganator, Bagnon, BetterBags and ArkInventory." },
+        { "check", "bagJunk", "Extras count as junk in bag addons", "In bag addons with a junk list (Baganator), your extras count as junk, so its sell-junk button sells them too. Off by default: some people sell junk without looking." },
+        { "check", "bagConfirm", "Ask before selling extras", "Sell extras shows what it'll sell and asks first." },
+        { "check", "bagAllowDelete", "Delete extras button", "Adds a Delete extras button to the Scroll Bag. It always asks first." },
+        { "slider", "liminalLow", "Liminal Passage low at", "The panel and Doorways warn you (and it's said once in chat) when you carry this many Scroll of Liminal Passage or fewer. 0 turns it off.", 0, 10, 1,
+            function(value) return value == 0 and L["off"] or tostring(value) end },
+        { "check", "liminalLowChat", "Liminal Passage low: say it in chat", "Also say it once in chat when you drop to that many." },
+    } },
+    { name = "Modules", icon = "Interface\\Icons\\INV_Misc_Gear_01", note = "Turn off what you don't use: its panel button goes away, and so does everything it adds.", items = {} },
+    { name = "Map", icon = "Interface\\Icons\\INV_Misc_Map_01", items = {
+        { "check", "mapPins", "Map pins", "Show libraries and the spots where untranslated scrolls dropped on the world map." },
+        { "slider", "mapPinScale", "Map pin size", "How big the scroll and book spots are on the map (libraries keep their size).", 0.5, 2, 0.1, Percent, dependsOn = "mapPins" },
+    } },
+    { name = "Language", icon = "Interface\\Icons\\INV_Misc_Note_02", items = {
+        { "choice", "language", "Language", "Scrollkeeper's language. Spanish, French, German and Chinese were translated with AI, so fixes are welcome on GitHub. Takes effect after /reload.", choices = {} },
+    } },
+    { name = "Backup", icon = "Interface\\Icons\\INV_Misc_Book_09", page = "backup" },
+    { name = "About", icon = "Interface\\Icons\\INV_Misc_QuestionMark", page = "about" },
+}
+for _, module in ipairs(MODULES) do
+    table.insert(SECTIONS[7].items, { "check", "module" .. module[1], module[2], module[3] })
+end
+SK.OPTION_SECTIONS = SECTIONS   -- for the test harness
+
+------------------------------------------------------------------------
+-- Building blocks
+------------------------------------------------------------------------
+
+local WIDTH, HEIGHT, NAV = 660, 520, 168
+local CONTENT = WIDTH - NAV - 52
+local window
+local current = 1
+local widgets = {}   -- what the shown section built: refreshed on change
+local shownContent   -- the shown section's content frame
+
+local function Store(item) return item.char and SK.charDB or SK.db end
+local function Value(item) return Store(item)[item[2]] end
+local function Set(item, value)
+    Store(item)[item[2]] = value
+    Changed(item[2])
+    for _, w in ipairs(widgets) do if w.Refresh then w:Refresh() end end
+end
+
+local function Enabled(item)
+    return not item.dependsOn or SK.db[item.dependsOn] and true or false
+end
+
 -- A box holding a web address, ready to copy (the game can't open links).
 local function CopyBox(parent, url)
     local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
-    box:SetSize(380, 20)
+    box:SetSize(360, 20)
     box:SetAutoFocus(false)
     box:SetText(url)
     box:SetCursorPosition(0)
     box:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
     box:SetScript("OnMouseUp", function(self) self:SetFocus() self:HighlightText() end)
     box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    -- Read-only: put the address back if it's typed over.
     box:SetScript("OnTextChanged", function(self, userInput)
         if userInput then self:SetText(url) self:HighlightText() end
     end)
     return box
 end
 
-local function AddBackupPage()
-    if not Settings.RegisterCanvasLayoutSubcategory then return end
-    local page = CreateFrame("Frame")
-
-    local title = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText(L["Backup"])
-
-    local text = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    text:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-    text:SetWidth(560)
-    text:SetJustifyH("LEFT")
-    text:SetSpacing(3)
-    text:SetText(L["Everything Scrollkeeper has saved (settings, your luck log, drops, books, your mages, prices and what you heard from other players) lives in your WTF folder. If you ever have to wipe WTF, it's gone."]
-        .. "\n\n" .. L["Make a backup, copy the text and keep it somewhere safe (a text file, a note, Discord). Restore pastes it back in and reloads."])
-
-    local backup = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
-    backup:SetSize(180, 26)
-    backup:SetPoint("TOPLEFT", text, "BOTTOMLEFT", 0, -18)
-    backup:SetText(L["Back up my data"])
-    backup:SetScript("OnClick", function() SK.ShowBackup() end)
-
-    local restore = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
-    restore:SetSize(180, 26)
-    restore:SetPoint("LEFT", backup, "RIGHT", 12, 0)
-    restore:SetText(L["Restore a backup"])
-    restore:SetScript("OnClick", function() SK.ShowRestore() end)
-
-    local commands = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    commands:SetPoint("TOPLEFT", backup, "BOTTOMLEFT", 0, -10)
-    commands:SetText(L["Same as /sk backup and /sk restore."])
-
-    Settings.RegisterCanvasLayoutSubcategory(category, page, L["Backup"])
+local function Tip(parent, text, anchor, x)
+    local tip = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    tip:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", x or 0, -2)
+    tip:SetWidth(CONTENT - 40)
+    tip:SetJustifyH("LEFT")
+    tip:SetTextColor(0.7, 0.7, 0.7)
+    tip:SetText(text or "")
+    return tip
 end
 
-local function AddAboutPage()
-    if not Settings.RegisterCanvasLayoutSubcategory then return end
-    local page = CreateFrame("Frame")
+-- Each Make* puts one setting at y in the content frame and returns the
+-- widget and how tall it is.
 
-    local icon = page:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(48, 48)
-    icon:SetPoint("TOPLEFT", 16, -16)
+local function MakeCheck(content, item, y)
+    local w = CreateFrame("Frame", nil, content)
+    w:SetSize(CONTENT, 20)
+    w:SetPoint("TOPLEFT", 0, y)
+    local check = CreateFrame("CheckButton", nil, w, "UICheckButtonTemplate")
+    check:SetSize(24, 24)
+    check:SetPoint("TOPLEFT", 0, 2)
+    local label = w:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("LEFT", check, "RIGHT", 4, 0)
+    label:SetText(L[item[3]])
+    local tip = Tip(w, L[item[4]], label, 0)
+    check:SetScript("OnClick", function(self) Set(item, self:GetChecked() and true or false) end)
+    function w:Refresh()
+        check:SetChecked(Value(item) and true or false)
+        local on = Enabled(item)
+        if on then check:Enable() else check:Disable() end
+        label:SetTextColor(on and 1 or 0.5, on and 0.82 or 0.5, on and 0 or 0.5)
+    end
+    w:Refresh()
+    return w, 22 + (tip:GetStringHeight() or 12) + 10
+end
+
+local function MakeChoice(content, item, y)
+    local w = CreateFrame("Frame", nil, content)
+    w:SetSize(CONTENT, 20)
+    w:SetPoint("TOPLEFT", 0, y)
+    local label = w:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("TOPLEFT", 4, 0)
+    label:SetText(L[item[3]])
+    local buttons, previous = {}, nil
+    local row, rowX = 0, 0
+    for i, choice in ipairs(item.choices) do
+        local b = CreateFrame("Button", nil, w, "UIPanelButtonTemplate")
+        b:SetText(L[choice[2]])
+        local width = math.max(90, ((b:GetFontString() and b:GetFontString():GetStringWidth()) or 70) + 24)
+        b:SetSize(width, 22)
+        if rowX + width > CONTENT - 20 and i > 1 then row, rowX = row + 1, 0 end
+        b:SetPoint("TOPLEFT", w, "TOPLEFT", 4 + rowX, -20 - row * 26)
+        rowX = rowX + width + 4
+        b:SetScript("OnClick", function() Set(item, choice[1]) end)
+        b:SetScript("OnEnter", function(self)
+            if not choice[3] then return end
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(L[choice[2]])
+            GameTooltip:AddLine(L[choice[3]], 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        b.value = choice[1]
+        buttons[#buttons + 1] = b
+        previous = b
+    end
+    local spacer = CreateFrame("Frame", nil, w)
+    spacer:SetSize(1, 1)
+    spacer:SetPoint("TOPLEFT", w, "TOPLEFT", 4, -20 - row * 26 - 22)
+    local tip = Tip(w, L[item[4]], spacer, 0)
+    -- The picked one's own description, under the buttons.
+    function w:Refresh()
+        local value = Value(item)
+        for _, b in ipairs(buttons) do
+            if b.value == value then b:LockHighlight() else b:UnlockHighlight() end
+        end
+        local text = L[item[4]]
+        for _, choice in ipairs(item.choices) do
+            if choice[1] == value and choice[3] then text = "|cffffffff" .. L[choice[3]] .. "|r\n" .. text end
+        end
+        tip:SetText(text)
+    end
+    w:Refresh()
+    return w, 20 + (row + 1) * 26 + (tip:GetStringHeight() or 24) + 12
+end
+
+local function MakeSlider(content, item, y)
+    local w = CreateFrame("Frame", nil, content)
+    w:SetSize(CONTENT, 20)
+    w:SetPoint("TOPLEFT", 0, y)
+    local label = w:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("TOPLEFT", 4, 0)
+    label:SetText(L[item[3]])
+    local minus = CreateFrame("Button", nil, w, "UIPanelButtonTemplate")
+    minus:SetSize(24, 20)
+    minus:SetPoint("TOPLEFT", label, "TOPLEFT", 260, 3)
+    minus:SetText("-")
+    local value = w:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    value:SetPoint("LEFT", minus, "RIGHT", 6, 0)
+    value:SetWidth(56)
+    local plus = CreateFrame("Button", nil, w, "UIPanelButtonTemplate")
+    plus:SetSize(24, 20)
+    plus:SetPoint("LEFT", value, "RIGHT", 6, 0)
+    plus:SetText("+")
+    local low, high, step, format = item[5], item[6], item[7], item[8]
+    local function Step(delta)
+        local now = tonumber(Value(item)) or low
+        local new = math.max(low, math.min(high, now + delta * step))
+        new = math.floor(new / step + 0.5) * step   -- no 0.30000000004
+        Set(item, new)
+    end
+    minus:SetScript("OnClick", function() Step(-1) end)
+    plus:SetScript("OnClick", function() Step(1) end)
+    local tip = Tip(w, L[item[4]], label, 0)
+    function w:Refresh()
+        local on = Enabled(item)
+        value:SetText(format(tonumber(Value(item)) or low))
+        if on then minus:Enable(); plus:Enable() else minus:Disable(); plus:Disable() end
+        label:SetTextColor(on and 1 or 0.5, on and 0.82 or 0.5, on and 0 or 0.5)
+    end
+    w:Refresh()
+    return w, 22 + (tip:GetStringHeight() or 12) + 12
+end
+
+local function MakeButton(content, item, y)
+    local w = CreateFrame("Frame", nil, content)
+    w:SetSize(CONTENT, 20)
+    w:SetPoint("TOPLEFT", 0, y)
+    local label = w:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetPoint("TOPLEFT", 4, 0)
+    label:SetText(L[item[2]])
+    local b = CreateFrame("Button", nil, w, "UIPanelButtonTemplate")
+    b:SetSize(140, 22)
+    b:SetPoint("TOPLEFT", label, "TOPLEFT", 260, 4)
+    b:SetText(L[item[3]])
+    b:SetScript("OnClick", item[5])
+    local tip = Tip(w, L[item[4]], label, 0)
+    return w, 22 + (tip:GetStringHeight() or 12) + 12
+end
+
+local function TextBlock(content, y, text, font)
+    local fs = content:CreateFontString(nil, "OVERLAY", font or "GameFontHighlight")
+    fs:SetPoint("TOPLEFT", 4, y)
+    fs:SetWidth(CONTENT - 20)
+    fs:SetJustifyH("LEFT")
+    fs:SetSpacing(3)
+    fs:SetText(text)
+    return fs, (fs:GetStringHeight() or 14)
+end
+
+local function BackupPage(content)
+    local y = 0
+    local _, h = TextBlock(content, y, L["Everything Scrollkeeper has saved (settings, your luck log, drops, books, your mages, prices and what you heard from other players) lives in your WTF folder. If you ever have to wipe WTF, it's gone."]
+        .. "\n\n" .. L["Make a backup, copy the text and keep it somewhere safe (a text file, a note, Discord). Restore pastes it back in and reloads."])
+    y = y - h - 16
+    local backup = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    backup:SetSize(170, 24)
+    backup:SetPoint("TOPLEFT", 4, y)
+    backup:SetText(L["Back up my data"])
+    backup:SetScript("OnClick", function() SK.ShowBackup() end)
+    local restore = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    restore:SetSize(170, 24)
+    restore:SetPoint("LEFT", backup, "RIGHT", 10, 0)
+    restore:SetText(L["Restore a backup"])
+    restore:SetScript("OnClick", function() SK.ShowRestore() end)
+    y = y - 34
+    local _, h2 = TextBlock(content, y, L["Same as /sk backup and /sk restore."], "GameFontDisableSmall")
+    return -(y - h2)
+end
+
+local function AboutPage(content)
+    local icon = content:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(44, 44)
+    icon:SetPoint("TOPLEFT", 4, 0)
     icon:SetTexture("Interface\\Icons\\INV_Scroll_03")
-
-    local title = page:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
-    title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, -2)
+    local title = content:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, -2)
     title:SetText(L["Scrollkeeper"])
-
-    local version = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    version:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
+    local version = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    version:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -3)
     version:SetText(L["Version %s  ·  by Natop (generalwrex)"]:format(SK.version))
-
-    local ingame = page:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-    ingame:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -3)
-    ingame:SetText(L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER))
-
-    local blurb = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    blurb:SetPoint("TOPLEFT", icon, "BOTTOMLEFT", 0, -16)
-    blurb:SetWidth(560)
-    blurb:SetJustifyH("LEFT")
-    blurb:SetSpacing(3)
-    blurb:SetText(L["Everything for the mage's Comprehension skill in one place: decipher, "]
+    local y = -56
+    local _, h = TextBlock(content, y, L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER), "GameFontDisable")
+    y = y - h - 10
+    _, h = TextBlock(content, y, L["Everything for the mage's Comprehension skill in one place: decipher, "]
         .. L["study, imbue and summon from one panel, see what each scroll tier turns into, "]
         .. L["find libraries and scroll drops on the map, and share what you learn with "]
         .. L["other Scrollkeeper players. Made for WoW Forever."])
-
-    local y = -150
-    local header = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    header:SetPoint("TOPLEFT", 16, y)
-    header:SetText(L["Links"])
-    local hint = page:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    hint:SetPoint("LEFT", header, "RIGHT", 10, -1)
-    hint:SetText(L["Click one, press Ctrl+C, and paste it in your browser."])
-    y = y - 28
+    y = y - h - 16
+    _, h = TextBlock(content, y, L["Links"] .. "  |cff808080" .. L["Click one, press Ctrl+C, and paste it in your browser."] .. "|r", "GameFontNormal")
+    y = y - h - 8
     for _, link in ipairs(SK.LINKS) do
-        local label = page:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        label:SetPoint("TOPLEFT", 24, y - 3)
+        local label = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        label:SetPoint("TOPLEFT", 12, y - 3)
         label:SetText(L[link[1]])
-        local box = CopyBox(page, link[2])
-        box:SetPoint("TOPLEFT", 150, y)
-        y = y - 28
+        local box = CopyBox(content, link[2])
+        box:SetPoint("TOPLEFT", 110, y)
+        y = y - 26
     end
-
-    y = y - 12
-    local help = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    help:SetPoint("TOPLEFT", 16, y)
-    help:SetText(L["Help improve it"])
-    local helpText = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    helpText:SetPoint("TOPLEFT", help, "BOTTOMLEFT", 8, -8)
-    helpText:SetWidth(560)
-    helpText:SetJustifyH("LEFT")
-    helpText:SetSpacing(3)
-    helpText:SetText(L["|cffffd100/sk bug|r  copy a bug report if something goes wrong.\n"]
+    y = y - 8
+    _, h = TextBlock(content, y, L["|cffffd100/sk bug|r  copy a bug report if something goes wrong.\n"]
         .. L["Paste it on the GitHub page above (Report a bug)."])
-
-    local thanks = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    thanks:SetPoint("TOPLEFT", helpText, "BOTTOMLEFT", -8, -18)
-    thanks:SetText(L["Thanks"])
-    local thanksText = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    thanksText:SetPoint("TOPLEFT", thanks, "BOTTOMLEFT", 8, -8)
-    thanksText:SetWidth(560)
-    thanksText:SetJustifyH("LEFT")
-    thanksText:SetSpacing(3)
-    local lines = {}
+    y = y - h - 16
+    local lines = { "|cffffd100" .. L["Thanks"] .. "|r" }
     for _, credit in ipairs(SK.CREDITS) do
         lines[#lines + 1] = ("|cffffd100%s|r  %s"):format(credit[1], L[credit[2]])
     end
     lines[#lines + 1] = L["Everyone who shares their scroll data or reports a bug."]
-    thanksText:SetText(table.concat(lines, "\n"))
-
-    Settings.RegisterCanvasLayoutSubcategory(category, page, L["About"])
+    _, h = TextBlock(content, y, table.concat(lines, "\n"))
+    return -(y - h)
 end
 
-local function AddOfflineSlider()
-    local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_offlineMinutes", "offlineMinutes", SK.db,
-        "number", L["Keep offline mages for"], 5)
-    setting:SetValueChangedCallback(function() if SK.RefreshNetwork then SK.RefreshNetwork() end end)
-    local options = Settings.CreateSliderOptions(1, 15, 1)
-    if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
-            return L["%d min"]:format(value)
-        end)
+------------------------------------------------------------------------
+-- The window
+------------------------------------------------------------------------
+
+local function ShowSection(index)
+    current = index
+    local section = SECTIONS[index]
+    for i, button in ipairs(window.nav) do
+        if i == index then button:LockHighlight() else button:UnlockHighlight() end
+        button.text:SetTextColor(i == index and 1 or 0.85, i == index and 1 or 0.75, i == index and 1 or 0.5)
     end
-    Settings.CreateSlider(category, setting, options,
-        L["When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long."])
-end
-
-local function AddExpiringSlider()
-    local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_expiringMinutes", "expiringMinutes", SK.db,
-        "number", L["Warn this long before"], 5)
-    local options = Settings.CreateSliderOptions(1, 15, 1)
-    if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
-            return L["%d min"]:format(value)
-        end)
-    end
-    return Settings.CreateSlider(category, setting, options,
-        L["How many minutes before your imbue or familiar runs out the running-out pop-up shows."])
-end
-
-local function AddScaleSlider()
-    local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_scale", "scale", SK.db,
-        "number", L["Panel size"], 1)
-    setting:SetValueChangedCallback(function() SK.ApplyPanelSettings() end)
-    local options = Settings.CreateSliderOptions(0.7, 1.5, 0.05)
-    if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
-        options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
-            return ("%d%%"):format(value * 100 + 0.5)
-        end)
-    end
-    Settings.CreateSlider(category, setting, options, L["How big the panel is."])
-end
-
-SK.Listen("READY", function()
-    if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then return end
-
-    SK.Safely("settings page", function()
-        category, layout = Settings.RegisterVerticalLayoutCategory("Scrollkeeper")
-
-        -- Panel ------------------------------------------------------------
-        AddHeader(L["Panel"])
-        local showPanel = AddCheckbox("showPanel", L["Show the panel"],
-            L["The window with your Comprehension, scrolls and Study timer. Mages only."], true)
-        SK.Safely("settings view", function()
-            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_viewMode", "viewMode", SK.db,
-                "string", L["Panel view"], "compact")
-            setting:SetValueChangedCallback(function() SK.ApplyPanelSettings() end)
-            local function Options()
-                local container = Settings.CreateControlTextContainer()
-                container:Add("compact", L["Simple"], L["Buttons, bars and your scrolls."])
-                container:Add("full", L["Advanced"], L["Everything: all the numbers, sections and weapon upgrades."])
-                container:Add("mini", L["Title only"], L["Just the title and your skill bar."])
-                return container:GetData()
-            end
-            Settings.CreateDropdown(category, setting, Options, L["How much the panel shows. The size button on the panel switches between these too."])
-        end)
-        SK.Safely("settings slider", AddScaleSlider)
-        SK.Safely("settings own layout", function()
-            if not SK.charDB then return end
-            if SK.charDB.own == nil then SK.charDB.own = false end
-            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_ownLayout", "own", SK.charDB,
-                "boolean", L["This character's own layout"], false)
-            setting:SetValueChangedCallback(function() SK.SetCharacterLayout(SK.charDB.own) end)
-            Settings.CreateCheckbox(category, setting,
-                L["Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters."])
-        end)
-        AddCheckbox("minimapButton", L["Minimap button"],
-            L["The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around."], true)
-        AddCheckbox("scrollIcon", L["Scroll icon"],
-            L["A small icon you can keep on screen. Click it for the most useful thing right now: Study when you're in a library, open a Bundle of Scrolls, or decipher your best scroll. Right-click it to open or close the panel in the view you picked above."], false)
-        AddCheckbox("hideInCombat", L["Hide the panel in combat"],
-            L["The panel hides when combat starts and comes back when it ends. (The X always closes it, even in combat.)"], true)
-        AddCheckbox("reminderToast", L["Imbue and familiar pop-up"],
-            L["A small pop-up when your weapon imbue or familiar wears off and you have a scroll for it. Click it to open the panel. Not in combat, and at most once every five minutes."], true)
-        local expiring = AddCheckbox("expiringReminder", L["Running-out pop-up"],
-            L["A pop-up when your weapon imbue or familiar is about to run out and you have a scroll to renew it. Once each time, not in combat."], true)
-        AddCheckbox("reminderInCombat", L["Pop-ups in combat too"],
-            L["Show the imbue and familiar pop-ups during a fight as well, in case one runs out mid-fight."], false)
-        AddCheckbox("imbueByUse", L["Imbue pick: the one I use most"],
-            L["Suggest the weapon imbue you use most, even if it's not for your spec. Off: an imbue for your spec always comes first (a Frost mage gets a Frost imbue)."], false)
-        AddCheckbox("familiarAnywhere", L["Familiar pop-ups outside dungeons and raids"],
-            L["Also remind you about your familiar out in the world. Flight paths make it vanish, so you may see this a lot."], false)
-        SK.Safely("settings expiring slider", function()
-            local slider = AddExpiringSlider()
-            if slider and DependsOn then DependsOn(slider, expiring, "expiringReminder") end
-        end)
-        AddCheckbox("locked", L["Lock position"],
-            L["Stops the panel (and the scroll icon) from being dragged."], false)
-        local buttons = AddCheckbox("showScrollBar", L["Scroll buttons"],
-            L["Adds a button to the panel for each kind of translated scroll in your bags. Click one to use it."], true)
-        DependsOn(buttons, showPanel, "showPanel")
-        if CreateSettingsButtonInitializer and layout then
-            layout:AddInitializer(CreateSettingsButtonInitializer(L["Panel position"], L["Move to middle"],
-                function() if SlashCmdList.SCROLLKEEPER then SlashCmdList.SCROLLKEEPER("reset") end end,
-                L["Lost the panel off screen? This puts it back in the middle at normal size."], true))
+    window.heading:SetText(L[section.name])
+    -- A fresh content frame each time: sections are small, and this keeps
+    -- old widgets out of the way.
+    if shownContent then shownContent:Hide() end
+    local content = CreateFrame("Frame", nil, window.scroll)
+    content:SetSize(CONTENT, 10)
+    window.scroll:SetScrollChild(content)
+    shownContent = content
+    widgets = {}
+    local height
+    if section.page == "backup" then
+        height = BackupPage(content)
+    elseif section.page == "about" then
+        height = AboutPage(content)
+    else
+        local y = 0
+        if section.note then
+            local _, h = TextBlock(content, y, L[section.note], "GameFontHighlightSmall")
+            y = y - h - 12
         end
-
-        -- Tooltips and chat -------------------------------------------------
-        AddHeader(L["Tooltips and chat"])
-        AddCheckbox("showTooltips", L["Tooltip lines"],
-            L["Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll."], true)
-        AddCheckbox("announce", L["Decipher messages"],
-            L["Prints a chat line such as \"deciphered: Scroll of Frog Familiar\"."], true)
-        AddCheckbox("updateNotice", L["Update messages"],
-            L["Say in chat (once per session) when another player has a newer Scrollkeeper than you."], true)
-        AddCheckbox("chatHelper", L["Chat notes"],
-            L["When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages."], true)
-
-        -- Sharing ------------------------------------------------------------
-        AddHeader(L["Sharing"])
-        SK.Safely("settings sharing", function()
-            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_sharing", "sharing", SK.db,
-                "string", L["Sharing"], "full")
-            setting:SetValueChangedCallback(function()
-                SK.SetSharing(SK.db.sharing)
-                if SK.Net and SK.Net.UpdateChannel then SK.Net.UpdateChannel() end
-                if SK.db.share and SK.SendHello then SK.SendHello() end
-            end)
-            local function Options()
-                local container = Settings.CreateControlTextContainer()
-                container:Add("full", L["Full"] .. " " .. L["(recommended)"], L["Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need."])
-                container:Add("anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."])
-                container:Add("none", L["None"] .. " " .. L["(not recommended)"], L["Nothing is sent. No Fellow Mages or swap board, but each update's odds still show."])
-                return container:GetData()
+        for _, item in ipairs(section.items) do
+            local make = ({ check = MakeCheck, choice = MakeChoice, slider = MakeSlider, button = MakeButton })[item[1]]
+            if make and not (item.char and not SK.charDB) then
+                local w, h = make(content, item, y)
+                widgets[#widgets + 1] = w
+                y = y - h
             end
-            Settings.CreateDropdown(category, setting, Options,
-                L["What Scrollkeeper shares with other players: what scrolls became, where they drop, which libraries work and who needs which scrolls. Only scroll data is sent, never chat or gold."])
-        end)
-
-        AddCheckbox("liminalDoor", L["Doorways: be a door"],
-            L["While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways."], false)
-        AddCheckbox("doorAutoInvite", L["Doorways: invite by myself"],
-            L["Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes."], false)
-
-        AddCheckbox("oddsStandard", L["Odds: list standard scrolls"],
-            L["Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row."], false)
-
-        SK.Safely("settings offline slider", AddOfflineSlider)
-
-        -- Helpers ------------------------------------------------------------
-        AddHeader(L["Mailbox, guild bank and auction house"])
-        AddCheckbox("mailHelper", L["Mailbox helper"],
-            L["At the mailbox, list your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail."], true)
-        AddCheckbox("mailIncludeMine", L["Mailbox: offer scrolls I'd use too"],
-            L["Also list mages who could use the scrolls you'd still level from yourself, marked so you know. Off: only scrolls you can't use."], false)
-        AddCheckbox("guildBankMarks", L["Guild bank marks"],
-            L["Put a colored dot on guild bank scrolls that you, your mages or a guildie would get a skill-up from."], true)
-        AddCheckbox("ahScanButton", L["Auction house scan button"],
-            L["Show a Scan scrolls button on the auction house. Prices you see are saved for tooltips either way."], true)
-
-        -- Modules --------------------------------------------------------------
-        -- Turn off what you don't use: its panel button goes away (and for
-        -- the Scroll Bag, everything it adds).
-        AddHeader(L["Modules"])
-        for _, module in ipairs({
-            { "Bag", "Scroll Bag", "Every deciphered scroll you own, keep or extra, and selling, mailing and banking the extras. Off: no window, bag marks, tooltip or chat notes." },
-            { "Codex", "Codex", "Every scroll and what it does, and the 40 library books." },
-            { "Plan", "Farming Plan", "Your next goal, where to farm, and auction house prices." },
-            { "Log", "Luck Log", "What your deciphers turned into, next to everyone's odds." },
-            { "Swap", "Scroll Swap", "Who has spare scrolls you'd level from, and who'd want yours." },
-            { "Doors", "Doorways", "Getting around with Scroll of Liminal Passage, and the running-low warning." },
-            { "Network", "Fellow Mages", "The Fellow Mages window (the Advanced view still shows them)." },
-        }) do
-            AddCheckbox("module" .. module[1], L[module[2]], L[module[3]], true)
         end
+        height = -y
+    end
+    content:SetHeight(math.max(10, height))
+    window.scroll:SetVerticalScroll(0)
+end
 
-        -- Scroll Bag -----------------------------------------------------------
-        AddHeader(L["Scroll Bag"])
-        AddCheckbox("bagCountBank", L["Count my bank"],
-            L["The Scroll Bag counts what's in your bank too, as of your last visit."], true)
-        AddCheckbox("bagCountMail", L["Count my mail"],
-            L["The Scroll Bag counts scrolls in your mailbox too, as of the last time you opened it."], true)
-        AddCheckbox("bagSetAside", L["Set aside imbues for weapons I don't have"],
-            L["An imbue for a weapon you don't own (in your bags, bank or hands) is set aside instead of extra. Bank them with Deposit set aside."], true)
-        AddCheckbox("bagWeaponAlert", L["Tell me about imbues for a new weapon"],
-            L["When you equip or loot a kind of weapon you didn't have, say which imbues for it are waiting in your bank or mail."], true)
-        AddCheckbox("bagChatStatus", L["Keep or extra in the decipher message"],
-            L["The \"deciphered:\" chat line also says whether the new scroll is a keep, an extra or set aside."], true)
-        AddCheckbox("bagTooltip", L["Keep or extra on scroll tooltips"],
-            L["Deciphered scroll tooltips say how many you have, where, and whether they're extra."], true)
-        AddCheckbox("bagMarks", L["Marks on scrolls in my bags"],
-            L["A small colored corner on mage scrolls in your bags: green keep, red extra, orange part of the stack is extra, blue set aside. Works with the game's bags, AdiBags, Baganator, Bagnon, BetterBags and ArkInventory."], true)
-        AddCheckbox("bagJunk", L["Extras count as junk in bag addons"],
-            L["In bag addons with a junk list (Baganator), your extras count as junk, so its sell-junk button sells them too. Off by default: some people sell junk without looking."], false)
-        AddCheckbox("bagConfirm", L["Ask before selling extras"],
-            L["Sell extras shows what it'll sell and asks first."], true)
-        AddCheckbox("bagAllowDelete", L["Delete extras button"],
-            L["Adds a Delete extras button to the Scroll Bag. It always asks first."], false)
-        SK.Safely("settings liminal slider", function()
-            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_liminalLow", "liminalLow", SK.db,
-                "number", L["Liminal Passage low at"], 2)
-            setting:SetValueChangedCallback(function() SK.Send("REMINDERS_CHANGED") end)
-            local options = Settings.CreateSliderOptions(0, 10, 1)
-            if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
-                options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
-                    return value == 0 and L["off"] or tostring(value)
-                end)
-            end
-            Settings.CreateSlider(category, setting, options,
-                L["The panel warns you (and says it once in chat) when you carry this many Scroll of Liminal Passage or fewer. 0 turns it off."])
-        end)
-        AddCheckbox("liminalLowChat", L["Liminal Passage low: say it in chat"],
-            L["Also say it once in chat when you drop to that many."], true)
-
-        -- Language -------------------------------------------------------------
-        AddHeader(L["Language"])
-        SK.Safely("settings language", function()
-            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_language", "language", SK.db,
-                "string", L["Language"], "auto")
-            setting:SetValueChangedCallback(function()
-                SK.Print(L["language changed. Type /reload to switch."])
-            end)
-            local function Options()
-                local container = Settings.CreateControlTextContainer()
+local function Build()
+    -- The language choices depend on your game client.
+    for _, section in ipairs(SECTIONS) do
+        for _, item in ipairs(section.items or {}) do
+            if item[2] == "language" then
+                item.choices = {}
                 for _, language in ipairs(SK.LANGUAGES or {}) do
-                    container:Add(language[1], language[1] == "auto" and L["Auto (game language)"] or language[2])
+                    item.choices[#item.choices + 1] = { language[1], language[1] == "auto" and "Auto (game language)" or language[2] }
                 end
-                return container:GetData()
             end
-            Settings.CreateDropdown(category, setting, Options,
-                L["Scrollkeeper's language. Spanish, French, German and Chinese were translated with AI, so fixes are welcome on GitHub. Takes effect after /reload."])
-        end)
+        end
+    end
+    if SK.charDB and SK.charDB.own == nil then SK.charDB.own = false end
 
-        -- Map ------------------------------------------------------------------
-        AddHeader(L["Map"])
-        local mapPins = AddCheckbox("mapPins", L["Map pins"],
-            L["Show libraries and the spots where untranslated scrolls dropped on the world map."], true)
-        SK.Safely("settings pin size", function()
-            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_mapPinScale", "mapPinScale", SK.db,
-                "number", L["Map pin size"], 1)
-            setting:SetValueChangedCallback(function() SK.Send("DROPS_CHANGED") end)
-            local options = Settings.CreateSliderOptions(0.5, 2, 0.1)
-            if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
-                options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
-                    return ("%d%%"):format(value * 100 + 0.5)
-                end)
-            end
-            local slider = Settings.CreateSlider(category, setting, options,
-                L["How big the scroll and book spots are on the map (libraries keep their size)."])
-            if slider and DependsOn then DependsOn(slider, mapPins, "mapPins") end
-        end)
+    local ok, frame = pcall(CreateFrame, "Frame", "ScrollkeeperOptionsFrame", UIParent, "PortraitFrameTemplate")
+    if not (ok and frame and frame.SetTitle) then
+        frame = CreateFrame("Frame", "ScrollkeeperOptionsFrame", UIParent, "BasicFrameTemplateWithInset")
+        frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
+    end
+    window = frame
+    window:SetSize(WIDTH, HEIGHT)
+    window:SetPoint("CENTER")
+    window:SetFrameStrata("HIGH")
+    window:SetToplevel(true)
+    window:SetClampedToScreen(true)
+    window:SetMovable(true)
+    window:EnableMouse(true)
+    window:RegisterForDrag("LeftButton")
+    window:SetScript("OnDragStart", window.StartMoving)
+    window:SetScript("OnDragStop", window.StopMovingOrSizing)
+    window:SetTitle(L["Scrollkeeper: Settings"])
+    if window.SetPortraitToAsset then window:SetPortraitToAsset("Interface\\Icons\\INV_Misc_Gear_01") end
+    tinsert(UISpecialFrames, "ScrollkeeperOptionsFrame")   -- Escape closes it
 
-        SK.Safely("settings backup", AddBackupPage)
-        SK.Safely("settings about", AddAboutPage)
+    local background = window:CreateTexture(nil, "BACKGROUND", nil, -7)
+    background:SetPoint("TOPLEFT", 2, -2)
+    background:SetPoint("BOTTOMRIGHT", -2, 2)
+    background:SetColorTexture(0.05, 0.05, 0.06, 0.95)
 
-        Settings.RegisterAddOnCategory(category)
-    end)
-end)
+    -- Sections down the left.
+    local navBg = window:CreateTexture(nil, "BACKGROUND", nil, -6)
+    navBg:SetPoint("TOPLEFT", 8, -62)
+    navBg:SetPoint("BOTTOMLEFT", 8, 10)
+    navBg:SetWidth(NAV - 8)
+    navBg:SetColorTexture(0.35, 0.22, 0.08, 0.25)
+    window.nav = {}
+    for i, section in ipairs(SECTIONS) do
+        local b = CreateFrame("Button", nil, window)
+        b:SetSize(NAV - 16, 28)
+        b:SetPoint("TOPLEFT", 12, -66 - (i - 1) * 32)
+        b:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+        local icon = b:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(20, 20)
+        icon:SetPoint("LEFT", 4, 0)
+        icon:SetTexture(section.icon)
+        icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        b.text:SetPoint("LEFT", icon, "RIGHT", 8, 0)
+        b.text:SetPoint("RIGHT", -4, 0)
+        b.text:SetJustifyH("LEFT")
+        b.text:SetText(L[section.name])
+        b:SetScript("OnClick", function() ShowSection(i) end)
+        window.nav[i] = b
+    end
 
-function SK.OpenOptions()
+    -- The section's settings on the right, scrolling if they don't fit.
+    window.heading = window:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    window.heading:SetPoint("TOPLEFT", NAV + 16, -40)
+    local divider = window:CreateTexture(nil, "ARTWORK")
+    divider:SetColorTexture(0.6, 0.45, 0.2, 0.5)
+    divider:SetHeight(1)
+    divider:SetPoint("TOPLEFT", NAV + 14, -60)
+    divider:SetPoint("TOPRIGHT", -30, -60)
+    window.scroll = CreateFrame("ScrollFrame", "ScrollkeeperOptionsScroll", window, "UIPanelScrollFrameTemplate")
+    window.scroll:SetPoint("TOPLEFT", NAV + 16, -70)
+    window.scroll:SetPoint("BOTTOMRIGHT", -32, 12)
+
+    window:SetScript("OnShow", function() ShowSection(current) end)
+    window:Hide()
+end
+
+-- Open the window, on a section by name ("Scroll Bag") if you like.
+function SK.OpenOptions(sectionName)
     if SK.InCombat() then
         SK.Print(L["settings can't be opened in combat."])
         return
     end
-    if category and Settings and Settings.OpenToCategory then
-        Settings.OpenToCategory(category:GetID())
-    else
-        SK.Print(L["settings page unavailable. Commands: /sk tooltips, /sk announce, /sk reset"])
+    if not window then Build() end
+    if type(sectionName) == "string" then
+        for i, section in ipairs(SECTIONS) do
+            if section.name:lower() == sectionName:lower() then current = i end
+        end
     end
+    window:Show()
+    ShowSection(current)
 end
+
+function SK.ToggleOptions()
+    if window and window:IsShown() then window:Hide() else SK.OpenOptions() end
+end
+
+------------------------------------------------------------------------
+-- The game's Options > AddOns > Scrollkeeper: a note and a button
+------------------------------------------------------------------------
+
+SK.Listen("READY", function()
+    if not Settings then return end
+    SK.Safely("settings page", function()
+        local page = CreateFrame("Frame")
+        local title = page:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        title:SetPoint("TOPLEFT", 16, -16)
+        title:SetText(L["Scrollkeeper"])
+        local text = page:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        text:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+        text:SetWidth(560)
+        text:SetJustifyH("LEFT")
+        text:SetText(L["Scrollkeeper has its own settings window now. Open it here, with /sk options, or with the gear on the panel."])
+        local open = CreateFrame("Button", nil, page, "UIPanelButtonTemplate")
+        open:SetSize(220, 26)
+        open:SetPoint("TOPLEFT", text, "BOTTOMLEFT", 0, -16)
+        open:SetText(L["Open Scrollkeeper settings"])
+        open:SetScript("OnClick", function()
+            if SettingsPanel and SettingsPanel:IsShown() and HideUIPanel then HideUIPanel(SettingsPanel) end
+            SK.OpenOptions()
+        end)
+        local category
+        if Settings.RegisterCanvasLayoutCategory then
+            category = Settings.RegisterCanvasLayoutCategory(page, "Scrollkeeper")
+        elseif Settings.RegisterVerticalLayoutCategory then
+            category = Settings.RegisterVerticalLayoutCategory("Scrollkeeper")
+        end
+        if category and Settings.RegisterAddOnCategory then Settings.RegisterAddOnCategory(category) end
+    end)
+end)

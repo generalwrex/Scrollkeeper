@@ -69,9 +69,9 @@ Mage scroll helper for WoW Forever.
   have a scroll for it.
 - **Library books:** how many of the 40 you've handed in, and the next librarian reward.
 - **World map pins:** libraries where Study worked, and spots where untranslated scrolls dropped.
-- **Backup and restore** all your Scrollkeeper data (Options > Scrollkeeper > Backup), in case you ever wipe WTF.
+- **Backup and restore** all your Scrollkeeper data (`/sk options` > Backup), in case you ever wipe WTF.
 - **Works with** Titan Panel and other info bars, the game's addon menu, Auctionator, TSM, and Zygor or TomTom for waypoint arrows.
-- **Settings:** Options > AddOns > Scrollkeeper, or `/sk options`. Lots of them.
+- **Settings:** `/sk options` (or the gear on the panel) opens Scrollkeeper's own settings window, sorted into sections. Lots of them.
 
 Nothing is automatic: every cast is one click from the player.
 
@@ -81,7 +81,7 @@ Nothing is automatic: every cast is one click from the player.
 | --- | --- |
 | `/sk` | show or hide the panel (on alts: your mages' window) |
 | `/sk simple` / `/sk advanced` | switch the panel view |
-| `/sk options` | open the settings page |
+| `/sk options` | open the settings window |
 | `/sk plan` | the Farming Plan |
 | `/sk log` | the Luck Log window |
 | `/sk logchat` | the luck log, printed in chat |
