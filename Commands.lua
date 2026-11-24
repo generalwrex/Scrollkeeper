@@ -13,6 +13,7 @@
 -- /sk swap       the Scroll Swap window
 -- /sk doors      Liminal Passage doors: who you can teleport to
 -- /sk mail       who could use your spare scrolls
+-- /sk bag        the Scroll Bag: every deciphered scroll you own, keep or extra
 -- /sk demo       fill Fellow Mages, the map and tooltips with made-up players
 -- /sk export     copy your scroll data to share (GitHub issue "Share your data")
 -- /sk backup     copy all your Scrollkeeper data; /sk restore puts it back
@@ -94,6 +95,8 @@ commands.setup = function() SK.ShowSetup() end
 commands.scan = function() SK.ScanAuctionScrolls() end
 commands.plan = function() SK.TogglePlan() end
 commands.codex = function() SK.ToggleGuide() end
+commands.bag = function() SK.ToggleScrollBag() end
+commands.bags = commands.bag
 commands.guide = commands.codex
 commands.about = function()
     SK.Print(L["version %s by generalwrex. Links are in Options > AddOns > Scrollkeeper > About."]:format(SK.version))
@@ -108,7 +111,7 @@ commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk codex, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk bag, /sk codex, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 ------------------------------------------------------------------------

@@ -1,5 +1,22 @@
 # Scrollkeeper
 
+## Unreleased: Scroll Bag
+
+- New: the **Scroll Bag** (/sk bag, or the bag button on the panel). Every deciphered mage scroll you own in one list, counted across your bags, bank and mail (bank and mail as of your last visit), grouped like the panel with imbues split by weapon.
+  - Each scroll is **Keep**, **Extra** (more than you want to keep) or **Set aside** (an imbue for a weapon you don't have). A small bar shows where they are: bags, bank or mail.
+  - Change how many to keep right in the list (- and +, click the number for "keep all").
+  - **Presets**: Apprentice's Satchel (lean), Battlemage's Kit (plus combat scrolls for raids) and Archivist's Hoard (keep everything). Change any number and save it as **your own preset**; rename or delete yours any time.
+  - Filters: All, Extra, Set aside, Bound.
+  - Buttons: **Stack** part-stacks, **Sell extras** at a vendor (it asks first), **Mail extras** to your bank alt or anyone (not bound ones), **Deposit set aside** at the bank, and **Delete extras** if you turn it on.
+  - Right-click a scroll to **protect** it: never sold, mailed or deleted.
+- New: **pins**. Right-click the panel's Familiar or Imbue button (or the imbue/familiar pop-up) for all your scrolls of that kind: click one to use it, click its star to pin it. A pinned scroll is what the button, key binding and pop-up use. Imbues get one pin per weapon kind, so swapping to a dagger picks your dagger imbue. Works in combat too.
+- New weapon? Scrollkeeper says which imbues for it are waiting in your bank or mail.
+- The "deciphered:" chat line now says what the Scroll Bag makes of it: keep, extra or set aside.
+- Deciphered scroll tooltips say how many you have, where, and keep or extra.
+- Colored marks on mage scrolls in your bags (green keep, red extra, orange part of the stack is extra, blue set aside, a star when pinned), in the game's bags and in AdiBags (with Keep / Extra / Set aside sections), Baganator, Bagnon, BetterBags and ArkInventory. None of them are needed. Baganator can count your extras as junk if you turn that on.
+- Running low on Scroll of Liminal Passage: the panel (and Doorways) warns you at 2 or fewer, and says it once in chat. Set the number (or turn it off) in /sk options.
+- All of it has settings in /sk options > Scroll Bag.
+
 ## 1.2.5
 
 - Liminal Passage: Elderwild in Hyjal is a place you can rest and be a door (thanks Curnil!).

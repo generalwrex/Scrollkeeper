@@ -48,6 +48,7 @@ Modules\Auction.lua
 Modules\Chat.lua
 Modules\Backfire.lua
 Modules\Farm.lua
+Modules\Stash.lua
 
 # Network: talking to other players' Scrollkeeper.
 Network\Comm.lua
@@ -71,12 +72,15 @@ UI\Log.lua
 UI\Doors.lua
 UI\Plan.lua
 UI\Guide.lua
+UI\ScrollBag.lua
 UI\Icon.lua
+UI\Picks.lua
 UI\Unlock.lua
 UI\Renew.lua
 UI\Minimap.lua
 UI\Setup.lua
 UI\Integrations.lua
+UI\BagAddons.lua
 UI\Options.lua
 
 # Slash commands.

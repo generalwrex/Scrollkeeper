@@ -347,6 +347,44 @@ SK.Listen("READY", function()
         AddCheckbox("ahScanButton", L["Auction house scan button"],
             L["Show a Scan scrolls button on the auction house. Prices you see are saved for tooltips either way."], true)
 
+        -- Scroll Bag -----------------------------------------------------------
+        AddHeader(L["Scroll Bag"])
+        AddCheckbox("bagCountBank", L["Count my bank"],
+            L["The Scroll Bag counts what's in your bank too, as of your last visit."], true)
+        AddCheckbox("bagCountMail", L["Count my mail"],
+            L["The Scroll Bag counts scrolls in your mailbox too, as of the last time you opened it."], true)
+        AddCheckbox("bagSetAside", L["Set aside imbues for weapons I don't have"],
+            L["An imbue for a weapon you don't own (in your bags, bank or hands) is set aside instead of extra. Bank them with Deposit set aside."], true)
+        AddCheckbox("bagWeaponAlert", L["Tell me about imbues for a new weapon"],
+            L["When you equip or loot a kind of weapon you didn't have, say which imbues for it are waiting in your bank or mail."], true)
+        AddCheckbox("bagChatStatus", L["Keep or extra in the decipher message"],
+            L["The \"deciphered:\" chat line also says whether the new scroll is a keep, an extra or set aside."], true)
+        AddCheckbox("bagTooltip", L["Keep or extra on scroll tooltips"],
+            L["Deciphered scroll tooltips say how many you have, where, and whether they're extra."], true)
+        AddCheckbox("bagMarks", L["Marks on scrolls in my bags"],
+            L["A small colored corner on mage scrolls in your bags: green keep, red extra, orange part of the stack is extra, blue set aside. Works with the game's bags, AdiBags, Baganator, Bagnon, BetterBags and ArkInventory."], true)
+        AddCheckbox("bagJunk", L["Extras count as junk in bag addons"],
+            L["In bag addons with a junk list (Baganator), your extras count as junk, so its sell-junk button sells them too. Off by default: some people sell junk without looking."], false)
+        AddCheckbox("bagConfirm", L["Ask before selling extras"],
+            L["Sell extras shows what it'll sell and asks first."], true)
+        AddCheckbox("bagAllowDelete", L["Delete extras button"],
+            L["Adds a Delete extras button to the Scroll Bag. It always asks first."], false)
+        SK.Safely("settings liminal slider", function()
+            local setting = Settings.RegisterAddOnSetting(category, "Scrollkeeper_liminalLow", "liminalLow", SK.db,
+                "number", L["Liminal Passage low at"], 2)
+            setting:SetValueChangedCallback(function() SK.Send("REMINDERS_CHANGED") end)
+            local options = Settings.CreateSliderOptions(0, 10, 1)
+            if MinimalSliderWithSteppersMixin and options.SetLabelFormatter then
+                options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, function(value)
+                    return value == 0 and L["off"] or tostring(value)
+                end)
+            end
+            Settings.CreateSlider(category, setting, options,
+                L["The panel warns you (and says it once in chat) when you carry this many Scroll of Liminal Passage or fewer. 0 turns it off."])
+        end)
+        AddCheckbox("liminalLowChat", L["Liminal Passage low: say it in chat"],
+            L["Also say it once in chat when you drop to that many."], true)
+
         -- Language -------------------------------------------------------------
         AddHeader(L["Language"])
         SK.Safely("settings language", function()

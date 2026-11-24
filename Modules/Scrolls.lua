@@ -227,6 +227,7 @@ function SK.NoImbueForSpec()
 end
 function SK.ScrollReason(scroll)
     if not scroll then return nil end
+    if SK.IsPinned and SK.IsPinned(scroll.itemID) then return L["pinned"] end
     local uses = SK.ScrollUses(scroll.itemID)
     local usual = uses >= 2 and L["your usual (used %d times)"]:format(uses) or nil
     if usual and SK.db and SK.db.imbueByUse then return usual end
@@ -274,8 +275,15 @@ function SK.ScrollGroups()
                 local n = SK.ScrollUses(scroll.itemID)
                 return n >= 2 and n or 0
             end
+            -- A pinned scroll (Scroll Bag, or right-click the Familiar or
+            -- Imbue button) beats every other pick while you can use it.
+            local function Pinned(scroll)
+                return SK.PinOf and SK.PinOf(category.key, SK.ImbueWeapon and SK.ImbueWeapon(scroll.itemID, scroll)) == scroll.itemID
+            end
             table.sort(scrolls, function(a, b)
                 if a.usable ~= b.usable then return a.usable end
+                local pa, pb = Pinned(a), Pinned(b)
+                if pa ~= pb then return pa end
                 local fa, fb = Favorite(a), Favorite(b)
                 if byUse and fa ~= fb then return fa > fb end
                 if (a.forSpec or false) ~= (b.forSpec or false) then return a.forSpec or false end
@@ -285,7 +293,7 @@ function SK.ScrollGroups()
                 return a.name < b.name
             end)
             local ranked = category.key == "imbues" or category.key == "familiars"
-            if ranked and scrolls[1].usable and not scrolls[1].offSpec then
+            if ranked and scrolls[1].usable and (not scrolls[1].offSpec or Pinned(scrolls[1])) then
                 scrolls[1].best = true
             end
             groups[#groups + 1] = { key = category.key, label = category.label, scrolls = scrolls }
@@ -298,8 +306,9 @@ end
 function SK.BestScroll(categoryKey)
     for _, group in ipairs(SK.ScrollGroups()) do
         if group.key == categoryKey then
-            for _, scroll in ipairs(group.scrolls) do
-                if scroll.usable and not scroll.offSpec then return scroll end
+            for i, scroll in ipairs(group.scrolls) do
+                -- (A pinned one sorts first, even another school's imbue.)
+                if scroll.usable and (not scroll.offSpec or (i == 1 and scroll.best)) then return scroll end
             end
         end
     end

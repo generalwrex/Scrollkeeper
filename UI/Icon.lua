@@ -365,6 +365,11 @@ do
                 SK.Print(L["imbue and familiar pop-ups are off. Turn them back on in /sk options (Panel)."])
                 return
             end
+            -- Right-click: pick another scroll of that kind (out of combat).
+            if button == "RightButton" and self.pickKind and SK.ShowPicks and not SK.InCombat() then
+                SK.ShowPicks(self.pickKind, self)
+                return
+            end
             -- The plain (in-combat) one can't use anything: open the panel after.
             if button == "LeftButton" and not self.secure and SK.TogglePanel and not SK.InCombat()
                 and not (ScrollkeeperPanel and ScrollkeeperPanel:IsShown()) then
@@ -399,6 +404,7 @@ do
             secureToast = secureToast or Build(true)
             toast = secureToast
             if SK.SetScrollUse then SK.SetScrollUse(toast, scroll and scroll.itemID, imbue) end
+            toast.pickKind = scroll and (imbue and "imbues" or "familiars") or nil
             toast:SetAttribute("type2", "none")
             toast.hideAfterCombat = nil
         end
@@ -413,7 +419,7 @@ do
             local why = SK.ScrollReason and SK.ScrollReason(scroll)
             which = "|cffffffff" .. (scroll.name or "") .. "|r" .. (why and (" |cff66bbff(" .. why .. ")|r") or "") .. "\n"
         end
-        if toast.secure then return which .. L["Click: use it  ·  Right-click: close  ·  Shift-right-click: off"] .. "  ·  " .. L["Alt-drag: move"] end
+        if toast.secure then return which .. L["Click: use it  ·  Right-click: pick another  ·  Shift-right-click: off"] .. "  ·  " .. L["Alt-drag: move"] end
         local key = SK.RenewKey and SK.RenewKey(kind)
         if key then return which .. L["In combat: press %s to use it."]:format(key) end
         return which .. L["In combat: set a key in Key Bindings > Scrollkeeper to use it mid-fight."]

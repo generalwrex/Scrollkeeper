@@ -801,6 +801,7 @@ local function UpdateMine()
         window.status:SetText(L["You're a door whenever you rest in an inn or a city."])
     end
     local text = L["Scrolls of Liminal Passage: |cffffffff%d|r"]:format(SK.LiminalCount())
+    if SK.LiminalLowText and SK.LiminalLowText() then text = text .. "  |cffff9933" .. L["(running low)"] .. "|r" end
     local price = LiminalPrice()
     if price then text = text .. "   " .. L["AH: %s"]:format(SK.ShortMoney(price)) end
     window.count:SetText(text)

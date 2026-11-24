@@ -180,6 +180,10 @@ function SK.Reminders()
         lines[#lines + 1] = L["|cffffd100No familiar out. Best you have:|r %s"]:format("\n" .. SK.ScrollLink(familiar.itemID, familiar.name))
     end
 
+    -- Running low on Scroll of Liminal Passage (Doorways)?
+    local liminal = SK.LiminalLowText and SK.LiminalLowText()
+    if liminal then lines[#lines + 1] = "|cffff9933" .. liminal .. "|r" end
+
     -- Would a Scroll of Comprehension (+15 for an hour) unlock more?
     local skill = SK.GetComprehension()
     local hasBoost = false

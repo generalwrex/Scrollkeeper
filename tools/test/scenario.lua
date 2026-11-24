@@ -1163,3 +1163,80 @@ if SK.isMage then
   C_Traits, C_ClassTalents, GetNumTalentTabs = realTraits, realClass, realTabs
   fire("TRAIT_CONFIG_UPDATED")
 end
+
+-- SCROLL BAG: keep / extra / set aside, presets, pins, actions
+if SK.isMage then
+  local function S(id, name, count) return { id = id, name = name, count = count, tip = { name, "Classes: Mage" } } end
+  for slot = 1, 16 do BAGS[3][slot] = nil end
+  BAGS[3][1] = S(213550, "Scroll of Polymorph: Odd Melon", 3)
+  BAGS[3][2] = S(213550, "Scroll of Polymorph: Odd Melon", 5)
+  BAGS[3][3] = S(277489, "Scroll of Imbue Spark", 2)
+  BAGS[3][4] = S(277493, "Scroll of Cat Familiar", 4)
+  BAGS[3][5] = S(277492, "Scroll of Khadgar's Unlocking", 5)
+  BAGS[3][6] = S(277492, "Scroll of Khadgar's Unlocking", 3)
+  BAGS[3][7] = S(213548, "Scroll of Liminal Passage", 3)
+  BAGS[-1] = { [1] = S(277492, "Scroll of Khadgar's Unlocking", 4), [2] = S(277489, "Scroll of Imbue Spark", 5) }
+  C_Item.GetItemNameByID = function(id) return SK.MAGE_SCROLL_IDS[id] or ("item" .. id) end
+  fire("BAG_UPDATE_DELAYED"); runTimers()
+  fire("BANKFRAME_OPENED"); runTimers()
+  local function Dump(label)
+    local parts = {}
+    for _, e in ipairs((SK.StashList())) do
+      parts[#parts + 1] = ("%s=%d(%s%s)"):format(e.name:gsub("^Scroll of ", ""), e.total, e.status, e.extra > 0 and (" " .. e.extra) or "")
+    end
+    print(label, table.concat(parts, "  "))
+  end
+  Dump("BAG satchel:")
+  print("BAG note melon:", SK.StashNote(213550), "| spark:", SK.StashNote(277489))
+  local stacks = SK.ExtraStacks(213550, 7)
+  print("BAG extra stacks melon:", #stacks, stacks[1].count, stacks[1].take, stacks[2] and stacks[2].take)
+  print("BAG slot status 3:1", SK.StashSlotStatus(3, 1, 213550), "3:2", SK.StashSlotStatus(3, 2, 213550), "3:4", SK.StashSlotStatus(3, 4, 277493))
+  SK.UseBagPreset("kit"); Dump("BAG kit:")
+  SK.SetKeepAmount(277492, 20); print("BAG changed:", SK.BagPresetChanged(), SK.KeepAmount(277492))
+  print("BAG save:", SK.SaveBagPreset("Mine"), SK.BagPreset(), SK.KeepAmount(277492), SK.BagPresetChanged())
+  print("BAG builtin name refused:", SK.SaveBagPreset("Battlemage's Kit"))
+  print("BAG rename:", SK.RenameBagPreset("Mine", "Raid night"), SK.BagPreset())
+  SK.DeleteBagPreset("Raid night"); print("BAG deleted, back to:", SK.BagPreset())
+  -- a sword in the bags: Spark isn't set aside any more
+  BAGS[4][9] = { id = 5555, name = "Sword", count = 1, tip = { "Sword" } }
+  local realInstant = C_Item.GetItemInfoInstant
+  C_Item.GetItemInfoInstant = function(id) if id == 5555 then return id, "Weapon", "Swords", "", 1, 2, 7 end return realInstant(id) end
+  fire("BAG_UPDATE_DELAYED"); runTimers()
+  Dump("BAG with sword:")
+  BAGS[4][9] = nil; C_Item.GetItemInfoInstant = realInstant
+  fire("BAG_UPDATE_DELAYED"); runTimers()
+  -- pins
+  SK.TogglePin(277493); print("BAG pin cat:", SK.IsPinned(277493), SK.PinOf("familiars"))
+  SK.TogglePin(277489); print("BAG pin spark:", SK.PinOf("imbues", "sword"))
+  SK.TogglePin(277493); print("BAG unpin cat:", SK.IsPinned(277493))
+  -- the window
+  SK.UseBagPreset("satchel")
+  SK.ToggleScrollBag(); SK.RefreshScrollBag(); runTimers()
+  print("BAG window built:", ScrollkeeperBagFrame ~= nil, "errors:", #ScrollkeeperDB.errors)
+  -- sell at a vendor: two Odd Melon stacks (3 and 5), keep 1 -> sell the 3, split 4 off the 5
+  MerchantFrame = { IsShown = function() return true end }
+  local sold, cursor = {}, nil
+  C_Container.GetContainerFreeSlots = function(bag) if bag == 4 then return { 12 } end return {} end
+  C_Container.UseContainerItem = function(b, s) local i = BAGS[b][s]; sold[#sold + 1] = i.count .. "x" .. i.id; BAGS[b][s] = nil end
+  C_Container.SplitContainerItem = function(b, s, n) BAGS[b][s].count = BAGS[b][s].count - n; cursor = { id = BAGS[b][s].id, name = BAGS[b][s].name, count = n, tip = BAGS[b][s].tip } end
+  C_Container.PickupContainerItem = function(b, s) if cursor then BAGS[b][s] = cursor; cursor = nil end end
+  SK.db.bagConfirm = false
+  SK.ScrollBagActions.sell()
+  for _ = 1, 10 do runTimers() end
+  print("BAG sold:", table.concat(sold, ", "), "| melons left in bags:", BAGS[3][2] and BAGS[3][2].count)
+  -- chat note on a decipher result
+  print("BAG tooltip line:", (function()
+    local tip = { added = {} }
+    function tip:AddLine(t) self.added[#self.added + 1] = t end
+    function tip:AddDoubleLine(a, b) self.added[#self.added + 1] = a .. " | " .. b end
+    for _, fn in ipairs(TOOLTIP_CALLS) do fn(tip, { id = 277492, lines = { { leftText = "Scroll of Khadgar's Unlocking" }, { leftText = "Classes: Mage" } } }) end
+    return tip.added[#tip.added]
+  end)())
+  -- Liminal Passage running low
+  SK.db.liminalLow = 2
+  local realCount = C_Item.GetItemCount; C_Item.GetItemCount = function() return 3 end; fire("BAG_UPDATE_DELAYED"); C_Item.GetItemCount = function() return 1 end; fire("BAG_UPDATE_DELAYED"); runTimers(); C_Item.GetItemCount = realCount
+  print("BAG liminal low:", SK.LiminalLowText())
+  print("BAG errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+  MerchantFrame = nil
+end

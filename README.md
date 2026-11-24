@@ -89,6 +89,7 @@ Nothing is automatic: every cast is one click from the player.
 | `/sk swap` | the Scroll Swap window |
 | `/sk doors` | Doorways: get somewhere with Scroll of Liminal Passage |
 | `/sk mail` | who could use your spare scrolls |
+| `/sk bag` | the Scroll Bag: every deciphered scroll you own, keep or extra |
 | `/sk backup` / `/sk restore` | save or bring back all your Scrollkeeper data |
 | `/sk bug` | copy a bug report |
 | `/sk about` | version and links |

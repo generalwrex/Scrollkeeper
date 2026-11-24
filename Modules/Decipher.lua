@@ -108,7 +108,18 @@ local function Finish()
         else
             skillText = L[" |cff808080(no skill-up)|r"]
         end
-        SK.Print(L["deciphered: "] .. SK.ScrollLink(entry.resultID, result) .. skillText)
+        local line = L["deciphered: "] .. SK.ScrollLink(entry.resultID, result) .. skillText
+        -- What the Scroll Bag makes of it: "extra, keeping 1", "set aside,
+        -- no sword". A moment later, once the new scroll is in your bags.
+        if db.bagChatStatus ~= false and entry.resultID and SK.StashNote and SK.IsMageScroll(entry.resultID) then
+            local id = entry.resultID
+            C_Timer.After(0.6, function()
+                local note = SK.StashNote(id)
+                SK.Print(line .. (note and ("  ·  " .. note) or ""))
+            end)
+        else
+            SK.Print(line)
+        end
     end
     SK.Send("DECIPHERED", entry.tier, entry.resultID)
     SK.Send("LOG_CHANGED")

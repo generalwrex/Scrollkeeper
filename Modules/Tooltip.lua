@@ -97,6 +97,16 @@ local function OnItemTooltip(tooltip, data)
     if needs then
         AddScrollLines(tooltip, needs, data.id)
         shiftTooltip, shiftOwner = tooltip, tooltip.GetOwner and tooltip:GetOwner()
+    elseif SK.isMage and data.id and SK.db.bagTooltip ~= false and SK.StashEntry and SK.IsMageScroll(data.id) then
+        -- A deciphered scroll: how many you have, where, and keep or extra.
+        local e = SK.StashEntry(data.id)
+        if e then
+            local where = {}
+            if e.bags > 0 then where[#where + 1] = L["bags %d"]:format(e.bags) end
+            if e.bank > 0 then where[#where + 1] = L["bank %d"]:format(e.bank) end
+            if e.mail > 0 then where[#where + 1] = L["mail %d"]:format(e.mail) end
+            tooltip:AddDoubleLine(TITLE .. ": " .. (SK.StashNote(data.id) or ""), table.concat(where, " · "), 1, 1, 1, 0.7, 0.7, 0.7)
+        end
     end
     -- Any scroll Scrollkeeper saw on the auction house: the price the plan
     -- goes by, which is Auctionator's or TSM's when installed, else our scan's.

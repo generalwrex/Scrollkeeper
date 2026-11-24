@@ -470,6 +470,8 @@ local function Build()
     local WINDOW_BUTTONS = {
         { icon = "Interface\\Icons\\INV_Misc_Book_09", open = function() SK.ToggleGuide() end,
           title = "Codex", text = "Every scroll and what it does, your picks, and where all 40 library books are." },
+        { icon = "Interface\\Icons\\INV_Misc_Bag_10", open = function() SK.ToggleScrollBag() end,
+          title = "Scroll Bag", text = "Every deciphered scroll you own (bags, bank, mail): what to keep, what's extra, and what to do with it." },
         { icon = "Interface\\Icons\\INV_Misc_Note_01", open = function() SK.TogglePlan() end,
           title = "Farming Plan", text = "Your next goal, where to farm, and scroll prices at the auction house." },
         { icon = "Interface\\Icons\\INV_Misc_Dice_01", open = function() SK.ToggleLog() end,
@@ -603,6 +605,7 @@ local function Build()
                 local why = best and best.itemID == self.itemID and SK.ScrollReason and SK.ScrollReason(best)
                 if why then GameTooltip:AddLine(L["Picked: %s"]:format(why), 0.4, 0.73, 1) end
                 GameTooltip:AddLine(L["|cff40ff40Click to use.|r"])
+                GameTooltip:AddLine(L["Right-click: all your scrolls of this kind, and pins."], 0.6, 0.6, 0.6)
                 GameTooltip:Show()
             else
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
