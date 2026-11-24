@@ -76,9 +76,9 @@ local function BuildQuestions()
     -- Required: shown to everyone (old setups too), and Skip can't pass it.
     list[#list + 1] = { key = "shareUsage", version = 1, account = true, required = true,
         question = L["Help make Scrollkeeper better?"],
-        hint = L["It's opt-in: nothing is sent unless you pick Yes. Scrollkeeper can count which windows, buttons and settings get used, so we know which features people use the most and can stay on top of them. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None. Change it any time in /sk options > Sharing."],
+        hint = L["Why: knowing which features people really use tells us where to spend our time, so the ones you rely on get fixed first, keep working as the game changes, and get better. It's opt-in: nothing is sent unless you pick Yes. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Change it any time in /sk options > Sharing."],
         options = {
-        { true, L["Yes, share anonymous counts"], L["Helps decide what gets fixed and improved next."], ICON .. "INV_Misc_Note_01" },
+        { true, L["Yes, share anonymous counts"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["The features you use get fixed first and improved next."], ICON .. "INV_Misc_Note_01" },
         { false, L["No thanks"], L["Nothing about how you use Scrollkeeper is sent (the default)."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
