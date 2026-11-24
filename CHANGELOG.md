@@ -2,8 +2,8 @@
 
 ## Unreleased: Usage stats
 
-- New: **anonymous usage stats**, so we can see which features people use the most and keep those in the best shape. Scrollkeeper counts which windows you open, which buttons you use, which settings you change and which /sk commands you type, plus which settings differ from the defaults. That's all: just names and numbers, under a random ID that isn't tied to any character. Never your name, realm, guild, chat, gold, bags or where you are.
-- Everyone gets one setup page asking about it (once per account, even if you've done setup before). It's on by default, and it can't be skipped, so everyone sees what it is. Change it any time in /sk options > Sharing. Nothing is sent when Sharing is None.
+- New: **anonymous usage stats** (opt-in), so we can see which features people use the most and keep those in the best shape. Scrollkeeper counts which windows you open, which buttons you use, which settings you change and which /sk commands you type, plus which settings differ from the defaults. That's all: just names and numbers, under a random ID that isn't tied to any character. Never your name, realm, guild, chat, gold, bags or where you are.
+- Everyone gets one setup page asking about it (once per account, even if you've done setup before). It's opt-in: off unless you pick Yes. The page can't be skipped, so everyone sees what it is and decides. Change it any time in /sk options > Sharing. Nothing is sent when Sharing is None.
 - Counts are shared every 30 minutes at most, over the same Scrollkeeper network as everything else. Only dev copies keep what they hear, and never who sent it.
 
 ## Unreleased: Themes

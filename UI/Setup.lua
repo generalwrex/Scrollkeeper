@@ -76,10 +76,10 @@ local function BuildQuestions()
     -- Required: shown to everyone (old setups too), and Skip can't pass it.
     list[#list + 1] = { key = "shareUsage", version = 1, account = true, required = true,
         question = L["Help make Scrollkeeper better?"],
-        hint = L["Scrollkeeper can count which windows, buttons and settings get used, so we know which features people use the most and can stay on top of them. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None. Change it any time in /sk options > Sharing."],
+        hint = L["It's opt-in: nothing is sent unless you pick Yes. Scrollkeeper can count which windows, buttons and settings get used, so we know which features people use the most and can stay on top of them. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None. Change it any time in /sk options > Sharing."],
         options = {
-        { true, L["Yes, share anonymous counts"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Helps decide what gets fixed and improved next."], ICON .. "INV_Misc_Note_01" },
-        { false, L["No thanks"], L["Nothing about how you use Scrollkeeper is sent."], ICON .. "Ability_Rogue_Feint" },
+        { true, L["Yes, share anonymous counts"], L["Helps decide what gets fixed and improved next."], ICON .. "INV_Misc_Note_01" },
+        { false, L["No thanks"], L["Nothing about how you use Scrollkeeper is sent (the default)."], ICON .. "Ability_Rogue_Feint" },
     } }
     local languages = {}
     for _, language in ipairs(SK.LANGUAGES or {}) do

@@ -1277,6 +1277,8 @@ end
 -- USAGE STATS: counting, sharing, hearing (dev copy), the report, and the required setup page
 do
   SK.db.usage = nil
+  print("USAGE default off:", SK.UsageWanted() == false)
+  SK.db.shareUsage = true
   if SK.isMage then SK.ToggleScrollBag(); SK.ToggleScrollBag(); SK.OpenOptions("Sharing") end
   SK.Track("bag.sell"); SK.Track("bad name!")
   local c = SK.db.usage.counts
@@ -1291,7 +1293,7 @@ do
   for _, line in ipairs(sent) do if line:find(UnitName("player") or "?", 1, true) then leaked = true end end
   print("USAGE name in message?", leaked, "theme setting sent?", (table.concat(sent, ",")):find("set.theme=dark", 1, true) ~= nil)
   SK.db.shareUsage = false; sent = {}; SK.SendUsage(true); print("USAGE off sends:", #sent)
-  SK.db.shareUsage = true; SK.db.theme = "classic"
+  SK.db.theme = "classic"
   SK.Net.Send = realSend
   local wasDev = SK.devCopy; SK.devCopy = true
   fire("CHAT_MSG_ADDON", "Scrollkeeper", "UZ|abc123#1|open.bag:5,bag.sell:2,set.theme=dark", "GUILD", "Someone-Realm")

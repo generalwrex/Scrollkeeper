@@ -9,8 +9,8 @@
 -- (beyond "this install has counted since ...").
 --
 -- Each install picks a random ID (not tied to any character) and shares its
--- counts every so often over the Scrollkeeper network, only with "Share
--- anonymous usage stats" on (asked in setup, and in /sk options > Sharing)
+-- counts every so often over the Scrollkeeper network, only if the player
+-- opted in to "Share anonymous usage stats" (asked in setup, off unless they say yes, and in /sk options > Sharing)
 -- and Sharing not set to None. Only a dev copy (run from git) keeps what it
 -- hears, by that random ID; the sender's name is never saved.
 --
@@ -127,7 +127,7 @@ local function ChangedSettings()
 end
 
 function SK.UsageWanted()
-    return SK.db and SK.db.shareUsage ~= false and SK.db.share and SK.db.sharing ~= "none"
+    return SK.db and SK.db.shareUsage == true and SK.db.share and SK.db.sharing ~= "none"
 end
 
 local lastSent = 0
