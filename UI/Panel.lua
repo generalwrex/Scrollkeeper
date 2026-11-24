@@ -429,6 +429,7 @@ local function Build()
             KeepUnderMouse(self, oldX, oldY)
         end)
     parts.collapse:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    SK.TrackClicks(parts.collapse, "panel.smaller", "panel.bigger")
     parts.collapse:SetPoint("RIGHT", parts.gear, "LEFT", -1, 0)
 
     -- Turn the minimap button (UI/Minimap.lua) on and off. Greyed out while it's off.
@@ -444,6 +445,7 @@ local function Build()
     -- Three groups with a gap between: windows, toggles, the panel itself.
     parts.minimapToggle:SetPoint("RIGHT", parts.collapse, "LEFT", -9, 0)
     panel.minimapToggle = parts.minimapToggle
+    SK.TrackClicks(parts.minimapToggle, "panel.minimaptoggle")
 
     -- Turn the scroll icon (UI/Icon.lua) on and off. Greyed out while it's off.
     parts.iconToggle = IconButton("Interface\\Icons\\INV_Scroll_03", 18,
@@ -525,6 +527,7 @@ local function Build()
     end)
     parts.news:SetScript("OnLeave", function() GameTooltip:Hide() end)
     parts.news:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    SK.TrackClicks(parts.news, "panel.news", "panel.news.dismiss")
     parts.news:SetScript("OnClick", function(_, mouseButton)
         local news = SK.NEWS
         if not news then return end
@@ -555,6 +558,7 @@ local function Build()
     parts.decipher:SetSize(INNER, 24)
     parts.decipher:RegisterForClicks("AnyUp", "AnyDown")
     parts.decipher:SetText(L["Decipher next scroll"])
+    SK.TrackClicks(parts.decipher, "panel.decipher")
     parts.decipher:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         local nextScroll = SK.NextDecipherable()
@@ -652,6 +656,8 @@ local function Build()
         "Interface\\Icons\\INV_Box_PetCarrier_01")
     parts.imbue = QuickButton("ScrollkeeperImbueButton", "imbues", L["Imbue"],
         "Interface\\Icons\\Spell_Fire_FlameTounge")
+    SK.TrackClicks(parts.familiar, "panel.familiar", "panel.familiar.right")
+    SK.TrackClicks(parts.imbue, "panel.imbue", "panel.imbue.right")
 
     -- Your scrolls section
     parts.scrollsHeader = SectionHeader(L["Your Scrolls"])
@@ -684,6 +690,7 @@ local function Build()
 
     for i = 1, MAX_SCROLL_BUTTONS do
         scrollButtons[i] = SK.UI.CreateItemButton(parts.scrollsArea, "ScrollkeeperScrollButton" .. i, ICON_SIZE)
+        SK.TrackClicks(scrollButtons[i], "panel.scroll", "panel.scroll.right")
         scrollButtons[i]:Hide()
     end
     -- One small label per category ("Imbues", "Familiars", ...).
@@ -738,12 +745,14 @@ local function Build()
         SK.ShowLibraryOnMap()
     end)
     parts.study:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    SK.TrackClicks(parts.study, "panel.study")
 
     parts.bundle = CreateFrame("Button", "ScrollkeeperBundleButton", panel,
         "SecureActionButtonTemplate,UIPanelButtonTemplate")
     parts.bundle:SetSize(half, 22)
     parts.bundle:RegisterForClicks("AnyUp", "AnyDown")
     parts.bundle:SetText(L["Open bundle"])
+    SK.TrackClicks(parts.bundle, "panel.bundle")
 
     parts.warning = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     parts.warning:SetWidth(INNER)
@@ -844,7 +853,7 @@ local function Build()
             end)
             row:SetScript("OnLeave", function() GameTooltip:Hide() end)
             if entry[1] == "deciphered" then
-                row:SetScript("OnMouseUp", function() SK.ToggleLog() end)
+                row:SetScript("OnMouseUp", function() SK.Track("panel.decipheredrow"); SK.ToggleLog() end)
             end
         end
         y = y - ROW_HEIGHT

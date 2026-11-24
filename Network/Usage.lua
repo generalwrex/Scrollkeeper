@@ -58,6 +58,25 @@ function SK.Track(name)
     usage.counts[name] = (usage.counts[name] or 0) + 1
 end
 
+-- Count clicks on a button (on release, once), and on rows clicked with
+-- OnMouseUp. A hook runs after the button's own click, so secure buttons
+-- (scrolls, Study, Decipher) work exactly as before.
+--   rightName: count right-clicks as this instead (nil: same name)
+function SK.TrackClicks(button, name, rightName)
+    if type(button) ~= "table" or not button.HookScript then return end
+    button:HookScript("OnClick", function(_, mouseButton, down)
+        if down then return end
+        SK.Track(mouseButton == "RightButton" and rightName or name)
+    end)
+end
+
+function SK.TrackMouseUp(frame, name, rightName)
+    if type(frame) ~= "table" or not frame.HookScript then return end
+    frame:HookScript("OnMouseUp", function(_, mouseButton)
+        SK.Track(mouseButton == "RightButton" and rightName or name)
+    end)
+end
+
 ------------------------------------------------------------------------
 -- Counting: wrap the functions that open windows and do things
 ------------------------------------------------------------------------

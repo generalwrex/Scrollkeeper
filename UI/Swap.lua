@@ -209,7 +209,7 @@ end
 local function Clickable(row, person, asking)
     row.itemID = nil
     row.person = person
-    row:SetScript("OnMouseUp", function(self) if self.person then OpenWhisper(self.person, asking) end end)
+    row:SetScript("OnMouseUp", function(self) if self.person then SK.Track("swap.whisper") OpenWhisper(self.person, asking) end end)
 end
 
 function SK.RefreshSwap()

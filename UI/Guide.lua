@@ -235,6 +235,7 @@ local function Build()
         button:SetID(i)
         button:SetScript("OnClick", function(self)
             tab = TAB_KEYS[self:GetID()]
+            SK.Track("codex.tab." .. tostring(tab))
             if PlaySound and SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then SK.Try(PlaySound, SOUNDKIT.IG_CHARACTER_INFO_TAB) end
             SK.RefreshGuide()
         end)
@@ -326,6 +327,7 @@ local function BookRow(row, entry)
         tooltip:AddLine(L["Click for a waypoint."], 0.6, 0.6, 0.6)
     end
     row.onClick = function()
+        SK.Track("codex.waypoint")
         if SK.SetWaypoint and SK.SetWaypoint(spot.map, spot.x / 100, spot.y / 100, spot.name) then
             SK.Print(L["waypoint set: "] .. spot.name)
         end

@@ -1310,6 +1310,15 @@ do
   local f = ScrollkeeperSetupFrame
   print("USAGE setup shown:", f and f:IsShown(), "question:", f and f.question:GetText())
   if f then f.skip:GetScript("OnClick")(f.skip); print("USAGE page:", f.question:GetText()); print("USAGE after skip shown:", f:IsShown(), "skip visible:", f.skip:IsShown(), "seen:", SK.db.setupSeenAccount.shareUsage) end
+  SK.db.shareUsage = true
+  local function RunHooks(frame, name, ...) local h = rawget(frame, "_hooks"); for _, fn in ipairs(h and h[name] or {}) do fn(frame, ...) end end
+  if f then f:Hide(); RunHooks(f, "OnHide"); print("USAGE escape -> shareUsage:", SK.db.shareUsage, "seen:", SK.db.setupSeenAccount.shareUsage) end
+  if ScrollkeeperDecipherButton then
+    RunHooks(ScrollkeeperDecipherButton, "OnClick", "LeftButton", true)
+    RunHooks(ScrollkeeperDecipherButton, "OnClick", "LeftButton", false)
+  end
+  if ScrollkeeperFamiliarButton then RunHooks(ScrollkeeperFamiliarButton, "OnClick", "RightButton", false) end
+  print("USAGE decipher button clicks:", SK.db.usage.counts["panel.decipher"], "familiar right:", SK.db.usage.counts["panel.familiar.right"])
   print("USAGE errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end

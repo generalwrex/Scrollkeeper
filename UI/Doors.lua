@@ -892,6 +892,7 @@ local function Build()
     who:SetSize(RIGHT_W, 22)
     who:SetPoint("TOPLEFT", hostsHeader, "BOTTOMLEFT", 0, -(HOST_ROWS * 30 + 10))
     who:SetScript("OnClick", function()
+        SK.Track("doors.who")
         if type(selected) == "table" then SearchWho(selected) end
         SK.RefreshDoors()
     end)
@@ -915,6 +916,7 @@ local function Build()
     action:HookScript("OnClick", function(_, _, down)
         if down then return end
         local step = NextStep()
+        SK.Track("doors." .. (step or "none"))
         if step == "ask" then
             for _, host in ipairs(SK.DoorHosts()) do
                 if host.short == trip.short then Ask(host) return end
@@ -944,7 +946,7 @@ local function Build()
     whisperEdit:SetPoint("TOPRIGHT", action, "BOTTOMRIGHT", 0, -16)
     whisperEdit:SetText(L["Whisper text..."])
     if whisperEdit.GetFontString and whisperEdit:GetFontString() then whisperEdit:GetFontString():SetFontObject("GameFontNormalSmall") end
-    whisperEdit:SetScript("OnClick", function() if StaticPopup_Show then StaticPopup_Show("SCROLLKEEPER_DOOR_WHISPER") end end)
+    whisperEdit:SetScript("OnClick", function() SK.Track("doors.editwhisper") if StaticPopup_Show then StaticPopup_Show("SCROLLKEEPER_DOOR_WHISPER") end end)
     whisperEdit:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine(L["Whisper text"])
@@ -958,12 +960,14 @@ local function Build()
     mine:SetPoint("TOPLEFT", action, "BOTTOMLEFT", 0, -34)
     window.doorCheck = SmallCheck(L["Be a door"], function(self)
         SK.db.liminalDoor = self:GetChecked() and true or false
+        SK.Track(SK.db.liminalDoor and "doors.bedoor.on" or "doors.bedoor.off")
         SK.Safely("door", SendDoor, true)
         UpdateMine()
     end)
     window.doorCheck:SetPoint("TOPLEFT", mine, "BOTTOMLEFT", 0, -2)
     window.autoCheck = SmallCheck(L["Invite by myself"], function(self)
         SK.db.doorAutoInvite = self:GetChecked() and true or false
+        SK.Track(SK.db.doorAutoInvite and "doors.autoinvite.on" or "doors.autoinvite.off")
         SK.Safely("door", SendDoor, true)
         UpdateMine()
     end)
@@ -1017,6 +1021,7 @@ function SK.RefreshDoors()
             tip:AddLine(L["%d open doors"]:format(entry.doors), 0.25, 1, 0.25)
         end
         row.onClick = function()
+            SK.Track(entry.all and "doors.place.all" or "doors.place")
             selected = entry.all and "all" or entry.place
             SK.RefreshDoors()
         end
@@ -1039,7 +1044,7 @@ function SK.RefreshDoors()
                 tip:AddLine(L["Click: whisper them asking for an invite. They don't need any addon, but they have to be resting."], 0.6, 0.6, 0.6, true)
             end
         end
-        row.onClick = function() Ask(host) end
+        row.onClick = function() SK.Track("doors.host." .. tostring(host.kind or "?")) Ask(host) end
     end, selected == "all" and L["No open doors right now. Pick a place to find players there."]
         or L["No doors here. Search below to find anyone in this zone."])
 

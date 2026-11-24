@@ -410,6 +410,7 @@ local function Chip(parent, key)
     chip.text = chip:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     chip.text:SetPoint("CENTER")
     chip:SetScript("OnClick", function()
+        SK.Track("bag.filter." .. tostring(key))
         filter = key
         window.list.scroll:SetVerticalScroll(0)
         SK.RefreshScrollBag()
@@ -483,7 +484,7 @@ local function Build()
     arrow:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
     box:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
     box.menu = BuildPresetMenu(box)
-    box:SetScript("OnClick", function() box.menu:Fill(); box.menu:SetShown(not box.menu:IsShown()) end)
+    box:SetScript("OnClick", function() SK.Track("bag.presetmenu") box.menu:Fill(); box.menu:SetShown(not box.menu:IsShown()) end)
     window.preset = box
 
     -- Its settings, in the settings window.
@@ -719,6 +720,7 @@ local function Row(i)
         local e = self.entry
         if not e then return end
         if button == "RightButton" then
+            SK.Track("bag.protect")
             SK.db.bagProtected = SK.db.bagProtected or {}
             SK.db.bagProtected[e.itemID] = not SK.db.bagProtected[e.itemID] or nil
             SK.RefreshScrollBag()

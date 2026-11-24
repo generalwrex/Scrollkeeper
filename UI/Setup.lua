@@ -74,7 +74,8 @@ local function BuildQuestions()
         { "none", L["None"] .. " |cffff6666" .. L["(not recommended)"] .. "|r", L["Nothing is sent. No Fellow Mages or swap board, but each update's odds still show."], ICON .. "Ability_Rogue_Feint" },
     } }
     -- Required: shown to everyone (old setups too), and Skip can't pass it.
-    list[#list + 1] = { key = "shareUsage", version = 1, account = true, required = true,
+    -- closeValue: Escape or the X on this page counts as this answer ("no").
+    list[#list + 1] = { key = "shareUsage", version = 1, account = true, required = true, closeValue = false,
         question = L["Help make Scrollkeeper better?"],
         hint = L["Why: knowing which features people really use tells us where to spend our time, so the ones you rely on get fixed first, keep working as the game changes, and get better. It's opt-in: nothing is sent unless you pick Yes. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Change it any time in /sk options > Sharing."],
         options = {
@@ -393,6 +394,19 @@ local function Build()
         SK.Print(L["all set! Change anything later with /sk options, or run this again with /sk setup."])
     end)
     window.done = window.next
+
+    -- Closed (Escape or X) without answering a required question: take its
+    -- closeValue (usage stats: no) so it isn't asked again.
+    window:HookScript("OnHide", function()
+        local closed = {}
+        for _, q in ipairs(questions) do
+            if q.required and q.closeValue ~= nil and (SeenFor(q)[q.key] or 0) < (q.version or 1) then
+                SK.db[q.key] = q.closeValue
+                closed[#closed + 1] = q
+            end
+        end
+        MarkSeen(closed)
+    end)
 
     window.back = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
     window.back:SetSize(90, 24)

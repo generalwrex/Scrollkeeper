@@ -33,6 +33,7 @@ button:SetAttribute("item", "item:" .. SK.KHADGARS_UNLOCKING)
 -- Without the scroll the game would just say so; say it nicer.
 button:HookScript("OnClick", function(_, _, down)
     if down then return end
+    SK.Track("key.unlock")
     if SK.UnlockingCount() == 0 then SK.Print(L["you have no Scroll of Khadgar's Unlocking."]) end
 end)
 

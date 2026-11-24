@@ -134,6 +134,7 @@ local function Build()
         button.number:SetPoint("BOTTOMRIGHT", 3, -2)
         button.number:SetText(tier)
         button:SetScript("OnClick", function()
+            SK.Track("log.tier")
             window.tier = tier
             window.results.scroll:SetVerticalScroll(0)   -- a new tier starts at the top
             SK.RefreshLog()

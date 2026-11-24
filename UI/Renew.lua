@@ -21,6 +21,7 @@ local function MakeButton(name, kind)
     button:RegisterForClicks("AnyUp", "AnyDown")
     button:HookScript("OnClick", function(self, _, down)
         if down then return end
+        SK.Track("key." .. kind)
         if not self.itemID then
             SK.Print(kind == "imbue" and L["you have no imbue scroll."] or L["you have no familiar scroll."])
         end

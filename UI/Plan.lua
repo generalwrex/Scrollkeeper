@@ -129,6 +129,7 @@ local function Build()
         button.number:SetPoint("BOTTOMRIGHT", 3, -2)
         button.number:SetText(tier)
         button:SetScript("OnClick", function()
+            SK.Track("plan.tier")
             world.picked = tier
             world.zones.scroll:SetVerticalScroll(0)
             SK.RefreshPlan()
@@ -184,6 +185,7 @@ local function Build()
         button:SetText(L[SORT_LABELS[mode]])
         if button.GetFontString and button:GetFontString() then button:GetFontString():SetFontObject("GameFontNormalSmall") end
         button:SetScript("OnClick", function()
+            SK.Track("plan.sort." .. mode)
             if (SK.db.planSort or "price") == mode then
                 SK.db.planSortReversed = not SK.db.planSortReversed
             else
@@ -269,7 +271,7 @@ local function RefreshWorld()
         row.itemID = nil
         row.label:SetText(zone.name)
         row.value:SetText(L["%d |4scroll:scrolls; found"]:format(zone.count))
-        row:SetScript("OnMouseUp", function() ShowZone(zone.mapID) end)
+        row:SetScript("OnMouseUp", function() SK.Track("plan.zone") ShowZone(zone.mapID) end)
         -- With Zygor or TomTom: an Arrow button to the zone's busiest drop spot.
         if arrows and type(row.skArrow) ~= "table" then
             row.skArrow = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
@@ -289,6 +291,7 @@ local function RefreshWorld()
                 GameTooltip:Show()
             end)
             row.skArrow:SetScript("OnClick", function()
+                SK.Track("plan.arrow")
                 local x, y = SK.BusiestDropSpot(zone.mapID)
                 if x and SK.SetWaypoint(zone.mapID, x, y, L["Scroll drops: %s"]:format(zone.name)) then
                     SK.Print(L["waypoint set: "] .. zone.name)
@@ -330,6 +333,7 @@ local function RefreshAuctionHouse()
         row.itemID = entry.itemID
         -- Click: search for it. Shift-click: link it in chat.
         row:SetScript("OnMouseUp", function(self)
+            SK.Track("plan.item")
             if IsModifiedClick and IsModifiedClick("CHATLINK") then
                 local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, self.itemID))
                 if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end

@@ -52,6 +52,7 @@ local function Build()
     button.count:SetPoint("BOTTOMRIGHT", -3, 3)
 
     button:HookScript("OnClick", function(_, mouseButton)
+        SK.Track(mouseButton == "RightButton" and "minimap.right" or "minimap.left")
         if mouseButton == "RightButton" then SK.OpenOptions() end
     end)
     if SK.MakePanelToggle then SK.MakePanelToggle(button, "LeftButton") end

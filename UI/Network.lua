@@ -366,6 +366,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
             button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         end
         button:SetScript("OnClick", function(self, mouseButton)
+            SK.Track("fellowmages.sort." .. tostring(mode))
             if mode == "mine" and mouseButton == "RightButton" then
                 -- Turning the filter on also switches to this sort.
                 SK.db.mageOnlyMine = not (SK.db.mageOnlyMine and SK.db.mageSort == "mine")
@@ -423,6 +424,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
         button.number:SetPoint("BOTTOMRIGHT", 3, -2)
         button.number:SetText(tier)
         button:SetScript("OnClick", function()
+            SK.Track("fellowmages.oddstier")
             pane.selectedTier = tier
             pane.odds.scroll:SetVerticalScroll(0)   -- a new tier starts at the top
             pane:Refresh()
@@ -509,6 +511,7 @@ function SK.UI.CreateNetworkPane(host, left, top, width, userRows, oddsRows)
                     MageTooltip(tooltip, entry.name, peer)
                 end
                 row.onClick = function()
+                    SK.Track("fellowmages.whisper")
                     -- Their real name (the list shows what they're called with titles).
                     local name = SK.ContactName and SK.ContactName(entry.sender or entry.name) or entry.name
                     -- Shift-click: the name goes into whatever box you're

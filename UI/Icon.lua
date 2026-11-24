@@ -354,6 +354,7 @@ do
         -- (HookScript: the secure template's own click uses the scroll first.)
         toast:HookScript("OnClick", function(self, button, down)
             if down then return end   -- act once, on release
+            SK.Track(button == "RightButton" and "toast.right" or "toast.use")
             HideToast(self)
             -- Shift-right-click: turn these reminders off (same as the setting).
             if button == "RightButton" and IsShiftKeyDown and IsShiftKeyDown() and self.expiring then

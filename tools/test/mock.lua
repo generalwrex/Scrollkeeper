@@ -23,6 +23,10 @@ local function newObj()
     if k == "GetVerticalScroll" or k == "GetVerticalScrollRange" then return function() return 0 end end
     if k == "GetScale" then return function() return 1 end end
     if k == "GetFont" then return function() return "font", 10 end end
+    if k == "HookScript" then return function(self, n, f)
+      local hooks = rawget(self, "_hooks") or {}; rawset(self, "_hooks", hooks)
+      hooks[n] = hooks[n] or {}; table.insert(hooks[n], f)
+    end end
     if k == "GetScript" then return function(self, n) return self._scripts[n] end end
     if k == "IsOwned" then return function() return false end end
     if k == "GetPoint" then return function() return "CENTER", nil, "CENTER", 0, 0 end end

@@ -270,7 +270,7 @@ local function Build()
         row.kind:SetPoint("LEFT", row.name, "RIGHT", 6, 0)
         row.detail = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.detail:SetPoint("TOPLEFT", row.name, "BOTTOMLEFT", 0, -2)
-        row:SetScript("OnClick", function(self) if self.person then FillMail(self.person) end end)
+        row:SetScript("OnClick", function(self) if self.person then SK.Track("mail.fill") FillMail(self.person) end end)
         row:SetScript("OnEnter", function(self)
             if not self.person then return end
             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
