@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## Unreleased: Modules
+
+- New in /sk options: **Modules**. Turn off what you don't use (Scroll Bag, Codex, Farming Plan, Luck Log, Scroll Swap, Doorways, Fellow Mages) and its button leaves the panel; the rest close up. The Scroll Bag off also stops its bag marks, tooltip and chat notes, and Doorways off stops the Liminal Passage warning.
+
 ## Unreleased: Scroll Bag
 
 - New: the **Scroll Bag** (/sk bag, or the bag button on the panel). Every deciphered mage scroll you own in one list, counted across your bags, bank and mail (bank and mail as of your last visit), grouped like the panel with imbues split by weapon.

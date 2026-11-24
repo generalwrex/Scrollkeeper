@@ -711,6 +711,10 @@ function SK.RefreshNetwork()
 end
 
 function SK.ToggleNetwork()
+    if not SK.ModuleOn("Network") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Fellow Mages"]))
+        return
+    end
     if not window then Build() end
     window:SetShown(not window:IsShown())
 end

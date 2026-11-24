@@ -1068,6 +1068,10 @@ function SK.ShowDoor(sender)
 end
 
 function SK.ToggleDoors()
+    if not SK.ModuleOn("Doors") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Doorways"]))
+        return
+    end
     -- The window holds a secure button (Teleport), so the game won't let
     -- addons show or hide it in combat.
     if SK.InCombat() then

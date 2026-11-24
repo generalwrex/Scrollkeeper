@@ -1240,3 +1240,13 @@ if SK.isMage then
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
   MerchantFrame = nil
 end
+
+-- MODULES: turn features off
+if SK.isMage then
+  SK.db.moduleBag = false; SK.db.moduleCodex = false
+  SK.ToggleScrollBag(); SK.ToggleGuide()
+  print("MODULES bag on?", SK.ModuleOn("Bag"), "plan on?", SK.ModuleOn("Plan"))
+  SK.RefreshPanel()
+  print("MODULES errors:", #ScrollkeeperDB.errors)
+  SK.db.moduleBag = true; SK.db.moduleCodex = true
+end

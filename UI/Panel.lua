@@ -468,19 +468,19 @@ local function Build()
     -- Small window buttons where the "0 ready" line was (the Decipher
     -- button already says how many are ready), left of the toggles.
     local WINDOW_BUTTONS = {
-        { icon = "Interface\\Icons\\INV_Misc_Book_09", open = function() SK.ToggleGuide() end,
+        { icon = "Interface\\Icons\\INV_Misc_Book_09", open = function() SK.ToggleGuide() end, module = "Codex",
           title = "Codex", text = "Every scroll and what it does, your picks, and where all 40 library books are." },
-        { icon = "Interface\\Icons\\INV_Misc_Bag_10", open = function() SK.ToggleScrollBag() end,
+        { icon = "Interface\\Icons\\INV_Misc_Bag_10", open = function() SK.ToggleScrollBag() end, module = "Bag",
           title = "Scroll Bag", text = "Every deciphered scroll you own (bags, bank, mail): what to keep, what's extra, and what to do with it." },
-        { icon = "Interface\\Icons\\INV_Misc_Note_01", open = function() SK.TogglePlan() end,
+        { icon = "Interface\\Icons\\INV_Misc_Note_01", open = function() SK.TogglePlan() end, module = "Plan",
           title = "Farming Plan", text = "Your next goal, where to farm, and scroll prices at the auction house." },
-        { icon = "Interface\\Icons\\INV_Misc_Dice_01", open = function() SK.ToggleLog() end,
+        { icon = "Interface\\Icons\\INV_Misc_Dice_01", open = function() SK.ToggleLog() end, module = "Log",
           title = "Luck Log", text = "What your deciphers turned into, next to everyone's odds, and your skill-ups." },
-        { icon = "Interface\\Icons\\INV_Letter_15", open = function() SK.ToggleSwap() end,
+        { icon = "Interface\\Icons\\INV_Letter_15", open = function() SK.ToggleSwap() end, module = "Swap",
           title = "Scroll Swap", text = "Who has spare scrolls you'd level from, and who'd want yours." },
-        { icon = "Interface\\Icons\\Spell_Arcane_Blink", open = function() SK.ToggleDoors() end,
+        { icon = "Interface\\Icons\\Spell_Arcane_Blink", open = function() SK.ToggleDoors() end, module = "Doors",
           title = "Doorways", text = "Pick a town and get there with Scroll of Liminal Passage: Scrollkeeper doors invite you, or find anyone there." },
-        { icon = "Interface\\Icons\\INV_Misc_GroupLooking", open = function() SK.ToggleNetwork() end,
+        { icon = "Interface\\Icons\\INV_Misc_GroupLooking", open = function() SK.ToggleNetwork() end, module = "Network",
           inAdvanced = true,   -- Advanced view has it built in, so no button there
           title = "Fellow Mages", text = "Other mages running Scrollkeeper, and the community's odds for each tier." },
     }
@@ -496,6 +496,7 @@ local function Build()
             button:SetPoint("TOPLEFT", panel, "TOPLEFT", 58, -30)
         end
         button.inAdvanced = entry.inAdvanced
+        button.module = entry.module
         parts.windowButtons[i] = button
         previous = button
     end
@@ -935,8 +936,21 @@ local function Layout()
     panel:SetWidth(advanced and (WIDTH + SIDE_WIDTH) or WIDTH)
     SetSideShown(advanced)
     -- No button for what this view already shows.
+    -- (and none for a module you turned off: Options > Modules). The
+    -- buttons left close up, so there's no gap.
+    local lastShown
     for _, button in ipairs(parts.windowButtons) do
-        button:SetShown(not (advanced and button.inAdvanced))
+        local show = not (advanced and button.inAdvanced) and SK.ModuleOn(button.module)
+        button:SetShown(show)
+        if show then
+            button:ClearAllPoints()
+            if lastShown then
+                button:SetPoint("LEFT", lastShown, "RIGHT", 2, 0)
+            else
+                button:SetPoint("TOPLEFT", panel, "TOPLEFT", 58, -30)
+            end
+            lastShown = button
+        end
     end
 
     -- The news, until you click it away: the line between the window
@@ -947,8 +961,7 @@ local function Layout()
     local showNews = news and news.text and SK.db.newsSeen ~= news.id
     parts.news:SetShown(showNews and true or false)
     if showNews then
-        local lastButton = parts.windowButtons[#parts.windowButtons]
-        if advanced and lastButton.inAdvanced then lastButton = parts.windowButtons[#parts.windowButtons - 1] end
+        local lastButton = lastShown or parts.windowButtons[1]
         parts.news:ClearAllPoints()
         if advanced then
             parts.news:SetPoint("LEFT", lastButton, "RIGHT", 10, 0)

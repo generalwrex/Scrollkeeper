@@ -498,7 +498,7 @@ local function CheckNewWeapons()
     end
     local _, _, bagWeapons = ScanContainers({ 0, 1, 2, 3, 4, 5 })
     for kind in pairs(bagWeapons) do now[kind] = true end
-    if knownKinds and SK.db.bagWeaponAlert ~= false then
+    if knownKinds and SK.db.bagWeaponAlert ~= false and SK.ModuleOn("Bag") then
         local s = State()
         for kind in pairs(now) do
             if not knownKinds[kind] then
@@ -528,7 +528,7 @@ SK.Listen("BAGS_CHANGED", function() SK.Safely("weapon alert", CheckNewWeapons) 
 -- A warning line, or nil: only once you've carried Liminal Passage at all.
 function SK.LiminalLowText()
     local limit = tonumber(SK.db and SK.db.liminalLow) or 2
-    if limit <= 0 or not (SK.db and SK.db.liminalSeen) then return nil end
+    if limit <= 0 or not (SK.db and SK.db.liminalSeen) or not SK.ModuleOn("Doors") then return nil end
     local n = SK.LiminalCount()
     if n > limit then return nil end
     local s = State()
@@ -545,7 +545,7 @@ SK.Listen("BAGS_CHANGED", function()
     if n > 0 then SK.db.liminalSeen = true end
     local limit = tonumber(SK.db.liminalLow) or 2
     -- Say it once, when it drops to the limit or below.
-    if lastLiminal and n < lastLiminal and n <= limit and limit > 0 and SK.db.liminalLowChat ~= false then
+    if lastLiminal and n < lastLiminal and n <= limit and limit > 0 and SK.db.liminalLowChat ~= false and SK.ModuleOn("Doors") then
         SK.Print(SK.LiminalLowText() or "")
     end
     lastLiminal = n

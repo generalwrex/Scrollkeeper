@@ -363,6 +363,10 @@ function SK.RefreshGuide()
 end
 
 function SK.ToggleGuide()
+    if not SK.ModuleOn("Codex") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Codex"]))
+        return
+    end
     if not window then Build() end
     window:SetShown(not window:IsShown())
 end

@@ -227,6 +227,10 @@ function SK.RefreshSwap()
 end
 
 function SK.ToggleSwap()
+    if not SK.ModuleOn("Swap") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Scroll Swap"]))
+        return
+    end
     if not window then Build() end
     window:SetShown(not window:IsShown())
 end

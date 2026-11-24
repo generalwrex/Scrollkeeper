@@ -347,6 +347,22 @@ SK.Listen("READY", function()
         AddCheckbox("ahScanButton", L["Auction house scan button"],
             L["Show a Scan scrolls button on the auction house. Prices you see are saved for tooltips either way."], true)
 
+        -- Modules --------------------------------------------------------------
+        -- Turn off what you don't use: its panel button goes away (and for
+        -- the Scroll Bag, everything it adds).
+        AddHeader(L["Modules"])
+        for _, module in ipairs({
+            { "Bag", "Scroll Bag", "Every deciphered scroll you own, keep or extra, and selling, mailing and banking the extras. Off: no window, bag marks, tooltip or chat notes." },
+            { "Codex", "Codex", "Every scroll and what it does, and the 40 library books." },
+            { "Plan", "Farming Plan", "Your next goal, where to farm, and auction house prices." },
+            { "Log", "Luck Log", "What your deciphers turned into, next to everyone's odds." },
+            { "Swap", "Scroll Swap", "Who has spare scrolls you'd level from, and who'd want yours." },
+            { "Doors", "Doorways", "Getting around with Scroll of Liminal Passage, and the running-low warning." },
+            { "Network", "Fellow Mages", "The Fellow Mages window (the Advanced view still shows them)." },
+        }) do
+            AddCheckbox("module" .. module[1], L[module[2]], L[module[3]], true)
+        end
+
         -- Scroll Bag -----------------------------------------------------------
         AddHeader(L["Scroll Bag"])
         AddCheckbox("bagCountBank", L["Count my bank"],

@@ -22,7 +22,7 @@ local COLORS = {
 }
 local SECTION = { keep = "Scrolls: Keep", extra = "Scrolls: Extra", partial = "Scrolls: Extra", aside = "Scrolls: Set aside" }
 
-local function Enabled() return SK.isMage and SK.db and SK.db.bagMarks ~= false end
+local function Enabled() return SK.isMage and SK.db and SK.db.bagMarks ~= false and SK.ModuleOn("Bag") end
 
 -- Status of a bag slot's item: "keep", "extra", "partial", "aside" or nil.
 local function StatusAt(bag, slot, itemID)

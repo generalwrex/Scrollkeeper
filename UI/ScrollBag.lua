@@ -881,6 +881,10 @@ function SK.RefreshScrollBag()
 end
 
 function SK.ToggleScrollBag()
+    if not SK.ModuleOn("Bag") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Scroll Bag"]))
+        return
+    end
     if not window then Build() end
     window:SetShown(not window:IsShown())
 end

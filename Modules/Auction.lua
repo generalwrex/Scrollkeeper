@@ -293,7 +293,7 @@ local function ShowButton()
     -- With Auctionator or TSM their prices are used, so no scan button.
     local otherAddon = SK.HasAuctionAddon and SK.HasAuctionAddon()
     local showScan = SK.db.ahScanButton ~= false and not otherAddon
-    local showPlan = SK.db.ahScanButton ~= false and SK.isMage and true or false
+    local showPlan = SK.db.ahScanButton ~= false and SK.isMage and SK.ModuleOn("Plan") and true or false
     button:SetShown(showScan)
     button.plan:SetShown(showPlan)
     -- Plan sits on top of Scan scrolls, or in its place when that's hidden.

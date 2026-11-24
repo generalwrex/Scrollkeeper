@@ -362,6 +362,10 @@ end
 -- dock = the auction house frame to sit beside (the AH mode), or nil for
 -- the normal window (the world mode).
 function SK.TogglePlan(dock)
+    if not SK.ModuleOn("Plan") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Farming Plan"]))
+        return
+    end
     if not window then Build() end
     if window:IsShown() and window.dock == dock then window:Hide() return end
     window:ClearAllPoints()

@@ -111,7 +111,7 @@ local function Finish()
         local line = L["deciphered: "] .. SK.ScrollLink(entry.resultID, result) .. skillText
         -- What the Scroll Bag makes of it: "extra, keeping 1", "set aside,
         -- no sword". A moment later, once the new scroll is in your bags.
-        if db.bagChatStatus ~= false and entry.resultID and SK.StashNote and SK.IsMageScroll(entry.resultID) then
+        if db.bagChatStatus ~= false and SK.ModuleOn("Bag") and entry.resultID and SK.StashNote and SK.IsMageScroll(entry.resultID) then
             local id = entry.resultID
             C_Timer.After(0.6, function()
                 local note = SK.StashNote(id)

@@ -97,7 +97,7 @@ local function OnItemTooltip(tooltip, data)
     if needs then
         AddScrollLines(tooltip, needs, data.id)
         shiftTooltip, shiftOwner = tooltip, tooltip.GetOwner and tooltip:GetOwner()
-    elseif SK.isMage and data.id and SK.db.bagTooltip ~= false and SK.StashEntry and SK.IsMageScroll(data.id) then
+    elseif SK.isMage and data.id and SK.db.bagTooltip ~= false and SK.ModuleOn("Bag") and SK.StashEntry and SK.IsMageScroll(data.id) then
         -- A deciphered scroll: how many you have, where, and keep or extra.
         local e = SK.StashEntry(data.id)
         if e then

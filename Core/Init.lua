@@ -112,6 +112,12 @@ function SK.Known(value)
     return value
 end
 
+-- Features you can turn off (Options > Modules): "Bag", "Codex", "Plan",
+-- "Log", "Swap", "Doors", "Network". On unless turned off.
+function SK.ModuleOn(key)
+    return not (key and SK.db and SK.db["module" .. key] == false)
+end
+
 function SK.InCombat()
     return InCombatLockdown and InCombatLockdown() or false
 end
@@ -269,6 +275,13 @@ local DEFAULTS = {
     familiarAnywhere = false, -- familiar pop-ups outside dungeons/raids too
     imbueByUse = false,      -- imbue pick: the one you use most before your spec's
     expiringMinutes = 5,     -- ...this many minutes before
+    moduleBag = true,        -- Modules: the Scroll Bag and everything it adds (marks, tooltip and chat notes)
+    moduleCodex = true,      -- ...the Codex
+    modulePlan = true,       -- ...the Farming Plan
+    moduleLog = true,        -- ...the Luck Log
+    moduleSwap = true,       -- ...the Scroll Swap board
+    moduleDoors = true,      -- ...Doorways (and the Liminal Passage warning)
+    moduleNetwork = true,    -- ...the Fellow Mages window
     bagCountBank = true,     -- Scroll Bag: count what's in your bank (remembered from your last visit)
     bagCountMail = true,     -- ...and in your mailbox
     bagSetAside = true,      -- ...imbues for a weapon you don't own are "set aside", not extra

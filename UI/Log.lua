@@ -233,6 +233,10 @@ function SK.RefreshLog()
 end
 
 function SK.ToggleLog()
+    if not SK.ModuleOn("Log") then
+        SK.Print(L["%s is turned off. Turn it on in /sk options (Modules)."]:format(L["Luck Log"]))
+        return
+    end
     if not window then Build() end
     window:SetShown(not window:IsShown())
 end
