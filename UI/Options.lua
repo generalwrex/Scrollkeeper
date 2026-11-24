@@ -122,6 +122,7 @@ local SECTIONS = {
             { "full", "Full (recommended)", "Everything works. Other Scrollkeeper mages see your name and skill, so they can send you scrolls you need." },
             { "anon", "Anonymous", "Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them." },
             { "none", "None (not recommended)", "Nothing is sent. No Fellow Mages or swap board, but each update's odds still show." } } },
+        { "check", "shareUsage", "Share anonymous usage stats", "Count which windows, buttons and settings get used, so we know which features people use the most and can stay on top of them. Totally anonymous: just counts under a random ID, never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None." },
         { "check", "liminalDoor", "Doorways: be a door", "While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways." },
         { "check", "doorAutoInvite", "Doorways: invite by myself", "Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes.", dependsOn = "liminalDoor" },
         { "check", "oddsStandard", "Odds: list standard scrolls", "Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row." },
@@ -179,6 +180,7 @@ local function Store(item) return item.char and SK.charDB or SK.db end
 local function Value(item) return Store(item)[item[2]] end
 local function Set(item, value)
     Store(item)[item[2]] = value
+    if SK.Track then SK.Track("set." .. item[2]) end
     Changed(item[2])
     for _, w in ipairs(widgets) do if w.Refresh then w:Refresh() end end
 end

@@ -135,6 +135,7 @@ local DEV_COMMANDS = {
     { "show", "show the latest scan to copy" },
     { "eventlog", "start or stop recording game events" },
     { "clear", "wipe the recorded scan data" },
+    { "usage", "anonymous usage stats: what everyone uses most, and yours (copy box)" },
 }
 
 local function DevOnly(run)
@@ -195,6 +196,10 @@ commands.realms = DevOnly(function()
 end)
 
 commands.export = DevOnly(function() SK.ShowExport() end)
+
+commands.usage = DevOnly(function()
+    if SK.UsageReport then SK.ShowTextBox("Usage stats", SK.UsageReport()) end
+end)
 
 commands.places = DevOnly(function()
     local mine = UnitFactionGroup and UnitFactionGroup("player")

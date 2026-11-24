@@ -54,6 +54,7 @@ Modules\Stash.lua
 Network\Comm.lua
 Network\Peers.lua
 Network\Share.lua
+Network\Usage.lua
 
 # Map: pins on the world map.
 Map\Pins.lua

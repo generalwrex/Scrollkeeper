@@ -300,6 +300,7 @@ local DEFAULTS = {
     share = true,            -- talk to other Scrollkeeper users in your guild and group
     shareChannel = true,     -- also use the public Scrollkeeper channel
     anonymous = false,       -- share without showing your name in other players' lists
+    shareUsage = true,       -- share anonymous usage counts (which windows and buttons get used) (Network/Usage.lua)
     mapPins = true,          -- show libraries and scroll drop spots on the world map
     mapPinScale = 1,         -- size of the scroll and book spots on the map
     locked = false,          -- stop the panel from being dragged
@@ -312,6 +313,8 @@ local DEFAULTS = {
     deciphered = 0,          -- total scrolls deciphered
     errors = {},
 }
+
+SK.DEFAULTS = DEFAULTS
 
 SK.On("ADDON_LOADED", function(loaded)
     if loaded ~= ADDON_NAME then return end

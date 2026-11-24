@@ -1273,3 +1273,41 @@ if SK.isMage then
   print("THEME errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- USAGE STATS: counting, sharing, hearing (dev copy), the report, and the required setup page
+do
+  SK.db.usage = nil
+  if SK.isMage then SK.ToggleScrollBag(); SK.ToggleScrollBag(); SK.OpenOptions("Sharing") end
+  SK.Track("bag.sell"); SK.Track("bad name!")
+  local c = SK.db.usage.counts
+  print("USAGE counts open.bag:", c["open.bag"], "open.options:", c["open.options"], "bag.sell:", c["bag.sell"], "badname:", c["badname"])
+  local sent = {}
+  local realSend = SK.Net.Send
+  SK.Net.Send = function(kind, ...) sent[#sent + 1] = kind .. "|" .. table.concat({ ... }, "|") end
+  SK.db.theme = "dark"
+  SK.SendUsage(true)
+  print("USAGE sent parts:", #sent, sent[1] and sent[1]:sub(1, 60))
+  local leaked = false
+  for _, line in ipairs(sent) do if line:find(UnitName("player") or "?", 1, true) then leaked = true end end
+  print("USAGE name in message?", leaked, "theme setting sent?", (table.concat(sent, ",")):find("set.theme=dark", 1, true) ~= nil)
+  SK.db.shareUsage = false; sent = {}; SK.SendUsage(true); print("USAGE off sends:", #sent)
+  SK.db.shareUsage = true; SK.db.theme = "classic"
+  SK.Net.Send = realSend
+  local wasDev = SK.devCopy; SK.devCopy = true
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "UZ|abc123#1|open.bag:5,bag.sell:2,set.theme=dark", "GUILD", "Someone-Realm")
+  local heard = SK.db.usageHeard and SK.db.usageHeard.abc123
+  print("USAGE heard open.bag:", heard and heard.counts["open.bag"], "theme:", heard and heard.settings.theme, "sender saved?", (heard and tostring(heard.sender)) or "nil")
+  local report = SK.UsageReport()
+  print("USAGE report installs line:", report:match("(%d+ installs)"))
+  SlashCmdList.SCROLLKEEPER("usage")
+  SK.devCopy = wasDev
+  -- Setup: the required page shows for old setups, and Skip can't pass it
+  SK.db.setupSeenAccount = SK.db.setupSeenAccount or {}
+  SK.db.setupSeenAccount.shareUsage = nil
+  SK.ShowSetup(true)
+  local f = ScrollkeeperSetupFrame
+  print("USAGE setup shown:", f and f:IsShown(), "question:", f and f.question:GetText())
+  if f then f.skip:GetScript("OnClick")(f.skip); print("USAGE page:", f.question:GetText()); print("USAGE after skip shown:", f:IsShown(), "skip visible:", f.skip:IsShown(), "seen:", SK.db.setupSeenAccount.shareUsage) end
+  print("USAGE errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end

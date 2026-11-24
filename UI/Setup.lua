@@ -73,6 +73,14 @@ local function BuildQuestions()
         { "anon", L["Anonymous"], L["Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them."], ICON .. "Ability_Stealth" },
         { "none", L["None"] .. " |cffff6666" .. L["(not recommended)"] .. "|r", L["Nothing is sent. No Fellow Mages or swap board, but each update's odds still show."], ICON .. "Ability_Rogue_Feint" },
     } }
+    -- Required: shown to everyone (old setups too), and Skip can't pass it.
+    list[#list + 1] = { key = "shareUsage", version = 1, account = true, required = true,
+        question = L["Help make Scrollkeeper better?"],
+        hint = L["Scrollkeeper can count which windows, buttons and settings get used, so we know which features people use the most and can stay on top of them. It's totally anonymous: just counts like \"Scroll Bag opened 12 times\" under a random ID. Never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None. Change it any time in /sk options > Sharing."],
+        options = {
+        { true, L["Yes, share anonymous counts"] .. " |cff40ff40" .. L["(recommended)"] .. "|r", L["Helps decide what gets fixed and improved next."], ICON .. "INV_Misc_Note_01" },
+        { false, L["No thanks"], L["Nothing about how you use Scrollkeeper is sent."], ICON .. "Ability_Rogue_Feint" },
+    } }
     local languages = {}
     for _, language in ipairs(SK.LANGUAGES or {}) do
         local auto = language[1] == "auto"
@@ -402,7 +410,17 @@ local function Build()
     window.skip:SetText(L["Skip"])
     window.skip:SetScript("OnClick", function()
         SK.db[SK.isMage and "setupDone" or "setupDoneOther"] = true
-        MarkSeen(questions)
+        -- Required questions still need an answer: show just those next.
+        local required, rest = {}, {}
+        for _, q in ipairs(questions) do
+            if q.required then required[#required + 1] = q else rest[#rest + 1] = q end
+        end
+        MarkSeen(rest)
+        if #required > 0 then
+            questions, page, answers = required, 1, {}
+            SK.RefreshSetupPage()
+            return
+        end
         window:Hide()
         -- Skipping the full setup still opens the panel (with the defaults).
         if SK.isMage and questions[1] and questions[1].key == "viewMode" and not SK.InCombat() then
@@ -471,6 +489,12 @@ function SK.RefreshSetupPage()
     end
     window.keyNote:SetText(q.keys and keyNote or "")
     window.back:SetEnabled(page > 1)
+    -- Only required questions left: no Skip (and no closing without an answer).
+    local onlyRequired = true
+    for _, question in ipairs(questions) do
+        if not question.required then onlyRequired = false end
+    end
+    window.skip:SetShown(not onlyRequired)
     window.next:SetText(page < #questions and L["Next"] or L["Done"])
 end
 
@@ -508,7 +532,9 @@ SK.Listen("READY", function()
     -- that existed then counts as answered.
     if SK.db[doneKey] and not SK.db[SK.isMage and "setupSeen" or "setupSeenOther"] then
         local seen = Seen()
-        for _, q in ipairs(BuildQuestions()) do seen[q.key] = 1 end
+        for _, q in ipairs(BuildQuestions()) do
+            if not q.required then seen[q.key] = 1 end
+        end
     end
     -- The reminders page (1.2.2) is only for new setups: everyone else
     -- keeps both reminders on, as they were, without being asked.
