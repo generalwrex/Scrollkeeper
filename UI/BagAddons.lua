@@ -234,22 +234,60 @@ local function SetUpBagnon()
     end
 end
 
--- BetterBags: categories for scrolls.
+-- BetterBags: categories for scrolls. BetterBags files items by item, not
+-- by stack, so a scroll goes in one category: Extra if you have more than
+-- you keep, Keep if not, Set aside if you have no weapon for it. When that
+-- changes (you sell, mail or loot some), the three categories are emptied
+-- and BetterBags sorts the scrolls again, only if something moved.
 local function SetUpBetterBags()
     local better = AceAddon("BetterBags")
     if not better then return end
     local ok, categories = pcall(better.GetModule, better, "Categories")
     if not (ok and categories and categories.RegisterCategoryFunction) then return end
-    categories:RegisterCategoryFunction("scrollkeeper", function(data)
-        local info = data and data.itemInfo
-        local status = info and StatusAt(data.bagid, data.slotid, info.itemID)
+    local function CategoryOf(itemID)
+        local status = StatusAt(nil, nil, itemID)
         return status and L[SECTION[status]] or nil
+    end
+    local filed = {}   -- itemID -> the category it was put in
+    local registered = pcall(categories.RegisterCategoryFunction, categories, "scrollkeeper", function(data)
+        local itemID = data and data.itemInfo and data.itemInfo.itemID
+        local category = itemID and CategoryOf(itemID)
+        if category then filed[itemID] = category end
+        return category
     end)
+    if not registered then return end
     refreshers[#refreshers + 1] = function()
-        local okEvents, events = pcall(better.GetModule, better, "Events")
-        if okEvents and events and events.SendMessage then pcall(events.SendMessage, events, "bags/FullRefreshAll") end
+        local changed = false
+        for itemID, category in pairs(filed) do
+            if CategoryOf(itemID) ~= category then changed = true break end
+        end
+        if not changed then
+            for _, e in ipairs((SK.StashList and SK.StashList()) or {}) do
+                if (e.bags or 0) > 0 and filed[e.itemID] == nil and CategoryOf(e.itemID) then changed = true break end
+            end
+        end
+        if not changed then return end
+        local okContext, contexts = pcall(better.GetModule, better, "Context")
+        local ctx = okContext and contexts and contexts.New and contexts:New("Scrollkeeper") or nil
+        local done = {}
+        for _, name in pairs(SECTION) do
+            name = L[name]
+            if not done[name] then
+                done[name] = true
+                pcall(categories.WipeCategory, categories, ctx or name, ctx and name or nil)
+            end
+        end
+        for itemID in pairs(filed) do filed[itemID] = nil end
+        if categories.ReprocessAllItems and ctx then
+            pcall(categories.ReprocessAllItems, categories, ctx)
+        else
+            local okEvents, events = pcall(better.GetModule, better, "Events")
+            if okEvents and events and events.SendMessage then pcall(events.SendMessage, events, "bags/FullRefreshAll") end
+        end
     end
 end
+
+SK.SetUpBetterBags = SetUpBetterBags   -- for the tests
 
 -- ArkInventory: a rule you can use in its rules window:
 --   scrollkeeper("extra"), scrollkeeper("keep"), scrollkeeper("aside")

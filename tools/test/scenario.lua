@@ -1327,3 +1327,32 @@ do
   print("USAGE errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+
+-- BETTERBAGS: category function, and re-sorting only when a scroll's category changes
+if SK.isMage then
+  local fns, wiped, reprocessed = {}, {}, 0
+  local cats = {
+    RegisterCategoryFunction = function(self, id, fn) fns[id] = fn end,
+    WipeCategory = function(self, ctx, name) wiped[#wiped + 1] = name end,
+    ReprocessAllItems = function(self, ctx) reprocessed = reprocessed + 1 end,
+  }
+  local modules = { Categories = cats, Context = { New = function(self, e) return { event = e } end }, Events = {} }
+  local better = { GetModule = function(self, name) return modules[name] end }
+  local realLibStub = LibStub
+  LibStub = function(name) return { GetAddon = function(self, n) if n == "BetterBags" then return better end end } end
+  SK.SetUpBetterBags()
+  LibStub = realLibStub
+  local fn = fns.scrollkeeper
+  local list = SK.StashList()
+  local first = list[1]
+  print("BETTERBAGS registered:", fn ~= nil, "first scroll ->", first and fn({ itemInfo = { itemID = first.itemID } }), "non-scroll ->", fn({ itemInfo = { itemID = 6948 } }))
+  SK.RefreshBagAddons()
+  print("BETTERBAGS no change -> reprocessed:", reprocessed)
+  local keepBefore = SK.KeepAmount(first.itemID)
+  SK.SetKeepAmount(first.itemID, 0)
+  SK.RefreshBagAddons()
+  print("BETTERBAGS after keep change -> reprocessed:", reprocessed, "wiped:", #wiped, "now ->", fn({ itemInfo = { itemID = first.itemID } }))
+  SK.SetKeepAmount(first.itemID, keepBefore)
+  print("BETTERBAGS errors:", #ScrollkeeperDB.errors); for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end
