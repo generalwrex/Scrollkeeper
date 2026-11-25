@@ -1,14 +1,27 @@
 # Scrollkeeper
 
-**Latest (1.2.4):** the scroll icon is now an action button: it Studies in a library, opens your bundles, or deciphers. Imbue picks finally know your spec (Frost mages get Frost imbues), the mail list only offers mages it can reach, and Escape closes the panel.
+**New in this update:** the **Scroll Bag** is here! Every deciphered scroll you own (bags, bank and mail) in one list: pick how many of each to keep, and stack, sell, mail or bank the rest in a click. It works with BetterBags, AdiBags, Baganator, Bagnon and ArkInventory. Scrollkeeper also got **its own settings window**, **themes** (Classic, Dark, Darker classic and a new Modern look), **pins** for your favorite familiar and imbues, **modules** so you can turn off what you don't use, and a red **?** on every window that explains it.
 
 ### Thank you to all who downloaded, your data is invaluable! <3
+
+And welcome **Curnil** to the dev team! The scroll icon and Doorways were his ideas, and there's more coming.
 
 A special thanks to Fellow Mage network user **Lofi Frostbeats** (RP-PvP Horde), who shared most of the community's tier 175 odds!
 
 I got tired of digging through my bags every time I wanted to decipher a scroll, so I made this. Scrollkeeper puts your whole Comprehension routine for WoW Forever in one window, and it tells you which scrolls will actually raise your skill before you waste them.
 
 The part I'm proudest of though is that it connects mages. Your alts, guildies, friends and everyone else running it help each other out. Most of that stuff no other scroll addon does.
+
+## Your Scroll Bag
+
+Deciphered scrolls pile up fast. `/sk bag` (or the bag button on the panel) shows every one you own, counted across your bags, bank and mail.
+
+*   Each scroll is **Keep**, **Extra** (more than you want) or **Set aside** (an imbue for a weapon you don't have). Change how many to keep with - and +, or right-click a scroll for keep all, protect, pin and more
+*   **Presets** for how many to keep (lean, raid-ready, or keep everything), and save your own with **New preset**
+*   **Stack**, **Sell extras** at a vendor, **Mail extras** to your bank alt, and **Deposit set aside** at the bank. Protected scrolls are never sold, mailed or deleted
+*   Right-click the panel's Familiar or Imbue button for all your scrolls of that kind, and star one to **pin** it. Imbues get a pin per weapon, so swapping to a dagger picks your dagger imbue
+*   Colored marks on scrolls in your bags, and Keep / Extra / Set aside sections in your bag addon
+*   Got a new weapon? It tells you which imbues for it are waiting in your bank or mail
 
 ## Getting scrolls to the right person
 
@@ -32,11 +45,15 @@ The part I'm proudest of though is that it connects mages. Your alts, guildies, 
 *   **Library books:** how many of the 40 you've handed in and what the next librarian reward is
 *   Open the panel in combat from the minimap button or the scroll icon
 *   Scroll prices from the auction house on tooltips and in the farming plan. Uses Auctionator or TSM if you have them, or scans for you if you don't
-*   **Backups**: save all your Scrollkeeper data as text (Options > Scrollkeeper > Backup), so wiping WTF doesn't wipe your luck log
+*   **Backups**: save all your Scrollkeeper data as text (`/sk options` > Backup), so wiping WTF doesn't wipe your luck log
 *   Buttons along the top of the panel for every window, plus the scroll icon and minimap button on/off
 *   Hides itself in combat and comes back after (you can turn that off)
 *   Three sizes: Advanced, Simple, or just the title and your skill bar
 *   Or turn on the **scroll icon**: a little icon you can put anywhere with how many scrolls you can decipher (green when they still give skill-ups). Click it to decipher your best scroll without opening anything, right-click to pop open the panel in your favorite view (thanks Curnil for the idea!). Lost it off screen? Right-click its toggle on the panel
+*   **Its own settings window** (`/sk options`, or the gear on the panel), and **themes**: Classic, Dark, Darker classic or Modern
+*   **Modules**: turn off the parts you don't use and their buttons go away
+*   A red **?** on every window: point at it for what the window does
+*   Shift-click any window's X to close all of them
 *   Tons of options. People love options
 
 ## Playing with other people
@@ -51,16 +68,17 @@ Log into your mage once and your other characters know about it. Your rogue's to
 
 ## Languages
 
-English, Spanish, French, German, and Simplified and Traditional Chinese. The non-English ones were translated with AI so they'll have mistakes. If you speak one, fixes are super welcome on [GitHub](https://github.com/generalwrex/scrollkeeper).
+English, Spanish, French, German, and Simplified and Traditional Chinese. The non-English ones were translated with AI so they'll have mistakes. If you speak one, fixes are super welcome in the [comments](https://www.curseforge.com/wow/addons/scrollkeeper/comments).
 
 ## Works with
 
-Titan Panel and ElvUI data bars, Auctionator, TSM, and Zygor or TomTom waypoint arrows from the map pins. None of them are required.
+BetterBags, AdiBags, Baganator, Bagnon and ArkInventory (Scroll Bag sections and marks), Titan Panel and ElvUI data bars, Auctionator, TSM, and Zygor or TomTom waypoint arrows from the map pins. None of them are required.
 
 ## Commands
 
 *   `/sk` show or hide the window
 *   `/sk simple` and `/sk advanced` switch views
+*   `/sk bag` the Scroll Bag
 *   `/sk net` Fellow Mages and the community odds
 *   `/sk mail` who could use your spare scrolls
 *   `/sk swap` the scroll swap board
@@ -77,8 +95,4 @@ Titan Panel and ElvUI data bars, Auctionator, TSM, and Zygor or TomTom waypoint 
 
 ## Helping out
 
-It's new, so stuff will break. If it does, type `/sk bug` and drop it in a [bug report](https://github.com/generalwrex/scrollkeeper/issues/new?template=bug_report.yml). Ideas are welcome [here](https://github.com/generalwrex/scrollkeeper/issues/new?template=feature_request.yml).
-
-Made by a mage, for mages. Say hi to Archmage Naage in game. Source is on [GitHub](https://github.com/generalwrex/scrollkeeper).
-
-If Scrollkeeper saved you some time (or some sheep), you can [buy me a coffee](https://donorbox.org/generalwrex) ☕ Totally optional, it's free forever either way.
+It's new, so stuff will break. If it does, type `/sk bug`, write what you were doing on the first line, and paste it in the [comments](https://www.curseforge.com/wow/addons/scrollkeeper/comments). Ideas go there too!
