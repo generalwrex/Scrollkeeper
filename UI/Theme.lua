@@ -61,6 +61,7 @@ local PALETTES = {
         square     = {                             -- square buttons and boxes
             button = { 0.15, 0.17, 0.21, 1 }, hover = { 0.21, 0.25, 0.32, 1 }, edge = { 0.3, 0.34, 0.41, 1 },
             accent = { 0.3, 0.62, 1, 1 }, text = { 0.93, 0.95, 0.98 }, input = { 0.05, 0.06, 0.08, 1 },
+            selected = { 0.14, 0.3, 0.52, 1 },     -- the picked one of a row of buttons
         },
     },
 }
@@ -142,6 +143,17 @@ end
 
 local squared = setmetatable({}, { __mode = "k" })
 
+-- A squared button's resting look: blue when it's the picked one (the
+-- game marks those with LockHighlight), plain otherwise.
+local function Rest(control, parts)
+    local sq = SK.UI.Palette().square
+    if not (sq and squared[control]) then return end
+    local picked = rawget(control, "skPicked")
+    Color(parts.bg, picked and sq.selected or sq.button)
+    local edge = picked and sq.accent or sq.edge
+    parts.edge:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
+end
+
 local function SquareParts(control)
     local parts = rawget(control, "skSquare")
     if parts then return parts end
@@ -166,10 +178,12 @@ local function SquareParts(control)
                 Color(parts.bg, sq.hover); parts.edge:SetBackdropBorderColor(sq.accent[1], sq.accent[2], sq.accent[3], 1)
             end
         end)
-        control:HookScript("OnLeave", function(self)
-            local sq = SK.UI.Palette().square
-            if sq and squared[self] then Color(parts.bg, sq.button); parts.edge:SetBackdropBorderColor(sq.edge[1], sq.edge[2], sq.edge[3], 1) end
-        end)
+        control:HookScript("OnLeave", function(self) Rest(self, parts) end)
+        -- Picked / not picked (rows of choices: Panel view, Theme, sort...).
+        if hooksecurefunc then
+            hooksecurefunc(control, "LockHighlight", function(self) self.skPicked = true; Rest(self, parts) end)
+            hooksecurefunc(control, "UnlockHighlight", function(self) self.skPicked = nil; Rest(self, parts) end)
+        end
         -- Pressed: a touch darker.
         control:HookScript("OnMouseDown", function(self)
             local sq = SK.UI.Palette().square
@@ -177,7 +191,9 @@ local function SquareParts(control)
         end)
         control:HookScript("OnMouseUp", function(self)
             local sq = SK.UI.Palette().square
-            if sq and squared[self] then Color(parts.bg, self:IsMouseOver() and sq.hover or sq.button) end
+            if sq and squared[self] then
+                if self:IsMouseOver() then Color(parts.bg, sq.hover) else Rest(self, parts) end
+            end
         end)
     end
     return parts
@@ -205,6 +221,7 @@ local function SkinControl(control, sq)
     if sq then
         Color(parts.bg, isButton and sq.button or sq.input)
         parts.edge:SetBackdropBorderColor(sq.edge[1], sq.edge[2], sq.edge[3], 1)
+        if isButton then Rest(control, parts) end
     end
     if isButton and control.SetNormalFontObject then
         -- White text on the square buttons; the game's gold otherwise.
