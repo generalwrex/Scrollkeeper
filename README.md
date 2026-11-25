@@ -101,10 +101,10 @@ Nothing is automatic: every cast is one click from the player.
 ## Help improve Scrollkeeper
 
 - **Found a bug?** Type `/sk bug` in game, copy the report, and post it in the
-  [issues on CurseForge](https://www.curseforge.com/wow/addons/scrollkeeper/issues).
+  [comments on CurseForge](https://www.curseforge.com/wow/addons/scrollkeeper/comments).
 - **Like it?** You can [buy me a coffee](https://donorbox.org/generalwrex). Totally optional.
 - **Have an idea?** Post it in the
-  [issues on CurseForge](https://www.curseforge.com/wow/addons/scrollkeeper/issues) too.
+  [comments on CurseForge](https://www.curseforge.com/wow/addons/scrollkeeper/comments) too.
 
 ## Releasing
 
@@ -151,4 +151,4 @@ Everything but English was translated with AI, so fixes from native speakers are
 (Chinese only shows up on Chinese game clients, since other clients' fonts have no Chinese characters.)
 The files are in `Locales/` (one line per piece of text: `L["English"] = "your translation"`).
 Keep the `%d` / `%s` codes, `|c...|r` colors and `|4one:many;` plurals as they are.
-Pull requests welcome on GitHub! Bugs and ideas go in the [issues on CurseForge](https://www.curseforge.com/wow/addons/scrollkeeper/issues).
+Pull requests welcome on GitHub! Bugs and ideas go in the [comments on CurseForge](https://www.curseforge.com/wow/addons/scrollkeeper/comments).
