@@ -698,6 +698,7 @@ L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill
 L[" (sent with Scrollkeeper)"] = "（由 Scrollkeeper 发送）"
 L["COD is not endorsed by Scrollkeeper: scroll sharing should be free!"] = "Scrollkeeper 不支持货到付款：分享卷轴应该是免费的！"
 L["on %s"] = "正在玩%s"
+L["playing"] = "正在玩"
 L["mage %s"] = "法师 %s"
 L["Fellow %s Mages"] = "%s同道法师"
 L["Scrollkeeper: "] = "Scrollkeeper："

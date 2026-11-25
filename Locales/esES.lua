@@ -701,6 +701,7 @@ L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill
 L[" (sent with Scrollkeeper)"] = " (enviado con Scrollkeeper)"
 L["COD is not endorsed by Scrollkeeper: scroll sharing should be free!"] = "Scrollkeeper no apoya el contra reembolso: ¡compartir pergaminos debería ser gratis!"
 L["on %s"] = "con %s"
+L["playing"] = "jugando"
 L["mage %s"] = "mago %s"
 L["Fellow %s Mages"] = "Compañeros magos de %s"
 L["Scrollkeeper: "] = "Scrollkeeper: "

@@ -700,6 +700,7 @@ L["Hi %s! Here are some tier %s scrolls that should give you Comprehension skill
 L[" (sent with Scrollkeeper)"] = " (gesendet mit Scrollkeeper)"
 L["COD is not endorsed by Scrollkeeper: scroll sharing should be free!"] = "Nachnahme wird von Scrollkeeper nicht unterstützt: Schriftrollen teilt man gratis!"
 L["on %s"] = "auf %s"
+L["playing"] = "spielt"
 L["mage %s"] = "Magier %s"
 L["Fellow %s Mages"] = "%s-Mitmagier"
 L["Scrollkeeper: "] = "Scrollkeeper: "
