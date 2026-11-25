@@ -143,14 +143,34 @@ end
 
 local squared = setmetatable({}, { __mode = "k" })
 
+-- Which buttons are "picked" (the game marks those with LockHighlight).
+-- Watched for every button from the start, so a button squared later
+-- still knows; kept in our own table (never written onto the buttons).
+local picked = setmetatable({}, { __mode = "k" })
+local Rest
+do
+    local ok, probe = pcall(CreateFrame, "Button")
+    local methods = ok and probe and getmetatable(probe) and getmetatable(probe).__index
+    if type(methods) == "table" and hooksecurefunc and methods.LockHighlight then
+        hooksecurefunc(methods, "LockHighlight", function(self)
+            picked[self] = true
+            if squared[self] then Rest(self, rawget(self, "skSquare")) end
+        end)
+        hooksecurefunc(methods, "UnlockHighlight", function(self)
+            picked[self] = nil
+            if squared[self] then Rest(self, rawget(self, "skSquare")) end
+        end)
+    end
+end
+
 -- A squared button's resting look: blue when it's the picked one (the
 -- game marks those with LockHighlight), plain otherwise.
-local function Rest(control, parts)
+function Rest(control, parts)
     local sq = SK.UI.Palette().square
-    if not (sq and squared[control]) then return end
-    local picked = rawget(control, "skPicked")
-    Color(parts.bg, picked and sq.selected or sq.button)
-    local edge = picked and sq.accent or sq.edge
+    if not (sq and parts and squared[control]) then return end
+    local isPicked = picked[control]
+    Color(parts.bg, isPicked and sq.selected or sq.button)
+    local edge = isPicked and sq.accent or sq.edge
     parts.edge:SetBackdropBorderColor(edge[1], edge[2], edge[3], 1)
 end
 
@@ -179,11 +199,6 @@ local function SquareParts(control)
             end
         end)
         control:HookScript("OnLeave", function(self) Rest(self, parts) end)
-        -- Picked / not picked (rows of choices: Panel view, Theme, sort...).
-        if hooksecurefunc then
-            hooksecurefunc(control, "LockHighlight", function(self) self.skPicked = true; Rest(self, parts) end)
-            hooksecurefunc(control, "UnlockHighlight", function(self) self.skPicked = nil; Rest(self, parts) end)
-        end
         -- Pressed: a touch darker.
         control:HookScript("OnMouseDown", function(self)
             local sq = SK.UI.Palette().square
