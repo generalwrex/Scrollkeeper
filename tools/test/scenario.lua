@@ -1266,10 +1266,20 @@ end
 
 -- THEMES: switch and back, nothing breaks
 if SK.isMage then
-  for _, name in ipairs({ "dark", "dusk", "classic" }) do
+  if SK.OpenOptions then SK.OpenOptions("Panel") end
+  if SK.ToggleScrollBag and not (ScrollkeeperBagFrame and ScrollkeeperBagFrame:IsShown()) then SK.ToggleScrollBag() end
+  for _, name in ipairs({ "dark", "dusk", "modern", "classic" }) do
     SK.db.theme = name; SK.OptionChanged("theme")
     print("THEME", SK.UI.ThemeName(), "stripe alpha", SK.UI.Palette().stripe[4])
   end
+  local parent = CreateFrame("Frame")
+  local button = CreateFrame("Button", nil, parent)
+  for _, k in ipairs({ "Left", "Middle", "Right" }) do rawset(button, k, button:CreateTexture()) end
+  rawset(parent, "GetChildren", function() return button end)
+  SK.db.theme = "modern"; SK.UI.SkinControls(parent)
+  print("THEME modern button squared:", rawget(button, "skSquare") ~= nil)
+  SK.db.theme = "classic"; SK.UI.SkinControls(parent)
+  print("THEME classic button back:", rawget(button, "skSquare").bg:IsShown() == false)
   print("THEME errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end

@@ -8,6 +8,8 @@
 
 ## Unreleased: Themes
 
+- New theme: **Modern**. Flat slate panels, square buttons and boxes with thin borders that light up blue when you point at them, slate-blue section bars.
+
 - New: **Theme** in /sk options > Panel. **Classic** (the game's own gold and stone windows, as always), **Dark** (flat charcoal panels, thin gray borders, no gold) and **Darker classic** (the game's window shapes, darkened, with gray borders and charcoal section bars). It changes every Scrollkeeper window, section bar, row stripe, pop-up and dropdown right away. With "This character's own layout" on, each character can have its own theme.
 
 ## Unreleased: Settings window
