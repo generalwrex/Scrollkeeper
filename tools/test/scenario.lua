@@ -1460,3 +1460,11 @@ do
   SK.ShowBugReport()
   print("BUGREPORT errors:", #ScrollkeeperDB.errors)
 end
+
+-- CLOSE ALL: every window, the panel too (out of combat)
+do
+  if SK.isMage then SK.ToggleScrollBag(); SK.OpenOptions("Panel") end
+  SK.CloseAllWindows()
+  print("CLOSEALL bag:", ScrollkeeperBagFrame and ScrollkeeperBagFrame:IsShown(), "panel:", ScrollkeeperPanel and ScrollkeeperPanel:IsShown(), "errors:", #ScrollkeeperDB.errors)
+  SK.db.showPanel = true
+end

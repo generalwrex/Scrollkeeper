@@ -3,6 +3,8 @@
 -- for what the window is and how to use it; click it to keep that open
 -- beside the window while you try things (click again, or its X, to
 -- close). Turn the "?" off in /sk options > Panel.
+--
+-- Also here: Shift-click the X on any Scrollkeeper window closes them all.
 
 local _, SK = ...
 local L = SK.L
@@ -151,10 +153,55 @@ function SK.UI.AddHelp(window, key)
         c:Show()
     end)
     window:HookScript("OnHide", function() if card and card.key == key then card:Hide() end end)
+    if key ~= "panel" then SK.UI.HookClose(window) end
     button:SetShown(Wanted())
     window.skHelp = button
     SK.UI.helpButtons = SK.UI.helpButtons or {}
     SK.UI.helpButtons[#SK.UI.helpButtons + 1] = button
+end
+
+------------------------------------------------------------------------
+-- Close all: Shift-click the X on any Scrollkeeper window
+------------------------------------------------------------------------
+
+local windows = {}
+local EXTRA = { "ScrollkeeperExportFrame", "ScrollkeeperUsageFrame", "ScrollkeeperHelpCard", "ScrollkeeperBagRowMenu",
+    "ScrollkeeperMailFrame" }
+
+-- Every Scrollkeeper window. The panel too, out of combat (the game
+-- won't let addons hide it in a fight; its own X still can).
+function SK.CloseAllWindows()
+    SK.Track("closeall")
+    for window in pairs(windows) do
+        if window ~= ScrollkeeperPanel and window.Hide then window:Hide() end
+    end
+    for _, name in ipairs(EXTRA) do
+        local frame = _G[name]
+        if type(frame) == "table" and frame.Hide then frame:Hide() end
+    end
+    local panel = ScrollkeeperPanel
+    if panel and panel:IsShown() and not (SK.InCombat and SK.InCombat()) then
+        SK.db.showPanel = false
+        panel:Hide()
+    end
+end
+
+local function CloseTip(owner)
+    GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+    GameTooltip:AddLine(CLOSE or L["Close"], 1, 1, 1)
+    GameTooltip:AddLine(L["Shift-click: close every Scrollkeeper window."], 0.6, 0.85, 1, true)
+    GameTooltip:Show()
+end
+
+-- The X of a window: Shift-click closes all, and says so on hover.
+function SK.UI.HookClose(window, close)
+    windows[window] = true
+    close = close or rawget(window, "CloseButton")
+    if type(close) ~= "table" or not close.HookScript or rawget(close, "skCloseAll") then return end
+    close.skCloseAll = true
+    close:HookScript("OnClick", function() if IsShiftKeyDown and IsShiftKeyDown() then SK.CloseAllWindows() end end)
+    close:HookScript("OnEnter", function(self) CloseTip(self) end)
+    close:HookScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
 -- The setting changed: show or hide every "?".

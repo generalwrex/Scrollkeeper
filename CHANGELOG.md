@@ -2,6 +2,7 @@
 
 ## Unreleased: Help
 
+- **Shift-click the X** on any Scrollkeeper window to close all of them (the panel too, out of combat). Point at an X to be reminded.
 - New: a red **?** in the corner of every Scrollkeeper window. Point at it for what the window does and how to use it; click it to keep that open beside the window. Turn them off in /sk options > Panel.
 
 ## Unreleased: Usage stats

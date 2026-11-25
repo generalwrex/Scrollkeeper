@@ -323,6 +323,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.HookClose(window)
 
     -- Everyone / Yours
     local function ModeButton(key, text, x)

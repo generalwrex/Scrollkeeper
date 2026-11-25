@@ -334,6 +334,8 @@ local function Build()
         end)
         secureClose:SetScript("OnEnter", function() close:LockHighlight() end)
         secureClose:SetScript("OnLeave", function() close:UnlockHighlight() end)
+        -- Shift-click: every other Scrollkeeper window closes too.
+        if SK.UI.HookClose then SK.UI.HookClose(panel, secureClose) end
     end
 
     -- Escape closes it, like the game's own windows. The game closes those
