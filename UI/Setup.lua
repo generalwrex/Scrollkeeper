@@ -593,10 +593,7 @@ function SK.ShowMessages()
             for i, line in ipairs(message.lines or {}) do
                 if i == 1 then SK.Print(L[line]) else print("  " .. L[line]) end
             end
-            if message.alert then
-                print("  |cff999999" .. L["Hover the Scrollkeeper buttons for more, or /sk help."] .. "|r")
-                print(rule)
-            end
+            if message.alert then print(rule) end
         end
     end
 end

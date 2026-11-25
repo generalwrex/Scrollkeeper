@@ -8,6 +8,9 @@
 --   lines    what to say, one chat line each (gets translated if Locales has it)
 --   alert    optional: make it stand out: lines above and below, a sound,
 --            and the first line in big letters mid-screen too
+--
+-- Each update's news is made from CHANGELOG.md by tools/make-news.py, into
+-- Data/News.lua (the release workflow runs it, so it's automatic).
 
 local _, SK = ...
 
@@ -17,19 +20,6 @@ local _, SK = ...
 SK.NEWS = nil
 
 SK.MESSAGES = {
-    {
-        id = "news-scroll-bag",
-        alert = true,
-        lines = {
-            "|TInterface\\GossipFrame\\AvailableQuestIcon:16:16|t |cffffd100New: the Scroll Bag, a settings window and themes!|r",
-            "|cffffd100-|r Scroll Bag (/sk bag): every deciphered scroll you have, in your bags, bank and mail. Pick how many to keep, then stack, sell, mail or bank the extras.",
-            "|cffffd100-|r Right-click the Imbue or Familiar button for a row of picks. Star one to pin it.",
-            "|cffffd100-|r Works with AdiBags, Baganator, Bagnon, BetterBags and ArkInventory.",
-            "|cffffd100-|r Scrollkeeper has its own settings window now: /sk options.",
-            "|cffffd100-|r Themes: Classic, Dark, Darker classic and Modern (Options > Panel).",
-            "|cffffd100-|r Don't use a part? Turn it off in Options > Modules.",
-        },
-    },
     {
         id = "thanks-1.1.5",
         version = "1.1.5",

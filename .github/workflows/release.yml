@@ -27,4 +27,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Make the in-game news from the changelog
+        run: python3 tools/make-news.py "${GITHUB_REF_NAME}"
       - uses: BigWigsMods/packager@v2

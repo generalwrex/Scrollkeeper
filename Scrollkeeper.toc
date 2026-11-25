@@ -30,6 +30,7 @@ Data\Scrolls.lua
 Data\Community.lua
 Data\Unpack.lua
 Data\Messages.lua
+Data\News.lua
 Data\BookSpots.lua
 
 # Modules: one feature per file. None of them draw anything.
