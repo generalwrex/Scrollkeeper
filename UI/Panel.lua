@@ -951,16 +951,35 @@ local function Layout()
     -- No button for what this view already shows.
     -- (and none for a module you turned off: Options > Modules). The
     -- buttons left close up, so there's no gap.
+    -- The window buttons fit between the portrait and the buttons on the
+    -- right. The narrow views have no room for the scroll icon and minimap
+    -- toggles (both are in /sk options > Panel), just size and gear: 49
+    -- wide; Advanced has all four: 96. If it's still tight, the window
+    -- buttons get a little smaller instead of running into them.
+    parts.iconToggle:SetShown(advanced and true or false)
+    parts.minimapToggle:SetShown(advanced and true or false)
+    local rightSide = advanced and 96 or 49
+    local shownCount = 0
+    for _, button in ipairs(parts.windowButtons) do
+        if not (advanced and button.inAdvanced) and SK.ModuleOn(button.module) then shownCount = shownCount + 1 end
+    end
+    local room = (panel:GetWidth() or 300) - 58 - rightSide - 8
+    local size, gap = 18, 2
+    if shownCount > 0 and shownCount * (size + gap) - gap > room then
+        gap = 1
+        size = math.max(12, math.floor((room + gap) / shownCount) - gap)
+    end
     local lastShown
     for _, button in ipairs(parts.windowButtons) do
         local show = not (advanced and button.inAdvanced) and SK.ModuleOn(button.module)
         button:SetShown(show)
         if show then
+            button:SetSize(size, size)
             button:ClearAllPoints()
             if lastShown then
-                button:SetPoint("LEFT", lastShown, "RIGHT", 2, 0)
+                button:SetPoint("LEFT", lastShown, "RIGHT", gap, 0)
             else
-                button:SetPoint("TOPLEFT", panel, "TOPLEFT", 58, -30)
+                button:SetPoint("TOPLEFT", panel, "TOPLEFT", 58, -30 - (18 - size) / 2)
             end
             lastShown = button
         end
