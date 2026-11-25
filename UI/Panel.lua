@@ -519,9 +519,10 @@ local function Build()
         local news = SK.NEWS
         if not news then return end
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine(L["News"])
-        GameTooltip:AddLine(L[news.text], 1, 1, 1, true)
-        for _, line in ipairs(news.more or {}) do GameTooltip:AddLine(L[line], 1, 1, 1, true) end
+        GameTooltip:AddLine(L[news.headline or news.text], 1, 0.82, 0, true)
+        if news.headline and news.text then GameTooltip:AddLine(L[news.text], 1, 1, 1, true) end
+        for _, line in ipairs(news.more or {}) do GameTooltip:AddLine("|cffffd100-|r " .. L[line], 1, 1, 1, true) end
+        GameTooltip:AddLine(" ")
         GameTooltip:AddLine(L["Click: print it in chat. Right-click: hide it until there's new news."], 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)
@@ -538,8 +539,9 @@ local function Build()
             return
         end
         -- Left-click: the whole thing in chat, where it can be read again.
-        SK.Print("|cffffd100" .. L["News:"] .. "|r " .. L[news.text])
-        for _, line in ipairs(news.more or {}) do print("  " .. L[line]) end
+        SK.Print("|cffffd100" .. L["News:"] .. "|r " .. L[news.headline or news.text])
+        if news.headline and news.text then print("  " .. L[news.text]) end
+        for _, line in ipairs(news.more or {}) do print("  - " .. L[line]) end
     end)
 
     -- Comprehension bar
@@ -968,7 +970,7 @@ local function Layout()
     local news = SK.NEWS
     -- (Advanced has room for the line; the narrow views get just the "!",
     -- and hovering it still shows everything.)
-    local showNews = news and news.text and SK.db.newsSeen ~= news.id
+    local showNews = news and (news.headline or news.text) and SK.db.newsSeen ~= news.id
     parts.news:SetShown(showNews and true or false)
     if showNews then
         local lastButton = lastShown or parts.windowButtons[1]
@@ -977,7 +979,7 @@ local function Layout()
             parts.news:SetPoint("LEFT", lastButton, "RIGHT", 10, 0)
             parts.news:SetPoint("RIGHT", parts.iconToggle, "LEFT", -10, 0)
             -- The yellow "!" is what catches the eye; the text stays plain.
-            parts.news.text:SetText(NEWS_ICON .. " |cffffd100" .. L["News:"] .. "|r |cffffffff" .. L[news.text] .. "|r")
+            parts.news.text:SetText(NEWS_ICON .. " |cffffffff" .. L[news.headline or news.text] .. "|r")
         else
             parts.news:SetPoint("LEFT", lastButton, "RIGHT", 3, 0)
             parts.news:SetWidth(18)
