@@ -6,8 +6,7 @@
 --   id       any name that's new (it's how Scrollkeeper remembers it was shown)
 --   version  optional: only show it in versions that start with this, like "1.1.5"
 --   lines    what to say, one chat line each (gets translated if Locales has it)
---   alert    optional: make it stand out: lines above and below, a sound,
---            and the first line in big letters mid-screen too
+--   alert    optional: make it stand out in chat: bright lines above and below
 --
 -- Each update's news is made from CHANGELOG.md by tools/make-news.py, into
 -- Data/News.lua (the release workflow runs it, so it's automatic).

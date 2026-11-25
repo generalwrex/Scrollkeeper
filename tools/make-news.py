@@ -2,8 +2,8 @@
 """Make the in-game news from CHANGELOG.md.
 
 Writes Data/News.lua: one chat message, shown once per account the first
-time someone opens the panel after updating, standing out (lines above and
-below, a sound, the headline mid-screen). It's written in Natop's voice,
+time someone opens the panel after updating, standing out in chat (bright
+lines above and below, bright colors). It's written in Natop's voice,
 with the top changelog entries as bullets.
 
     python tools/make-news.py            # from the top of the changelog
@@ -129,11 +129,11 @@ def main():
         "    id = " + lua("news-" + version) + ",",
         "    alert = true,",
         "    lines = {",
-        "        " + lua("|TInterface\\GossipFrame\\AvailableQuestIcon:16:16|t |cffffd100" + greeting + "|r") + ",",
+        "        " + lua("|TInterface\\GossipFrame\\AvailableQuestIcon:16:16|t |cffffe14d" + greeting + "|r") + ",",
     ]
     for line in lines:
-        out.append("        " + lua("|cffffd100-|r " + line) + ",")
-    out.append("        " + lua("|cff9d9d9d" + signoff + "|r") + ",")
+        out.append("        " + lua("|cff40c8ff>|r |cffffffff" + line + "|r") + ",")
+    out.append("        " + lua("|cff9fe0ff" + signoff + "|r") + ",")
     out += ["    },", "})", ""]
     path = os.path.join(ROOT, "Data", "News.lua")
     with open(path, "w", encoding="utf-8", newline="\n") as f:
