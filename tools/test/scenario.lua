@@ -1356,3 +1356,13 @@ if SK.isMage then
   SK.SetKeepAmount(first.itemID, keepBefore)
   print("BETTERBAGS errors:", #ScrollkeeperDB.errors); for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- MAIL TO: first name and surname kept, spaces tidied; your mages listed
+if SK.isMage and ScrollkeeperBagFrame then
+  print("MAILTO tidy:", "[" .. SK.TidyMailName("  Test   Sheep ") .. "]")
+  local picks = ScrollkeeperBagFrame.mailPick
+  picks:Fill()
+  local first = picks.rows[1] and picks.rows[1].text:GetText()
+  print("MAILTO first pick:", first)
+  print("MAILTO errors:", #ScrollkeeperDB.errors)
+end
