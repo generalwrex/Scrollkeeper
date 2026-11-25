@@ -25,7 +25,7 @@ end
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.2.4"
+SK.version = "1.3.0"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text

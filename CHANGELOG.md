@@ -1,32 +1,6 @@
 # Scrollkeeper
 
-## Unreleased: Help
-
-- **Shift-click the X** on any Scrollkeeper window to close all of them (the panel too, out of combat). Point at an X to be reminded.
-- New: a red **?** in the corner of every Scrollkeeper window. Point at it for what the window does and how to use it; click it to keep that open beside the window. Turn them off in /sk options > Panel.
-
-## Unreleased: Usage stats
-
-- New: **anonymous usage stats** (opt-in), so we can see which features people use the most and keep those in the best shape. Scrollkeeper counts which windows you open and how long they stay open, which buttons and rows you click, which settings you change, which /sk commands you type, which pop-ups and scroll tooltips show up, and which parts of Scrollkeeper hit an error (just where, never the message), plus which settings differ from the defaults. It also sends your class, faction, game language, Comprehension in steps of 25, how many mages you have, your panel view, and which bag, map and bar addons you use (so we know which ones to support best). That's all: just names and numbers, under a random ID that isn't tied to any character. Never your name, realm, guild, chat, gold, bags or where you are.
-- Everyone gets one setup page asking about it (once per account, even if you've done setup before). It's opt-in: off unless you pick Yes. The page can't be skipped, so everyone sees what it is and decides. Closing it with Escape or the X counts as No. Change it any time in /sk options > Sharing. Nothing is sent when Sharing is None.
-- Counts are shared every 30 minutes at most, over the same Scrollkeeper network as everything else. Only dev copies keep what they hear, and never who sent it.
-
-## Unreleased: Themes
-
-- New theme: **Modern**. Flat slate panels, square buttons and boxes with thin borders that light up blue when you point at them, slate-blue section bars.
-
-- New: **Theme** in /sk options > Panel. **Classic** (the game's own gold and stone windows, as always), **Dark** (flat charcoal panels, thin gray borders, no gold) and **Darker classic** (the game's window shapes, darkened, with gray borders and charcoal section bars). It changes every Scrollkeeper window, section bar, row stripe, pop-up and dropdown right away. With "This character's own layout" on, each character can have its own theme.
-
-## Unreleased: Settings window
-
-- Scrollkeeper has **its own settings window** now (/sk options, the gear on the panel, or right-click the minimap button): sections down the left (Panel, Pop-ups, Tooltips and chat, Sharing, Mailbox and auction house, Scroll Bag, Modules, Map, Language, Backup, About), the settings on the right with what each one does. The game's Options > AddOns > Scrollkeeper page has a button that opens it.
-- The Scroll Bag has a gear that opens its settings.
-
-## Unreleased: Modules
-
-- New in /sk options: **Modules**. Turn off what you don't use (Scroll Bag, Codex, Farming Plan, Luck Log, Scroll Swap, Doorways, Fellow Mages) and its button leaves the panel; the rest close up. The Scroll Bag off also stops its bag marks, tooltip and chat notes, and Doorways off stops the Liminal Passage warning.
-
-## Unreleased: Scroll Bag
+## 1.3.0
 
 - New: the **Scroll Bag** (/sk bag, or the bag button on the panel). Every deciphered mage scroll you own in one list, counted across your bags, bank and mail (bank and mail as of your last visit), grouped like the panel with imbues split by weapon.
   - Each scroll is **Keep**, **Extra** (more than you want to keep) or **Set aside** (an imbue for a weapon you don't have). A small bar shows where they are: bags, bank or mail.
@@ -43,6 +17,16 @@
 - Colored marks on mage scrolls in your bags (green keep, red extra, orange part of the stack is extra, blue set aside, a star when pinned), in the game's bags and in AdiBags (with Keep / Extra / Set aside sections), Baganator, Bagnon, BetterBags and ArkInventory. None of them are needed. Baganator can count your extras as junk if you turn that on.
 - Running low on Scroll of Liminal Passage: the panel (and Doorways) warns you at 2 or fewer, and says it once in chat. Set the number (or turn it off) in /sk options.
 - All of it has settings in /sk options > Scroll Bag.
+- New in /sk options: **Modules**. Turn off what you don't use (Scroll Bag, Codex, Farming Plan, Luck Log, Scroll Swap, Doorways, Fellow Mages) and its button leaves the panel; the rest close up. The Scroll Bag off also stops its bag marks, tooltip and chat notes, and Doorways off stops the Liminal Passage warning.
+- Scrollkeeper has **its own settings window** now (/sk options, the gear on the panel, or right-click the minimap button): sections down the left (Panel, Pop-ups, Tooltips and chat, Sharing, Mailbox and auction house, Scroll Bag, Modules, Map, Language, Backup, About), the settings on the right with what each one does. The game's Options > AddOns > Scrollkeeper page has a button that opens it.
+- The Scroll Bag has a gear that opens its settings.
+- New theme: **Modern**. Flat slate panels, square buttons and boxes with thin borders that light up blue when you point at them, slate-blue section bars.
+- New: **Theme** in /sk options > Panel. **Classic** (the game's own gold and stone windows, as always), **Dark** (flat charcoal panels, thin gray borders, no gold) and **Darker classic** (the game's window shapes, darkened, with gray borders and charcoal section bars). It changes every Scrollkeeper window, section bar, row stripe, pop-up and dropdown right away. With "This character's own layout" on, each character can have its own theme.
+- **Shift-click the X** on any Scrollkeeper window to close all of them (the panel too, out of combat). Point at an X to be reminded.
+- New: a red **?** in the corner of every Scrollkeeper window. Point at it for what the window does and how to use it; click it to keep that open beside the window. Turn them off in /sk options > Panel.
+- New: **anonymous usage stats** (opt-in), so we can see which features people use the most and keep those in the best shape. Scrollkeeper counts which windows you open and how long they stay open, which buttons and rows you click, which settings you change, which /sk commands you type, which pop-ups and scroll tooltips show up, and which parts of Scrollkeeper hit an error (just where, never the message), plus which settings differ from the defaults. It also sends your class, faction, game language, Comprehension in steps of 25, how many mages you have, your panel view, and which bag, map and bar addons you use (so we know which ones to support best). That's all: just names and numbers, under a random ID that isn't tied to any character. Never your name, realm, guild, chat, gold, bags or where you are.
+- Everyone gets one setup page asking about it (once per account, even if you've done setup before). It's opt-in: off unless you pick Yes. The page can't be skipped, so everyone sees what it is and decides. Closing it with Escape or the X counts as No. Change it any time in /sk options > Sharing. Nothing is sent when Sharing is None.
+- Counts are shared every 30 minutes at most, over the same Scrollkeeper network as everything else. Only dev copies keep what they hear, and never who sent it.
 
 ## 1.2.5
 
