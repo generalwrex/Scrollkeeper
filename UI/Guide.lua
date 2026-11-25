@@ -231,7 +231,11 @@ local function Build()
         button:SetNormalTexture(icon)
         button:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
         -- (The usual "checked" glow isn't on Forever: the hover glow is.)
-        button:SetCheckedTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        -- SetCheckedTexture has no blend mode: without ADD this glow art
+        -- (black around a blue glow) covers the icon in black.
+        button:SetCheckedTexture("Interface\\Buttons\\ButtonHilight-Square")
+        local checked = button:GetCheckedTexture()
+        if checked and checked.SetBlendMode then checked:SetBlendMode("ADD") end
         button:SetID(i)
         button:SetScript("OnClick", function(self)
             tab = TAB_KEYS[self:GetID()]
