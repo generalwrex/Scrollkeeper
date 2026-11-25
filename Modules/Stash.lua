@@ -176,6 +176,13 @@ end
 
 function SK.BagPresetChanged() return next(State().changes) ~= nil end
 
+-- Is this scroll's keep amount changed from the preset's? And back to it.
+function SK.KeepChanged(itemID) return State().changes[itemID] ~= nil end
+function SK.ResetKeepAmount(itemID)
+    State().changes[itemID] = nil
+    SK.Send("STASH_CHANGED")
+end
+
 function SK.UseBagPreset(key)
     local s = State()
     s.preset = key
@@ -376,7 +383,9 @@ end
 function SK.StashStatus(itemID, total, owned)
     local kind = SK.ImbueWeapon(itemID)
     owned = owned or SK.OwnedWeaponKinds()
-    if kind and SK.db.bagSetAside ~= false and not owned[kind] then
+    -- (A scroll you marked "don't set aside" in its menu never is.)
+    if kind and SK.db.bagSetAside ~= false and not owned[kind]
+        and not (SK.db.bagNoAside and SK.db.bagNoAside[itemID]) then
         return "aside", 0, L["no %s"]:format(L[kind])
     end
     local keep = SK.KeepAmount(itemID)

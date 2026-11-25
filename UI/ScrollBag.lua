@@ -12,7 +12,9 @@
 --
 -- Every action is one click from you, and only does anything at the right
 -- place (a vendor, the mailbox, the bank). Nothing runs in combat.
--- Right-click a row to protect it: never sold, mailed or deleted.
+-- Right-click a row for its menu: keep amount (all, a number, the
+-- preset's), protect (never sold, mailed or deleted), pin, don't set
+-- aside, link in chat.
 
 local _, SK = ...
 local L = SK.L
@@ -471,6 +473,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "bag")
 
     -- Preset
     local label = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -687,6 +690,151 @@ local function Header(i)
     return h
 end
 
+------------------------------------------------------------------------
+-- A row's right-click menu
+------------------------------------------------------------------------
+
+local rowMenu
+local function RowMenu()
+    if rowMenu then return rowMenu end
+    rowMenu = CreateFrame("Frame", "ScrollkeeperBagRowMenu", UIParent, "BackdropTemplate")
+    rowMenu:SetFrameStrata("DIALOG")
+    rowMenu:SetClampedToScreen(true)
+    rowMenu:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
+    rowMenu:SetBackdropColor(0.05, 0.05, 0.06, 0.97)
+    SK.UI.SkinBox(rowMenu, "box")
+    rowMenu:EnableMouse(true)
+    rowMenu.title = rowMenu:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    rowMenu.title:SetPoint("TOPLEFT", 10, -8)
+    rowMenu.title:SetPoint("RIGHT", -10, 0)
+    rowMenu.title:SetJustifyH("LEFT")
+    rowMenu.title:SetWordWrap(false)
+    rowMenu.options = {}
+    rowMenu:Hide()
+    tinsert(UISpecialFrames, "ScrollkeeperBagRowMenu")
+    -- Closes when the Scroll Bag does, or when you click elsewhere.
+    rowMenu:SetScript("OnUpdate", function(self)
+        if not (window and window:IsShown()) then self:Hide() return end
+        if IsMouseButtonDown and (IsMouseButtonDown("LeftButton") or IsMouseButtonDown("RightButton"))
+            and not self:IsMouseOver() and self.openedAt and GetTime() - self.openedAt > 0.2 then
+            self:Hide()
+        end
+    end)
+    return rowMenu
+end
+
+local function MenuOption(menu, i)
+    local opt = menu.options[i]
+    if opt then return opt end
+    opt = CreateFrame("Button", nil, menu)
+    opt:SetHeight(18)
+    opt:SetPoint("LEFT", 6, 0)
+    opt:SetPoint("RIGHT", -6, 0)
+    opt:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+    opt.check = opt:CreateTexture(nil, "OVERLAY")
+    opt.check:SetSize(14, 14)
+    opt.check:SetPoint("LEFT", 2, 0)
+    opt.check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+    opt.text = opt:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    opt.text:SetPoint("LEFT", 20, 0)
+    opt.text:SetPoint("RIGHT", -4, 0)
+    opt.text:SetJustifyH("LEFT")
+    menu.options[i] = opt
+    return opt
+end
+
+local function AskKeepNumber(e)
+    if not StaticPopup_Show then return end
+    local dialog = StaticPopup_Show("SCROLLKEEPER_BAG_NAME", L["How many %s to keep?"]:format(e.name or "?"), nil, function(text)
+        local n = tonumber((text or ""):match("%d+"))
+        if n then SK.SetKeepAmount(e.itemID, n) end
+    end)
+    local edit = dialog and (dialog.editBox or dialog.EditBox)
+    if edit then
+        local keep = SK.KeepAmount(e.itemID)
+        edit:SetText(tostring(keep or e.total or 0))
+        edit:HighlightText()
+    end
+end
+
+function SK.ShowBagRowMenu(row)
+    local e = row and row.entry
+    if not e then return end
+    local menu = RowMenu()
+    local keep = SK.KeepAmount(e.itemID)
+    local items = {
+        { text = L["Keep all"], checked = keep == nil, run = function() SK.SetKeepAmount(e.itemID, nil) end },
+        { text = keep and L["Keep %d (change...)"]:format(keep) or L["Keep a number..."], checked = keep ~= nil,
+            run = function() AskKeepNumber(e) end },
+    }
+    if SK.KeepChanged and SK.KeepChanged(e.itemID) then
+        items[#items + 1] = { text = L["Back to the preset's amount"], run = function() SK.ResetKeepAmount(e.itemID) end }
+    end
+    items[#items + 1] = { gap = true }
+    items[#items + 1] = { text = L["Protect (never sold, mailed or deleted)"], checked = Protected(e.itemID), run = function()
+        SK.Track("bag.protect")
+        SK.db.bagProtected = SK.db.bagProtected or {}
+        SK.db.bagProtected[e.itemID] = not SK.db.bagProtected[e.itemID] or nil
+        SK.RefreshScrollBag()
+    end }
+    if row.pin and row.pin:IsShown() then
+        items[#items + 1] = { text = L["Pin (the buttons and pop-up use it)"], checked = SK.IsPinned(e.itemID), run = function()
+            SK.TogglePin(e.itemID)
+        end }
+    end
+    if e.weapon then
+        local noAside = SK.db.bagNoAside and SK.db.bagNoAside[e.itemID]
+        items[#items + 1] = { text = L["Don't set aside (keep it even with no %s)"]:format(L[e.weapon] or e.weapon), checked = noAside and true or false,
+            run = function()
+                SK.Track("bag.noaside")
+                SK.db.bagNoAside = SK.db.bagNoAside or {}
+                SK.db.bagNoAside[e.itemID] = not SK.db.bagNoAside[e.itemID] or nil
+                SK.Send("STASH_CHANGED")
+            end }
+    end
+    items[#items + 1] = { gap = true }
+    items[#items + 1] = { text = L["Link in chat"], run = function()
+        local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, e.itemID))
+        if link and ChatEdit_InsertLink then
+            if ChatFrame_OpenChat and not (ChatEdit_GetActiveWindow and ChatEdit_GetActiveWindow()) then ChatFrame_OpenChat("") end
+            ChatEdit_InsertLink(link)
+        end
+    end }
+
+    menu.title:SetText(e.name or "")
+    local y, n = -28, 0
+    for _, item in ipairs(items) do
+        if item.gap then
+            y = y - 6
+        else
+            n = n + 1
+            local opt = MenuOption(menu, n)
+            opt:ClearAllPoints()
+            opt:SetPoint("TOPLEFT", 6, y)
+            opt:SetPoint("RIGHT", -6, 0)
+            opt.text:SetText(item.text)
+            opt.check:SetShown(item.checked and true or false)
+            opt:SetScript("OnClick", function()
+                menu:Hide()
+                SK.Quietly("bag row menu", item.run)
+            end)
+            opt:Show()
+            y = y - 18
+        end
+    end
+    for i = n + 1, #menu.options do menu.options[i]:Hide() end
+    menu:SetSize(270, -y + 8)
+    local scale = UIParent:GetEffectiveScale() or 1
+    local x, cy = GetCursorPosition()
+    x, cy = tonumber(x) or 0, tonumber(cy) or 0
+    if scale == 0 then scale = 1 end
+    menu:ClearAllPoints()
+    menu:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / scale - 6, cy / scale + 6)
+    menu.openedAt = GetTime()
+    menu:Show()
+end
+
 local function Row(i)
     local r = rows[i]
     if r then return r end
@@ -806,7 +954,7 @@ local function Row(i)
         GameTooltip:AddLine(SK.StashNote(e.itemID) or "", 1, 1, 1)
         if e.bound then GameTooltip:AddLine(L["Bound: can be sold to a vendor or deleted, not mailed or auctioned."], 0.7, 0.7, 0.7, true) end
         if Protected(e.itemID) then GameTooltip:AddLine(L["Protected: never sold, mailed or deleted."], 1, 0.82, 0, true) end
-        GameTooltip:AddLine(L["Right-click: protect it (or not). Shift-click: link it."], 0.6, 0.6, 0.6, true)
+        GameTooltip:AddLine(L["Right-click: keep, protect, pin and more. Shift-click: link it."], 0.6, 0.6, 0.6, true)
         GameTooltip:Show()
     end)
     r:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -814,10 +962,8 @@ local function Row(i)
         local e = self.entry
         if not e then return end
         if button == "RightButton" then
-            SK.Track("bag.protect")
-            SK.db.bagProtected = SK.db.bagProtected or {}
-            SK.db.bagProtected[e.itemID] = not SK.db.bagProtected[e.itemID] or nil
-            SK.RefreshScrollBag()
+            SK.Track("bag.rowmenu")
+            SK.ShowBagRowMenu(self)
         elseif IsModifiedClick and IsModifiedClick("CHATLINK") then
             local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, e.itemID))
             if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
