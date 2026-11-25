@@ -463,6 +463,8 @@ local function ShowSection(index)
     end
     content:SetHeight(math.max(10, height))
     window.scroll:SetVerticalScroll(0)
+    -- Square the new buttons now (Modern), before they're ever drawn gold.
+    if SK.UI.SkinControls then SK.UI.SkinControls(window) end
 end
 
 local function Build()

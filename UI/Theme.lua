@@ -281,6 +281,23 @@ local function Sweep()
         if frame.IsShown and frame:IsShown() then SkinControls(frame, sq) end
     end
 end
+-- Square new buttons on the very next frame (not up to a second later,
+-- when they'd show the game's gold for a moment): windows call this
+-- after building or refreshing parts.
+local soonFrame
+function SK.UI.SkinSoon()
+    if not SK.UI.Palette().square then return end
+    if not soonFrame then
+        soonFrame = CreateFrame("Frame")
+        soonFrame:Hide()
+        soonFrame:SetScript("OnUpdate", function(self)
+            self:Hide()
+            SK.Quietly("theme controls", Sweep)
+        end)
+    end
+    soonFrame:Show()
+end
+
 local function StartSweeping()
     if ticker or not SK.UI.Palette().square or not (C_Timer and C_Timer.NewTicker) then return end
     ticker = C_Timer.NewTicker(1, function() SK.Quietly("theme controls", Sweep) end)
@@ -317,7 +334,20 @@ local function SkinWindow(frame)
     end
 end
 
-SK.Listen("READY", function() StartSweeping() end)
+SK.Listen("READY", function()
+    StartSweeping()
+    -- After any window refreshes, square what it just made.
+    for _, name in ipairs({ "RefreshPanel", "RefreshScrollBag", "RefreshGuide", "RefreshLog", "RefreshNetwork",
+        "RefreshPlan", "RefreshSwap", "RefreshDoors", "RefreshSetupPage", "RefreshMailHelper", "OpenOptions" }) do
+        local original = SK[name]
+        if type(original) == "function" then
+            SK[name] = function(...)
+                SK.UI.SkinSoon()
+                return original(...)
+            end
+        end
+    end
+end)
 
 -- A window's dark background (and the window itself, for the frame art).
 function SK.UI.Background(texture, frame)
