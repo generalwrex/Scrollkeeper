@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Scrollkeeper
 ## Notes: Mage scrolls made easy: one-click Decipher, Study, Familiar and Imbue, skill-up chances, library and book spots on the map, and help from your alts.
-## Author: generalwrex
+## Author: generalwrex, Curnil
 ## Version: @project-version@
 ## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
 ## SavedVariablesPerCharacter: ScrollkeeperCharDB

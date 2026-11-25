@@ -18,9 +18,14 @@ local L = SK.L
 
 SK.AUTHOR_CHARACTER = "Archmage Naage"
 
+-- The dev team: { name, what they do }. Shown on the About page.
+SK.TEAM = {
+    { "Natop", "made Scrollkeeper (Archmage Naage)" },
+    { "Curnil", "dev team: the scroll icon and Doorways were his ideas" },
+}
+
 -- People who helped: { name, what they did }. Shown on the About page.
 SK.CREDITS = {
-    { "Curnil", "the scroll icon idea, and the idea for Doorways" },
     { "Lofi Frostbeats", "Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds" },
 }
 
@@ -407,7 +412,13 @@ local function AboutPage(content)
     end
     y = y - 8
     _, h = TextBlock(content, y, L["|cffffd100/sk bug|r  copy a bug report if something goes wrong.\n"]
-        .. L["Paste it on the GitHub page above (Report a bug)."])
+        .. L["Paste it in the CurseForge comments (Report a bug, above)."])
+    y = y - h - 16
+    local team = { "|cffffd100" .. L["Dev team"] .. "|r" }
+    for _, member in ipairs(SK.TEAM or {}) do
+        team[#team + 1] = ("|cffffd100%s|r  %s"):format(member[1], L[member[2]])
+    end
+    _, h = TextBlock(content, y, table.concat(team, "\n"))
     y = y - h - 16
     local lines = { "|cffffd100" .. L["Thanks"] .. "|r" }
     for _, credit in ipairs(SK.CREDITS) do

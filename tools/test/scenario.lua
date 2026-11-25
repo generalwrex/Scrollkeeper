@@ -1445,3 +1445,10 @@ do
   print("HELP buttons:", count, "errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- ABOUT: team and thanks
+do
+  SK.OpenOptions("About")
+  print("ABOUT errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end
