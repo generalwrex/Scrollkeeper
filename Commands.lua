@@ -135,7 +135,7 @@ local DEV_COMMANDS = {
     { "show", "show the latest scan to copy" },
     { "eventlog", "start or stop recording game events" },
     { "clear", "wipe the recorded scan data" },
-    { "usage", "anonymous usage stats: what everyone uses most, and yours (copy box)" },
+    { "usage", "anonymous usage stats window: everyone or yours (/sk usage text: copy box)" },
 }
 
 local function DevOnly(run)

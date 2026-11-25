@@ -1380,3 +1380,14 @@ if SK.isMage and ScrollkeeperBagFrame then
   print("MAILTO first pick:", first)
   print("MAILTO errors:", #ScrollkeeperDB.errors)
 end
+
+-- USAGE WINDOW: opens, fills both ways
+do
+  SK.ToggleUsageWindow()
+  local f = ScrollkeeperUsageFrame
+  if f then f:Refresh() end
+  print("USAGEWIN shown:", f and f:IsShown())
+  if f then f.mine:GetScript("OnClick")(f.mine); f.everyone:GetScript("OnClick")(f.everyone) end
+  print("USAGEWIN errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end

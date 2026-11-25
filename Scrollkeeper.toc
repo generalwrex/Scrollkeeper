@@ -92,4 +92,5 @@ Commands.lua
 #@do-not-package@
 Dev\Scan.lua
 Dev\Network.lua
+Dev\UsageWindow.lua
 #@end-do-not-package@

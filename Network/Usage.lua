@@ -287,6 +287,40 @@ end
 -- The report (/sk usage, dev copies)
 ------------------------------------------------------------------------
 
+-- Everything heard, added up, for the usage window and the text report.
+--   mine = true: just this install's own counts.
+-- Returns { installs, totals = {key=n}, users = {key=installs}, settings = {"key=value"=installs}, since }
+function SK.UsageData(mine)
+    local usage = Store() or { counts = {} }
+    local data = { installs = 0, totals = {}, users = {}, settings = {}, since = usage.since }
+    local function Count(counts)
+        data.installs = data.installs + 1
+        for key, n in pairs(counts) do
+            data.totals[key] = (data.totals[key] or 0) + n
+            data.users[key] = (data.users[key] or 0) + 1
+        end
+    end
+    if mine then
+        Count(usage.counts)
+        for key, default in pairs(SK.DEFAULTS or {}) do
+            local value = SK.db[key]
+            if value ~= default and type(value) ~= "table" then data.settings[key .. "=" .. tostring(value)] = 1 end
+        end
+        return data
+    end
+    local seenMine = false
+    for id, entry in pairs(SK.db.usageHeard or {}) do
+        if id == SK.db.usageID then seenMine = true end
+        Count(entry.counts or {})
+        for setting, value in pairs(entry.settings or {}) do
+            local key = setting .. "=" .. value
+            data.settings[key] = (data.settings[key] or 0) + 1
+        end
+    end
+    if not seenMine then Count(usage.counts) end
+    return data
+end
+
 function SK.UsageReport()
     local lines = {}
     local function Add(text) lines[#lines + 1] = text end
