@@ -730,7 +730,7 @@ local function Row(i)
 
     -- Where they are: a thin bar in three colors.
     r.bar = CreateFrame("Frame", nil, r)
-    r.bar:SetSize(116, 6)
+    r.bar:SetSize(100, 6)
     r.bar:SetPoint("LEFT", r, "LEFT", 262, 0)
     local barBg = r.bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
@@ -747,7 +747,7 @@ local function Row(i)
     -- Keep: - n +
     r.minus = CreateFrame("Button", nil, r)
     r.minus:SetSize(14, 14)
-    r.minus:SetPoint("LEFT", r, "LEFT", 396, 0)
+    r.minus:SetPoint("LEFT", r, "LEFT", 372, 0)
     r.minus:SetNormalFontObject("GameFontNormal")
     r.minus:SetText("-")
     r.keep = CreateFrame("Button", nil, r)
@@ -784,12 +784,15 @@ local function Row(i)
     end
 
     r.status = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    r.status:SetPoint("LEFT", r, "LEFT", 466, 0)
-    r.status:SetWidth(56)
+    r.status:SetPoint("LEFT", r, "LEFT", 436, 0)
+    r.status:SetWidth(60)
     r.status:SetJustifyH("LEFT")
     r.status:SetWordWrap(false)
+    -- How many you have, in its own column on the right (never under the status).
     r.count = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    r.count:SetPoint("RIGHT", -4, 0)
+    r.count:SetPoint("RIGHT", -6, 0)
+    r.count:SetWidth(24)
+    r.count:SetJustifyH("RIGHT")
 
     r:SetScript("OnEnter", function(self)
         local e = self.entry
