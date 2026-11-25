@@ -216,6 +216,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "codex")
 
     -- Side tabs: square icons down the right edge, like the game's own
     -- windows on Forever (Professions, Spellbook). Hover for the name.

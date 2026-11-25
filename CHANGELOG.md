@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## Unreleased: Help
+
+- New: a red **?** in the corner of every Scrollkeeper window. Point at it for what the window does and how to use it; click it to keep that open beside the window. Turn them off in /sk options > Panel.
+
 ## Unreleased: Usage stats
 
 - New: **anonymous usage stats** (opt-in), so we can see which features people use the most and keep those in the best shape. Scrollkeeper counts which windows you open and how long they stay open, which buttons and rows you click, which settings you change, which /sk commands you type, which pop-ups and scroll tooltips show up, and which parts of Scrollkeeper hit an error (just where, never the message), plus which settings differ from the defaults. It also sends your class, faction, game language, Comprehension in steps of 25, how many mages you have, your panel view, and which bag, map and bar addons you use (so we know which ones to support best). That's all: just names and numbers, under a random ID that isn't tied to any character. Never your name, realm, guild, chat, gold, bags or where you are.
@@ -29,7 +33,8 @@
   - **Presets**: Apprentice's Satchel (lean), Battlemage's Kit (plus combat scrolls for raids) and Archivist's Hoard (keep everything). Change any number and save it as **your own preset**; rename or delete yours any time.
   - Filters: All, Extra, Set aside, Bound.
   - Buttons: **Stack** part-stacks, **Sell extras** at a vendor (it asks first), **Mail extras** to your bank alt or anyone (not bound ones), **Deposit set aside** at the bank, and **Delete extras** if you turn it on.
-  - Right-click a scroll to **protect** it: never sold, mailed or deleted.
+  - **Right-click a scroll** for its menu: keep all or a number, back to the preset's amount, **protect** it (never sold, mailed or deleted), pin it, **don't set it aside** (keep a sword imbue even with no sword), or link it in chat.
+  - **New preset** button next to the preset dropdown: saves your keep amounts as a new preset, never over an existing one.
 - New: **pins**. Right-click the panel's Familiar or Imbue button (or the imbue/familiar pop-up) for all your scrolls of that kind: click one to use it, click its star to pin it. A pinned scroll is what the button, key binding and pop-up use. Imbues get one pin per weapon kind, so swapping to a dagger picks your dagger imbue. Works in combat too.
 - New weapon? Scrollkeeper says which imbues for it are waiting in your bank or mail.
 - The "deciphered:" chat line now says what the Scroll Bag makes of it: keep, extra or set aside.

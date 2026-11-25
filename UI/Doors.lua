@@ -842,6 +842,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "doors")
 
     local intro = window:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     intro:SetPoint("TOPLEFT", 64, -34)

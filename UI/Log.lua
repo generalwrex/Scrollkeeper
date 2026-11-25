@@ -103,6 +103,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "log")
 
     -- Totals at the top: "57 scrolls deciphered" and the skill-up rate.
     window.total = window:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")

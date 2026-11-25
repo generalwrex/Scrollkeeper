@@ -664,6 +664,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "fellowmages")
 
     window.summary = window:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     window.summary:SetPoint("TOPLEFT", 62, -32)

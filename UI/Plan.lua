@@ -83,6 +83,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "plan")
 
     -- Your Comprehension, at the top in both modes.
     window.skill = window:CreateFontString(nil, "OVERLAY", "GameFontNormal")

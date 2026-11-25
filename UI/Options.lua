@@ -51,6 +51,7 @@ local function Changed(key)
     if key == "language" then SK.Print(L["language changed. Type /reload to switch."]) end
     if key == "own" then SK.SetCharacterLayout(SK.charDB.own) end
     if key == "theme" and SK.UI.ApplyTheme then SK.UI.ApplyTheme() end
+    if key == "helpButtons" and SK.UI.ApplyHelpButtons then SK.UI.ApplyHelpButtons() end
     if key:find("^bag") or key:find("^liminal") or key:find("^module") then
         SK.Send("STASH_CHANGED")
         SK.Send("REMINDERS_CHANGED")
@@ -94,6 +95,7 @@ local SECTIONS = {
             { "dark", "Dark", "Flat charcoal panels with thin gray borders and muted headers. No gold." },
             { "dusk", "Darker classic", "The game's window shapes, darkened: gray borders and charcoal section bars." },
             { "modern", "Modern", "Flat slate panels, square buttons and boxes with thin borders, a blue accent." } } },
+        { "check", "helpButtons", "Help buttons", "A red ? in the corner of every Scrollkeeper window: point at it for what the window does, click it to keep that open beside the window." },
         { "slider", "scale", "Panel size", "How big the panel is.", 0.7, 1.5, 0.05, Percent },
         { "check", "own", "This character's own layout", "Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters.", char = true },
         { "check", "minimapButton", "Minimap button", "The round Scrollkeeper button on the edge of the minimap, with how many scrolls you can decipher. Left-click: panel. Right-click: settings. Drag to move it around." },
@@ -501,6 +503,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "options")
 
     -- Sections down the left.
     local navBg = window:CreateTexture(nil, "BACKGROUND", nil, -6)

@@ -184,6 +184,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "swap")
 
     local width = 300
     local top = SK.UI.CreateHeader(window, L["Scrolls you could get"], width)

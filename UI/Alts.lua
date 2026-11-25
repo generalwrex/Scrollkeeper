@@ -53,6 +53,7 @@ local function Build()
     background:SetPoint("TOPLEFT", 2, -2)
     background:SetPoint("BOTTOMRIGHT", -2, 2)
     SK.UI.Background(background)
+    SK.UI.AddHelp(window, "alts")
 
     if type(window.CloseButton) == "table" then
         window.CloseButton:SetScript("OnClick", function()

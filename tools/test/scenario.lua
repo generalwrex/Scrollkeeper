@@ -1409,3 +1409,39 @@ if SK.isMage then
   SK.DeleteBagPreset(name)
   print("NEWPRESET errors:", #ScrollkeeperDB.errors)
 end
+
+-- ROW MENU: opens on a row, every option runs
+if SK.isMage and ScrollkeeperBagFrame then
+  SK.RefreshScrollBag()
+  local list = SK.StashList()
+  local imbue
+  for _, e in ipairs(list) do if e.weapon then imbue = e break end end
+  local row = { entry = imbue or list[1], pin = { IsShown = function() return true end } }
+  SK.ShowBagRowMenu(row)
+  local menu = ScrollkeeperBagRowMenu
+  local n = 0
+  for _, opt in ipairs(menu and menu.options or {}) do
+    if rawget(opt, "text") and opt.text:GetText() then
+      n = n + 1
+      local before = #ScrollkeeperDB.errors
+      opt:GetScript("OnClick")(opt)
+      if #ScrollkeeperDB.errors > before then print("ROWMENU option broke:", opt.text:GetText()) end
+      SK.ShowBagRowMenu(row)
+    end
+  end
+  print("ROWMENU options:", n, "noAside set:", SK.db.bagNoAside and imbue and SK.db.bagNoAside[imbue.itemID])
+  print("ROWMENU errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end
+
+-- HELP: every window with a "?" has its help, and the card opens
+do
+  local count = 0
+  for _, b in ipairs(SK.UI.helpButtons or {}) do
+    count = count + 1
+    b:GetScript("OnEnter")(b); b:GetScript("OnClick")(b)
+  end
+  SK.db.helpButtons = false; SK.OptionChanged("helpButtons"); SK.db.helpButtons = true; SK.OptionChanged("helpButtons")
+  print("HELP buttons:", count, "errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
+end

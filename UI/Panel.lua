@@ -184,6 +184,7 @@ local function CreateWindow()
         background:SetPoint("TOPLEFT", 2, -2)
         background:SetPoint("BOTTOMRIGHT", -2, 2)
         SK.UI.Background(background)
+        SK.UI.AddHelp(frame, "panel")
         return frame
     end
 

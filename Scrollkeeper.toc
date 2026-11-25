@@ -64,6 +64,7 @@ Map\Pins.xml
 # UI: everything you can see.
 UI\Widgets.lua
 UI\Theme.lua
+UI\Help.lua
 UI\Panel.lua
 UI\Network.lua
 UI\Alts.lua
