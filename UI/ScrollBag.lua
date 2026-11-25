@@ -286,7 +286,7 @@ local ACTIONS = {
         if n == 0 then SK.Print(L["no extras you can mail (bound scrolls can't be mailed)."]) return end
         local to = SendMailNameEditBox and SendMailNameEditBox:GetText() or ""
         if to == "" and (SK.db.bagMailTo or "") ~= "" and SendMailNameEditBox then
-            SendMailNameEditBox:SetText(SK.db.bagMailTo)
+            SendMailNameEditBox:SetText(SK.TidyMailName and SK.TidyMailName(SK.db.bagMailTo) or SK.db.bagMailTo)
         end
         if SendMailSubjectEditBox and (SendMailSubjectEditBox:GetText() or "") == "" then
             SendMailSubjectEditBox:SetText(L["Spare scrolls"])
@@ -539,17 +539,78 @@ local function Build()
     mailTo:SetSize(150, 18)
     mailTo:SetPoint("LEFT", mailLabel, "RIGHT", 10, 0)
     mailTo:SetAutoFocus(false)
-    mailTo:SetScript("OnEditFocusLost", function(self) SK.db.bagMailTo = self:GetText() or "" end)
+    -- Forever names are a first name and a surname ("Test Sheep"): keep the
+    -- one space between them, drop extra spaces around and between.
+    local function TidyName(text)
+        return ((text or ""):gsub("^%s+", ""):gsub("%s+$", ""):gsub("%s+", " "))
+    end
+    SK.TidyMailName = TidyName
+    mailTo:SetScript("OnEditFocusLost", function(self)
+        SK.db.bagMailTo = TidyName(self:GetText())
+        self:SetText(SK.db.bagMailTo)
+    end)
     mailTo:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     mailTo:SetScript("OnEscapePressed", function(self) self:SetText(SK.db.bagMailTo or ""); self:ClearFocus() end)
     mailTo:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
         GameTooltip:SetText(L["Mail extras to"])
-        GameTooltip:AddLine(L["Your bank alt, or anyone. Used when the mail's To box is empty, so you can still click a name in the mailbox's list instead."], 1, 1, 1, true)
+        GameTooltip:AddLine(L["Your bank alt, or anyone, by first name and surname (\"Test Sheep\"). Used when the mail's To box is empty, so you can still click a name in the mailbox's list instead."], 1, 1, 1, true)
+        GameTooltip:AddLine(L["The arrow lists your mages you can mail."], 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
     end)
     mailTo:SetScript("OnLeave", function() GameTooltip:Hide() end)
     window.mailTo = mailTo
+
+    -- Your mages you can mail (same faction and server), by full name.
+    local pick = CreateFrame("Button", nil, window)
+    pick:SetSize(18, 18)
+    pick:SetPoint("LEFT", mailTo, "RIGHT", 2, 0)
+    pick:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+    pick:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Down")
+    pick:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    local picks = CreateFrame("Frame", nil, pick, "BackdropTemplate")
+    picks:SetPoint("BOTTOMLEFT", mailTo, "TOPLEFT", -6, 2)
+    picks:SetFrameStrata("DIALOG")
+    picks:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
+    picks:SetBackdropColor(0.05, 0.05, 0.06, 0.97)
+    picks:SetBackdropBorderColor(0.6, 0.5, 0.3, 1)
+    SK.UI.SkinBox(picks, "box")
+    picks:Hide()
+    picks.rows = {}
+    function picks:Fill()
+        local names = {}
+        for _, mage in ipairs(SK.MailableMages and SK.MailableMages() or {}) do
+            names[#names + 1] = TidyName((mage.name or ""):gsub("%-.*$", ""))
+        end
+        if #names == 0 then names[1] = false end
+        for i, name in ipairs(names) do
+            local row = self.rows[i]
+            if not row then
+                row = CreateFrame("Button", nil, self)
+                row:SetSize(170, 18)
+                row:SetPoint("TOPLEFT", 6, -6 - (i - 1) * 18)
+                row:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+                row.text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                row.text:SetPoint("LEFT", 4, 0)
+                self.rows[i] = row
+            end
+            row.text:SetText(name or ("|cff999999" .. L["(no other mages you can mail yet)"] .. "|r"))
+            row:SetScript("OnClick", function()
+                if name then
+                    SK.Track("bag.mailtopick")
+                    SK.db.bagMailTo = name
+                    mailTo:SetText(name)
+                end
+                picks:Hide()
+            end)
+            row:Show()
+        end
+        for i = #names + 1, #self.rows do self.rows[i]:Hide() end
+        self:SetSize(182, 12 + #names * 18)
+    end
+    pick:SetScript("OnClick", function() picks:Fill(); picks:SetShown(not picks:IsShown()) end)
+    window.mailPick = picks
 
     window.buttons = {}
     local specs = {
@@ -571,7 +632,7 @@ local function Build()
         mailTo:SetText(SK.db.bagMailTo or "")
         SK.RefreshScrollBag()
     end)
-    window:SetScript("OnHide", function() box.menu:Hide() end)
+    window:SetScript("OnHide", function() box.menu:Hide(); picks:Hide() end)
     window:Hide()
 end
 
