@@ -1,5 +1,9 @@
 # Scrollkeeper
 
+## Unreleased: Bank extras
+
+- New in the Scroll Bag: **Bank extras**. At the bank, it keeps your keep amount of each scroll in your bags and puts the rest in your bank (Deposit set aside only moves imbues for weapons you don't have). Protected scrolls stay put.
+
 ## 1.3.0
 
 - New: the **Scroll Bag** (/sk bag, or the bag button on the panel). Every deciphered mage scroll you own in one list, counted across your bags, bank and mail (bank and mail as of your last visit), grouped like the panel with imbues split by weapon.

@@ -1478,3 +1478,9 @@ if SK.isMage and SK.ToggleDemo then
   print("DEMOMAIL people:", #plan, "not mine:", demo)
   SK.ToggleDemo()
 end
+
+-- BANK EXTRAS: the button is there, and says to open the bank first
+if SK.isMage and SK.ScrollBagActions and SK.ScrollBagActions.bank then
+  SK.ScrollBagActions.bank()
+  print("BANKEXTRAS button:", ScrollkeeperBagFrame and ScrollkeeperBagFrame.buttons.bank ~= nil, "errors:", #ScrollkeeperDB.errors)
+end

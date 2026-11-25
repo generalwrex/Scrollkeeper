@@ -7,7 +7,7 @@
 --   list     a header per group (imbues by weapon), a row per scroll:
 --            icon (border = status), name, pin star, lock if bound,
 --            a bar of where they are, keep - n +, status, total
---   bottom   totals, and Stack / Sell extras / Mail extras / Deposit
+--   bottom   totals, and Stack / Sell extras / Mail extras / Bank extras / Deposit
 --            set aside / Delete extras
 --
 -- Every action is one click from you, and only does anything at the right
@@ -218,6 +218,52 @@ local function DepositStep()
     return false
 end
 
+-- Bank: extras go into the bank. Whole stacks move with a click (using
+-- an item with the bank open); for a part-stack, the part is split off
+-- onto the cursor and put in an empty bank slot.
+local BANK_BAGS = { -1, 6, 7, 8, 9, 10, 11, 12 }
+local function FreeBankSlot()
+    for _, bag in ipairs(BANK_BAGS) do
+        local free = SK.Try(C_Container.GetContainerFreeSlots, bag)
+        if type(free) == "table" and free[1] then return bag, free[1] end
+    end
+end
+-- What to bank: what's in your bags over the keep amount. (Extra counts
+-- your bank and mail too, so after banking a scroll would still be extra:
+-- banking keeps the keep amount in your bags and banks the rest.)
+local function BankAmount(e)
+    if e.status ~= "extra" or e.bags <= 0 or Protected(e.itemID) then return 0 end
+    local keep = SK.KeepAmount(e.itemID)
+    if keep == nil then return 0 end
+    return math.max(0, e.bags - keep)
+end
+local function NextToBank()
+    for _, e in ipairs((SK.StashList())) do
+        local n = BankAmount(e)
+        if n > 0 then
+            local stacks = SK.ExtraStacks(e.itemID, n)
+            if stacks[1] then return stacks[1], e end
+        end
+    end
+end
+local function BankStep()
+    if not SK.BankIsOpen() then return false end
+    if Locked() then return true end
+    local stack = NextToBank()
+    if not stack then return false end
+    if stack.take >= stack.count then
+        C_Container.UseContainerItem(stack.bag, stack.slot)
+        return true
+    end
+    local bag, slot = FreeBankSlot()
+    if not bag then error(L["your bank is full."]) end
+    ClearCursor()
+    C_Container.SplitContainerItem(stack.bag, stack.slot, stack.take)
+    C_Container.PickupContainerItem(bag, slot)
+    ClearCursor()
+    return true
+end
+
 -- Delete: only when you turned it on in the settings, and after asking.
 local function DeleteStep()
     if Locked() then return true end
@@ -315,6 +361,11 @@ local ACTIONS = {
             end
             SK.RefreshScrollBag()
         end)
+    end,
+    bank = function()
+        if not SK.BankIsOpen() then SK.Print(L["open your bank first, then click Bank extras."]) return end
+        if not NextToBank() then SK.Print(L["no extras in your bags to bank."]) return end
+        RunSteps(L["Bank extras"], BankStep, Finished(L["banking"]))
     end,
     deposit = function()
         if not SK.BankIsOpen() then SK.Print(L["open your bank first, then click Deposit set aside."]) return end
@@ -648,10 +699,11 @@ local function Build()
     window.buttons = {}
     local specs = {
         { "stack", L["Stack"], 60, L["Merge part-stacks of the same scroll in your bags."] },
-        { "sell", L["Sell extras"], 82, L["At a vendor: sells the extras in your bags. Protected scrolls (right-click a row) are never sold."] },
-        { "mail", L["Mail extras"], 82, L["On the Send Mail tab: attaches the extras you can mail (not bound ones)."] },
-        { "deposit", L["Deposit set aside"], 112, L["At the bank: puts set-aside imbues (for weapons you don't have) in the bank."] },
-        { "delete", L["Delete extras"], 92, L["Deletes the extras in your bags, after asking. Turn this button on in /sk options."] },
+        { "sell", L["Sell extras"], 78, L["At a vendor: sells the extras in your bags. Protected scrolls (right-click a row) are never sold."] },
+        { "mail", L["Mail extras"], 78, L["On the Send Mail tab: attaches the extras you can mail (not bound ones)."] },
+        { "bank", L["Bank extras"], 82, L["At the bank: puts the extras in your bags into your bank. Protected scrolls stay."] },
+        { "deposit", L["Deposit set aside"], 108, L["At the bank: puts set-aside imbues (for weapons you don't have) in the bank."] },
+        { "delete", L["Delete extras"], 84, L["Deletes the extras in your bags, after asking. Turn this button on in /sk options."] },
     }
     local last
     for _, spec in ipairs(specs) do
