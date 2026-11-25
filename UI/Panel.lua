@@ -979,7 +979,14 @@ local function Layout()
             parts.news:SetPoint("LEFT", lastButton, "RIGHT", 10, 0)
             parts.news:SetPoint("RIGHT", parts.iconToggle, "LEFT", -10, 0)
             -- The yellow "!" is what catches the eye; the text stays plain.
-            parts.news.text:SetText(NEWS_ICON .. " |cffffffff" .. L[news.headline or news.text] .. "|r")
+            -- The longest line that fits: headline, short headline, "What's new".
+            local room = (parts.news:GetRight() and parts.news:GetLeft()) and (parts.news:GetRight() - parts.news:GetLeft()) or nil
+            for _, line in ipairs({ news.headline or news.text, news.short, "What's new" }) do
+                if line then
+                    parts.news.text:SetText(NEWS_ICON .. " |cffffffff" .. L[line] .. "|r")
+                    if not room or (parts.news.text.GetUnboundedStringWidth and parts.news.text:GetUnboundedStringWidth() or parts.news.text:GetStringWidth() or 0) <= room then break end
+                end
+            end
         else
             parts.news:SetPoint("LEFT", lastButton, "RIGHT", 3, 0)
             parts.news:SetWidth(18)

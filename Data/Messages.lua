@@ -6,29 +6,30 @@
 --   id       any name that's new (it's how Scrollkeeper remembers it was shown)
 --   version  optional: only show it in versions that start with this, like "1.1.5"
 --   lines    what to say, one chat line each (gets translated if Locales has it)
+--   alert    optional: make it stand out: lines above and below, a sound,
+--            and the first line in big letters mid-screen too
 
 local _, SK = ...
 
--- The news line on the panel, under the buttons at the top:
---   headline  the short line shown on the panel ("New: ...")
---   more      the details, shown when you hover it (and in chat on click)
--- Change the id for new news: everyone who clicked the old one away sees
--- the new one. SK.NEWS = nil: no line at all.
-SK.NEWS = {
-    id = "scroll-bag",
-    headline = "New: the Scroll Bag, a settings window and themes",
-    more = {
-        "Scroll Bag (/sk bag): every deciphered scroll you have, in your bags, bank and mail. Pick how many to keep, then stack, sell, mail or bank the extras.",
-        "Right-click the Imbue or Familiar button for a row of picks. Star one to pin it.",
-        "Works with AdiBags, Baganator, Bagnon, BetterBags and ArkInventory.",
-        "Scrollkeeper has its own settings window now: /sk options.",
-        "Themes: Classic, Dark, Darker classic and Modern (Options > Panel).",
-        "Don't use a part? Turn it off in Options > Modules.",
-        "Opt-in, anonymous usage stats help decide what to improve next (Options > Sharing).",
-    },
-}
+-- The news line on the panel (under the title). Not used right now:
+-- news goes in chat, once, as a message below. To bring the line back:
+--   SK.NEWS = { id = "new name", headline = "...", short = "...", more = { "...", ... } }
+SK.NEWS = nil
 
 SK.MESSAGES = {
+    {
+        id = "news-scroll-bag",
+        alert = true,
+        lines = {
+            "|TInterface\\GossipFrame\\AvailableQuestIcon:16:16|t |cffffd100New: the Scroll Bag, a settings window and themes!|r",
+            "|cffffd100-|r Scroll Bag (/sk bag): every deciphered scroll you have, in your bags, bank and mail. Pick how many to keep, then stack, sell, mail or bank the extras.",
+            "|cffffd100-|r Right-click the Imbue or Familiar button for a row of picks. Star one to pin it.",
+            "|cffffd100-|r Works with AdiBags, Baganator, Bagnon, BetterBags and ArkInventory.",
+            "|cffffd100-|r Scrollkeeper has its own settings window now: /sk options.",
+            "|cffffd100-|r Themes: Classic, Dark, Darker classic and Modern (Options > Panel).",
+            "|cffffd100-|r Don't use a part? Turn it off in Options > Modules.",
+        },
+    },
     {
         id = "thanks-1.1.5",
         version = "1.1.5",

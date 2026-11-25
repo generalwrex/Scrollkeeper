@@ -1391,3 +1391,11 @@ do
   print("USAGEWIN errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- NEWS IN CHAT: once, standing out
+do
+  SK.db.messagesSeen = {}
+  SK.ShowMessages()
+  SK.ShowMessages()
+  print("NEWS errors:", #ScrollkeeperDB.errors)
+end

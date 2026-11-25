@@ -579,8 +579,23 @@ function SK.ShowMessages()
             or (type(SK.version) == "string" and SK.version:sub(1, #message.version) == message.version)
         if message.id and wanted and not SK.db.messagesSeen[message.id] then
             SK.db.messagesSeen[message.id] = true
+            local rule = "|cff69ccf0" .. string.rep("-", 60) .. "|r"
+            if message.alert then
+                print(rule)
+                -- The headline in big letters mid-screen, and a sound.
+                local first = message.lines and message.lines[1]
+                if first and RaidNotice_AddMessage and RaidWarningFrame then
+                    pcall(RaidNotice_AddMessage, RaidWarningFrame, "Scrollkeeper: " .. L[first],
+                        ChatTypeInfo and ChatTypeInfo.RAID_WARNING or { r = 1, g = 0.82, b = 0 })
+                end
+                if PlaySound then pcall(PlaySound, SOUNDKIT and SOUNDKIT.READY_CHECK or 8960, "Master") end
+            end
             for i, line in ipairs(message.lines or {}) do
                 if i == 1 then SK.Print(L[line]) else print("  " .. L[line]) end
+            end
+            if message.alert then
+                print("  |cff999999" .. L["Hover the Scrollkeeper buttons for more, or /sk help."] .. "|r")
+                print(rule)
             end
         end
     end
