@@ -1468,3 +1468,13 @@ do
   print("CLOSEALL bag:", ScrollkeeperBagFrame and ScrollkeeperBagFrame:IsShown(), "panel:", ScrollkeeperPanel and ScrollkeeperPanel:IsShown(), "errors:", #ScrollkeeperDB.errors)
   SK.db.showPanel = true
 end
+
+-- DEMO MAIL: demo mages show in the mailbox list
+if SK.isMage and SK.ToggleDemo then
+  SK.ToggleDemo()
+  local plan = SK.MailPlan()
+  local demo = 0
+  for _, p in ipairs(plan) do if p.kind ~= "mine" then demo = demo + 1 end end
+  print("DEMOMAIL people:", #plan, "not mine:", demo)
+  SK.ToggleDemo()
+end

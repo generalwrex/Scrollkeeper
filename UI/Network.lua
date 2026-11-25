@@ -746,7 +746,8 @@ function SK.ToggleDemo()
             local set = {}
             for _, tier in ipairs(tiers) do set[tier] = true end
             return { version = SK.version, class = class, level = level, skill = skill, max = level * 5,
-                     tiers = set, upgrades = upgrades or {}, seen = time(), source = "GUILD", demo = true }
+                     tiers = set, upgrades = upgrades or {}, seen = time(), source = "GUILD", demo = true,
+                     reached = true }   -- (so the mailbox list and the rest show them too)
         end
         SK.peers["Kaelith-Demo"] = Peer("MAGE", 24, 41, { 15, 50 })
         SK.peers["Morwen-Demo"] = Peer("MAGE", 38, 162, { 50 }, { "Blade" })
