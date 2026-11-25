@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.3.0):** the Scroll Bag: every deciphered scroll in your bags, bank and mail in one list, with what to keep, and stack, sell, mail or bank the extras in a click. It works with BetterBags, AdiBags, Baganator, Bagnon and ArkInventory. Scrollkeeper also has its own settings window, themes (including a new Modern look), pins for your favorite familiar and imbues, modules to turn off what you don't use, and a red ? on every window that explains it.
+**Latest (1.3.1):** the Scroll Bag can **Bank extras** now: at the bank it keeps your keep amount of each scroll in your bags and puts the rest in your bank. It also shows how many of each scroll are in your bags, bank and mail, in their own columns. New in 1.3.0: the Scroll Bag, its own settings window, themes (including a new Modern look), pins, modules, and a red ? on every window that explains it.
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 
