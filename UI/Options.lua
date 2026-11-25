@@ -26,7 +26,6 @@ SK.CREDITS = {
 
 SK.LINKS = {
     { "CurseForge", "https://www.curseforge.com/wow/addons/scrollkeeper" },
-    { "GitHub", "https://github.com/generalwrex/scrollkeeper" },
     { "Report a bug", "https://www.curseforge.com/wow/addons/scrollkeeper/issues" },
     { "Buy me a coffee", "https://donorbox.org/generalwrex" },
 }
