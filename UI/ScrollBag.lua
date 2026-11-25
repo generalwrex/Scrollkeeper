@@ -17,7 +17,7 @@
 local _, SK = ...
 local L = SK.L
 
-local WIDTH, LIST_HEIGHT, ROW = 470, 330, 20
+local WIDTH, LIST_HEIGHT, ROW = 580, 370, 22
 local INNER = WIDTH - 32
 local COLORS = {
     keep = { 0.25, 0.85, 0.35 }, extra = { 0.9, 0.25, 0.25 }, aside = { 0.35, 0.6, 1 },
@@ -265,6 +265,22 @@ if StaticPopupDialogs then
     }
 end
 
+-- Start a new preset: ask for a name (a free one filled in), never over
+-- an existing preset.
+local function AskNewPreset()
+    if not StaticPopup_Show then return end
+    local dialog = StaticPopup_Show("SCROLLKEEPER_BAG_NAME", L["Name for the new preset:"], nil, function(name)
+        local ok, why = SK.SaveBagPreset(name, true)
+        if ok then SK.Print(L["saved the preset %s."]:format(name:gsub("^%s+", ""):gsub("%s+$", "")))
+        elseif why then SK.Print(why) end
+    end)
+    local edit = dialog and (dialog.editBox or dialog.EditBox)
+    if edit then
+        edit:SetText(SK.NewBagPresetName())
+        edit:HighlightText()
+    end
+end
+
 local function Confirm(text, run)
     if SK.db.bagConfirm == false or not StaticPopup_Show then run() return end
     StaticPopup_Show("SCROLLKEEPER_BAG_CONFIRM", text, nil, run)
@@ -356,12 +372,7 @@ local function BuildPresetMenu(box)
             items[#items + 1] = { name = name, tip = L["Your preset."], key = name }
         end
         items[#items + 1] = { action = true, name = "|cff40ff40" .. L["Save as new preset..."] .. "|r",
-            tip = L["Keep amounts as they are now, under a name."], run = function()
-                StaticPopup_Show("SCROLLKEEPER_BAG_NAME", L["Name for this preset:"], nil, function(name)
-                    local ok, why = SK.SaveBagPreset(name)
-                    if not ok then SK.Print(why) end
-                end)
-            end }
+            tip = L["Keep amounts as they are now, under a name."], run = AskNewPreset }
         if SK.IsCustomPreset(current) then
             if SK.BagPresetChanged() then
                 items[#items + 1] = { action = true, name = "|cff40ff40" .. L["Save changes to %s"]:format(current) .. "|r",
@@ -443,7 +454,7 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(WIDTH, 560)
+    window:SetSize(WIDTH, 610)
     window:SetPoint("CENTER", -100, 0)
     window:SetToplevel(true)
     window:SetClampedToScreen(true)
@@ -487,6 +498,25 @@ local function Build()
     box:SetScript("OnClick", function() SK.Track("bag.presetmenu") box.menu:Fill(); box.menu:SetShown(not box.menu:IsShown()) end)
     window.preset = box
 
+    -- Save as a new preset, right next to the dropdown.
+    local save = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+    save:SetSize(110, 22)
+    save:SetPoint("LEFT", box, "RIGHT", 8, 0)
+    save:SetText(L["New preset"])
+    save:SetScript("OnClick", function()
+        SK.Track("bag.presetsave")
+        box.menu:Hide()
+        AskNewPreset()
+    end)
+    save:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["New preset"])
+        GameTooltip:AddLine(L["Saves the keep amounts as they are now as a new preset of your own. Never changes an existing one."], 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    save:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    window.savePreset = save
+
     -- Its settings, in the settings window.
     local gear = CreateFrame("Button", nil, window)
     gear:SetSize(18, 18)
@@ -509,17 +539,17 @@ local function Build()
     local previous
     for _, key in ipairs({ "all", "extra", "aside", "bound" }) do
         local chip = Chip(window, key)
-        if previous then chip:SetPoint("LEFT", previous, "RIGHT", 6, 0) else chip:SetPoint("TOPLEFT", 16, -82) end
+        if previous then chip:SetPoint("LEFT", previous, "RIGHT", 8, 0) else chip:SetPoint("TOPLEFT", 16, -86) end
         window.chips[key] = chip
         previous = chip
     end
     window.key = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    window.key:SetPoint("TOPRIGHT", -18, -86)
+    window.key:SetPoint("TOPRIGHT", -18, -90)
     window.key:SetText("|cffd4a62a■|r " .. L["bags"] .. "  |cff5a8fd4■|r " .. L["bank"] .. "  |cffb06ad4■|r " .. L["mail"])
 
     -- The list
     local scroll = CreateFrame("ScrollFrame", "ScrollkeeperBagList", window, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 16, -106)
+    scroll:SetPoint("TOPLEFT", 16, -114)
     scroll:SetSize(INNER - 22, LIST_HEIGHT)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(INNER - 22, LIST_HEIGHT)
@@ -536,7 +566,7 @@ local function Build()
     mailLabel:SetPoint("BOTTOMLEFT", 18, 42)
     mailLabel:SetText(L["Mail extras to:"])
     local mailTo = CreateFrame("EditBox", nil, window, "InputBoxTemplate")
-    mailTo:SetSize(150, 18)
+    mailTo:SetSize(190, 18)
     mailTo:SetPoint("LEFT", mailLabel, "RIGHT", 10, 0)
     mailTo:SetAutoFocus(false)
     -- Forever names are a first name and a surname ("Test Sheep"): keep the
@@ -623,7 +653,7 @@ local function Build()
     local last
     for _, spec in ipairs(specs) do
         local b = SmallButton(window, spec[2], spec[3], function() ACTIONS[spec[1]]() end, spec[4])
-        if last then b:SetPoint("LEFT", last, "RIGHT", 4, 0) else b:SetPoint("BOTTOMLEFT", 16, 12) end
+        if last then b:SetPoint("LEFT", last, "RIGHT", 8, 0) else b:SetPoint("BOTTOMLEFT", 16, 12) end
         window.buttons[spec[1]] = b
         last = b
     end
@@ -678,14 +708,14 @@ local function Row(i)
 
     r.name = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     r.name:SetPoint("LEFT", r.border, "RIGHT", 6, 0)
-    r.name:SetWidth(150)
+    r.name:SetWidth(196)
     r.name:SetJustifyH("LEFT")
     r.name:SetWordWrap(false)
 
     -- Pin star (familiars and imbues).
     r.pin = CreateFrame("Button", nil, r)
     r.pin:SetSize(14, 14)
-    r.pin:SetPoint("LEFT", r, "LEFT", 184, 0)
+    r.pin:SetPoint("LEFT", r, "LEFT", 236, 0)
     r.pin.tex = r.pin:CreateTexture(nil, "OVERLAY")
     r.pin.tex:SetAllPoints()
     r.pin.tex:SetTexture("Interface\\COMMON\\FavoritesIcon")
@@ -700,8 +730,8 @@ local function Row(i)
 
     -- Where they are: a thin bar in three colors.
     r.bar = CreateFrame("Frame", nil, r)
-    r.bar:SetSize(90, 6)
-    r.bar:SetPoint("LEFT", r, "LEFT", 204, 0)
+    r.bar:SetSize(116, 6)
+    r.bar:SetPoint("LEFT", r, "LEFT", 262, 0)
     local barBg = r.bar:CreateTexture(nil, "BACKGROUND")
     barBg:SetAllPoints()
     barBg:SetColorTexture(0.16, 0.16, 0.16, 1)
@@ -717,7 +747,7 @@ local function Row(i)
     -- Keep: - n +
     r.minus = CreateFrame("Button", nil, r)
     r.minus:SetSize(14, 14)
-    r.minus:SetPoint("LEFT", r, "LEFT", 302, 0)
+    r.minus:SetPoint("LEFT", r, "LEFT", 396, 0)
     r.minus:SetNormalFontObject("GameFontNormal")
     r.minus:SetText("-")
     r.keep = CreateFrame("Button", nil, r)
@@ -754,8 +784,8 @@ local function Row(i)
     end
 
     r.status = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    r.status:SetPoint("LEFT", r, "LEFT", 362, 0)
-    r.status:SetWidth(52)
+    r.status:SetPoint("LEFT", r, "LEFT", 466, 0)
+    r.status:SetWidth(56)
     r.status:SetJustifyH("LEFT")
     r.status:SetWordWrap(false)
     r.count = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")

@@ -1399,3 +1399,13 @@ do
   SK.ShowMessages()
   print("NEWS errors:", #ScrollkeeperDB.errors)
 end
+
+-- NEW PRESET: never over an existing one; a free name suggested
+if SK.isMage then
+  local name = SK.NewBagPresetName()
+  print("NEWPRESET first:", name, SK.SaveBagPreset(name, true))
+  print("NEWPRESET again:", SK.SaveBagPreset(name, true))
+  print("NEWPRESET next name:", SK.NewBagPresetName())
+  SK.DeleteBagPreset(name)
+  print("NEWPRESET errors:", #ScrollkeeperDB.errors)
+end

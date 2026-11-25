@@ -194,9 +194,17 @@ local function Snapshot()
 end
 
 -- Save the current numbers as a new preset (or over a custom one).
-function SK.SaveBagPreset(name)
+-- asNew: making a new preset, so never over an existing one.
+function SK.SaveBagPreset(name, asNew)
     name = type(name) == "string" and name:gsub("^%s+", ""):gsub("%s+$", "") or ""
     if name == "" then return false, L["Give the preset a name."] end
+    if asNew then
+        for existing in pairs(CustomPresets()) do
+            if existing:lower() == name:lower() then
+                return false, L["There's already a preset called %s. Pick another name."]:format(existing)
+            end
+        end
+    end
     for _, preset in ipairs(SK.BAG_PRESETS) do
         if name:lower() == L[preset.name]:lower() or name:lower() == preset.name:lower() then
             return false, L["That's a built-in preset's name. Pick another."]
@@ -205,6 +213,19 @@ function SK.SaveBagPreset(name)
     CustomPresets()[name] = { keep = Snapshot(), at = time() }
     SK.UseBagPreset(name)
     return true
+end
+
+-- A name for a new preset that isn't taken: "My preset", "My preset 2"...
+function SK.NewBagPresetName()
+    local taken = {}
+    for existing in pairs(CustomPresets()) do taken[existing:lower()] = true end
+    local base = L["My preset"]
+    if not taken[base:lower()] then return base end
+    for i = 2, 99 do
+        local name = base .. " " .. i
+        if not taken[name:lower()] then return name end
+    end
+    return base
 end
 
 function SK.RenameBagPreset(old, new)
