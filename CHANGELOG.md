@@ -3,6 +3,7 @@
 ## Unreleased: Bank extras
 
 - New in the Scroll Bag: **Bank extras**. At the bank, it keeps your keep amount of each scroll in your bags and puts the rest in your bank (Deposit set aside only moves imbues for weapons you don't have). Protected scrolls stay put.
+- The Scroll Bag shows **how many are in your bags, bank and mail** as numbers, each in its own column with a heading (Bags, Bank, Mail, Keep, Status, All), instead of a colored bar.
 
 ## 1.3.0
 

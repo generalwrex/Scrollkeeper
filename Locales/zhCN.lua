@@ -799,3 +799,10 @@ L["A few minutes before it runs out (set how many in the settings)."] = "在快�
 L["(not recommended)"] = "（不推荐）"
 L["the scroll icon idea, and the idea for Doorways"] = "卷轴图标的点子，以及传送门的点子"
 L["Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds"] = "网络中的同道法师（RP-PvP 部落），分享了社区大部分 175 级几率数据"
+
+-- Scroll Bag column headings
+L["Bags"] = "背包"
+L["Bank"] = "银行"
+L["Mail"] = "邮件"
+L["Status"] = "状态"
+L["All"] = "全部"

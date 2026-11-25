@@ -801,3 +801,10 @@ L["A few minutes before it runs out (set how many in the settings)."] = "Quelque
 L["(not recommended)"] = "(déconseillé)"
 L["the scroll icon idea, and the idea for Doorways"] = "l'idée de l'icône du parchemin et celle des Passages"
 L["Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds"] = "confrère mage du réseau (RP-PvP, Horde) qui a partagé la plupart des chances de la communauté pour le palier 175"
+
+-- Scroll Bag column headings
+L["Bags"] = "Sacs"
+L["Bank"] = "Banque"
+L["Mail"] = "Courrier"
+L["Status"] = "État"
+L["All"] = "Total"

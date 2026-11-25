@@ -24,7 +24,10 @@ local INNER = WIDTH - 32
 local COLORS = {
     keep = { 0.25, 0.85, 0.35 }, extra = { 0.9, 0.25, 0.25 }, aside = { 0.35, 0.6, 1 },
 }
-local WHERE_COLORS = { bags = { 0.83, 0.65, 0.16 }, bank = { 0.35, 0.56, 0.83 }, mail = { 0.69, 0.42, 0.83 } }
+local WHERE_COLORS = { bags = { 0.95, 0.8, 0.35 }, bank = { 0.45, 0.68, 1 }, mail = { 0.8, 0.55, 1 } }
+local WHERE = { "bags", "bank", "mail" }
+-- Where each column starts in a row (the headings above the list line up).
+local COLUMN_X = { bags = 262, bank = 296, mail = 330 }
 local GROUP_ORDER = { "upgrades", "imbues:staff", "imbues:dagger", "imbues:sword", "imbues:other", "familiars", "combat", "utility" }
 local GROUP_LABELS = { upgrades = "Upgrades", familiars = "Familiars", combat = "Combat", utility = "Utility",
     ["imbues:staff"] = "Imbues: staff", ["imbues:dagger"] = "Imbues: dagger", ["imbues:sword"] = "Imbues: sword",
@@ -507,7 +510,7 @@ local function Build()
         frame.SetTitle = function(self, text) if self.TitleText then self.TitleText:SetText(text) end end
     end
     window = frame
-    window:SetSize(WIDTH, 610)
+    window:SetSize(WIDTH, 624)
     window:SetPoint("CENTER", -100, 0)
     window:SetToplevel(true)
     window:SetClampedToScreen(true)
@@ -597,13 +600,28 @@ local function Build()
         window.chips[key] = chip
         previous = chip
     end
+    -- Column headings over the list: Bags / Bank / Mail / Keep / Status / All.
+    local headings = {
+        { L["Bags"], 16 + COLUMN_X.bags, 32, WHERE_COLORS.bags },
+        { L["Bank"], 16 + COLUMN_X.bank, 32, WHERE_COLORS.bank },
+        { L["Mail"], 16 + COLUMN_X.mail, 32, WHERE_COLORS.mail },
+        { L["Keep"], 16 + 372, 54 },
+        { L["Status"], 16 + 436, 60 },
+        { L["All"], 16 + 494, 26 },
+    }
+    for _, h in ipairs(headings) do
+        local fs = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        fs:SetPoint("TOPLEFT", h[2], -114)
+        fs:SetWidth(h[3])
+        fs:SetJustifyH(h[1] == L["Status"] and "LEFT" or "CENTER")
+        if h[4] then fs:SetTextColor(h[4][1], h[4][2], h[4][3]) end
+        fs:SetText(h[1])
+    end
     window.key = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    window.key:SetPoint("TOPRIGHT", -18, -90)
-    window.key:SetText("|cffd4a62a■|r " .. L["bags"] .. "  |cff5a8fd4■|r " .. L["bank"] .. "  |cffb06ad4■|r " .. L["mail"])
 
     -- The list
     local scroll = CreateFrame("ScrollFrame", "ScrollkeeperBagList", window, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 16, -114)
+    scroll:SetPoint("TOPLEFT", 16, -128)
     scroll:SetSize(INNER - 22, LIST_HEIGHT)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(INNER - 22, LIST_HEIGHT)
@@ -928,20 +946,15 @@ local function Row(i)
     end)
     r.pin:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    -- Where they are: a thin bar in three colors.
-    r.bar = CreateFrame("Frame", nil, r)
-    r.bar:SetSize(100, 6)
-    r.bar:SetPoint("LEFT", r, "LEFT", 262, 0)
-    local barBg = r.bar:CreateTexture(nil, "BACKGROUND")
-    barBg:SetAllPoints()
-    barBg:SetColorTexture(0.16, 0.16, 0.16, 1)
-    r.parts = {}
-    for _, where in ipairs({ "bags", "bank", "mail" }) do
-        local t = r.bar:CreateTexture(nil, "ARTWORK")
-        t:SetHeight(6)
-        local c = WHERE_COLORS[where]
-        t:SetColorTexture(c[1], c[2], c[3], 1)
-        r.parts[where] = t
+    -- Where they are: how many in your bags, bank and mail, a column each
+    -- (under the Bags / Bank / Mail headings).
+    r.where = {}
+    for i, where in ipairs(WHERE) do
+        local fs = r:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        fs:SetPoint("LEFT", r, "LEFT", COLUMN_X[where], 0)
+        fs:SetWidth(32)
+        fs:SetJustifyH("CENTER")
+        r.where[where] = fs
     end
 
     -- Keep: - n +
@@ -1041,16 +1054,12 @@ local function FillRow(r, e, striped)
     r.pin:SetShown(pinnable and true or false)
     r.pin.tex:SetDesaturated(not e.pinned)
     r.pin.tex:SetAlpha(e.pinned and 1 or 0.35)
-    -- Bar
-    local x = 0
-    for _, where in ipairs({ "bags", "bank", "mail" }) do
-        local part = r.parts[where]
-        local width = e.total > 0 and (e[where] / e.total) * 90 or 0
-        part:ClearAllPoints()
-        part:SetPoint("LEFT", r.bar, "LEFT", x, 0)
-        part:SetWidth(math.max(width, 0.01))
-        part:SetShown(width > 0)
-        x = x + width
+    -- Bags / Bank / Mail counts ("-" for none)
+    for _, where in ipairs(WHERE) do
+        local n = e[where] or 0
+        local c = WHERE_COLORS[where]
+        r.where[where]:SetText(n > 0 and tostring(n) or "|cff505050-|r")
+        r.where[where]:SetTextColor(c[1], c[2], c[3])
     end
     r.keep:SetText(e.keep == nil and L["all"] or tostring(e.keep))
     if e.status == "aside" then
