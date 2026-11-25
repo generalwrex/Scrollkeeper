@@ -78,6 +78,7 @@ local function Build()
     local titleLabel = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     titleLabel:SetPoint("TOPLEFT", 18, -64)
     titleLabel:SetText(L["Title:"])
+    window.titleLabel = titleLabel
     local titleBox = CreateFrame("EditBox", nil, window, "InputBoxTemplate")
     titleBox:SetPoint("LEFT", titleLabel, "RIGHT", 10, 0)
     titleBox:SetPoint("RIGHT", window, "RIGHT", -20, 0)
@@ -95,7 +96,7 @@ local function Build()
     window.titleBox = titleBox
 
     local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 16, -90)
+    scroll:SetPoint("TOPLEFT", 16, -64)
     scroll:SetPoint("BOTTOMRIGHT", -36, 44)
 
     local box = CreateFrame("EditBox", nil, scroll)
@@ -134,9 +135,12 @@ local function Show(title, hint, text, note, issueTitle)
     window:SetTitle(title)
     window.hint:SetText(hint)
     window.note:SetText(note or "")
+    -- CurseForge comments have no title: it's the first line of the text,
+    -- so one copy gets everything.
     window.title = issueTitle or ""
-    window.titleBox:SetText(window.title)
-    window.titleBox:SetCursorPosition(0)
+    window.titleLabel:Hide()
+    window.titleBox:Hide()
+    if window.title ~= "" then text = window.title .. "\n" .. text end
     window.text = text
     window.box:SetText(text)
     window:Show()
@@ -324,25 +328,26 @@ end
 function SK.BugReportText()
     local db = SK.db
     local lines = {}
-    local function Line(label, value) lines[#lines + 1] = label .. ": " .. tostring(value) end
+    local function Add(text) lines[#lines + 1] = text end
 
     local build, buildNumber, _, interface = GetBuildInfo()
     local _, class = UnitClass("player")
     local skill = SK.GetComprehension()
-    lines[#lines + 1] = "Scrollkeeper bug report"
-    Line("Scrollkeeper", SK.version)
-    Line("Game", ("%s (%s), interface %s, %s"):format(build or "?", buildNumber or "?", interface or "?",
-        GetLocale and GetLocale() or "?"))
-    Line("Character", ("%s level %d, Comprehension %d/%d"):format(class or "?", UnitLevel("player") or 0,
-        skill.rank, skill.max))
-    Line("Realm", ("%s, ruleset %s, %s"):format(tostring(SK.RealmName()),
-        tostring(SK.ServerKind and SK.ServerKind() or "?"), tostring(UnitFactionGroup and UnitFactionGroup("player"))))
-    Line("View", SK.ViewMode and SK.ViewMode() or "?")
-    Line("Settings", ("panel %s, tooltips %s, sharing %s, channel %s, map pins %s, scale %s"):format(
-        tostring(db.showPanel), tostring(db.showTooltips), tostring(db.share),
-        tostring(db.shareChannel), tostring(db.mapPins), tostring(db.scale)))
+    -- Laid out for a CurseForge comment: short, plain lines, the part to
+    -- fill in first.
+    Add("What I was doing: ")
+    Add("")
+    Add(("Scrollkeeper %s · game %s (%s, interface %s) · %s"):format(tostring(SK.version), build or "?", buildNumber or "?",
+        interface or "?", GetLocale and GetLocale() or "?"))
+    Add(("%s level %d · Comprehension %d/%d · %s %s · view %s · theme %s"):format(class or "?", UnitLevel("player") or 0,
+        skill.rank, skill.max, tostring(SK.ServerKind and SK.ServerKind() or "?"),
+        tostring(UnitFactionGroup and UnitFactionGroup("player")), tostring(SK.ViewMode and SK.ViewMode() or "?"),
+        tostring(SK.UI.ThemeName and SK.UI.ThemeName() or "?")))
+    Add(("Settings: panel %s, tooltips %s, sharing %s, map pins %s, scale %s"):format(
+        tostring(db.showPanel), tostring(db.showTooltips), tostring(db.sharing or db.share),
+        tostring(db.mapPins), tostring(db.scale)))
 
-    -- Other addons that are loaded (just a count and the names, to spot conflicts).
+    -- Other addons that are loaded (to spot conflicts), at most 25 names.
     local loaded = {}
     if C_AddOns and C_AddOns.GetNumAddOns then
         for i = 1, C_AddOns.GetNumAddOns() do
@@ -350,17 +355,24 @@ function SK.BugReportText()
             if name and name ~= "Scrollkeeper" and C_AddOns.IsAddOnLoaded(i) then loaded[#loaded + 1] = name end
         end
     end
-    Line("Other addons", #loaded > 0 and table.concat(loaded, ", ") or "none")
+    table.sort(loaded)
+    local shown = {}
+    for i = 1, math.min(#loaded, 25) do shown[i] = loaded[i] end
+    Add(("Other addons (%d): %s%s"):format(#loaded, #shown > 0 and table.concat(shown, ", ") or "none",
+        #loaded > 25 and (", +%d more"):format(#loaded - 25) or ""))
 
-    lines[#lines + 1] = ""
+    -- The last few errors, each kept short.
     local errors = db.errors or {}
     if #errors == 0 then
-        lines[#lines + 1] = "Errors: none caught"
+        Add("Errors: none caught")
     else
-        lines[#lines + 1] = ("Errors (%d, newest last):"):format(#errors)
-        for _, entry in ipairs(errors) do
-            lines[#lines + 1] = ("[%s] %s: %s"):format(date("%Y-%m-%d %H:%M", entry.at or 0),
-                tostring(entry.where), tostring(entry.error))
+        local first = math.max(1, #errors - 4)
+        Add(("Errors (last %d of %d):"):format(#errors - first + 1, #errors))
+        for i = first, #errors do
+            local entry = errors[i]
+            local message = tostring(entry.error):gsub("\n", " ")
+            if #message > 220 then message = message:sub(1, 217) .. "..." end
+            Add(("- %s %s: %s"):format(date("%m-%d %H:%M", entry.at or 0), tostring(entry.where), message))
         end
     end
     return table.concat(lines, "\n")
@@ -380,7 +392,7 @@ function SK.ShowExport()
     local _, _, heard = SK.ExportText()
     local issueTitle = ("[Data] Skill %d/%d, %d deciphered"):format(skill.rank, skill.max, SK.db.deciphered or 0)
         .. (heard > 0 and (", +%d players heard"):format(heard) or "")
-    Show(L["Scrollkeeper Export"], L["Copy the title and the text into a comment on CurseForge"], text,
+    Show(L["Scrollkeeper Export"], L["Select all, Ctrl+C, and paste it in a comment on CurseForge"], text,
         L["Scroll data only. No character or account names."], issueTitle)
 end
 
@@ -389,8 +401,8 @@ function SK.ShowBugReport()
     local last = errors[#errors]
     local issueTitle = last and ("[Bug] " .. tostring(last.where) .. ": " .. tostring(last.error):gsub("^.-:%d+: ", ""):sub(1, 70))
         or "[Bug] "
-    Show(L["Scrollkeeper Bug Report"], L["Copy the title and the text into a comment on CurseForge"], SK.BugReportText(),
-        L["Please also say what you were doing when it went wrong."], issueTitle)
+    Show(L["Scrollkeeper Bug Report"], L["Select all, Ctrl+C, and paste it in a comment on CurseForge"], SK.BugReportText(),
+        L["Write what you were doing on the first line, then copy it."], issueTitle)
 end
 
 -- Keep your latest export in the saved data, so the share script

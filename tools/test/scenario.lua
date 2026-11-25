@@ -1452,3 +1452,11 @@ do
   print("ABOUT errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- BUG REPORT: one text for a CurseForge comment
+do
+  local text = SK.BugReportText()
+  print("BUGREPORT lines:", select(2, text:gsub("\n", "")) + 1, "first:", text:match("^[^\n]*"))
+  SK.ShowBugReport()
+  print("BUGREPORT errors:", #ScrollkeeperDB.errors)
+end
