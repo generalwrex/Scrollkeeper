@@ -26,7 +26,8 @@ SK.HELP = {
         "- and +: change the keep amount (Shift: 5). Click the number for keep all.",
         "Right-click a scroll: keep all or a number, protect it, pin it, don't set it aside, link it.",
         "Presets: pick one, or New preset to save your keep amounts under a name.",
-        "Stack, Sell extras (at a vendor), Mail extras (at a mailbox), Deposit set aside (at the bank).",
+        "Stack, Sell extras (at a vendor), Deposit set aside (at the bank).",
+        "Sync bank extras: at the bank, extras go in and what you're missing comes out. Sync mail extras: Send Mail tab attaches extras, Inbox takes out what you're missing. Tick Auto-sync at the bank to sync every time you open it.",
     } },
     codex = { "Codex", {
         "Every mage scroll and library book in the game, and where they drop.",

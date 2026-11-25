@@ -234,9 +234,16 @@ local function SkinControl(control, sq)
     parts.edge:SetShown(sq and true or false)
     squared[control] = sq and true or nil
     if sq then
-        Color(parts.bg, isButton and sq.button or sq.input)
-        parts.edge:SetBackdropBorderColor(sq.edge[1], sq.edge[2], sq.edge[3], 1)
-        if isButton then Rest(control, parts) end
+        -- (The once-a-second look over open windows comes through here too:
+        -- a button the mouse is on keeps its hover look.)
+        if isButton and control.IsMouseOver and control:IsMouseOver() and (not control.IsEnabled or control:IsEnabled()) then
+            Color(parts.bg, sq.hover)
+            parts.edge:SetBackdropBorderColor(sq.accent[1], sq.accent[2], sq.accent[3], 1)
+        else
+            Color(parts.bg, isButton and sq.button or sq.input)
+            parts.edge:SetBackdropBorderColor(sq.edge[1], sq.edge[2], sq.edge[3], 1)
+            if isButton then Rest(control, parts) end
+        end
     end
     if isButton and control.SetNormalFontObject then
         -- White text on the square buttons; the game's gold otherwise.

@@ -172,6 +172,7 @@ function SK.SetKeepAmount(itemID, n)
     if value == PresetKeep(SK.BagPreset(), itemID) then value = nil end
     State().changes[itemID] = value
     SK.Send("STASH_CHANGED")
+    SK.Send("KEEP_CHANGED")
 end
 
 function SK.BagPresetChanged() return next(State().changes) ~= nil end
@@ -181,6 +182,7 @@ function SK.KeepChanged(itemID) return State().changes[itemID] ~= nil end
 function SK.ResetKeepAmount(itemID)
     State().changes[itemID] = nil
     SK.Send("STASH_CHANGED")
+    SK.Send("KEEP_CHANGED")
 end
 
 function SK.UseBagPreset(key)
@@ -188,6 +190,7 @@ function SK.UseBagPreset(key)
     s.preset = key
     s.changes = {}
     SK.Send("STASH_CHANGED")
+    SK.Send("KEEP_CHANGED")
 end
 
 -- Every scroll's keep amount right now (preset plus changes), for saving.

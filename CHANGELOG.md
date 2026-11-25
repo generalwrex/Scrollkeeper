@@ -1,5 +1,17 @@
 # Scrollkeeper
 
+## 1.3.2
+
+- The Scroll Bag's bank and mail buttons now work **both ways**, so your bags end up with your keep amount of each scroll:
+  - **Sync bank extras** (at the bank): extras in your bags go into the bank, and what your bags are missing comes out of it. Raise a keep amount and click it to get more out (scrolls set to keep all stay where they are).
+  - **Sync mail extras** (at the mailbox): on the Send Mail tab it attaches your extras like Mail extras did; on the Inbox it takes what your bags are missing out of your mail (never cash-on-delivery mail).
+  - New: **Auto-sync at the bank**, a check right on the Scroll Bag (and in /sk options > Scroll Bag): Sync bank extras runs on its own when you open your bank. Off by default.
+  - New setting: **Sync mail automatically** (/sk options > Scroll Bag, off by default).
+  - With Auto-sync on and the bank open, changing a keep amount (or the preset) syncs again a second after your last click.
+  - The button shows **Syncing...** while it works, then **Synced** or **In sync**, so you can see on the panel when it's done. When there's nothing to sync, it's grayed out and reads **In sync**. Chat says what really changed in your bags ("into the bank: 2 Odd Melon"); auto-sync only speaks up when it moved something.
+  - The game's red **"Couldn't split those items"** messages are hidden while the Scroll Bag moves scrolls (a setting, on by default). Moves wait for the last one to land, and if one really won't go, Scrollkeeper stops and says so in chat.
+- Fixed: in the Modern theme, a button's hover highlight no longer goes away after a few seconds.
+
 ## 1.3.1
 
 - New in the Scroll Bag: **Bank extras**. At the bank, it keeps your keep amount of each scroll in your bags and puts the rest in your bank (Deposit set aside only moves imbues for weapons you don't have). Protected scrolls stay put.

@@ -1484,3 +1484,28 @@ if SK.isMage and SK.ScrollBagActions and SK.ScrollBagActions.bank then
   SK.ScrollBagActions.bank()
   print("BANKEXTRAS button:", ScrollkeeperBagFrame and ScrollkeeperBagFrame.buttons.bank ~= nil, "errors:", #ScrollkeeperDB.errors)
 end
+
+-- SYNC: both buttons there, and say where to go
+if SK.isMage and ScrollkeeperBagFrame then
+  SK.ScrollBagActions.bank(); SK.ScrollBagActions.mailsync()
+  local b = ScrollkeeperBagFrame.buttons
+  print("SYNC buttons:", b.bank ~= nil, b.mailsync ~= nil, b.mail == nil, b.delete ~= nil, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- AUTOSYNC: the bank check on the Scroll Bag
+if SK.isMage and ScrollkeeperBagFrame then
+  local a = ScrollkeeperBagFrame.autoSync
+  a:SetChecked(true); a:GetScript("OnClick")(a)
+  local on = SK.db.bagAutoSyncBank
+  a:SetChecked(false); a:GetScript("OnClick")(a)
+  print("AUTOSYNC check:", a ~= nil, on, SK.db.bagAutoSyncBank, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- REFINE: sync shows on the button, auto-sync re-runs on keep changes, quiet when nothing to do
+if SK.isMage and ScrollkeeperBagFrame then
+  SK.db.bagAutoSyncBank = true
+  SK.Send("KEEP_CHANGED")
+  SK.ScrollBagActions.bank(true); SK.ScrollBagActions.mailsync(true)
+  SK.db.bagAutoSyncBank = false
+  print("REFINE bank label:", ScrollkeeperBagFrame.buttons.bank:GetText(), "errors:", #ScrollkeeperDB.errors)
+end

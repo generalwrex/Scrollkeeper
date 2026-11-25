@@ -25,7 +25,7 @@ end
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.3.1"
+SK.version = "1.3.2"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -291,6 +291,9 @@ local DEFAULTS = {
     bagChatStatus = true,    -- ...the "deciphered:" chat line says keep, extra or set aside
     bagTooltip = true,       -- ...a keep/extra line on deciphered scroll tooltips
     bagConfirm = true,       -- ...ask before selling extras
+    bagAutoSyncBank = false, -- ...Sync bank extras on its own when the bank opens (also a check on the Scroll Bag)
+    bagAutoSyncMail = false, -- ...Sync mail extras on its own once the mail comes in
+    bagHideErrors = true,    -- ...hide the game's red "Couldn't split those items" while Scrollkeeper moves scrolls
     bagAllowDelete = false,  -- ...show the Delete extras button
     bagMarks = true,         -- ...colored corner marks on scrolls in your bags (and bag addons)
     bagJunk = false,         -- ...extras count as junk in bag addons with a junk list

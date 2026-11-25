@@ -43,36 +43,149 @@ local function Protected(itemID) return SK.db.bagProtected and SK.db.bagProtecte
 -- Doing things: one step at a time, a moment apart, so the game keeps up
 ------------------------------------------------------------------------
 
+-- The same move tried again and again means the game isn't doing it:
+-- stop instead of looping.
+local lastTry, tries = nil, 0
+local function Trying(key, itemID, where)
+    if key == lastTry then tries = tries + 1 else lastTry, tries = key, 1 end
+    if tries >= 3 then
+        lastTry, tries = nil, 0
+        local name = (itemID and C_Item and SK.Try(C_Item.GetItemNameByID, itemID)) or L["that scroll"]
+        error(L["the game wouldn't move %s %s, so Scrollkeeper stopped."]:format(name, where), 0)
+    end
+end
+
+-- After a split, wait until the part shows up in its new slot before the
+-- next move: moving again too soon is what makes the game say "Couldn't
+-- split those items" (the same as clicking items too fast yourself).
+local landing
+local function Landing()
+    if not landing then return false end
+    local info = SK.Try(C_Container.GetContainerItemInfo, landing.bag, landing.slot)
+    if (type(info) == "table" and not info.isLocked) or GetTime() > landing.by then
+        landing = nil
+        return false
+    end
+    return true
+end
+local function Empty(bag, slot)
+    return SK.Try(C_Container.GetContainerItemInfo, bag, slot) == nil
+end
+-- Really empty, and not the slot a split is still on its way to.
+local function Open(bag, slot)
+    if landing and landing.bag == bag and landing.slot == slot then return false end
+    return Empty(bag, slot)
+end
+local function Land(bag, slot) landing = { bag = bag, slot = slot, by = GetTime() + 2 } end
+
+-- The button shows it's working ("Syncing...") and then how it went for a
+-- moment, so you can see on the panel when it finished.
+local working = {}   -- button -> { run, showing }
+local LABELS = {}    -- button key -> its label
+local function Working(key, doing)
+    local b = window and window.buttons and window.buttons[key]
+    if not b then return function() end end
+    local w = working[b]
+    if not w then w = { run = 0 }; working[b] = w end
+    b:Enable()
+    b:SetText("|cffffff00" .. doing .. "|r")
+    w.run, w.showing = w.run + 1, true
+    local mine = w.run
+    return function(text)
+        b:SetText("|cff40ff40" .. (text or L["Done"]) .. "|r")
+        C_Timer.After(2.5, function()
+            if w.run == mine then
+                w.showing = false
+                b:SetText(LABELS[key] or "")
+                SK.UpdateSyncButtons()
+            end
+        end)
+    end
+end
+
 local busy
-local function RunSteps(name, step, done)
-    if busy then SK.Print(L["one thing at a time: Scrollkeeper is still busy (%s)."]:format(busy)) return end
+-- While Scrollkeeper moves scrolls, the game's red "Couldn't split those
+-- items" / "That item is locked" messages (and their sound) are its own
+-- business: hide them, then put them back. (A setting: bagHideErrors.)
+local errorsHidden = false
+local function HideErrors()
+    if SK.db.bagHideErrors == false or errorsHidden then return end
+    if UIErrorsFrame and UIErrorsFrame.IsEventRegistered and UIErrorsFrame:IsEventRegistered("UI_ERROR_MESSAGE") then
+        UIErrorsFrame:UnregisterEvent("UI_ERROR_MESSAGE")
+        errorsHidden = true
+    end
+end
+local function ShowErrors()
+    if not errorsHidden then return end
+    errorsHidden = false
+    -- A moment later, so a message for the last move is still hidden.
+    C_Timer.After(0.5, function()
+        if not errorsHidden and UIErrorsFrame then UIErrorsFrame:RegisterEvent("UI_ERROR_MESSAGE") end
+    end)
+end
+
+local function RunSteps(name, step, done, quiet)
+    if busy then
+        if quiet then return end
+        SK.Print(L["one thing at a time: Scrollkeeper is still busy (%s)."]:format(busy))
+        return
+    end
     busy = name
+    lastTry, tries, landing = nil, 0, nil
+    HideErrors()
     local count, guard = 0, 0
+    local function Finish()
+        busy = nil
+        ShowErrors()
+        if done then done(count) end
+    end
     local function Next()
         guard = guard + 1
-        if guard > 200 or SK.InCombat() then busy = nil; if done then done(count) end return end
+        if guard > 200 or SK.InCombat() then Finish() return end
         local ok, did = pcall(step)
         if ok and did then
-            count = count + 1
+            -- "wait": the game is still moving something, try again shortly.
+            if did ~= "wait" then count = count + 1 end
             C_Timer.After(0.35, Next)
         else
-            busy = nil
             if not ok then SK.Print("|cffff5555" .. tostring(did) .. "|r") end
-            if done then done(count) end
+            Finish()
         end
     end
     Next()
 end
 
+-- Only plain bags take scrolls: not the reagent bag or other special bags
+-- (a split put there fails with "Couldn't split those items").
+local function PlainBag(bag)
+    local _, family = SK.Try(C_Container.GetContainerNumFreeSlots, bag)
+    return family == nil or family == 0
+end
+SK.PlainBag = PlainBag
 local function FreeSlot()
     for bag = 0, 5 do
-        local free = C_Container.GetContainerFreeSlots and SK.Try(C_Container.GetContainerFreeSlots, bag)
-        if type(free) == "table" and free[1] then return bag, free[1] end
+        if PlainBag(bag) then
+            local free = C_Container.GetContainerFreeSlots and SK.Try(C_Container.GetContainerFreeSlots, bag)
+            if type(free) == "table" then
+                for _, slot in ipairs(free) do
+                    if Open(bag, slot) then return bag, slot end
+                end
+            end
+        end
     end
     return nil
 end
 
+local BANK_BAGS = { -1, 6, 7, 8, 9, 10, 11, 12 }
 local function Locked()
+    if SK.BankIsOpen() then
+        for _, bag in ipairs(BANK_BAGS) do
+            for slot = 1, SK.Try(C_Container.GetContainerNumSlots, bag) or 0 do
+                local info = SK.Try(C_Container.GetContainerItemInfo, bag, slot)
+                if type(info) == "table" and info.isLocked then return true end
+            end
+        end
+    end
     for bag = 0, 5 do
         for slot = 1, SK.Try(C_Container.GetContainerNumSlots, bag) or 0 do
             local info = SK.Try(C_Container.GetContainerItemInfo, bag, slot)
@@ -95,7 +208,7 @@ end
 
 -- Merge part-stacks of the same scroll in your bags.
 local function StackStep()
-    if Locked() then return true end
+    if Locked() then return "wait" end
     local byID = {}
     for bag = 0, 5 do
         for slot = 1, SK.Try(C_Container.GetContainerNumSlots, bag) or 0 do
@@ -148,7 +261,7 @@ local function AtMailbox() return SendMailFrame and SendMailFrame:IsShown() end
 local splitOff   -- the slot a part-stack was just split into: sold next
 local function SellStep()
     if not AtMerchant() then splitOff = nil return false end
-    if Locked() then return true end
+    if Locked() then return "wait" end
     if splitOff then
         local spot = splitOff
         splitOff = nil
@@ -165,7 +278,7 @@ local function SellStep()
         return true
     end
     local bag, slot = FreeSlot()
-    if not bag then error(L["no empty bag slot to split a stack into. Make room for one."]) end
+    if not bag then error(L["no empty bag slot to split a stack into. Make room for one."], 0) end
     ClearCursor()
     local info = SK.Try(C_Container.GetContainerItemInfo, stack.bag, stack.slot)
     C_Container.SplitContainerItem(stack.bag, stack.slot, stack.take)
@@ -185,7 +298,7 @@ local function FreeAttachment()
 end
 local function MailStep()
     if not AtMailbox() then return false end
-    if Locked() then return true end
+    if Locked() then return "wait" end
     local index = FreeAttachment()
     if not index then return false end
     local stack = NextExtra(function(e) return e.bound end)
@@ -205,7 +318,7 @@ end
 -- open moves it there).
 local function DepositStep()
     if not SK.BankIsOpen() then return false end
-    if Locked() then return true end
+    if Locked() then return "wait" end
     for bag = 0, 5 do
         for slot = 1, SK.Try(C_Container.GetContainerNumSlots, bag) or 0 do
             local info = SK.Try(C_Container.GetContainerItemInfo, bag, slot)
@@ -224,11 +337,16 @@ end
 -- Bank: extras go into the bank. Whole stacks move with a click (using
 -- an item with the bank open); for a part-stack, the part is split off
 -- onto the cursor and put in an empty bank slot.
-local BANK_BAGS = { -1, 6, 7, 8, 9, 10, 11, 12 }
 local function FreeBankSlot()
     for _, bag in ipairs(BANK_BAGS) do
-        local free = SK.Try(C_Container.GetContainerFreeSlots, bag)
-        if type(free) == "table" and free[1] then return bag, free[1] end
+        if PlainBag(bag) then
+            local free = SK.Try(C_Container.GetContainerFreeSlots, bag)
+            if type(free) == "table" then
+                for _, slot in ipairs(free) do
+                    if Open(bag, slot) then return bag, slot end
+                end
+            end
+        end
     end
 end
 -- What to bank: what's in your bags over the keep amount. (Extra counts
@@ -251,25 +369,144 @@ local function NextToBank()
 end
 local function BankStep()
     if not SK.BankIsOpen() then return false end
-    if Locked() then return true end
-    local stack = NextToBank()
+    if Landing() or Locked() then return "wait" end
+    local stack, e = NextToBank()
     if not stack then return false end
+    Trying("in:" .. stack.bag .. ":" .. stack.slot .. ":" .. stack.count, e and e.itemID, L["into your bank"])
+    local bag, slot = FreeBankSlot()
     if stack.take >= stack.count then
         C_Container.UseContainerItem(stack.bag, stack.slot)
         return true
     end
-    local bag, slot = FreeBankSlot()
-    if not bag then error(L["your bank is full."]) end
+    if not bag then error(L["your bank is full."], 0) end
     ClearCursor()
     C_Container.SplitContainerItem(stack.bag, stack.slot, stack.take)
     C_Container.PickupContainerItem(bag, slot)
     ClearCursor()
+    Land(bag, slot)
     return true
+end
+
+-- Taking out: the other way round. Raise a keep amount above what's in
+-- your bags, and the difference comes out of your bank
+-- (Sync bank extras) or your mail (Sync mail extras) into your bags.
+-- "Keep all" means keep them wherever they are: nothing comes out for it.
+local function Wanted(e)
+    if e.status == "aside" then return 0 end
+    local keep = SK.KeepAmount(e.itemID)
+    if keep == nil then return 0 end
+    return math.max(0, keep - e.bags)
+end
+local function AtInbox() return InboxFrame and InboxFrame:IsShown() end
+
+-- The smallest unlocked stack of a scroll in your bank, or nil.
+local function BankStackOf(itemID)
+    local best
+    for _, bag in ipairs(BANK_BAGS) do
+        for slot = 1, SK.Try(C_Container.GetContainerNumSlots, bag) or 0 do
+            local info = SK.Try(C_Container.GetContainerItemInfo, bag, slot)
+            if type(info) == "table" and info.itemID == itemID and not info.isLocked then
+                if not best or (info.stackCount or 1) < best.count then
+                    best = { bag = bag, slot = slot, count = info.stackCount or 1 }
+                end
+            end
+        end
+    end
+    return best
+end
+
+-- Is there anything for Sync bank extras to do right now?
+local function BankNeedsSync()
+    if not SK.BankIsOpen() then return true end   -- can't tell: let the click say "open your bank"
+    if NextToBank() then return true end
+    for _, e in ipairs((SK.StashList())) do
+        if Wanted(e) > 0 and BankStackOf(e.itemID) then return true end
+    end
+    return false
+end
+
+-- And for Sync mail extras? (On the Send Mail tab: extras you can mail.)
+local function MailNeedsSync()
+    if SendMailFrame and SendMailFrame:IsShown() then
+        return NextExtra(function(e) return e.bound end) ~= nil
+    end
+    if not AtInbox() then return true end
+    if not (GetInboxNumItems and GetInboxItem) then return false end
+    local byID = {}
+    for _, e in ipairs((SK.StashList())) do byID[e.itemID] = e end
+    for i = 1, GetInboxNumItems() or 0 do
+        local cod = select(6, SK.Try(GetInboxHeaderInfo, i))
+        if not (cod and cod > 0) then
+            for a = 1, ATTACHMENTS_MAX_RECEIVE or 16 do
+                local _, itemID = SK.Try(GetInboxItem, i, a)
+                local e = itemID and byID[itemID]
+                if e and Wanted(e) > 0 then return true end
+            end
+        end
+    end
+    return false
+end
+local function TakeFromBankStep()
+    if not SK.BankIsOpen() then return false end
+    if Landing() or Locked() then return "wait" end
+    local entries = SK.StashList()
+    do
+        for _, e in ipairs(entries) do
+            local need = Wanted(e)
+            if need > 0 and e.bank > 0 then
+                local best = BankStackOf(e.itemID)
+                if best then
+                    Trying("out:" .. best.bag .. ":" .. best.slot .. ":" .. best.count, e.itemID, L["into your bags"])
+                    local bag, slot = FreeSlot()
+                    if best.count <= need then
+                        if not bag then error(L["your bags are full."], 0) end
+                        C_Container.UseContainerItem(best.bag, best.slot)
+                    else
+                        if not bag then error(L["your bags are full."], 0) end
+                        ClearCursor()
+                        C_Container.SplitContainerItem(best.bag, best.slot, need)
+                        C_Container.PickupContainerItem(bag, slot)
+                        ClearCursor()
+                        Land(bag, slot)
+                    end
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
+
+local function TakeFromMailStep()
+    if not AtInbox() then return false end
+    if Locked() then return "wait" end
+    local entries = SK.StashList()
+    if GetInboxNumItems and GetInboxItem and TakeInboxItem then
+        local byID = {}
+        for _, e in ipairs(entries) do byID[e.itemID] = e end
+        local max = ATTACHMENTS_MAX_RECEIVE or 16
+        for i = 1, GetInboxNumItems() do
+            local cod = select(6, SK.Try(GetInboxHeaderInfo, i))
+            if not (cod and cod > 0) then
+                for a = 1, max do
+                    local _, itemID = SK.Try(GetInboxItem, i, a)
+                    local e = itemID and byID[itemID]
+                    if e and Wanted(e) > 0 then
+                        if not FreeSlot() then error(L["your bags are full."], 0) end
+                        Trying("mail:" .. i .. ":" .. a, itemID, L["out of your mail"])
+                        TakeInboxItem(i, a)
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
 end
 
 -- Delete: only when you turned it on in the settings, and after asking.
 local function DeleteStep()
-    if Locked() then return true end
+    if Locked() then return "wait" end
     local stack = NextExtra()
     if not stack then return false end
     ClearCursor()
@@ -337,6 +574,40 @@ local function Confirm(text, run)
     StaticPopup_Show("SCROLLKEEPER_BAG_CONFIRM", text, nil, run)
 end
 
+-- How many of each mage scroll are in your bags.
+local function BagCounts()
+    local counts = {}
+    for bag = 0, 5 do
+        for slot = 1, SK.Try(C_Container.GetContainerNumSlots, bag) or 0 do
+            local info = SK.Try(C_Container.GetContainerItemInfo, bag, slot)
+            if type(info) == "table" and info.itemID and (SK.MAGE_SCROLL_IDS[info.itemID] or SK.SCROLL_FACTS[info.itemID]) then
+                counts[info.itemID] = (counts[info.itemID] or 0) + (info.stackCount or 1)
+            end
+        end
+    end
+    return counts
+end
+-- "2 Odd Melon into the bank, 3 Arcane Brilliance into your bags", and
+-- whether anything changed at all.
+local function ChangeText(before, after)
+    local ids, seen = {}, {}
+    for id in pairs(before) do if not seen[id] then seen[id] = true; ids[#ids + 1] = id end end
+    for id in pairs(after) do if not seen[id] then seen[id] = true; ids[#ids + 1] = id end end
+    table.sort(ids)
+    local into, out = {}, {}
+    for _, id in ipairs(ids) do
+        local d = (after[id] or 0) - (before[id] or 0)
+        if d ~= 0 then
+            local name = ((C_Item and SK.Try(C_Item.GetItemNameByID, id)) or SK.MAGE_SCROLL_IDS[id] or ("item " .. id)):gsub("^Scroll of ", "")
+            if d > 0 then out[#out + 1] = d .. " " .. name else into[#into + 1] = (-d) .. " " .. name end
+        end
+    end
+    local parts = {}
+    if into[1] then parts[#parts + 1] = L["into the bank: %s"]:format(table.concat(into, ", ")) end
+    if out[1] then parts[#parts + 1] = L["into your bags: %s"]:format(table.concat(out, ", ")) end
+    return table.concat(parts, "; "), parts[1] ~= nil
+end
+
 local ACTIONS = {
     stack = function()
         RunSteps(L["Stack"], StackStep, Finished(L["stacking"]))
@@ -365,10 +636,68 @@ local ACTIONS = {
             SK.RefreshScrollBag()
         end)
     end,
-    bank = function()
-        if not SK.BankIsOpen() then SK.Print(L["open your bank first, then click Bank extras."]) return end
-        if not NextToBank() then SK.Print(L["no extras in your bags to bank."]) return end
-        RunSteps(L["Bank extras"], BankStep, Finished(L["banking"]))
+    -- At the bank: extras in your bags go in, what your bags are missing
+    -- (up to your keep amounts) comes out.
+    -- auto: started by Auto-sync, so it only speaks up when it moved something.
+    bank = function(auto)
+        if not SK.BankIsOpen() then
+            if not auto then SK.Print(L["open your bank first, then click Sync bank extras."]) end
+            return
+        end
+        if busy then
+            if not auto then SK.Print(L["one thing at a time: Scrollkeeper is still busy (%s)."]:format(busy)) end
+            return
+        end
+        if not BankNeedsSync() then
+            if not auto then SK.Print(L["bank already in sync with your keep amounts."]) end
+            SK.UpdateSyncButtons()
+            return
+        end
+        local finished = Working("bank", L["Syncing..."])
+        local before = BagCounts()
+        RunSteps(L["Sync bank extras"], function() return BankStep() or TakeFromBankStep() end, function()
+            -- Say what really changed in your bags, once the game has caught up.
+            C_Timer.After(0.6, function()
+                local text, changed = ChangeText(before, BagCounts())
+                if changed then
+                    SK.Print((auto and L["auto-sync: %s."] or L["bank synced: %s."]):format(text))
+                elseif not auto then
+                    SK.Print(L["bank already in sync with your keep amounts."])
+                end
+                finished(changed and L["Synced"] or L["In sync"])
+                SK.RefreshScrollBag()
+            end)
+        end, auto)
+    end,
+    -- At the mailbox (Inbox): what your bags are missing comes out of your mail.
+    -- At the mailbox, both ways: on the Send Mail tab extras get attached
+    -- (Mail extras), on the Inbox what your bags are missing comes out.
+    mailsync = function(auto)
+        if AtMailbox() and not auto then return SK.ScrollBagActions.mail() end
+        if not AtInbox() then
+            if not auto then SK.Print(L["open your mailbox first, then click Sync mail extras."]) end
+            return
+        end
+        if busy then
+            if not auto then SK.Print(L["one thing at a time: Scrollkeeper is still busy (%s)."]:format(busy)) end
+            return
+        end
+        if not MailNeedsSync() then
+            if not auto then SK.Print(L["nothing in your mail that your bags are missing."]) end
+            SK.UpdateSyncButtons()
+            return
+        end
+        local finished = Working("mailsync", L["Syncing..."])
+        RunSteps(L["Sync mail extras"], TakeFromMailStep, function(count)
+            finished(count > 0 and L["Synced"] or L["In sync"])
+            if count > 0 then
+                SK.Print((auto and L["auto-sync: took %d |4attachment:attachments; from your mail."]
+                    or L["mail synced: took %d |4attachment:attachments;."]):format(count))
+            elseif not auto then
+                SK.Print(L["nothing in your mail that your bags are missing."])
+            end
+            SK.RefreshScrollBag()
+        end, auto)
     end,
     deposit = function()
         if not SK.BankIsOpen() then SK.Print(L["open your bank first, then click Deposit set aside."]) return end
@@ -574,6 +903,7 @@ local function Build()
     save:SetScript("OnLeave", function() GameTooltip:Hide() end)
     window.savePreset = save
 
+
     -- Its settings, in the settings window.
     local gear = CreateFrame("Button", nil, window)
     gear:SetSize(18, 18)
@@ -717,22 +1047,48 @@ local function Build()
     window.buttons = {}
     local specs = {
         { "stack", L["Stack"], 60, L["Merge part-stacks of the same scroll in your bags."] },
-        { "sell", L["Sell extras"], 78, L["At a vendor: sells the extras in your bags. Protected scrolls (right-click a row) are never sold."] },
-        { "mail", L["Mail extras"], 78, L["On the Send Mail tab: attaches the extras you can mail (not bound ones)."] },
-        { "bank", L["Bank extras"], 82, L["At the bank: puts the extras in your bags into your bank. Protected scrolls stay."] },
-        { "deposit", L["Deposit set aside"], 108, L["At the bank: puts set-aside imbues (for weapons you don't have) in the bank."] },
-        { "delete", L["Delete extras"], 84, L["Deletes the extras in your bags, after asking. Turn this button on in /sk options."] },
+        { "sell", L["Sell extras"], 82, L["At a vendor: sells the extras in your bags. Protected scrolls (right-click a row) are never sold."] },
+        { "bank", L["Sync bank extras"], 104, L["At the bank: your bags end up with your keep amount of each scroll. Extras go into the bank, and what's missing comes out of it. Protected scrolls stay."] },
+        { "mailsync", L["Sync mail extras"], 104, L["At the mailbox. On the Send Mail tab: attaches the extras you can mail (not bound ones) to your Mail extras to name. On the Inbox: takes what your bags are missing (up to your keep amounts) out of your mail, skipping cash-on-delivery mail."] },
+        { "deposit", L["Deposit set aside"], 112, L["At the bank: puts set-aside imbues (for weapons you don't have) in the bank."] },
     }
+    -- Delete extras (only when turned on in the settings) sits up by the presets.
+    local delete = SmallButton(window, L["Delete extras"], 90, function() ACTIONS.delete() end,
+        L["Deletes the extras in your bags, after asking. Turn this button on in /sk options."])
+    delete:SetPoint("LEFT", window.savePreset, "RIGHT", 8, 0)
     local last
     for _, spec in ipairs(specs) do
         local b = SmallButton(window, spec[2], spec[3], function() ACTIONS[spec[1]]() end, spec[4])
         if last then b:SetPoint("LEFT", last, "RIGHT", 8, 0) else b:SetPoint("BOTTOMLEFT", 16, 12) end
         window.buttons[spec[1]] = b
+        LABELS[spec[1]] = spec[2]
         last = b
     end
+    window.buttons.delete = delete
+
+    -- Auto-sync at the bank, right here (also in /sk options).
+    local auto = CreateFrame("CheckButton", nil, window, "UICheckButtonTemplate")
+    auto:SetSize(22, 22)
+    auto:SetPoint("BOTTOMRIGHT", -150, 36)
+    local autoText = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    autoText:SetPoint("LEFT", auto, "RIGHT", 1, 0)
+    autoText:SetText(L["Auto-sync at the bank"])
+    auto:SetScript("OnClick", function(self)
+        SK.db.bagAutoSyncBank = self:GetChecked() and true or false
+        if SK.db.bagAutoSyncBank and SK.BankIsOpen() then ACTIONS.bank(true) end
+    end)
+    auto:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["Auto-sync at the bank"], 1, 1, 1)
+        GameTooltip:AddLine(L["When you open your bank, Sync bank extras runs on its own, so your bags end up with your keep amounts."], nil, nil, nil, true)
+        GameTooltip:Show()
+    end)
+    auto:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    window.autoSync = auto
 
     window:SetScript("OnShow", function()
         mailTo:SetText(SK.db.bagMailTo or "")
+        auto:SetChecked(SK.db.bagAutoSyncBank and true or false)
         SK.RefreshScrollBag()
     end)
     window:SetScript("OnHide", function() box.menu:Hide(); picks:Hide() end)
@@ -1089,6 +1445,7 @@ function SK.RefreshScrollBag()
     if not (window and window:IsShown()) then return end
     local entries, owned = SK.StashList()
     local s = SK.StashState()
+    SK.Quietly("sync buttons", SK.UpdateSyncButtons)
 
     -- Preset box
     local presetName = SK.BagPresetName()
@@ -1206,6 +1563,50 @@ function SK.ToggleScrollBag()
     end
     if not window then Build() end
     window:SetShown(not window:IsShown())
+end
+
+-- Sync automatically (a setting): at the bank, and once the mail has come in.
+local function AutoSync(action, key)
+    if SK.db[key] and SK.ModuleOn("Bag") and SK.isMage and not SK.InCombat() then
+        C_Timer.After(0.8, function() SK.Quietly("auto sync", ACTIONS[action], true) end)
+    end
+end
+-- With the bank open, changing a keep amount (or the preset) syncs again,
+-- a moment after your last click, so +/- clicks don't each start a sync.
+local keepTimer = 0
+SK.Listen("KEEP_CHANGED", function()
+    if not (SK.db.bagAutoSyncBank and SK.BankIsOpen()) then return end
+    keepTimer = keepTimer + 1
+    local mine = keepTimer
+    C_Timer.After(1, function()
+        if mine == keepTimer and SK.BankIsOpen() then AutoSync("bank", "bagAutoSyncBank") end
+    end)
+end)
+SK.On("BANKFRAME_OPENED", function() AutoSync("bank", "bagAutoSyncBank") end)
+local mailOpened = false
+SK.On("MAIL_SHOW", function() mailOpened = true end)
+SK.On("MAIL_INBOX_UPDATE", function() if mailOpened then mailOpened = false; AutoSync("mailsync", "bagAutoSyncMail") end end)
+
+-- Sync buttons: grayed out reading "In sync" when there's nothing to do.
+function SK.UpdateSyncButtons()
+    if not (window and window.buttons) then return end
+    for key, needs in pairs({ bank = BankNeedsSync, mailsync = MailNeedsSync }) do
+        local b = window.buttons[key]
+        local w = b and working[b]
+        if b and not (w and w.showing) then
+            local ok, need = pcall(needs)
+            if ok and not need then
+                b:SetText("|cff808080" .. L["In sync"] .. "|r")
+                b:Disable()
+            else
+                b:SetText(LABELS[key] or "")
+                b:Enable()
+            end
+        end
+    end
+end
+for _, event in ipairs({ "BANKFRAME_OPENED", "BANKFRAME_CLOSED", "MAIL_SHOW", "MAIL_CLOSED", "MAIL_INBOX_UPDATE" }) do
+    SK.On(event, function() C_Timer.After(0.5, function() SK.Quietly("sync buttons", SK.UpdateSyncButtons) end) end)
 end
 
 local refreshSoon

@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.3.1):** the Scroll Bag can **Bank extras** now: at the bank it keeps your keep amount of each scroll in your bags and puts the rest in your bank. It also shows how many of each scroll are in your bags, bank and mail, in their own columns. New in 1.3.0: the Scroll Bag, its own settings window, themes (including a new Modern look), pins, modules, and a red ? on every window that explains it.
+**Latest (1.3.2):** the Scroll Bag's bank and mail buttons now **Sync** both ways: extras go into your bank or mail, and what your bags are missing comes back out. Tick **Auto-sync at the bank** to have it happen every time you open your bank. New in 1.3.0: the Scroll Bag, its own settings window, themes (including a new Modern look), pins, modules, and a red ? on every window that explains it.
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 
