@@ -15,11 +15,11 @@
 -- /sk mail       who could use your spare scrolls
 -- /sk bag        the Scroll Bag: every deciphered scroll you own, keep or extra
 -- /sk demo       fill Fellow Mages, the map and tooltips with made-up players
--- /sk export     copy your scroll data to share (GitHub issue "Share your data")
+-- /sk export     copy your scroll data to share (an issue on CurseForge)
 -- /sk backup     copy all your Scrollkeeper data; /sk restore puts it back
 -- /sk setup      the first-time setup window
 -- /sk about      version and links
--- /sk bug        copy a bug report (GitHub issue "Bug report")
+-- /sk bug        copy a bug report (an issue on CurseForge)
 -- /sk scan       scan the auction house for scroll prices
 --                (in the dev copy, Dev/Scan.lua makes it a data dump instead)
 

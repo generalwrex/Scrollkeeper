@@ -8,7 +8,7 @@
 --                Scrollkeeper caught.
 --
 -- Both open a window with a ready-made issue title and the text: copy each
--- (Ctrl+C) into a GitHub issue (the issue forms say where).
+-- (Ctrl+C) into an issue on CurseForge (curseforge.com/wow/addons/scrollkeeper/issues).
 --
 -- Export format (one record per line, same fields as the network messages):
 --   Scrollkeeper export 1
@@ -74,7 +74,7 @@ local function Build()
     window.hint:SetPoint("RIGHT", window, "RIGHT", -16, 0)
     window.hint:SetJustifyH("CENTER")
 
-    -- A ready-made title for the GitHub issue, also copyable.
+    -- A ready-made title for the issue, also copyable.
     local titleLabel = window:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     titleLabel:SetPoint("TOPLEFT", 18, -64)
     titleLabel:SetText(L["Title:"])
@@ -380,7 +380,7 @@ function SK.ShowExport()
     local _, _, heard = SK.ExportText()
     local issueTitle = ("[Data] Skill %d/%d, %d deciphered"):format(skill.rank, skill.max, SK.db.deciphered or 0)
         .. (heard > 0 and (", +%d players heard"):format(heard) or "")
-    Show(L["Scrollkeeper Export"], L["Copy the title and the text into a GitHub issue"], text,
+    Show(L["Scrollkeeper Export"], L["Copy the title and the text into an issue on CurseForge"], text,
         L["Scroll data only. No character or account names."], issueTitle)
 end
 
@@ -389,7 +389,7 @@ function SK.ShowBugReport()
     local last = errors[#errors]
     local issueTitle = last and ("[Bug] " .. tostring(last.where) .. ": " .. tostring(last.error):gsub("^.-:%d+: ", ""):sub(1, 70))
         or "[Bug] "
-    Show(L["Scrollkeeper Bug Report"], L["Copy the title and the text into a GitHub issue"], SK.BugReportText(),
+    Show(L["Scrollkeeper Bug Report"], L["Copy the title and the text into an issue on CurseForge"], SK.BugReportText(),
         L["Please also say what you were doing when it went wrong."], issueTitle)
 end
 
