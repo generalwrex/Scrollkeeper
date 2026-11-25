@@ -1275,6 +1275,10 @@ if SK.isMage then
   local parent = CreateFrame("Frame")
   local button = CreateFrame("Button", nil, parent)
   for _, k in ipairs({ "Left", "Middle", "Right" }) do rawset(button, k, button:CreateTexture()) end
+  local label = button:CreateFontString()
+  rawset(button, "GetObjectType", function() return "Button" end)
+  rawset(button, "GetFontString", function() return label end)
+  rawset(button, "GetRegions", function() return button.Left, button.Middle, button.Right end)
   rawset(parent, "GetChildren", function() return button end)
   SK.db.theme = "modern"; SK.UI.SkinControls(parent)
   print("THEME modern button squared:", rawget(button, "skSquare") ~= nil)

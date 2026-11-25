@@ -126,13 +126,18 @@ end
 -- Every other theme shows the game's art again.
 ------------------------------------------------------------------------
 
-local function Piece(frame, key) local piece = rawget(frame, key) return type(piece) == "table" and piece or nil end
-
--- A button or edit box made from the game's three-part templates
--- (UIPanelButtonTemplate, InputBoxTemplate).
-local function ThreeParts(control)
-    local left, middle, right = Piece(control, "Left"), Piece(control, "Middle") or Piece(control, "Mid"), Piece(control, "Right")
-    if left and middle and right then return { left, middle, right } end
+-- Which controls get squared: text buttons (the game's panel buttons, in
+-- whichever form this client's template has) and edit boxes. Not icon
+-- buttons, check boxes, tabs or rows, which draw their own look.
+local function Squarable(control)
+    if rawget(control, "skNoSquare") or not control.GetObjectType then return false end
+    local kind = control:GetObjectType()
+    if kind == "EditBox" then return rawget(control, "skSquare") ~= nil or control:GetNumRegions() > 0 end
+    if kind ~= "Button" then return false end
+    if rawget(control, "LeftActive") or rawget(control, "LeftDisabled") or rawget(control, "Icon") or rawget(control, "icon") then return false end
+    local text = control.GetFontString and control:GetFontString()
+    return text ~= nil and (control.GetNormalTexture and control:GetNormalTexture() ~= nil
+        or rawget(control, "Left") ~= nil or rawget(control, "Middle") ~= nil)
 end
 
 local squared = setmetatable({}, { __mode = "k" })
@@ -140,35 +145,60 @@ local squared = setmetatable({}, { __mode = "k" })
 local function SquareParts(control)
     local parts = rawget(control, "skSquare")
     if parts then return parts end
+    -- The game's art: every texture the control has now (its normal,
+    -- pushed, highlight and disabled art, or its left/middle/right pieces).
+    local art = {}
+    for _, region in ipairs({ control:GetRegions() }) do
+        if region.GetObjectType and region:GetObjectType() == "Texture" then art[#art + 1] = region end
+    end
     local bg = control:CreateTexture(nil, "BACKGROUND", nil, -7)
     bg:SetAllPoints()
     local edge = CreateFrame("Frame", nil, control, "BackdropTemplate")
     edge:SetAllPoints()
     if edge.SetBackdrop then edge:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 }) end
     edge:EnableMouse(false)
-    parts = { bg = bg, edge = edge, art = ThreeParts(control) }
+    parts = { bg = bg, edge = edge, art = art }
     control.skSquare = parts
-    if control.HookScript and control.GetObjectType and control:GetObjectType() == "Button" then
+    if control.HookScript and control:GetObjectType() == "Button" then
         control:HookScript("OnEnter", function(self)
             local sq = SK.UI.Palette().square
-            if sq and squared[self] then Color(parts.bg, sq.hover); parts.edge:SetBackdropBorderColor(sq.accent[1], sq.accent[2], sq.accent[3], 1) end
+            if sq and squared[self] and (not self.IsEnabled or self:IsEnabled()) then
+                Color(parts.bg, sq.hover); parts.edge:SetBackdropBorderColor(sq.accent[1], sq.accent[2], sq.accent[3], 1)
+            end
         end)
         control:HookScript("OnLeave", function(self)
             local sq = SK.UI.Palette().square
             if sq and squared[self] then Color(parts.bg, sq.button); parts.edge:SetBackdropBorderColor(sq.edge[1], sq.edge[2], sq.edge[3], 1) end
+        end)
+        -- Pressed: a touch darker.
+        control:HookScript("OnMouseDown", function(self)
+            local sq = SK.UI.Palette().square
+            if sq and squared[self] then Color(parts.bg, sq.input) end
+        end)
+        control:HookScript("OnMouseUp", function(self)
+            local sq = SK.UI.Palette().square
+            if sq and squared[self] then Color(parts.bg, self:IsMouseOver() and sq.hover or sq.button) end
         end)
     end
     return parts
 end
 
 local function SkinControl(control, sq)
-    if not ThreeParts(control) and not rawget(control, "skSquare") then return end
-    local isButton = control.GetObjectType and control:GetObjectType() == "Button"
-    if not sq and not squared[control] then return end   -- never squared: nothing to undo
+    if not (sq or squared[control]) then return end    -- never squared: nothing to undo
+    if not Squarable(control) then return end
+    -- Secure buttons (Decipher, Study) can't be changed in combat: next time.
+    if InCombatLockdown and InCombatLockdown() and control.IsProtected and control:IsProtected() then return end
     local parts = SquareParts(control)
-    for _, piece in ipairs(parts.art or {}) do piece:SetAlpha(sq and 0 or 1) end
-    local highlight = isButton and control.GetHighlightTexture and control:GetHighlightTexture()
-    if highlight and highlight.SetAlpha then highlight:SetAlpha(sq and 0 or 1) end
+    local isButton = control:GetObjectType() == "Button"
+    -- The game's art is kept but hidden (alpha), so the game can keep
+    -- swapping it for pressed and disabled as usual.
+    for _, piece in ipairs(parts.art) do piece:SetAlpha(sq and 0 or 1) end
+    if isButton then
+        for _, getter in ipairs({ "GetNormalTexture", "GetPushedTexture", "GetHighlightTexture", "GetDisabledTexture" }) do
+            local texture = control[getter] and control[getter](control)
+            if texture and texture.SetAlpha then texture:SetAlpha(sq and 0 or 1) end
+        end
+    end
     parts.bg:SetShown(sq and true or false)
     parts.edge:SetShown(sq and true or false)
     squared[control] = sq and true or nil
@@ -176,9 +206,16 @@ local function SkinControl(control, sq)
         Color(parts.bg, isButton and sq.button or sq.input)
         parts.edge:SetBackdropBorderColor(sq.edge[1], sq.edge[2], sq.edge[3], 1)
     end
-    local text = isButton and control.GetFontString and control:GetFontString()
-    if text and text.SetTextColor then
-        if sq then text:SetTextColor(sq.text[1], sq.text[2], sq.text[3]) else text:SetTextColor(1, 0.82, 0) end
+    if isButton and control.SetNormalFontObject then
+        -- White text on the square buttons; the game's gold otherwise.
+        if sq then
+            if not rawget(control, "skFont") then control.skFont = control.GetNormalFontObject and control:GetNormalFontObject() or GameFontNormal end
+            control:SetNormalFontObject(GameFontHighlight)
+            if control.SetHighlightFontObject then control:SetHighlightFontObject(GameFontHighlight) end
+        elseif rawget(control, "skFont") then
+            control:SetNormalFontObject(control.skFont)
+            if control.SetHighlightFontObject then control:SetHighlightFontObject(GameFontHighlight) end
+        end
     end
 end
 
@@ -194,6 +231,28 @@ local function SkinControls(frame, sq, depth)
     end
 end
 SK.UI.SkinControls = function(frame) SK.Quietly("theme controls", SkinControls, frame, SK.UI.Palette().square) end
+
+-- Windows build parts when they're first needed (a settings section, a
+-- Doorways list), so while a square theme is on, open windows are looked
+-- over again every second for new buttons.
+local ticker
+local function Sweep()
+    local sq = SK.UI.Palette().square
+    if not sq then
+        if ticker then ticker:Cancel(); ticker = nil end
+        return
+    end
+    for frame in pairs(windows) do
+        if frame.IsShown and frame:IsShown() then SkinControls(frame, sq) end
+    end
+    for frame in pairs(boxes) do
+        if frame.IsShown and frame:IsShown() then SkinControls(frame, sq) end
+    end
+end
+local function StartSweeping()
+    if ticker or not SK.UI.Palette().square or not (C_Timer and C_Timer.NewTicker) then return end
+    ticker = C_Timer.NewTicker(1, function() SK.Quietly("theme controls", Sweep) end)
+end
 
 local function SkinWindow(frame)
     local p = SK.UI.Palette()
@@ -225,6 +284,8 @@ local function SkinWindow(frame)
         frame:HookScript("OnShow", function(self) SK.Quietly("theme controls", SkinControls, self, SK.UI.Palette().square) end)
     end
 end
+
+SK.Listen("READY", function() StartSweeping() end)
 
 -- A window's dark background (and the window itself, for the frame art).
 function SK.UI.Background(texture, frame)
@@ -290,5 +351,6 @@ function SK.UI.ApplyTheme()
     for header in pairs(headers) do SK.UI.SkinHeader(header) end
     for frame, kind in pairs(boxes) do SK.UI.SkinBox(frame, kind) end
     for frame in pairs(windows) do SK.Quietly("theme window", SkinWindow, frame) end
+    StartSweeping()
     SK.Send("THEME_CHANGED")
 end
