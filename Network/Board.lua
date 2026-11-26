@@ -80,6 +80,7 @@ end
 SK.BoardData = Board
 
 function SK.BoardOn()
+    if SK.RemoteOff and SK.RemoteOff("Board") then return false end
     return SK.db and SK.db.share and SK.db.boardOn ~= false and true or false
 end
 
@@ -666,6 +667,7 @@ Net.Handle("BQ", function(sender, f)
         -- on, since nobody can change them.
         for _, m in pairs(Board().modLog) do Net.SendTo(sender, "BS", m.sig, m.action, m.a, m.b, m.c, m.at) end
         if SK.PassOnThemes then SK.PassOnThemes(sender) end
+        if SK.PassOnNotes then SK.PassOnNotes(sender) end
         for _, p in ipairs(batch) do Net.SendTo(sender, "BP", Fields(p)) end
     end)
 end)

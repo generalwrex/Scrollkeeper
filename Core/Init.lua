@@ -116,7 +116,9 @@ end
 
 -- Features you can turn off (Options > Modules): "Bag", "Codex", "Plan",
 -- "Log", "Swap", "Doors", "Network", "Board". On unless turned off.
+-- Off too while the Scrollkeeper team has switched it off (Network/Notes.lua).
 function SK.ModuleOn(key)
+    if key and SK.RemoteOff and SK.RemoteOff(key) then return false end
     return not (key and SK.db and SK.db["module" .. key] == false)
 end
 

@@ -79,7 +79,10 @@ local function Keep(t)
     if SK.UI.ApplyTheme then SK.UI.ApplyTheme() end
 end
 
-function SK.ThemesFromNetwork() return SK.db and SK.db.share and SK.db.themesShared ~= false end
+function SK.ThemesFromNetwork()
+    if SK.RemoteOff and SK.RemoteOff("Themes") then return false end
+    return SK.db and SK.db.share and SK.db.themesShared ~= false
+end
 
 Net.Handle("BT", function(_, f)
     if not SK.ThemesFromNetwork() then return end

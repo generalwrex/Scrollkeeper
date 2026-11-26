@@ -1,6 +1,19 @@
 # Scrollkeeper
 
+## Unreleased: news and switches from the Scrollkeeper team
+
+> News from the Scrollkeeper team now reaches you right away, not just with updates.
+> If something ever breaks, the team can switch it off for everyone until the fix is out.
+
+- New: **news from the Scrollkeeper team** shows in chat once, between updates too (signed by the team, so nobody else can send it).
+- New: if a feature ever breaks, the Scrollkeeper team can **switch it off** for everyone until a fix is out; Scrollkeeper tells you in chat when that happens, and when it's back.
+- Better in-game news for each update.
+
 ## 1.4.0
+
+> New: the Fellow Mages board (/sk board, or the button on the panel): want or spare scrolls, Liminal doorways, odds and tips, with replies.
+> New: holiday themes that arrive by themselves when a holiday comes around (this month: Pilgrim's Bounty).
+> Fixed: Sync bank extras now really puts your extras in the bank.
 
 - New: the **Fellow Mages board** (/sk board, the board button on the panel, or the Board button in Fellow Mages). The panel button turns into a letter with a green count when there are new posts. Post what you're after, offer spare scrolls, say where you're opening a Liminal doorway, or share odds and tips. Posts last 7 days, with replies under them.
   - Categories: Notices (from the dev team), Portals and doorways, Scrolls wanted, Spare scrolls, Odds and tips, and General.

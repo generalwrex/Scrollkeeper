@@ -1663,3 +1663,33 @@ do
   print("BOARDFILTER errors:", #ScrollkeeperDB.errors)
   for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
+
+-- TEAM NOTES: signed news and switches
+do
+  local function RunTimers() for _ = 1, 30 do local l = TIMERS; TIMERS = {}; if #l == 0 then break end for _, t in ipairs(l) do pcall(t) end end end
+  local E = SK.Ed25519
+  local seed = string.rep("\6", 32)
+  local real, signer = SK.BOARD_MOD_KEY, SK.BoardSigner
+  SK.BOARD_MOD_KEY = E.ToBase64(E.PublicKey(seed))
+  SK.BoardSigner = function(t) return E.Sign(t, seed) end
+  local okNews = SK.SendTeamNote("news", "n1", "Hello from the team")
+  local okOff = SK.SendTeamNote("off", "Board", "1", "posts not syncing")
+  local boardOff = not SK.BoardOn()
+  local moduleOff = not SK.ModuleOn("Board")
+  SK.SendTeamNote("off", "Board", "0", "")
+  local boardBack = SK.BoardOn()
+  -- a player receives a signed one, and a forged one
+  SK.BoardSigner = nil
+  local now = (GetServerTime and GetServerTime()) or time()
+  local payload = table.concat({ "SK1N", "off", "Sync", "1", "testing", tostring(now) }, "|")
+  local sig = E.ToBase64(E.Sign(payload, seed))
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BN|" .. sig .. "|off|Sync|1|testing|" .. now, "CHANNEL", "Someone")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BN|" .. sig .. "|off|Bag|1|testing|" .. now, "CHANNEL", "Evil")
+  RunTimers()
+  local syncOff = SK.RemoteOff("Sync")
+  local bagStill = not SK.RemoteOff("Bag")
+  SK.ScrollBagActions.bank()
+  SK.db.teamNotes = {}
+  SK.BOARD_MOD_KEY, SK.BoardSigner = real, signer
+  print("TEAMNOTES news:", okNews, "off:", okOff, boardOff, moduleOff, "back:", boardBack, "received:", syncOff, "forged ignored:", bagStill, "errors:", #ScrollkeeperDB.errors)
+end
