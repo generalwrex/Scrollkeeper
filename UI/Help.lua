@@ -57,6 +57,13 @@ SK.HELP = {
         "The big button does the next step: Ask, Invite, Teleport, Leave group.",
         "Be a door: let others come to you while you rest.",
     } },
+    board = { "Fellow Mages board", {
+        "Posts from other Scrollkeeper mages, kept for 7 days. Pick a category on the left and a post in the middle; replies are on the right.",
+        "Scrolls wanted, Spare scrolls, Portals and doorways, and Odds and tips are your ruleset only, since you can't trade, group or whisper across rulesets. General and Notices can be from every ruleset (or just yours, with the buttons at the top).",
+        "New post: 3 a day. Replies: up to 30 a day. Delete takes your own post down.",
+        "Hide post and Mute are just for you. Unmute all brings them back.",
+        "The dev team can take posts down and ban spammers for everyone. Their names show in pink with [dev].",
+    } },
     fellowmages = { "Fellow Mages", {
         "Other mages running Scrollkeeper on your ruleset and faction, and what tiers they still level from.",
         "Click a mage to whisper them. Sort with the buttons at the top.",

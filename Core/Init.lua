@@ -115,7 +115,7 @@ function SK.Known(value)
 end
 
 -- Features you can turn off (Options > Modules): "Bag", "Codex", "Plan",
--- "Log", "Swap", "Doors", "Network". On unless turned off.
+-- "Log", "Swap", "Doors", "Network", "Board". On unless turned off.
 function SK.ModuleOn(key)
     return not (key and SK.db and SK.db["module" .. key] == false)
 end
@@ -197,7 +197,7 @@ end
 ------------------------------------------------------------------------
 
 SK.LAYOUT_KEYS = { "showPanel", "viewMode", "scale", "panelPoint", "collapsed", "showScrollBar", "locked",
-    "hideInCombat", "minimapButton", "minimapAngle", "scrollIcon", "iconPos", "toastPoint", "theme" }
+    "hideInCombat", "minimapButton", "minimapAngle", "scrollIcon", "iconPos", "toastPoint", "theme", "themeBefore", "themeHoliday" }
 
 local accountLayout   -- the account's values while this character uses its own
 
@@ -312,6 +312,11 @@ local DEFAULTS = {
     locked = false,          -- stop the panel from being dragged
     viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
     scale = 1,               -- panel size
+    boardOn = true,          -- the Fellow Mages board (Network/Board.lua, /sk board)
+    boardNotify = true,      -- ...say once a session when there are new posts
+    boardRulesets = "all",   -- ...General posts and notices: "all" rulesets or "mine"
+    themeHoliday = false,
+    themesShared = true,     -- holiday themes from the network (Network/Themes.lua)    -- wear the holiday theme on its own during holidays (UI/Theme.lua)
     theme = "classic",       -- how the windows look: "classic", "dark" or "dusk" (Darker classic) (UI/Theme.lua)
     panelPoint = nil,        -- saved panel position
     mages = {},              -- your mages across the account (Modules/Alts.lua), incl. Study timers

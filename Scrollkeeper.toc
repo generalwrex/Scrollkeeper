@@ -3,7 +3,7 @@
 ## Notes: Mage scrolls made easy: one-click Decipher, Study, Familiar and Imbue, skill-up chances, library and book spots on the map, and help from your alts.
 ## Author: generalwrex, Curnil
 ## Version: @project-version@
-## SavedVariables: ScrollkeeperDB, ScrollkeeperScan
+## SavedVariables: ScrollkeeperDB
 ## SavedVariablesPerCharacter: ScrollkeeperCharDB
 ## Category: Class
 ## X-License: MIT
@@ -24,6 +24,7 @@ Locales\frFR.lua
 Locales\zhCN.lua
 Locales\zhTW.lua
 Core\Constants.lua
+Core\Ed25519.lua
 
 # Data: plain tables of game facts. Edit these when Blizzard changes scrolls.
 Data\Scrolls.lua
@@ -56,6 +57,8 @@ Network\Comm.lua
 Network\Peers.lua
 Network\Share.lua
 Network\Usage.lua
+Network\Board.lua
+Network\Themes.lua
 
 # Map: pins on the world map.
 Map\Pins.lua
@@ -74,6 +77,7 @@ UI\Mail.lua
 UI\Swap.lua
 UI\Log.lua
 UI\Doors.lua
+UI\Board.lua
 UI\Plan.lua
 UI\Guide.lua
 UI\ScrollBag.lua
@@ -90,9 +94,3 @@ UI\Options.lua
 # Slash commands.
 Commands.lua
 
-# Dev: tools for working on the addon (/sk dev lists them). Not packaged.
-#@do-not-package@
-Dev\Scan.lua
-Dev\Network.lua
-Dev\UsageWindow.lua
-#@end-do-not-package@

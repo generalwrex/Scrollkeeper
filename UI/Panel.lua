@@ -486,26 +486,67 @@ local function Build()
           title = "Scroll Swap", text = "Who has spare scrolls you'd level from, and who'd want yours." },
         { icon = "Interface\\Icons\\Spell_Arcane_Blink", open = function() SK.ToggleDoors() end, module = "Doors",
           title = "Doorways", text = "Pick a town and get there with Scroll of Liminal Passage: Scrollkeeper doors invite you, or find anyone there." },
+        { icon = "Interface\\Icons\\INV_Misc_Note_02", open = function() SK.ToggleBoard() end, module = "Board", board = true,
+          title = "Fellow Mages board", text = "Posts and replies from other mages: scrolls wanted and spare, doorways, tips.",
+          tip = function()
+              local n = SK.BoardUnread and SK.BoardUnread() or 0
+              return n > 0 and ("\n|cff40ff40" .. L["%d new |4post:posts;"]:format(n) .. "|r") or ""
+          end },
         { icon = "Interface\\Icons\\INV_Misc_GroupLooking", open = function() SK.ToggleNetwork() end, module = "Network",
           inAdvanced = true,   -- Advanced view has it built in, so no button there
           title = "Fellow Mages", text = "Other mages running Scrollkeeper, and the community's odds for each tier." },
     }
     parts.windowButtons = {}
     local previous
-    for i, entry in ipairs(WINDOW_BUTTONS) do
+    -- Buttons other addons added (SK.AddPanelButton), after ours.
+    for _, entry in ipairs(SK.extraPanelButtons or {}) do WINDOW_BUTTONS[#WINDOW_BUTTONS + 1] = entry end
+    parts.makeWindowButton = function(entry)
         local button = IconButton(entry.icon, 18,
             function() return L[entry.title] .. "\n|cffffffff" .. L[entry.text] .. "|r" end,
+            function() entry.open() end)
+        button.inAdvanced = entry.inAdvanced or false
+        button.module = entry.module or false
+        if entry.badge then
+            -- A count in the corner (entry.badge() returns it, or nil).
+            local badge = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+            badge:SetPoint("BOTTOMRIGHT", 3, -2)
+            badge:SetTextColor(1, 0.48, 0.66)
+            parts.added = parts.added or {}
+            parts.added[button] = { entry = entry, badge = badge }
+        end
+        parts.windowButtons[#parts.windowButtons + 1] = button
+        return button
+    end
+    for i, entry in ipairs(WINDOW_BUTTONS) do
+        local button = IconButton(entry.icon, 18,
+            function() return L[entry.title] .. "\n|cffffffff" .. L[entry.text] .. "|r" .. (entry.tip and entry.tip() or "") end,
             function() entry.open() end)
         if previous then
             button:SetPoint("LEFT", previous, "RIGHT", 2, 0)
         else
             button:SetPoint("TOPLEFT", panel, "TOPLEFT", 58, -30)
         end
-        button.inAdvanced = entry.inAdvanced
-        button.module = entry.module
+        button.inAdvanced = entry.inAdvanced or false
+        button.module = entry.module or false
+        if entry.board then
+            -- New posts: a different icon and a green count in the corner.
+            button.badge = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+            button.badge:SetPoint("BOTTOMRIGHT", 3, -2)
+            button.badge:SetTextColor(0.25, 1, 0.25)
+            parts.boardButton = button
+        end
+        if entry.badge then
+            local badge = button:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+            badge:SetPoint("BOTTOMRIGHT", 3, -2)
+            badge:SetTextColor(1, 0.48, 0.66)
+            parts.added = parts.added or {}
+            parts.added[button] = { entry = entry, badge = badge }
+        end
         parts.windowButtons[i] = button
         previous = button
     end
+    if SK.RefreshBoardButton then SK.RefreshBoardButton() end
+    if SK.RefreshPanelButtons then SK.RefreshPanelButtons() end
 
     -- News (SK.NEWS in Data/Messages.lua), in the open space of the button
     -- row under the title. Advanced view has room for the line itself;
@@ -1490,3 +1531,43 @@ SK.Listen("READY", function()
         end
     end)
 end)
+
+-- The board button: a letter when there are new posts (with how many),
+-- a plain note when there aren't.
+local BOARD_QUIET, BOARD_NEW = "Interface\\Icons\\INV_Misc_Note_02", "Interface\\Icons\\INV_Letter_17"
+function SK.RefreshBoardButton()
+    local button = parts and parts.boardButton
+    if not button then return end
+    local n = SK.BoardUnread and SK.BoardOn and SK.BoardOn() and SK.BoardUnread() or 0
+    button:SetNormalTexture(n > 0 and BOARD_NEW or BOARD_QUIET)
+    button.badge:SetText(n > 0 and (n > 9 and "9+" or tostring(n)) or "")
+end
+SK.Listen("BOARD_CHANGED", function() SK.Safely("board button", SK.RefreshBoardButton) end)
+SK.Listen("READY", function() C_Timer.After(2, function() SK.Safely("board button", SK.RefreshBoardButton) end) end)
+
+-- Another addon can put a button on the panel, with the window buttons:
+-- SK.AddPanelButton({ icon = texture, title = "...", text = "...", open = function() ... end,
+--     badge = function() return a count or nil end, iconNow = function() return a texture end })
+-- (then SK.RefreshPanelButtons() when the count changes)
+function SK.AddPanelButton(entry)
+    if type(entry) ~= "table" or type(entry.open) ~= "function" or not entry.icon then return end
+    entry.title, entry.text = entry.title or "", entry.text or ""
+    SK.extraPanelButtons = SK.extraPanelButtons or {}
+    table.insert(SK.extraPanelButtons, entry)
+    -- Panel already made: add it now and lay the row out again.
+    if parts.makeWindowButton then
+        parts.makeWindowButton(entry)
+        if SK.ApplyPanelSettings then SK.Safely("panel", SK.ApplyPanelSettings) end
+        SK.RefreshPanelButtons()
+    end
+end
+
+-- Added buttons: their counts (entry.badge()) and icons (entry.iconNow()), now.
+function SK.RefreshPanelButtons()
+    for button, added in pairs(parts.added or {}) do
+        local entry = added.entry
+        local n = entry.badge and entry.badge()
+        added.badge:SetText(n and tostring(n) or "")
+        if entry.iconNow then button:SetNormalTexture(entry.iconNow() or entry.icon) end
+    end
+end

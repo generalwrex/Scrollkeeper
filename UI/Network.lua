@@ -675,6 +675,22 @@ local function Build()
     window.summary:SetPoint("RIGHT", window, "RIGHT", -12, 0)
     window.summary:SetJustifyH("CENTER")
 
+    -- The board, from here too.
+    local board = CreateFrame("Button", nil, window, "UIPanelButtonTemplate")
+    board:SetSize(70, 20)
+    board:SetPoint("TOPRIGHT", -34, -30)
+    board:SetText(L["Board"])
+    if board.GetFontString and board:GetFontString() then board:GetFontString():SetFontObject("GameFontNormalSmall") end
+    board:SetScript("OnClick", function() if SK.ToggleBoard then SK.ToggleBoard() end end)
+    board:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["Fellow Mages board"])
+        local n = SK.BoardUnread and SK.BoardUnread() or 0
+        GameTooltip:AddLine(n > 0 and L["%d new |4post:posts;."]:format(n) or L["Posts and replies from other mages. /sk board"], 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    board:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     window.pane = SK.UI.CreateNetworkPane(window, LEFT, -62, WIDTH - LEFT * 2, 8, 8)
 
     window.footer = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")

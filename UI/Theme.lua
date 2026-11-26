@@ -9,12 +9,15 @@
 --                   with gray borders and charcoal section bars
 --   modern          flat slate panels, square buttons and boxes with thin
 --                   borders, a blue accent
+--   holiday themes  Modern in holiday colors (Winter Veil, Hallow's End...),
+--                   only during their months
 --
 -- Every window, section bar, row stripe and pop-up asks for its colors
 -- here, and is remembered, so switching themes changes everything at once.
 
 local _, SK = ...
 SK.UI = SK.UI or {}
+local L = SK.L
 
 local PALETTES = {
     classic = {
@@ -66,6 +69,108 @@ local PALETTES = {
     },
 }
 
+------------------------------------------------------------------------
+-- Holiday themes: the Modern look in holiday colors, only in their months
+-- (the game's calendar month). Out of season you're back on the theme you
+-- had before; "Holiday themes automatically" puts one on for you.
+------------------------------------------------------------------------
+
+-- A Modern-style palette from a few colors: bg (panels), bar (section
+-- bars and buttons), accent (borders, the picked button), text (titles).
+local function Holiday(bg, bar, accent, text, headerText)
+    local function Mix(c, f) return { c[1] * f, c[2] * f, c[3] * f } end
+    return {
+        background = { bg[1], bg[2], bg[3], 0.97 },
+        stripe     = { 1, 1, 1, 0.035 },
+        header     = { bar[1] * 0.6, bar[2] * 0.6, bar[3] * 0.6, 0.95 },
+        nav        = { bar[1] * 0.45, bar[2] * 0.45, bar[3] * 0.45, 0.9 },
+        border     = { accent[1] * 0.7, accent[2] * 0.7, accent[3] * 0.7, 1 },
+        box        = { accent[1] * 0.6, accent[2] * 0.6, accent[3] * 0.6, 1 },
+        flat       = true,
+        title      = text,
+        headerTint = bar,
+        headerText = headerText or text,
+        square     = {
+            button = { bar[1] * 0.45, bar[2] * 0.45, bar[3] * 0.45, 1 },
+            hover = { bar[1] * 0.65, bar[2] * 0.65, bar[3] * 0.65, 1 },
+            edge = { accent[1] * 0.55, accent[2] * 0.55, accent[3] * 0.55, 1 },
+            accent = { accent[1], accent[2], accent[3], 1 },
+            text = { 0.95, 0.95, 0.95 },
+            input = { bg[1] * 0.6, bg[2] * 0.6, bg[3] * 0.6, 1 },
+            selected = { accent[1] * 0.45, accent[2] * 0.45, accent[3] * 0.45, 1 },
+        },
+    }
+end
+
+-- Holiday themes come from the network (Network/Themes.lua), signed by
+-- the dev team; in the order "automatically" picks when two share a month.
+SK.UI.HOLIDAYS = {}
+local HOLIDAY_BY_KEY = {}
+
+-- Add (or update) a holiday theme: colors are { r, g, b } 0-1.
+function SK.UI.AddHoliday(key, name, tip, months, bg, bar, accent, text, order)
+    local h = HOLIDAY_BY_KEY[key]
+    if not h then
+        h = {}
+        table.insert(SK.UI.HOLIDAYS, h)
+        HOLIDAY_BY_KEY[key] = h
+    end
+    h[1], h[2], h[3], h[4], h[5] = key, name, tip, months, Holiday(bg, bar, accent, text)
+    h.order = order or 50
+    table.sort(SK.UI.HOLIDAYS, function(a, b)
+        if a.order ~= b.order then return a.order < b.order end
+        return a[1] < b[1]
+    end)
+    PALETTES[key] = h[5]
+end
+
+function SK.UI.RemoveHoliday(key)
+    if not HOLIDAY_BY_KEY[key] then return end
+    HOLIDAY_BY_KEY[key] = nil
+    PALETTES[key] = nil
+    for i, h in ipairs(SK.UI.HOLIDAYS) do
+        if h[1] == key then table.remove(SK.UI.HOLIDAYS, i) break end
+    end
+end
+
+local MONTH_NAMES = { "January", "February", "March", "April", "May", "June", "July",
+    "August", "September", "October", "November", "December" }
+
+-- This month, by the game's calendar (your own clock if that's not there).
+function SK.UI.Month()
+    local now = C_DateAndTime and C_DateAndTime.GetCurrentCalendarTime and SK.Try(C_DateAndTime.GetCurrentCalendarTime)
+    if type(now) == "table" and now.month then return now.month end
+    return tonumber(date("%m"))
+end
+
+function SK.UI.IsHolidayTheme(key) return HOLIDAY_BY_KEY[key] ~= nil end
+
+-- Is a holiday theme in season? Also its months in words ("October").
+function SK.UI.ThemeInSeason(key)
+    local h = HOLIDAY_BY_KEY[key]
+    if not h then return true end
+    local month, words = SK.UI.Month(), {}
+    local inSeason = false
+    for _, m in ipairs(h[4]) do
+        if m == month then inSeason = true end
+        words[#words + 1] = L[MONTH_NAMES[m]]
+    end
+    return inSeason, table.concat(words, L[" and "])
+end
+
+-- The holiday in season now, for "automatically", or nil.
+local function HolidayNow()
+    for _, h in ipairs(SK.UI.HOLIDAYS) do
+        if SK.UI.ThemeInSeason(h[1]) then return h[1] end
+    end
+end
+SK.UI.HolidayNow = HolidayNow
+
+function SK.UI.HolidayName(key)
+    local h = HOLIDAY_BY_KEY[key]
+    return h and L[h[2]] or key
+end
+
 SK.UI.THEMES = {
     { "classic", "Classic", "The game's own windows: gold and stone frames, bronze section bars." },
     { "dark", "Dark", "Flat charcoal panels with thin gray borders and muted headers. No gold." },
@@ -74,9 +179,51 @@ SK.UI.THEMES = {
 }
 
 function SK.UI.ThemeName()
-    local name = SK.db and SK.db.theme
-    return PALETTES[name] and name or "classic"
+    local db = SK.db
+    local name = db and db.theme
+    if not PALETTES[name] then
+        -- A holiday theme that hasn't come in yet (or is gone): your everyday one.
+        local before = db and db.themeBefore
+        return (PALETTES[before] and not HOLIDAY_BY_KEY[before]) and before or "classic"
+    end
+    if not HOLIDAY_BY_KEY[name] then
+        -- Remember your everyday theme, to come back to after a holiday.
+        if db then db.themeBefore = name end
+        if db and db.themeHoliday then
+            local holiday = HolidayNow()
+            if holiday then return holiday end
+        end
+        return name
+    end
+    if SK.UI.ThemeInSeason(name) then return name end
+    local before = db and db.themeBefore
+    return (PALETTES[before] and not HOLIDAY_BY_KEY[before]) and before or "classic"
 end
+
+-- At login: a holiday theme whose holiday is over goes back to your
+-- everyday theme (said once), and with "automatically" on, a holiday
+-- starting is said once a year.
+SK.Listen("READY", function()
+    local db = SK.db
+    if not db then return end
+    local name = db.theme
+    if HOLIDAY_BY_KEY[name] and not SK.UI.ThemeInSeason(name) then
+        local before = (PALETTES[db.themeBefore] and not HOLIDAY_BY_KEY[db.themeBefore]) and db.themeBefore or "classic"
+        db.theme = before
+        local everyday
+        for _, t in ipairs(SK.UI.THEMES) do if t[1] == before then everyday = L[t[2]] end end
+        SK.Print(L["%s is over, so the windows are back to %s."]:format(SK.UI.HolidayName(name), everyday or before))
+        if SK.UI.ApplyTheme then SK.UI.ApplyTheme() end
+    elseif db.themeHoliday and not HOLIDAY_BY_KEY[name] then
+        local holiday = HolidayNow()
+        local year = date("%Y")
+        db.holidaySaid = db.holidaySaid or {}
+        if holiday and db.holidaySaid[holiday] ~= year then
+            db.holidaySaid[holiday] = year
+            SK.Print(L["it's %s! Scrollkeeper dressed up for it. (Turn it off: /sk options > Panel > Holiday themes automatically.)"]:format(SK.UI.HolidayName(holiday)))
+        end
+    end
+end)
 
 function SK.UI.Palette() return PALETTES[SK.UI.ThemeName()] end
 
@@ -345,7 +492,7 @@ SK.Listen("READY", function()
     StartSweeping()
     -- After any window refreshes, square what it just made.
     for _, name in ipairs({ "RefreshPanel", "RefreshScrollBag", "RefreshGuide", "RefreshLog", "RefreshNetwork",
-        "RefreshPlan", "RefreshSwap", "RefreshDoors", "RefreshSetupPage", "RefreshMailHelper", "OpenOptions" }) do
+        "RefreshPlan", "RefreshSwap", "RefreshDoors", "RefreshBoard", "RefreshSetupPage", "RefreshMailHelper", "OpenOptions" }) do
         local original = SK[name]
         if type(original) == "function" then
             SK[name] = function(...)

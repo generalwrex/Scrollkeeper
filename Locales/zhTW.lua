@@ -543,7 +543,6 @@ L["The Farming Plan button moved: it's with the other window buttons up top."] =
 L["Click: print it in chat. Right-click: hide it until there's new news."] = "點擊：在聊天裡顯示。右鍵：隱藏，直到有新消息。"
 L["Study ready"] = "研讀就緒"
 L["%d tier %d"] = "%d 個 %d 檔"
-L["Buy me a coffee"] = "請我喝杯咖啡"
 L["Seems to be offline: whispers won't reach them, but mail will be waiting for them."] = "好像不在線：密語到不了，但郵件會等著他們。"
 L["Keep offline mages for"] = "離線法師保留"
 L["%d min"] = "%d 分鐘"

@@ -546,7 +546,6 @@ L["The Farming Plan button moved: it's with the other window buttons up top."] =
 L["Click: print it in chat. Right-click: hide it until there's new news."] = "Clic: mostrarlo en el chat. Clic derecho: ocultarlo hasta que haya novedades."
 L["Study ready"] = "Estudio listo"
 L["%d tier %d"] = "%d de nivel %d"
-L["Buy me a coffee"] = "Invítame a un café"
 L["Seems to be offline: whispers won't reach them, but mail will be waiting for them."] = "Parece desconectado: los susurros no le llegan, pero el correo le estará esperando."
 L["Keep offline mages for"] = "Mantener magos desconectados"
 L["%d min"] = "%d min"

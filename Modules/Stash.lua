@@ -300,7 +300,25 @@ end
 -- Counting: bags (live), bank and mail (remembered from your last visit)
 ------------------------------------------------------------------------
 
-local BANK_BAGS = { -1, -3, 6, 7, 8, 9, 10, 11, 12 }
+-- The bank's containers. On Forever (newer client): the character bank
+-- tabs, CharacterBankTab_1 to _9 (6 to 14); there -1 is the KEYRING, never
+-- the bank. Older clients: the bank (-1) and the bank bags after your bags.
+function SK.BankBags()
+    local index = Enum and Enum.BagIndex
+    local list = {}
+    if index and index.CharacterBankTab_1 then
+        for i = 1, 12 do
+            local bag = index["CharacterBankTab_" .. i]
+            if bag then list[#list + 1] = bag end
+        end
+    else
+        list[1] = BANK_CONTAINER or -1
+        local first = (NUM_TOTAL_EQUIPPED_BAG_SLOTS or ((NUM_BAG_SLOTS or 4) + (NUM_REAGENTBAG_SLOTS or 0))) + 1
+        for bag = first, first + (NUM_BANKBAGSLOTS or 7) - 1 do list[#list + 1] = bag end
+    end
+    return list
+end
+local BANK_BAGS = SK.BankBags()
 
 local function IsMageScrollID(itemID)
     return itemID and (SK.MAGE_SCROLL_IDS[itemID] ~= nil or SK.SCROLL_FACTS[itemID] ~= nil)

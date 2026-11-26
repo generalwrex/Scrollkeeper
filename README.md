@@ -138,7 +138,6 @@ Modules/              one feature per file, no drawing
 Network/              talking to other players' Scrollkeeper (protocol notes in each file)
 Map/                  world map pins
 UI/                   everything you can see, plus optional links to other addons
-Dev/                  /sk scan data collection tool (not in the released addon)
 tools/community/      builds the shipped community data (not loaded by the game)
 tools/test/           runs the addon in a fake WoW (not loaded by the game)
                       cd tools/test, npm install, npm test

@@ -69,6 +69,13 @@ function Net.RememberMyself(sender)
     SK.Send("COMMUNITY_CHANGED")
 end
 
+-- The names your own messages come back under.
+function Net.MySenderNames()
+    local list = {}
+    for name in pairs(mySenderNames) do list[#list + 1] = name end
+    return list
+end
+
 function Net.IsMe(sender)
     if mySenderNames[sender] then return true end
     -- (On Forever UnitName gives only the first name: check the full one too.)
@@ -205,6 +212,20 @@ function Net.Send(kind, ...)
         if queued.priority > priority then at = i break end
     end
     table.insert(queue, at, { key = key, text = text, priority = priority, only = only })
+end
+
+-- Queue a message for one player (a whisper), going out with the rest of
+-- the queue and its budget, so a batch of them can't trip the game's limit.
+function Net.SendTo(target, kind, ...)
+    if not (SK.db and SK.db.share and target) then return end
+    local parts = { kind }
+    for i = 1, select("#", ...) do
+        parts[#parts + 1] = tostring((select(i, ...)) or ""):gsub("|", "/")
+    end
+    local text = table.concat(parts, "|")
+    if #text > MAX_LENGTH then return end
+    queue[#queue + 1] = { key = kind .. "|" .. text .. "@" .. target, text = text, priority = PRIORITY[kind] or 3,
+        only = { { "WHISPER", target } } }
 end
 
 -- How many messages are waiting (for /sk who).

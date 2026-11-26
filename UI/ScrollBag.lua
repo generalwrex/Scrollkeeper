@@ -176,7 +176,8 @@ local function FreeSlot()
     return nil
 end
 
-local BANK_BAGS = { -1, 6, 7, 8, 9, 10, 11, 12 }
+-- (SK.BankBags in Modules/Stash.lua: never the keyring.)
+local BANK_BAGS = SK.BankBags()
 local function Locked()
     if SK.BankIsOpen() then
         for _, bag in ipairs(BANK_BAGS) do

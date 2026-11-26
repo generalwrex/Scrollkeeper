@@ -1,4 +1,24 @@
 -- Minimal WoW mock for loading Scrollkeeper outside the game.
+
+-- WoW's bit library (LuaBitOp: 32-bit, signed results), from Lua 5.3's operators.
+do
+  -- (fengari's integers are 32-bit: keep everything as signed 32-bit.)
+  local function I(x)
+    local v = math.floor(x) % 4294967296
+    if v >= 2147483648 then v = v - 4294967296 end
+    return math.tointeger(v)
+  end
+  local function S(x) return I(x) end
+  bit = {
+    band = function(a, ...) local r = I(a) for _, v in ipairs({ ... }) do r = r & I(v) end return S(r) end,
+    bor = function(a, ...) local r = I(a) for _, v in ipairs({ ... }) do r = r | I(v) end return S(r) end,
+    bxor = function(a, ...) local r = I(a) for _, v in ipairs({ ... }) do r = r ~ I(v) end return S(r) end,
+    bnot = function(a) return S(~I(a)) end,
+    lshift = function(a, n) return S(I(a) << n) end,
+    rshift = function(a, n) return S(I(a) >> n) end,
+    arshift = function(a, n) return I(math.floor(I(a) / 2 ^ n)) end,
+  }
+end
 local frames = {}
 local function newObj()
   local o = { _scripts = {}, _events = {}, _attrs = {}, _shown = true, _text = nil }
@@ -145,3 +165,4 @@ function CreateSettingsListSectionHeaderInitializer(t) return { text = t } end
 function CreateSettingsButtonInitializer(...) return {} end
 Minimap = CreateFrame("Frame", "Minimap")
 function GetCursorPosition() return 100, 100 end
+

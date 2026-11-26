@@ -1,5 +1,20 @@
 # Scrollkeeper
 
+## Unreleased: Fellow Mages board and holiday themes
+
+- New: the **Fellow Mages board** (/sk board, the board button on the panel, or the Board button in Fellow Mages). The panel button turns into a letter with a green count when there are new posts. Post what you're after, offer spare scrolls, say where you're opening a Liminal doorway, or share odds and tips. Posts last 7 days, with replies under them.
+  - Categories: Notices (from the dev team), Portals and doorways, Scrolls wanted, Spare scrolls, Odds and tips, and General.
+  - Trade, doorway and odds posts only reach mages on your ruleset, since you can't trade, group or whisper across rulesets. General posts and notices can come from every ruleset (or just yours: your pick, at the top of the board or in /sk options > Sharing).
+  - 3 posts and 30 replies a day each. Whisper an author, hide a post, or mute a mage (just for you). **Edit** or Delete your own posts (edits show as edited).
+  - Search the posts, and **Your posts** lists your own. New posts since you last looked are marked **new**.
+  - **Filter**: only new posts, no replies yet, has replies, from the dev team, your ruleset, or the last day or 3; and the order (newest post, latest reply, most replies). Your filters are kept.
+  - The dev team can take posts down and ban spammers for everyone. Their messages are signed, so nobody else can, and the dev team shows in pink with [dev].
+  - No server needed: every Scrollkeeper keeps a copy, and when you log in it asks another mage for what you missed. Posts are only text, never run as code, and only a post's author can change it.
+- New: **holiday themes**, the Modern look in holiday colors, like Hallow's End, Winter Veil and Pilgrim's Bounty. They come from the Scrollkeeper team over the network (only colors, signed so nobody else can send them), so new ones show up without an update. Each one can only be picked during its months (by the game's calendar), and when the holiday's over you're back on your everyday theme. Find them in /sk options > Panel; turn them off in /sk options > Sharing.
+- Fixed: **Sync bank extras** couldn't put scrolls into the bank ("Couldn't split those items"): it was aiming at your keyring, which Forever numbers the way older games numbered the bank. It now uses the bank's own tabs, and counts all of them.
+- The donation link is no longer in the game (Blizzard's add-on rules keep donation requests to the CurseForge page).
+- New setting: **Holiday themes automatically**: Scrollkeeper wears the holiday's theme on its own while it lasts (off by default).
+
 ## 1.3.2
 
 - The Scroll Bag's bank and mail buttons now work **both ways**, so your bags end up with your keep amount of each scroll:

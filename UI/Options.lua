@@ -32,7 +32,6 @@ SK.CREDITS = {
 SK.LINKS = {
     { "CurseForge", "https://www.curseforge.com/wow/addons/scrollkeeper" },
     { "Report a bug", "https://www.curseforge.com/wow/addons/scrollkeeper/comments" },
-    { "Buy me a coffee", "https://donorbox.org/generalwrex" },
 }
 
 ------------------------------------------------------------------------
@@ -54,8 +53,9 @@ local function Changed(key)
     if (key == "oddsStandard" or key == "offlineMinutes") and SK.RefreshNetwork then SK.RefreshNetwork() end
     if key == "language" then SK.Print(L["language changed. Type /reload to switch."]) end
     if key == "own" then SK.SetCharacterLayout(SK.charDB.own) end
-    if key == "theme" and SK.UI.ApplyTheme then SK.UI.ApplyTheme() end
+    if (key == "theme" or key == "themeHoliday") and SK.UI.ApplyTheme then SK.UI.ApplyTheme() end
     if key == "helpButtons" and SK.UI.ApplyHelpButtons then SK.UI.ApplyHelpButtons() end
+    if key:find("^board") then SK.Send("BOARD_CHANGED") end
     if key:find("^bag") or key:find("^liminal") or key:find("^module") then
         SK.Send("STASH_CHANGED")
         SK.Send("REMINDERS_CHANGED")
@@ -85,6 +85,7 @@ local MODULES = {
     { "Swap", "Scroll Swap", "Who has spare scrolls you'd level from, and who'd want yours." },
     { "Doors", "Doorways", "Getting around with Scroll of Liminal Passage, and the running-low warning." },
     { "Network", "Fellow Mages", "The Fellow Mages window (the Advanced view still shows them)." },
+    { "Board", "Fellow Mages board", "The board button on the panel (/sk board still opens it). The board itself is in Sharing." },
 }
 
 local SECTIONS = {
@@ -99,6 +100,8 @@ local SECTIONS = {
             { "dark", "Dark", "Flat charcoal panels with thin gray borders and muted headers. No gold." },
             { "dusk", "Darker classic", "The game's window shapes, darkened: gray borders and charcoal section bars." },
             { "modern", "Modern", "Flat slate panels, square buttons and boxes with thin borders, a blue accent." } } },
+        { "choice", "theme", "Holiday themes", "The Modern look in holiday colors, only during the holiday's months. When it's over, you're back on your everyday theme.", choices = {}, holidays = true },
+        { "check", "themeHoliday", "Holiday themes automatically", "During a holiday, Scrollkeeper wears its holiday theme on its own, and goes back to your theme after. Off: only if you pick one above." },
         { "check", "helpButtons", "Help buttons", "A red ? in the corner of every Scrollkeeper window: point at it for what the window does, click it to keep that open beside the window." },
         { "slider", "scale", "Panel size", "How big the panel is.", 0.7, 1.5, 0.05, Percent },
         { "check", "own", "This character's own layout", "Panel position, size and view, the minimap button, the scroll icon and the pop-up's spot are saved for this character only. Everything else stays the same on all your characters.", char = true },
@@ -130,6 +133,12 @@ local SECTIONS = {
             { "anon", "Anonymous", "Share with everyone, but your name isn't shown in their lists, so nobody can mail you scrolls from them." },
             { "none", "None (not recommended)", "Nothing is sent. No Fellow Mages or swap board, but each update's odds still show." } } },
         { "check", "shareUsage", "Share anonymous usage stats (recommended)", "Opt-in, off unless you turn it on. Counts which windows, buttons and settings get used, so we know which features people rely on most and can fix and improve those first. Totally anonymous: just counts under a random ID, plus your class, faction, game language, rough Comprehension skill and which bag and map addons you use, never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None." },
+        { "check", "themesShared", "Holiday themes from the network", "New holiday themes come from the Scrollkeeper team over the network, no update needed (they're only colors). Off: no new ones." },
+        { "check", "boardOn", "Fellow Mages board", "Posts and replies from other Scrollkeeper mages, kept for 7 days (/sk board). Off: you don't get or send posts." },
+        { "check", "boardNotify", "Board: tell me about new posts", "Say once a session in chat when the board has new posts.", dependsOn = "boardOn" },
+        { "choice", "boardRulesets", "Board: General posts from", "Trade, doorway and odds posts are always your ruleset only. This is for General posts and notices.", choices = {
+            { "all", "All rulesets", "Mages on every ruleset, with their ruleset shown by their name." },
+            { "mine", "Only my ruleset", "Just mages you could whisper or group with." } } },
         { "check", "liminalDoor", "Doorways: be a door", "While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways." },
         { "check", "doorAutoInvite", "Doorways: invite by myself", "Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes.", dependsOn = "liminalDoor" },
         { "check", "oddsStandard", "Odds: list standard scrolls", "Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row." },
@@ -267,14 +276,26 @@ local function MakeChoice(content, item, y)
         if rowX + width > CONTENT - 20 and i > 1 then row, rowX = row + 1, 0 end
         b:SetPoint("TOPLEFT", w, "TOPLEFT", 4 + rowX, -20 - row * 26)
         rowX = rowX + width + 4
-        b:SetScript("OnClick", function() Set(item, choice[1]) end)
+        b:SetScript("OnClick", function()
+            if choice.season and not SK.UI.ThemeInSeason(choice[1]) then return end
+            Set(item, choice[1])
+        end)
         b:SetScript("OnEnter", function(self)
             if not choice[3] then return end
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             GameTooltip:SetText(L[choice[2]])
             GameTooltip:AddLine(L[choice[3]], 1, 1, 1, true)
+            if choice.season then
+                local now, months = SK.UI.ThemeInSeason(choice[1])
+                if now then
+                    GameTooltip:AddLine(L["In season now, until the end of %s."]:format(months), 0.25, 1, 0.25, true)
+                else
+                    GameTooltip:AddLine(L["Only in %s."]:format(months), 1, 0.4, 0.4, true)
+                end
+            end
             GameTooltip:Show()
         end)
+        b.season = choice.season
         b:SetScript("OnLeave", function() GameTooltip:Hide() end)
         b.value = choice[1]
         buttons[#buttons + 1] = b
@@ -465,8 +486,16 @@ local function ShowSection(index)
             y = y - h - 12
         end
         for _, item in ipairs(section.items) do
+            -- Holiday themes: the ones in season now (they can come in
+            -- from the network at any time, so this is worked out here).
+            if item.holidays then
+                item.choices = {}
+                for _, h in ipairs(SK.UI.HOLIDAYS or {}) do
+                    if SK.UI.ThemeInSeason(h[1]) then item.choices[#item.choices + 1] = { h[1], h[2], h[3], season = true } end
+                end
+            end
             local make = ({ check = MakeCheck, choice = MakeChoice, slider = MakeSlider, button = MakeButton })[item[1]]
-            if make and not (item.char and not SK.charDB) then
+            if make and not (item.char and not SK.charDB) and not (item.holidays and #item.choices == 0) then
                 local w, h = make(content, item, y)
                 widgets[#widgets + 1] = w
                 y = y - h
@@ -484,6 +513,13 @@ local function Build()
     -- The language choices depend on your game client.
     for _, section in ipairs(SECTIONS) do
         for _, item in ipairs(section.items or {}) do
+            -- Holiday themes: only the ones in season now are shown.
+            if item.holidays then
+                item.choices = {}
+                for _, h in ipairs(SK.UI.HOLIDAYS or {}) do
+                    if SK.UI.ThemeInSeason(h[1]) then item.choices[#item.choices + 1] = { h[1], h[2], h[3], season = true } end
+                end
+            end
             if item[2] == "language" then
                 item.choices = {}
                 for _, language in ipairs(SK.LANGUAGES or {}) do
@@ -577,6 +613,11 @@ function SK.OpenOptions(sectionName)
     window:Show()
     ShowSection(current)
 end
+
+-- A holiday theme came in: show it if the options are open.
+SK.Listen("THEMES_CHANGED", function()
+    if window and window:IsShown() then SK.Safely("options", ShowSection, current) end
+end)
 
 function SK.ToggleOptions()
     if window and window:IsShown() then window:Hide() else SK.OpenOptions() end

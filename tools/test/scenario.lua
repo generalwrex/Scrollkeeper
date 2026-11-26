@@ -1381,8 +1381,8 @@ if SK.isMage and ScrollkeeperBagFrame then
   print("MAILTO errors:", #ScrollkeeperDB.errors)
 end
 
--- USAGE WINDOW: opens, fills both ways
-do
+-- USAGE WINDOW: opens, fills both ways (when it's loaded)
+if SK.ToggleUsageWindow then
   SK.ToggleUsageWindow()
   local f = ScrollkeeperUsageFrame
   if f then f:Refresh() end
@@ -1508,4 +1508,158 @@ if SK.isMage and ScrollkeeperBagFrame then
   SK.ScrollBagActions.bank(true); SK.ScrollBagActions.mailsync(true)
   SK.db.bagAutoSyncBank = false
   print("REFINE bank label:", ScrollkeeperBagFrame.buttons.bank:GetText(), "errors:", #ScrollkeeperDB.errors)
+end
+
+-- HOLIDAY themes: only in season (two made up here; real ones come from the network)
+do
+  local m = SK.UI.Month()
+  local c = { 0.1, 0.1, 0.1 }
+  SK.UI.AddHoliday("testin", "Test In", "", { m }, c, c, c, c, 1)
+  SK.UI.AddHoliday("testout", "Test Out", "", { m % 12 + 1 }, c, c, c, c, 2)
+  local inKey, outKey
+  for _, h in ipairs(SK.UI.HOLIDAYS) do
+    if SK.UI.ThemeInSeason(h[1]) then inKey = inKey or h[1] else outKey = outKey or h[1] end
+  end
+  SK.db.theme = "modern"; SK.UI.ThemeName()
+  SK.db.theme = outKey; SK.UI.ApplyTheme()
+  local outName = SK.UI.ThemeName()
+  SK.db.theme = inKey or "modern"; SK.UI.ApplyTheme()
+  local inName = SK.UI.ThemeName()
+  SK.db.theme = "modern"; SK.db.themeHoliday = true
+  local auto = SK.UI.ThemeName()
+  SK.db.themeHoliday = false; SK.UI.ApplyTheme()
+  print("HOLIDAY month:", m, "out->", outKey, outName, "in->", inKey, inName, "auto:", auto, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- BOARD: post, reply, receive, first version wins, take-down only by author, limits, window
+do
+  SK.db.share = true; SK.db.boardOn = true
+  local now = (GetServerTime and GetServerTime()) or time()
+  local p, why = SK.BoardPost("general", "Hello mages", "First post on the board!")
+  local r = p and SK.BoardPost(nil, nil, "Replying to myself", p.id)
+  -- someone else, with a hello so we know their character ID
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.3.2|MAGE|60|300|300|175||Player-9-0ABC", "GUILD", "Other-Realm")
+  local msg = "BP|abc12345||w|" .. now .. "|" .. (SK.ServerKind() or "") .. "|175|Player-9-0ABC|Other Mage|LF Odd Melon|Will trade"
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", msg, "GUILD", "Other-Realm")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", msg:gsub("Will trade", "CHANGED"), "GUILD", "Other-Realm")
+  local kept = SK.BoardData().posts["abc12345"]
+  -- forged delete from someone else, then a real one
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BD|abc12345", "GUILD", "Evil-Realm")
+  local afterForged = SK.BoardData().posts["abc12345"] ~= nil
+  -- bad stuff: code-ish text, wrong category code, old date
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|bad1||x|" .. now .. "|||Player-9-0ABC|X|T|B", "GUILD", "Other-Realm")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|bad2||g|" .. (now - 30 * 86400) .. "|||Player-9-0ABC|X|T|B", "GUILD", "Other-Realm")
+  -- notices only from the team
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|bad3||n|" .. now .. "|||Player-9-0ABC|Other Mage|Fake notice|B", "GUILD", "Other-Realm")
+  -- daily limit: 3 posts
+  local ok2 = SK.BoardPost("general", "Two", "b")
+  local ok3 = SK.BoardPost("general", "Three", "c")
+  local ok4, why4 = SK.BoardPost("general", "Four", "d")
+  -- catch up request gets answered
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BQ|0", "GUILD", "Other-Realm")
+  local posts, replies = SK.BoardPosts()
+  SK.ToggleBoard(); SK.RefreshBoard()
+  SK.ToggleDemo(); SK.RefreshBoard(); SK.ToggleDemo()
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BD|abc12345", "GUILD", "Other-Realm")
+  local gone = SK.BoardData().posts["abc12345"] == nil
+  print("BOARD post:", p ~= nil, why, "reply:", r ~= nil, "kept first:", kept and kept.body, "forged delete ignored:", afterForged,
+    "bad dropped:", SK.BoardData().posts.bad1 == nil and SK.BoardData().posts.bad2 == nil and (SK.BoardData().posts.bad3 == nil or not SK.BoardData().posts.bad3.verified),
+    "limit:", ok2 ~= nil, ok3 ~= nil, ok4 == nil, why4, "list:", #posts, "replies:", replies[p and p.id or ""] and #replies[p.id],
+    "author delete:", gone, "window:", ScrollkeeperBoardFrame ~= nil, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- BOARD MOD: only messages signed with the team's key count
+do
+  local function RunTimers()
+    for _ = 1, 20 do
+      local list = TIMERS; TIMERS = {}
+      if #list == 0 then break end
+      for _, t in ipairs(list) do pcall(t) end
+    end
+  end
+  -- A test key (the real secret key isn't in this repo).
+  local seed = string.rep("\7", 32)
+  local realKey = SK.BOARD_MOD_KEY
+  SK.BOARD_MOD_KEY = SK.Ed25519.ToBase64(SK.Ed25519.PublicKey(seed))
+  local now = (GetServerTime and GetServerTime()) or time()
+  local rs = SK.ServerKind() or ""
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|beef0001||g|" .. now .. "|" .. rs .. "|175|Player-9-0ABC|Other Mage|Spam|Buy gold", "GUILD", "Other-Realm")
+  -- signed with the wrong key: ignored
+  local wrong = SK.Ed25519.ToBase64(SK.Ed25519.Sign("SK1|remove|beef0001|||" .. now, string.rep("\9", 32)))
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BS|" .. wrong .. "|remove|beef0001|||" .. now, "GUILD", "Evil-Realm")
+  RunTimers()
+  local stillThere = SK.BoardData().posts.beef0001 ~= nil
+  -- signed right, relayed by anyone: counts
+  local good = SK.Ed25519.ToBase64(SK.Ed25519.Sign("SK1|remove|beef0001|||" .. now, seed))
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BS|" .. good .. "|remove|beef0001|||" .. now, "GUILD", "Someone-Realm")
+  RunTimers()
+  local removed = SK.BoardData().posts.beef0001 == nil
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|beef0001||g|" .. now .. "|" .. rs .. "|175|Player-9-0ABC|Other Mage|Spam|Buy gold", "GUILD", "Someone-Realm")
+  local staysOut = SK.BoardData().posts.beef0001 == nil
+  -- a signer, as the team has
+  SK.BoardSigner = function(text) return SK.Ed25519.Sign(text, seed) end
+  local okBan = SK.BoardMod("ban", "Player-9-0ABC", now + 86400, "Other Mage")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|beef0002||g|" .. now .. "|" .. rs .. "|175|Player-9-0ABC|Other Mage|Again|Hi", "GUILD", "Other-Realm")
+  local banned = SK.BoardData().posts.beef0002 == nil
+  -- an old unban sent again can't undo the newer ban
+  local oldUnban = SK.Ed25519.ToBase64(SK.Ed25519.Sign("SK1|unban|Player-9-0ABC|||" .. (now - 100), seed))
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BS|" .. oldUnban .. "|unban|Player-9-0ABC|||" .. (now - 100), "GUILD", "Someone-Realm")
+  RunTimers()
+  local stillBanned = SK.BoardData().bans["Player-9-0ABC"] ~= nil
+  SK.BoardMod("unban", "Player-9-0ABC")
+  -- a notice: hidden until the team's signed OK
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|beef0003||n|" .. now .. "|" .. rs .. "|175|Player-1-0DEF|Natop|News|Hello", "GUILD", "Someone-Realm")
+  local function shown(id) for _, p in ipairs((SK.BoardPosts())) do if p.id == id then return true end end return false end
+  local hiddenFirst = SK.BoardData().posts.beef0003 ~= nil and not shown("beef0003")
+  SK.BoardMod("ok", "beef0003")
+  local okNow = shown("beef0003")
+  -- dev mark
+  SK.BoardMod("dev", "Player-1-0DEF", nil, "Natop")
+  local isDev = SK.BoardIsDev("Player-1-0DEF")
+  local list = #SK.BoardModList()
+  SK.BoardSigner = nil
+  local ok, why = SK.BoardMod("remove", "beef0003")
+  SK.BOARD_MOD_KEY = realKey
+  print("BOARDMOD wrong key ignored:", stillThere, "removed:", removed, "stays out:", staysOut, "ban:", okBan, banned,
+    "old unban ignored:", stillBanned, "notice hidden then ok:", hiddenFirst, okNow, "dev:", isDev,
+    "no key refused:", ok == false, why, "list:", list, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- BOARD EDIT: only the author's edits count, newer only
+do
+  SK.db.share = true; SK.db.boardOn = true
+  local now = (GetServerTime and GetServerTime()) or time()
+  local rs = SK.ServerKind() or ""
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "H|1|1.3.2|MAGE|60|300|300|175||Player-9-0EEE", "GUILD", "Editor-Realm")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|edd00001||g|" .. now .. "|" .. rs .. "|175|Player-9-0EEE|Ed Itor|Old title|Old text|0", "GUILD", "Editor-Realm")
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BE|edd00001|1|Hacked|Bad", "GUILD", "Evil-Realm")
+  local p = SK.BoardData().posts.edd00001
+  local notHacked = p and p.body == "Old text"
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BE|edd00001|1|New title|New text", "GUILD", "Editor-Realm")
+  local edited = p and p.body == "New text" and p.title == "New title" and p.rev == 1
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BE|edd00001|1|Again|Same rev", "GUILD", "Editor-Realm")
+  local sameRevIgnored = p and p.body == "New text"
+  -- a relayed copy with a higher rev from someone else: ignored
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|edd00001||g|" .. now .. "|" .. rs .. "|175|Player-9-0EEE|Ed Itor|Relayed|Fake|5", "GUILD", "Someone-Realm")
+  local relayIgnored = p and p.body == "New text"
+  -- my own edit
+  SK.BoardData().posts = {}
+  local mine = SK.BoardPost("general", "Mine", "first")
+  local ok, why = SK.BoardEdit(mine and mine.id, "Mine v2", "second")
+  local notMine = SK.BoardEdit("edd00001", "x", "y")
+  SK.ToggleBoard(); SK.RefreshBoard(); SK.ToggleBoard()
+  print("BOARDEDIT not hacked:", notHacked, "edited:", edited, "same rev ignored:", sameRevIgnored, "relay ignored:", relayIgnored,
+    "mine:", ok ~= nil, mine and mine.body, mine and mine.rev, "others' refused:", notMine == nil, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- BOARD FILTERS: menu, each filter, sorting
+do
+  SK.db.boardFilter = { show = { unanswered = true }, age = 1, sort = "replies" }
+  SK.ToggleBoard(); SK.RefreshBoard()
+  SK.db.boardFilter = { show = { dev = true, new = true }, age = 0, sort = "active" }
+  SK.RefreshBoard()
+  SK.db.boardFilter = nil
+  SK.RefreshBoard(); SK.ToggleBoard()
+  print("BOARDFILTER errors:", #ScrollkeeperDB.errors)
+  for _, e in ipairs(ScrollkeeperDB.errors) do print("  ", e.where, e.error) end
 end
