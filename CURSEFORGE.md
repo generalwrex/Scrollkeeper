@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-**Latest (1.3.2):** the Scroll Bag's bank and mail buttons now **Sync** both ways: extras go into your bank or mail, and what your bags are missing comes back out. Tick **Auto-sync at the bank** to have it happen every time you open your bank. New in 1.3.0: the Scroll Bag, its own settings window, themes (including a new Modern look), pins, modules, and a red ? on every window that explains it.
+**Latest (1.4.0):** the **Fellow Mages board**: post what scrolls you want or have spare, where you're opening a Liminal doorway, and odds and tips, with replies, search and filters. Plus **holiday themes** that arrive over the network, and Sync bank extras now really puts extras in your bank. New in 1.3.0: the Scroll Bag, its own settings window, themes (including a new Modern look), pins, modules, and a red ? on every window that explains it.
 
 ### Thank you to all who downloaded, your data is invaluable! <3
 

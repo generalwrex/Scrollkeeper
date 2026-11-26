@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-## Unreleased: Fellow Mages board and holiday themes
+## 1.4.0
 
 - New: the **Fellow Mages board** (/sk board, the board button on the panel, or the Board button in Fellow Mages). The panel button turns into a letter with a green count when there are new posts. Post what you're after, offer spare scrolls, say where you're opening a Liminal doorway, or share odds and tips. Posts last 7 days, with replies under them.
   - Categories: Notices (from the dev team), Portals and doorways, Scrolls wanted, Spare scrolls, Odds and tips, and General.
