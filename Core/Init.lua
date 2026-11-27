@@ -25,7 +25,7 @@ end
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.4.0"
+SK.version = "1.4.1"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -315,6 +315,8 @@ local DEFAULTS = {
     viewMode = nil,          -- "full" (Advanced), "compact" (Simple) or "mini" (title only)
     scale = 1,               -- panel size
     boardOn = true,          -- the Fellow Mages board (Network/Board.lua, /sk board)
+    textEmoji = true,        -- board and chat text: :fire: shows as an icon
+    textMarkdown = true,     -- ...and **bold**, *italic*, `code`, ~~strike~~, - bullets, > quotes
     boardNotify = true,      -- ...say once a session when there are new posts
     boardRulesets = "all",   -- ...General posts and notices: "all" rulesets or "mine"
     themeHoliday = false,

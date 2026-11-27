@@ -1,6 +1,6 @@
 # Scrollkeeper
 
-## Unreleased: 1.4.1
+## 1.4.1
 
 > Fixed: no more "No player named ... is currently playing." spam from the Fellow Mages board.
 > News from the Scrollkeeper team now reaches you right away, not just with updates.

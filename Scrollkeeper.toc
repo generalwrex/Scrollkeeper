@@ -78,6 +78,7 @@ UI\Mail.lua
 UI\Swap.lua
 UI\Log.lua
 UI\Doors.lua
+UI\Format.lua
 UI\Board.lua
 UI\Plan.lua
 UI\Guide.lua

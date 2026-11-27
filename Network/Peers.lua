@@ -324,6 +324,16 @@ local RACE_FACTION = {
 
 function SK.FactionOfRace(englishRace) return RACE_FACTION[englishRace or ""] end
 
+-- A character's faction from its ID ("Horde"/"Alliance"), or nil if the
+-- game can't tell us (not seen yet, or a race that can be either).
+function SK.FactionOfGUID(guid)
+    if type(guid) ~= "string" or not GetPlayerInfoByGUID then return nil end
+    local ok, _, _, _, englishRace = pcall(GetPlayerInfoByGUID, guid)
+    local faction = ok and RACE_FACTION[englishRace or ""]
+    if faction == "Horde" or faction == "Alliance" then return faction end
+    return nil
+end
+
 -- Can we actually reach this player? The shared channel reaches every
 -- Forever server (PvE, PvP, RP, RP-PvP) and maybe the other faction, but
 -- whispers, mail and trades only work on your own server and faction, so

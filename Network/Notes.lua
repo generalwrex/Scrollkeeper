@@ -4,6 +4,8 @@
 --   news   a line of news, shown once in chat (between updates too)
 --   off    a feature switched off for everyone until a fix is out
 --          (value "1" off, "0" back on), with why
+--   ver    the latest released version (key "latest", value "1.4.0"):
+--          an older Scrollkeeper says once that it's out
 -- Only text and on/off: never code.
 --
 --   BN|signature|kind|key|value|why|at
@@ -37,12 +39,13 @@ local function Plain(text, max)
 end
 
 local function Valid(n)
-    if n.kind ~= "news" and n.kind ~= "off" then return nil end
+    if n.kind ~= "news" and n.kind ~= "off" and n.kind ~= "ver" then return nil end
     n.key = Plain(n.key, 24)
     if n.key == "" or not n.key:match("^[%w%-_]+$") then return nil end
     n.value, n.why = Plain(n.value, 150), Plain(n.why, 80)
     if n.kind == "off" and n.value ~= "1" and n.value ~= "0" then return nil end
     if n.kind == "news" and n.value == "" then return nil end
+    if n.kind == "ver" and not (n.key == "latest" and n.value:match("^%d+%.%d+%.?%d*$")) then return nil end
     if not (tonumber(n.at) and n.at < Now() + 600 and n.at > Now() - 60 * 86400) then return nil end
     return n
 end
@@ -70,7 +73,10 @@ local function ShowNews(n)
 end
 
 local function Apply(n, quiet)
-    if n.kind == "news" then
+    if n.kind == "ver" then
+        -- The same notice as hearing a newer version from a player (once a session).
+        if SK.NoteVersion then SK.NoteVersion(n.value) end
+    elseif n.kind == "news" then
         if not quiet then ShowNews(n) end
     elseif n.kind == "off" and not quiet then
         if n.value == "1" then
@@ -139,6 +145,9 @@ SK.Listen("READY", function()
         if type(n) ~= "table" or (n.kind == "news" and (n.at or 0) < Now() - NEWS_DAYS * 86400) then saved[id] = nil end
     end
     C_Timer.After(8, function()
-        for _, n in pairs(Saved()) do if n.kind == "news" then SK.Safely("team news", ShowNews, n) end end
+        for _, n in pairs(Saved()) do
+            if n.kind == "news" then SK.Safely("team news", ShowNews, n) end
+            if n.kind == "ver" and SK.NoteVersion then SK.Safely("team version", SK.NoteVersion, n.value) end
+        end
     end)
 end)
