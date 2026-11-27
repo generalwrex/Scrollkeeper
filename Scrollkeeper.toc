@@ -82,6 +82,7 @@ UI\Format.lua
 UI\Board.lua
 UI\Plan.lua
 UI\Guide.lua
+UI\Tutorial.lua
 UI\ScrollBag.lua
 UI\Icon.lua
 UI\Picks.lua

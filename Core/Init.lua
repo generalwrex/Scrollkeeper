@@ -25,7 +25,7 @@ end
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.4.1"
+SK.version = "1.4.2"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -263,7 +263,6 @@ local DEFAULTS = {
     hideInCombat = true,     -- hide the panel while in combat, show it again after
     mailHelper = true,       -- at the mailbox: who could use your scrolls
     mailIncludeMine = false, -- ...also offer the scrolls you'd still level from yourself
-    updateNotice = true,     -- say in chat when someone has a newer Scrollkeeper
     offlineMinutes = 5,      -- Fellow Mages: how long someone found offline stays listed
     oddsStandard = false,    -- community odds: list standard scrolls one by one (off: one merged row)
     guildBankMarks = true,   -- dots on guild bank scrolls someone levels from
@@ -317,7 +316,28 @@ local DEFAULTS = {
     boardOn = true,          -- the Fellow Mages board (Network/Board.lua, /sk board)
     textEmoji = true,        -- board and chat text: :fire: shows as an icon
     textMarkdown = true,     -- ...and **bold**, *italic*, `code`, ~~strike~~, - bullets, > quotes
+    boardPingReplies = true, -- ...chat line when someone replies to your post (or one you follow)
+    boardPingReacts = true,  -- ...when someone reacts to yours
+    boardPingMentions = true,-- ...when someone says @YourName
+    boardPingSound = true,   -- ...with a sound
+    boardAutoFollow = true,  -- ...follow posts you reply to
+    boardShowOnline = true,  -- ...a green dot by mages who are online now
+    boardStickyNotices = true, -- ...team notices pinned on top of every category
+    boardHideDone = false,   -- ...hide posts marked done
+    boardWordFilter = false, -- ...swear words as ****
+    boardFontSize = "normal",-- ...text size in the post pane: small, normal, large
     boardNotify = true,      -- ...say once a session when there are new posts
+    showUnknownRuleset = false,   -- Fellow Mages: list mages on very old versions whose ruleset can't be told
+    mapDoors = true,         -- map pins for open doors (Doorways)
+    mapInns = true,          -- map pins for inns (Doorways), drawn on top of the game's inn icons
+    doorGreet = true,        -- Doorways: say hi in party when someone joins to use you as a door
+    doorGreetText = nil,
+    doorGreetPlug = true,    -- ...plus a line that Doorways is part of Scrollkeeper     -- ...your own words for it ({name} = their name)
+    doorTeleportPop = true,  -- Doorways: a Teleport button pops up when you're grouped with a door
+    doorAcceptMages = true,  -- Doorways: while a door, accept invites from mages by themselves
+    doorWhisperInvite = true,  -- Doorways: while a door, invite whispers asking for one
+    doorWords = "",          -- ...your own words for that, split by commas
+    rulesetPick = "auto",    -- your ruleset: "auto" (realm name, or mages on your realm) or pve/pvp/rp/rppvp
     boardRulesets = "all",   -- ...General posts and notices: "all" rulesets or "mine"
     themeHoliday = false,
     themesShared = true,     -- holiday themes from the network (Network/Themes.lua)    -- wear the holiday theme on its own during holidays (UI/Theme.lua)

@@ -1,6 +1,42 @@
 # Scrollkeeper
 
-## 1.4.1
+## Unreleased: 1.4.3
+
+Thanks to **Magnus Magoo** for testing the board, Doorways and Fellow Mages with us, **Navacado** for the tutorial idea, and **Count Turbo** for saying "DO IT!" to the board!
+
+> New: react to board posts and replies with a heart, laugh, fire or wow.
+> New: /sk tutorial, a quick tour of how mage scrolls work (thanks Navacado!).
+> New: get pinged when someone replies, reacts or @mentions you, and shift-click item links into posts.
+
+- Fixed: on realms whose name doesn't say the ruleset (or is blank), you couldn't post or reply in trade, doorway and odds. Scrollkeeper now also goes by what mages on your realm say, and there's a new setting to pick it yourself (/sk options > Sharing > Your ruleset). It tells you once if it can't tell.
+- New: **reactions on the board.** Heart, laugh, fire or wow on any post or reply: pick from the little smiley under it (use as many as you like), click one of yours again to take it back, hover to see who. Only reactions someone used show, and the post list shows them on each post.
+- New: **board pings.** A line in chat (with a sound) when someone replies to your post, reacts to it, or writes @YourName. Follow any post from its ••• menu to get its replies too (posts you reply to are followed for you). Each part has its own setting.
+- New: **links on the board.** Shift-click items and spells into a post or reply and they show with their icon and color. Items in a post get buttons under it with their tooltip (shift-click to link them in chat). Web addresses are colored, and every post and reply has Copy text in its ••• menu, so you can copy them out.
+- Board: mark your own post **done** from its ••• menu when you've traded or found your door (it shows grayed with a check, and there's a setting to hide done posts). **Report** a post or reply to the Scrollkeeper team from the same menu.
+- Board: **From my bags** in Scrolls wanted and Spare scrolls writes the post for you: the tiers you need, or the spares you're carrying.
+- Board: team notices stay pinned on top of every category, categories get a green dot when there's something new in them, and there are settings for text size and an optional word filter.
+- Options: the board has its own page now, /sk options > Fellow Mages board, with all its settings in one place.
+- Board: the emoji picker, reaction picker and ••• menus close when you click somewhere else, press Escape, or close the board.
+- Fixed: Fellow Mages listed the same mage twice when they were on two alts ("playing Priest" and "playing Rogue"). Now each mage shows once: the mage itself if they're on it, else the alt heard from last.
+- Board: a green dot by the names of mages who are online right now, so you know who might answer (a setting).
+- New: **a tutorial** (/sk tutorial): a quick tour of mage scrolls from the start (untranslated scrolls and tiers, deciphering, imbues, familiars, Study, library books, Liminal Passage, Fellow Mages), with a Show me button that opens each part. New mages get it after setup.
+- New: **Doorways: answer whispers.** While you're a door, anyone who whispers you asking for one ("can I teleport to you?", "liminal pls", "tp to you", "inv pls"...) gets invited by themselves, even without Scrollkeeper. Invite triggers... on Doorways is a little list of the words: it starts with common ones, and you can add, change or remove any of them (Defaults puts them back). Only mages get invited (only mages can use Liminal Passage), and if they're already in your group they get a whisper back telling them to use the scroll. Same limits as always (6 invites in 10 minutes), and it's all in the Doorways log. On by default, off in the options or on Doorways.
+- Doorways: when you're a door, you're in the list too (on top, "Your door"), and your town's count includes you, so you can see what others see.
+- Doorways: when someone joins to use you as a door, you say hi in party ("Welcome! Use your Scroll of Liminal Passage on me and I'll see you here."). Change it with Greeting... on Doorways ({name} for their name), or turn it off in the options. A second line mentions that Doorways is part of Scrollkeeper (its own setting).
+- Doorways: clearer names: "Invite by myself" is now "Skip the pop-up" (with a tooltip saying what it does).
+- New: **Doorways log**, right on Doorways under Your door: who asked to come to you, who you invited, whether they joined and left (teleported), problems like declined invites or busy doors, and what they whispered you after (thanks in pink). The same for your own trips.
+- Board: the Scrollkeeper team can pin any post to the top of the list (shown with a pin), like a notice.
+- Board: done posts sink to the bottom of the list, and turning off "Pin notices" also lets notices sort with the rest.
+- Board: a ••• menu on every post too, with Copy text, Follow, Mark as done, Report and the rest.
+- Board: each reply has a little ••• menu: edit or delete your own replies (you couldn't before), or hide a reply or mute its author.
+- Board: the post list is tidier: just who and when under each title. Hover a post for its tier, ruleset, category, replies and reactions.
+- Network: quick things (new posts, reactions, replies) go out ahead of bulk sharing, and once everyone around you is on 1.4.3, several small messages are packed into one, so Scrollkeeper sends fewer messages.
+- Clearer message when a post can't be made because of rulesets.
+- Real emoji typed or pasted into the board (which the game shows as boxes) turn into our pictures when we have one (🔥 ❤ 😂 and more), and the rest are left out.
+- Fixed: mages on very old Scrollkeeper versions (before 1.2.0) from other rulesets showed in Fellow Mages, since they don't say their ruleset. They're now only listed when they're in your guild, group or friends (a setting shows them all).
+- Fixed: the board is shared by all your characters, so a post from 1.4.0 (which doesn't say its faction) could show on your other-faction characters. Posts now get the faction they arrived on written on them, and older ones without one stay hidden until catching up brings them back.
+
+## 1.4.2
 
 > Fixed: no more "No player named ... is currently playing." spam from the Fellow Mages board.
 > News from the Scrollkeeper team now reaches you right away, not just with updates.
@@ -14,8 +50,20 @@
 - Board: posts from other rulesets now reach you even if you were offline when they were posted. Catching up used to only work within your own ruleset; now one mage per ruleset sends its General posts and notices on the channel (trade, doorway and odds posts stay on their own ruleset).
 - Board: every post and reply shows the author's ruleset by their name, like [PvE] (gold when it's not yours).
 - Board posts and replies only ever show to their author's own faction: Horde and Alliance never see each other's text. (A post says its faction. Posts from 1.4.0 don't, but they can only reach you from your own faction anyway, so they show.)
+- Doorways: towns are grouped by continent and zone, each group folding up with a click and showing its open doors.
+- Doorways: a search box over the towns. Type a bit of the name or its zone, spelled however ("rogmar", "gadg", "stv" all work).
+- Map: Doors and Inns buttons on the world map, next to Scrollkeeper's scroll filter, to show or hide those pins right there.
+- Doorways: an innkeeper pin on the map, drawn on top of the game's own inn icon (Inns button on the map, or Map: inns in /sk options): how many doors are open there, and a click opens Doorways on that town. Spots are learned wherever you or a Scrollkeeper door rests, and places that aren't in Doorways' list yet (Forever keeps adding them) get added the same way.
+- Doorways: a **Teleport to X** pop-up shows up on its own once you're grouped with a door, so you don't have to find the scroll in your bags. Not resting yet? It offers your mage city teleports and your Hearthstone first, then turns into Teleport once you are. After the teleport it offers **Thanks & leave** (says thanks in party) or **Leave group**. It works however you got there: the Doorways window, your own whisper, or their invite. Drag it anywhere; setting "Doorways: Teleport button pop-up".
+- Map: the scroll filter has **Scrolls: none**, to see just doors and inns.
+- Doorways: in a raid, the Teleport pop-up checks you're in the door's subgroup (the scroll only reaches your own party) and says which group they're in if not. The tutorial now lists what a teleport needs: same party, both resting, mages only.
+- Doorways: in a group you don't lead, whispers asking for a door still send the invite (your leader gets it as a suggested invite).
+- Doorways: while you're a door and resting, an invite from a **mage** is accepted by itself (setting "Doorways: accept mages' invites"). Anyone else still gets the usual box.
+- Fixed: accepting a door's invite could error (PARTY_INVITE_REQUEST, Doors.lua).
+- New: **/sk innscan** reads the innkeeper icons on the open world map (**/sk innscan all**: every zone), so Doorways learns where the inns are.
+- Doorways: Forever's own inns are in the list now: Powderfuse Port (Riverglades) for everyone, Farholde Keep (Riverglades), Valanaar and Shen'dralas for the Alliance, and Rog'mar (Riverglades) for the Horde.
 - Doorways: Nethergarde Keep is gone from the list; it has no inn, so nobody can rest there to be a door. Thanks foundmonster (#5).
-- New: **emojis and formatting on the board.** Smiley faces (type :) :D ;) :( <3 and more, or :smile:), plus :fire:, :sheep:, :skull: and other game icons, or pick one from the new button by the text box. **Bold**, *italic*, `code`, ~~strike~~, and - or > at the start for bullets and quotes. Both can be switched off in /sk options > Sharing.
+- New: **emojis and formatting on the board.** Smiley faces (type :) :D ;) :( <3 and more, or :smile:), plus :fire:, :sheep:, :skull: and other game icons, or pick one from the new button by the text box. **Bold**, *italic*, `code`, ~~strike~~, and - or > at the start for bullets and quotes. Both can be switched off in /sk options > Fellow Mages board.
 - New: **news from the Scrollkeeper team** shows in chat once, between updates too (signed by the team, so nobody else can send it).
 - New: if a feature ever breaks, the Scrollkeeper team can **switch it off** for everyone until a fix is out; Scrollkeeper tells you in chat when that happens, and when it's back.
 - When a new Scrollkeeper is out, the team can say so: if yours is older, you're told once (with Update messages on).

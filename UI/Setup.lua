@@ -159,6 +159,11 @@ local function Apply()
     end
     SK.db[SK.isMage and "setupDone" or "setupDoneOther"] = true
     MarkSeen(questions)
+    -- New mage: the tutorial next.
+    if SK.isMage and not SK.db.tutorialSeen and SK.ToggleTutorial and C_Timer then
+        SK.db.tutorialTold = true
+        C_Timer.After(1, function() SK.Safely("tutorial", SK.ToggleTutorial) end)
+    end
     -- Mages: open the panel in the view they just picked.
     -- (Only when this run asked about the view, not for a single new question.)
     if SK.isMage and questions[1] and questions[1].key == "viewMode" then

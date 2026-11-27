@@ -8,7 +8,7 @@ local L = SK.L
 
 local WIDTH, HEIGHT = 780, 520
 local CAT_W, LIST_W, DETAIL_W = 150, 290, 300
-local LIST_ROWS = 12
+local LIST_ROWS = 8         -- three-line rows (title, who, reactions)
 local TOP = -62
 
 local window
@@ -33,12 +33,27 @@ local function MyFactionName()
 end
 
 local MAGE = "|cff69ccf0"
-local function AuthorText(p)
+-- short: just the name (and [dev]), for the post list; tier and ruleset
+-- are on its tooltip.
+-- Online now: heard from them (Fellow Mages) in the last 10 minutes.
+local function IsOnline(guid)
+    if not guid or guid == "" then return false end
+    if SK.BoardIsMine and SK.BoardIsMine({ guid = guid }) then return true end
+    for _, peer in pairs(SK.peers or {}) do
+        if peer.guid == guid and not peer.demo and time() - (peer.seen or 0) < 600 and not peer.offline then return true end
+    end
+    return false
+end
+SK.BoardAuthorOnline = IsOnline
+
+local function AuthorText(p, short)
     local name = p.author ~= "" and p.author or L["a Fellow Mage"]
+    if SK.db.boardShowOnline ~= false and IsOnline(p.guid) then name = "|TInterface\\FriendsFrame\\StatusIcon-Online:12:12|t" .. name end
     local dev = p.team or SK.BoardIsDev(p.guid)
     local color = dev and "|cffff7aa8" or MAGE
     local parts = { color .. name .. "|r" }
     if dev then parts[#parts + 1] = "|cffff7aa8" .. L["[dev]"] .. "|r" end
+    if short then return table.concat(parts, " ") end
     if (p.tier or 0) > 0 then parts[#parts + 1] = "|cffaaaaaa[" .. p.tier .. "]|r" end
     -- Their ruleset, always: gold when it isn't yours, gray when it is.
     local mine = SK.ServerKind and SK.ServerKind()
@@ -122,6 +137,7 @@ local function BuildCompose()
     c.title:SetPoint("LEFT", titleLabel, "RIGHT", 12, 0)
     c.title:SetAutoFocus(false)
     c.title:SetMaxBytes(41)
+    if SK.UI_LinkTarget then SK.UI_LinkTarget(c.title) end
     c.title:SetScript("OnTextChanged", function() c:Refresh() end)
     c.title:SetScript("OnEscapePressed", function() c:Hide() end)
 
@@ -134,6 +150,7 @@ local function BuildCompose()
     c.body:SetMultiLine(true)
     c.body:SetAutoFocus(false)
     c.body:SetFontObject("ChatFontNormal")
+    if SK.UI_LinkTarget then SK.UI_LinkTarget(c.body) end
     c.body:SetScript("OnTextChanged", function() c:Refresh() end)
     c.body:SetScript("OnEscapePressed", function() c:Hide() end)
     bodyBox:EnableMouse(true)
@@ -146,6 +163,12 @@ local function BuildCompose()
     c.note:SetPoint("TOPLEFT", bodyBox, "BOTTOMLEFT", 26, -4)
     c.emoji = SK.EmojiButton(c, c.body)
     c.emoji:SetPoint("TOPLEFT", bodyBox, "BOTTOMLEFT", 2, -2)
+    -- Wanted / spare posts: write it from your bags.
+    c.fromBags = Button(c, L["From my bags"], 96, function()
+        local text = state.FromBags and state.FromBags(c.cat)
+        if text and text ~= "" then c.body:SetText(text); c:Refresh() end
+    end, L["Write which scroll tiers you need (Scrolls wanted) or have spare (Spare scrolls), from your bags."])
+    c.fromBags:SetPoint("BOTTOMRIGHT", bodyBox, "TOPRIGHT", 0, 4)
     c.note:SetPoint("RIGHT", c.left, "LEFT", -8, 0)
     c.note:SetJustifyH("LEFT")
 
@@ -183,10 +206,12 @@ local function BuildCompose()
         else
             self.note:SetText(L["%s mages on every ruleset can see this."]:format(MyFactionName()))
         end
+        self.fromBags:SetShown((self.cat == "wanted" or self.cat == "spare") and SK.isMage and true or false)
         local ready = cat and room >= 0 and (self.title:GetText() or "") ~= "" and (self.body:GetText() or "") ~= ""
         self.post:SetEnabled(ready and true or false)
     end
 
+    c:HookScript("OnHide", function() SK.UI_CloseMenus() end)
     c:SetScript("OnShow", function(self)
         self.error = nil
         local e = state.editPost
@@ -249,7 +274,7 @@ local function ApplyFilter(posts, replies)
         local list = replies[p.id]
         local n = list and #list or 0
         local last = (list and list[#list] and list[#list].at) or p.at
-        local ok = true
+        local ok = not (SK.db.boardHideDone and SK.BoardIsDone(p) and not SK.BoardIsMine(p))
         if f.show.new and not ((last or 0) > (state.readBefore or 0) and not SK.BoardIsMine(p)) then ok = false end
         if f.show.unanswered and n > 0 then ok = false end
         if f.show.answered and n == 0 then ok = false end
@@ -262,11 +287,21 @@ local function ApplyFilter(posts, replies)
         end
     end
     table.sort(out, function(a, b)
-        local an, bn = a.cat == "notice", b.cat == "notice"
-        if an ~= bn then return an end   -- notices stay on top
+        -- Team notices stay on top (setting "Pin notices"), then your pick.
+        -- Pinned by the team first, then notices (setting "Pin notices").
+        local ap, bp = SK.BoardIsPinned(a), SK.BoardIsPinned(b)
+        if ap ~= bp then return ap end
+        if SK.db.boardStickyNotices ~= false then
+            local an, bn = a.cat == "notice", b.cat == "notice"
+            if an ~= bn then return an end
+        end
+        -- Done posts sink to the bottom.
+        local ad, bd = SK.BoardIsDone(a), SK.BoardIsDone(b)
+        if ad ~= bd then return bd end
         if f.sort == "active" and a.lastActivity ~= b.lastActivity then return a.lastActivity > b.lastActivity end
         if f.sort == "replies" and a.replyCount ~= b.replyCount then return a.replyCount > b.replyCount end
-        return a.at > b.at
+        if (a.at or 0) ~= (b.at or 0) then return (a.at or 0) > (b.at or 0) end
+        return (a.id or "") > (b.id or "")
     end)
     return out
 end
@@ -464,7 +499,7 @@ local function Build()
     window.searchHint:SetText(L["Search"])
     window.search:SetScript("OnEditFocusGained", function() window.searchHint:Hide() end)
     window.search:SetScript("OnEditFocusLost", function(self) window.searchHint:SetShown((self:GetText() or "") == "") end)
-    window.list = SK.UI.CreateScrollList(window, LIST_W, LIST_ROWS, true)
+    window.list = SK.UI.CreateScrollList(window, LIST_W, LIST_ROWS, 3)
     window.list:SetPoint("TOPLEFT", window.listHeader, "BOTTOMLEFT", 0, -4)
 
     -- Right: the picked post and its replies.
@@ -473,7 +508,7 @@ local function Build()
     window.detailHeader = detailHeader
     local scroll = CreateFrame("ScrollFrame", nil, window, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", detailHeader, "BOTTOMLEFT", 4, -6)
-    scroll:SetSize(DETAIL_W - 28, LIST_ROWS * 30 - 70)
+    scroll:SetSize(DETAIL_W - 28, 290)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(DETAIL_W - 28, 10)
     scroll:SetScrollChild(content)
@@ -495,15 +530,25 @@ local function Build()
     window.reply:SetPoint("TOPLEFT", scroll, "BOTTOMLEFT", 4, -12)
     window.reply:SetAutoFocus(false)
     window.reply:SetMaxBytes(200)
-    window.reply:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    if SK.UI_LinkTarget then SK.UI_LinkTarget(window.reply) end
+    window.reply:SetScript("OnEscapePressed", function(self)
+        if state.editReply then state.editReply = nil; self:SetText("") end
+        self:ClearFocus()
+    end)
     window.replyHint = window.reply:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     window.replyHint:SetPoint("LEFT", 4, 0)
     window.replyHint:SetText(L["Write a reply..."])
     local function Reply()
         local text = window.reply:GetText() or ""
         if text == "" or not picked.post then return end
-        local p, why = SK.BoardPost(nil, nil, text, picked.post)
-        if not p then SK.Print(why) return end
+        if state.editReply then
+            local ok, why = SK.BoardEdit(state.editReply, nil, text)
+            state.editReply = nil
+            if not ok then SK.Print(why) return end
+        else
+            local p, why = SK.BoardPost(nil, nil, text, picked.post)
+            if not p then SK.Print(why) return end
+        end
         window.reply:SetText("")
         window.reply:ClearFocus()
         SK.RefreshBoard()
@@ -567,6 +612,7 @@ local function Build()
     end)
     window:SetScript("OnHide", function()
         window.compose:Hide()
+        SK.UI_CloseMenus()
         if state.ticker then state.ticker:Cancel(); state.ticker = nil end
     end)
     for _, f in ipairs(SK.boardBuilt or {}) do SK.Safely("board addon", f, window) end
@@ -577,10 +623,250 @@ end
 -- Filling it in
 ------------------------------------------------------------------------
 
+-- Reactions under a post or reply: only the ones someone used (icon and
+-- count, yours lit up; click to switch to it or take it back, hover: who),
+-- then a small button that drops down all of them to pick from.
+local reactMenu
+local function ReactMenu()
+    if reactMenu then return reactMenu end
+    local list = SK.BOARD_REACTIONS or {}
+    reactMenu = CreateFrame("Frame", "ScrollkeeperReactMenu", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+    reactMenu:SetFrameStrata("DIALOG")
+    reactMenu:SetSize(#list * 26 + 10, 34)
+    if reactMenu.SetBackdrop then
+        reactMenu:SetBackdrop({ bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", tile = true, tileSize = 16, edgeSize = 12,
+            insets = { left = 3, right = 3, top = 3, bottom = 3 } })
+        reactMenu:SetBackdropColor(0.05, 0.05, 0.08, 0.95)
+    end
+    reactMenu:EnableMouse(true)
+    for i, e in ipairs(list) do
+        local b = CreateFrame("Button", nil, reactMenu)
+        b:SetSize(22, 22)
+        b:SetPoint("LEFT", 6 + (i - 1) * 26, 0)
+        b:SetNormalTexture(SK.EmojiTexture and SK.EmojiTexture(e) or nil)
+        b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+        b:SetScript("OnClick", function()
+            reactMenu:Hide()
+            if reactMenu.id then
+                local ok, why = SK.BoardReact(reactMenu.id, e)
+                if not ok and why then SK.Print(why) end
+            end
+        end)
+        b:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(":" .. e .. ":")
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
+    reactMenu:Hide()
+    SK.UI_AutoClose(reactMenu)
+    return reactMenu
+end
+
+local function ReactRow(parent)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(240, 18)
+    row.buttons = {}
+    for i, e in ipairs(SK.BOARD_REACTIONS or {}) do
+        local b = CreateFrame("Button", nil, row)
+        b:SetSize(38, 18)
+        b.bg = b:CreateTexture(nil, "BACKGROUND")
+        b.bg:SetAllPoints()
+        b.icon = b:CreateTexture(nil, "ARTWORK")
+        b.icon:SetSize(14, 14)
+        b.icon:SetPoint("LEFT", 4, 0)
+        b.icon:SetTexture(SK.EmojiTexture and SK.EmojiTexture(e) or nil)
+        b.count = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        b.count:SetPoint("LEFT", b.icon, "RIGHT", 4, 0)
+        b:SetHighlightTexture("Interface\\Buttons\\UI-Listbox-Highlight2", "ADD")
+        b:SetScript("OnClick", function()
+            if row.id then
+                local ok, why = SK.BoardReact(row.id, e)
+                if not ok and why then SK.Print(why) end
+            end
+        end)
+        b:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:SetText(":" .. e .. ":")
+            local names = self.names or {}
+            for i2 = 1, math.min(#names, 12) do GameTooltip:AddLine(names[i2], 1, 1, 1) end
+            if #names > 12 then GameTooltip:AddLine(L["and %d more"]:format(#names - 12), 0.7, 0.7, 0.7) end
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        b.emoji = e
+        row.buttons[i] = b
+    end
+    -- The drop-down button: pick a reaction.
+    local add = CreateFrame("Button", nil, row)
+    add:SetSize(18, 18)
+    add:SetNormalTexture(SK.EmojiTexture and SK.EmojiTexture("smile") or nil)
+    add:SetAlpha(0.6)
+    add:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    add:SetScript("OnClick", function(self)
+        local menu = ReactMenu()
+        if menu:IsShown() and menu.id == row.id then menu:Hide() return end
+        menu.id = row.id
+        SK.UI_PopupFrom(menu, self)
+        menu:ClearAllPoints()
+        menu:SetPoint("TOPLEFT", self, "BOTTOMLEFT", -4, -2)
+        menu:Show()
+    end)
+    add:SetScript("OnEnter", function(self)
+        self:SetAlpha(1)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:SetText(L["React"])
+        GameTooltip:Show()
+    end)
+    add:SetScript("OnLeave", function(self) self:SetAlpha(0.6); GameTooltip:Hide() end)
+    row.add = add
+    function row:Show_(id)
+        self.id = id
+        local counts, mine = SK.BoardReactions(id)
+        local x = 0
+        for _, b in ipairs(self.buttons) do
+            local info = counts[b.emoji]
+            b:ClearAllPoints()
+            if info and info.count > 0 then
+                b.count:SetText(info.count)
+                b.names = info.names
+                if mine[b.emoji] then b.bg:SetColorTexture(0.3, 0.62, 1, 0.35) else b.bg:SetColorTexture(1, 1, 1, 0.06) end
+                b:SetPoint("LEFT", x, 0)
+                b:Show()
+                x = x + 42
+            else
+                b.names = nil
+                b:Hide()
+            end
+        end
+        self.add:ClearAllPoints()
+        self.add:SetPoint("LEFT", x, 0)
+        self:Show()
+    end
+    return row
+end
+
+-- What you can do with one reply ("..." on its right): edit or delete
+-- your own, hide or mute someone else's, plus anything other addons add
+-- with SK.AddBoardReplyAction({ text, func(reply), show(reply) }).
+local replyActions = {}
+function SK.AddBoardReplyAction(action) replyActions[#replyActions + 1] = action end
+
+local replyMenu
+local function ReplyMenu(anchor, r)
+    if not replyMenu then
+        replyMenu = CreateFrame("Frame", "ScrollkeeperBoardMenu", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+        replyMenu:SetFrameStrata("DIALOG")
+        if replyMenu.SetBackdrop then
+            replyMenu:SetBackdrop({ bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+                edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", tile = true, tileSize = 16, edgeSize = 12,
+                insets = { left = 3, right = 3, top = 3, bottom = 3 } })
+            replyMenu:SetBackdropColor(0.05, 0.05, 0.08, 0.95)
+        end
+        replyMenu:EnableMouse(true)
+        replyMenu.items = {}
+        SK.UI_AutoClose(replyMenu)
+    end
+    local entries = {}
+    entries[#entries + 1] = { text = L["Copy text"], func = function()
+        local text = SK.PlainText(r.body or "")
+        if r.parent == "" then text = SK.PlainText(r.title or "") .. "\n\n" .. text end
+        SK.ShowTextBox(L["Copy text"], text)
+    end }
+    if r.parent == "" and not SK.BoardIsMine(r) then
+        local on = SK.BoardFollowing(r.id)
+        entries[#entries + 1] = { text = on and L["Unfollow"] or L["Follow (ping me about replies)"], func = function() SK.BoardFollow(r.id, not on) end }
+    end
+    if SK.BoardIsMine(r) and r.parent == "" then
+        local done = SK.BoardIsDone(r)
+        entries[#entries + 1] = { text = done and L["Not done after all"] or L["Mark as done"], func = function()
+            local ok, why = SK.BoardSetDone(r.id, not done)
+            if not ok and why then SK.Print(why) end
+        end }
+    end
+    if not SK.BoardIsMine(r) and not r.demo then
+        local reported = SK.BoardReported(r.id)
+        entries[#entries + 1] = { text = reported and ("|cff808080" .. L["Reported"] .. "|r") or L["Report to the team"], func = function()
+            if not reported and SK.BoardReport(r.id) then SK.Print(L["thanks, the Scrollkeeper team will have a look."]) end
+        end }
+    end
+    if SK.BoardIsMine(r) then
+        entries[#entries + 1] = { text = L["Edit"], func = function()
+            if r.parent == "" then
+                state.editPost = r; window.compose:Hide(); window.compose:Show()
+                return
+            end
+            state.editReply = r.id
+            window.reply:SetText(r.body or "")
+            window.reply:SetFocus()
+        end }
+        entries[#entries + 1] = { text = DELETE or L["Delete"], func = function() SK.BoardDelete(r.id); SK.RefreshBoard() end }
+    else
+        entries[#entries + 1] = { text = r.parent == "" and L["Hide post"] or L["Hide reply"], func = function() SK.BoardHide(r.id); SK.RefreshBoard() end }
+        entries[#entries + 1] = { text = L["Mute"], func = function() SK.BoardMute(r.guid); SK.RefreshBoard() end }
+    end
+    for _, a in ipairs(replyActions) do
+        if not a.show or a.show(r) then entries[#entries + 1] = { text = a.text, func = function() a.func(r) end } end
+    end
+    for i, e in ipairs(entries) do
+        local b = replyMenu.items[i]
+        if not b then
+            b = CreateFrame("Button", nil, replyMenu)
+            b:SetSize(120, 18)
+            b:SetPoint("TOPLEFT", 6, -6 - (i - 1) * 18)
+            b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            b.text:SetPoint("LEFT", 4, 0)
+            b:SetHighlightTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight", "ADD")
+            replyMenu.items[i] = b
+        end
+        b.text:SetText(e.text)
+        b:SetScript("OnClick", function() replyMenu:Hide(); e.func() end)
+        b:Show()
+    end
+    for i = #entries + 1, #replyMenu.items do replyMenu.items[i]:Hide() end
+    replyMenu:SetSize(132, #entries * 18 + 12)
+    SK.UI_PopupFrom(replyMenu, anchor)
+    replyMenu:ClearAllPoints()
+    replyMenu:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", 0, -2)
+    replyMenu:Show()
+end
+
+-- "From my bags": what you need (Scrolls wanted) or have spare.
+state.FromBags = function(cat)
+    if cat == "spare" and SK.MySpares then
+        local parts = {}
+        local spares = SK.MySpares()
+        for _, tier in ipairs(SK.TIERS or {}) do
+            if (spares[tier] or 0) > 0 then parts[#parts + 1] = L["tier %d x%d"]:format(tier, spares[tier]) end
+        end
+        if #parts == 0 then SK.Print(L["no spare scrolls in your bags right now."]) return nil end
+        return L["Spare scrolls: %s. Whisper or mail me!"]:format(table.concat(parts, ", "))
+    elseif cat == "wanted" then
+        local skill = SK.GetComprehension and SK.GetComprehension()
+        if not (skill and skill.known) then return nil end
+        local parts = {}
+        for _, tier in ipairs(SK.TIERS or {}) do
+            local chance = skill.effective >= tier and SK.SkillUpChance and SK.SkillUpChance(tier, skill.rank)
+            if chance and chance.gives then parts[#parts + 1] = tostring(tier) end
+        end
+        if #parts == 0 then SK.Print(L["no tier gives you skill-ups right now."]) return nil end
+        return L["Looking for tier %s scrolls (Comprehension %d). Whisper or mail me!"]:format(table.concat(parts, ", "), skill.rank or 0)
+    end
+end
+
+-- Text size in the post pane (setting boardFontSize).
+local FONT_SIZES = { small = "GameFontHighlightSmall", normal = "GameFontHighlight", large = "GameFontHighlightLarge" }
+local function BodyFont() return FONT_SIZES[SK.db and SK.db.boardFontSize or "normal"] or "GameFontHighlight" end
+
 local function ShowDetail(p, replies)
     local c = window.detail
     state.current = p
-    for _, r in ipairs(c.replies) do r.head:Hide(); r.body:Hide() end
+    for _, r in ipairs(c.replies) do r.head:Hide(); r.body:Hide(); if r.react then r.react:Hide() end; if r.more then r.more:Hide() end end
+    if state.react then state.react:Hide() end
+    if state.postMore then state.postMore:Hide() end
+    for _, b in ipairs(state.items or {}) do b:Hide() end
     if not p then
         c.title:SetText(L["Pick a post."])
         c.meta:SetText("")
@@ -597,13 +883,73 @@ local function ShowDetail(p, replies)
     c.meta:SetText((cat and L[cat.name] or "") .. " · " .. AuthorText(p) .. " · " .. Ago(p.at)
         .. ((p.rev or 0) > 0 and (" |cff808080" .. L["(edited)"] .. "|r") or ""))
     c.body:SetPoint("TOPLEFT", c.meta, "BOTTOMLEFT", 0, -8)
+    c.body:SetFontObject(BodyFont())
     c.body:SetText(SK.FormatText(p.body))
+    -- ••• on the post too (copy, edit, hide, mod actions).
+    if not state.postMore then
+        local more = CreateFrame("Button", nil, c)
+        more:SetSize(22, 14)
+        local t = more:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        t:SetPoint("CENTER")
+        t:SetText("•••")
+        more:SetAlpha(0.6)
+        more:SetScript("OnEnter", function(self) self:SetAlpha(1) end)
+        more:SetScript("OnLeave", function(self) self:SetAlpha(0.6) end)
+        state.postMore = more
+    end
+    state.postMore:ClearAllPoints()
+    state.postMore:SetPoint("TOPRIGHT", c.title, "TOPRIGHT", 0, 1)
+    state.postMore:SetScript("OnClick", function(self)
+        if replyMenu and replyMenu:IsShown() then replyMenu:Hide() return end
+        ReplyMenu(self, p)
+    end)
+    state.postMore:SetShown(not p.demo)
+    -- Items linked in the post: buttons with their tooltip (shift-click
+    -- to link them in chat).
+    state.items = state.items or {}
+    local ids, itemAnchor = SK.LinkedItems(p.title .. " " .. p.body), c.body
+    for i = 1, math.max(#ids, #state.items) do
+        local b = state.items[i]
+        if i <= #ids and i <= 8 then
+            if not b then
+                b = CreateFrame("Button", nil, c)
+                b:SetSize(24, 24)
+                b.icon = b:CreateTexture(nil, "ARTWORK")
+                b.icon:SetAllPoints()
+                b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+                b:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetItemByID(self.itemID)
+                    GameTooltip:AddLine(L["Shift-click to link it in chat."], 0.6, 0.6, 0.6)
+                    GameTooltip:Show()
+                end)
+                b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+                b:SetScript("OnClick", function(self)
+                    local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, self.itemID))
+                    if link and IsModifiedClick and IsModifiedClick("CHATLINK") and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end
+                end)
+                state.items[i] = b
+            end
+            b.itemID = ids[i]
+            b.icon:SetTexture(C_Item and SK.Try(C_Item.GetItemIconByID, ids[i]) or nil)
+            b:ClearAllPoints()
+            if i == 1 then b:SetPoint("TOPLEFT", c.body, "BOTTOMLEFT", 0, -6) else b:SetPoint("LEFT", state.items[i - 1], "RIGHT", 4, 0) end
+            b:Show()
+            if i == 1 then itemAnchor = b end
+        elseif b then
+            b:Hide()
+        end
+    end
+    state.react = state.react or ReactRow(c)
+    state.react:ClearAllPoints()
+    state.react:SetPoint("TOPLEFT", itemAnchor, "BOTTOMLEFT", 0, -6)
+    state.react:Show_(p.id)
     c.line:ClearAllPoints()
-    c.line:SetPoint("TOPLEFT", c.body, "BOTTOMLEFT", 0, -10)
+    c.line:SetPoint("TOPLEFT", state.react, "BOTTOMLEFT", 0, -8)
     c.line:SetSize(DETAIL_W - 34, 1)
     c.line:Show()
     local anchor, height = c.line, (c.title:GetStringHeight() or 14) + (c.meta:GetStringHeight() or 12)
-        + (c.body:GetStringHeight() or 14) + 30
+        + (c.body:GetStringHeight() or 14) + 30 + 24 + (#ids > 0 and 30 or 0)
     for i, r in ipairs(replies or {}) do
         local row = c.replies[i]
         if not row then
@@ -615,11 +961,33 @@ local function ShowDetail(p, replies)
         row.head:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, i == 1 and -8 or -10)
         row.head:SetText(AuthorText(r) .. " |cff808080· " .. Ago(r.at) .. ((r.rev or 0) > 0 and (" " .. L["(edited)"]) or "") .. "|r")
         row.body:SetPoint("TOPLEFT", row.head, "BOTTOMLEFT", 0, -2)
+        row.body:SetFontObject(BodyFont())
         row.body:SetText(SK.FormatText(r.body))
         row.head:Show()
         row.body:Show()
-        anchor = row.body
-        height = height + (row.head:GetStringHeight() or 12) + (row.body:GetStringHeight() or 14) + 12
+        if not row.more then
+            row.more = CreateFrame("Button", nil, c)
+            row.more:SetSize(22, 14)
+            row.more.text = row.more:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            row.more.text:SetPoint("CENTER")
+            row.more.text:SetText("•••")
+            row.more:SetAlpha(0.6)
+            row.more:SetScript("OnEnter", function(self) self:SetAlpha(1) end)
+            row.more:SetScript("OnLeave", function(self) self:SetAlpha(0.6) end)
+        end
+        row.more:ClearAllPoints()
+        row.more:SetPoint("TOPRIGHT", row.head, "TOPRIGHT", 0, 1)
+        row.more:SetScript("OnClick", function(self)
+            if replyMenu and replyMenu:IsShown() then replyMenu:Hide() return end
+            ReplyMenu(self, r)
+        end)
+        row.more:SetShown(not r.demo)
+        row.react = row.react or ReactRow(c)
+        row.react:ClearAllPoints()
+        row.react:SetPoint("TOPLEFT", row.body, "BOTTOMLEFT", 0, -4)
+        row.react:Show_(r.id)
+        anchor = row.react
+        height = height + (row.head:GetStringHeight() or 12) + (row.body:GetStringHeight() or 14) + 12 + 22
     end
     c:SetHeight(math.max(20, height))
 end
@@ -628,12 +996,30 @@ function SK.RefreshBoard()
     if not (window and window:IsShown()) then return end
     local on = SK.BoardOn()
     local counts, total = SK.BoardCounts()
+    state.newIn = {}
+    for _, p in pairs(SK.BoardData().posts) do
+        if (p.at or 0) > (state.readBefore or 0) and not SK.BoardIsMine(p) and SK.BoardVisible(p) then
+            local top = p.parent == "" and p or SK.BoardData().posts[p.parent]
+            if top then state.newIn[top.cat] = true end
+        end
+    end
     for _, b in ipairs(window.catButtons) do
         local n
         if b.key == "mine" then n = state.mineCount or 0
         else n = b.key and (counts[b.key] or 0) or total end
         b.count:SetText(n)
         b.bg:SetShown(b.key == picked.cat)
+        -- A green dot: something new in there since you last looked.
+        state.dots = state.dots or {}
+        local dot = state.dots[b]
+        if not dot then
+            dot = b:CreateTexture(nil, "OVERLAY")
+            dot:SetSize(6, 6)
+            dot:SetPoint("RIGHT", b.count, "LEFT", -4, 0)
+            dot:SetColorTexture(0.25, 1, 0.25, 1)
+            state.dots[b] = dot
+        end
+        dot:SetShown(b.key ~= nil and b.key ~= "mine" and (state.newIn or {})[b.key] and true or false)
     end
     local all = SK.db.boardRulesets ~= "mine"
     if all then window.allRulesets:LockHighlight(); window.onlyMine:UnlockHighlight()
@@ -664,11 +1050,37 @@ function SK.RefreshBoard()
 
     window.list:SetRows(posts, function(row, p)
         local n = replies[p.id] and #replies[p.id] or 0
-        local pin = p.cat == "notice" and "|TInterface\\Buttons\\UI-GuildButton-PublicNote-Up:12:12|t |cffffc94d" or ""
+        local pin = SK.BoardIsPinned(p) and "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_1:12:12|t |cffffc94d"
+            or p.cat == "notice" and "|TInterface\\Buttons\\UI-GuildButton-PublicNote-Up:12:12|t |cffffc94d" or ""
         local new = (p.at or 0) > (state.readBefore or 0) and not SK.BoardIsMine(p) and not p.demo
-        row.label:SetText(pin .. SK.FormatText(p.title) .. (pin ~= "" and "|r" or "") .. (new and (" |cff40ff40" .. L["new"] .. "|r") or ""))
-        row.sub:SetText(AuthorText(p) .. " |cff808080· " .. Ago(p.at)
+        local title = SK.FormatText(p.title)
+        if SK.BoardIsDone(p) then title = "|cff808080" .. "|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t " .. SK.PlainText(p.title) .. "|r" end
+        row.label:SetText(pin .. title .. (pin ~= "" and "|r" or "") .. (new and (" |cff40ff40" .. L["new"] .. "|r") or ""))
+        -- Under the title: just who and when (tier and ruleset on hover),
+        -- and the reactions on a line of their own (to look at; react in the post).
+        row.sub:SetText(AuthorText(p, true) .. " |cff808080· " .. Ago(p.at)
             .. (n > 0 and (" · " .. L["%d |4reply:replies;"]:format(n)) or "") .. "|r")
+        -- The post's reactions and its replies', added up.
+        local counts = {}
+        local function Add(id)
+            for e, info in pairs((SK.BoardReactions(id))) do counts[e] = { count = (counts[e] and counts[e].count or 0) + info.count } end
+        end
+        Add(p.id)
+        for _, r in ipairs(replies[p.id] or {}) do Add(r.id) end
+        local shown = {}
+        for _, e in ipairs(SK.BOARD_REACTIONS or {}) do
+            local info, tex = counts[e], SK.EmojiTexture and SK.EmojiTexture(e)
+            if info and info.count > 0 and tex then shown[#shown + 1] = "|T" .. tex .. ":0|t " .. info.count end
+        end
+        if row.third then row.third:SetText(table.concat(shown, "   ")) end
+        row.tipFunc = function(tip)
+            local cat = SK.BoardCategory(p.cat)
+            tip:AddLine(SK.FormatText(p.title), 1, 0.82, 0, true)
+            tip:AddLine(AuthorText(p))
+            tip:AddDoubleLine(cat and L[cat.name] or "", Ago(p.at), 0.8, 0.8, 0.8, 0.8, 0.8, 0.8)
+            if n > 0 then tip:AddLine(L["%d |4reply:replies;"]:format(n), 1, 1, 1) end
+            if #shown > 0 then tip:AddLine(table.concat(shown, "   "), 1, 1, 1) end
+        end
         local sel = selectTex[row]
         if not sel then
             sel = row:CreateTexture(nil, "BACKGROUND", nil, 1)
@@ -678,7 +1090,6 @@ function SK.RefreshBoard()
         end
         sel:SetShown(p.id == picked.post)
         row.onClick = function() picked.post = p.id; SK.RefreshBoard() end
-        row.tipFunc = nil
     end, SK.BoardOn() and ((search or FiltersOn() > 0) and L["Nothing matches that."] or L["No posts here yet. Be the first: New post."]) or "")
 
     ShowDetail(current, current and replies[current.id])
@@ -699,7 +1110,7 @@ function SK.RefreshBoard()
     if not (SK.db and SK.db.share) then
         window.off:SetText("|cffff6666" .. L["Sharing is off, so the board can't send or get posts. Turn it on in /sk options > Sharing."] .. "|r")
     elseif SK.db.boardOn == false then
-        window.off:SetText("|cffff6666" .. L["The board is off. Turn it on in /sk options > Sharing."] .. "|r")
+        window.off:SetText("|cffff6666" .. L["The board is off. Turn it on in /sk options > Fellow Mages board."] .. "|r")
     else
         window.off:SetText("")
     end

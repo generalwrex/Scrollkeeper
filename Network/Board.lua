@@ -13,6 +13,9 @@
 --   BR|since         the same, from 1.4.1 on. A new kind so 1.4.0 copies
 --                    never hear it: they'd whisper answers across rulesets
 --                    and get "No player named ..." over and over.
+--   BX|id:guid:emoji|on|at|name   that mage's reaction to post id (on: 1,
+--                    or 0 = taken back; each emoji counts on its own). Straight from them, or passed on in
+--                    catch-up (then only if we have none from them yet).
 --   BA|name          "I'm answering name's BQ" (so only one player does);
 --                    name@ruleset: answering for that ruleset, on the channel
 --   BS|signature|action|a|b|c|at
@@ -80,15 +83,15 @@ local function FactionOf(p)
     local f = SK.FactionOfGUID and SK.FactionOfGUID(p.guid)
     return f == "Horde" and "H" or f == "Alliance" and "A" or nil
 end
--- Same faction as you? Text from the other faction never shows. A post
--- that doesn't say (from 1.4.0) and whose author the game can't place
--- counts as yours: it could only have reached you over the channel or a
--- whisper, and the game keeps both to one faction.
+-- Same faction as you? Text from the other faction never shows. Posts
+-- get their faction written on when they arrive (see BP), so one that
+-- still has none (kept by 1.4.0-1.4.2) and whose author the game can't
+-- place stays hidden: it may have come in on another character. Catching
+-- up brings it back, marked.
 local function SameFaction(p)
     if p.demo then return true end
     local mine, theirs = MyFaction(), FactionOf(p)
-    if theirs == nil then return true end
-    return mine == theirs
+    return mine ~= nil and theirs ~= nil and mine == theirs
 end
 SK.BoardSameFaction = SameFaction
 
@@ -104,6 +107,9 @@ local function Board()
     b.bans = type(b.bans) == "table" and b.bans or {}            -- guid -> { untilAt, name }
     b.modLog = type(b.modLog) == "table" and b.modLog or {}      -- key -> the signed message, to pass on
     b.devs = type(b.devs) == "table" and b.devs or {}            -- guid -> { name, at }
+    b.reactions = type(b.reactions) == "table" and b.reactions or {}   -- post id -> "guid:emoji" -> { guid, e, on, at, name }
+    b.follow = type(b.follow) == "table" and b.follow or {}      -- post id -> true: ping me about its replies
+    b.pinned = type(b.pinned) == "table" and b.pinned or {}      -- post id -> true: pinned by the dev team (signed)
     return b
 end
 SK.BoardData = Board
@@ -137,6 +143,7 @@ end
 ------------------------------------------------------------------------
 
 local function Clean(text, max)
+    if SK.EncodeLinks then text = SK.EncodeLinks(text) end
     text = tostring(text or ""):gsub("[%c]", " "):gsub("|", "/"):gsub("^%s+", ""):gsub("%s+$", "")
     if max and #text > max then
         text = text:sub(1, max)
@@ -227,15 +234,21 @@ local function Tidy()
     for guid, dev in pairs(b.devs) do
         if type(dev) ~= "table" or (dev.at or 0) < now - DEV_DAYS * 86400 then b.devs[guid] = nil end
     end
+    for id in pairs(b.reactions) do if not posts[id] then b.reactions[id] = nil end end
+    for id in pairs(b.follow) do if not posts[id] then b.follow[id] = nil end end
+    for id in pairs(b.pinned) do if not posts[id] then b.pinned[id] = nil end end
     for key, m in pairs(b.modLog) do
         local keep = type(m) == "table" and (m.at or 0) > now - DEV_DAYS * 86400
         if keep and m.action == "ban" then keep = (tonumber(m.b) or 0) > now end
-        if keep and m.action == "ok" then keep = b.posts[m.a] ~= nil end
+        if keep and (m.action == "ok" or m.action == "pin") then keep = b.posts[m.a] ~= nil end
         if not keep then b.modLog[key] = nil end
     end
 end
 
 -- Is this character on the dev team (said with the team's key, lately)?
+-- Pinned to the top by the dev team (signed "pin"; notices are pinned too).
+function SK.BoardIsPinned(p) return p and (Board().pinned[p.id] == true) or false end
+
 function SK.BoardIsDev(guid)
     local dev = guid and Board().devs[guid]
     return dev and (dev.at or 0) > Now() - DEV_DAYS * 86400 or false
@@ -324,7 +337,9 @@ function SK.BoardPosts(cat, search)
     for _, p in ipairs(all) do
         if SK.BoardVisible(p) then
             if p.parent == "" then
+                -- Notices stay pinned on top of every category (not "Your posts").
                 local inCat = not cat or p.cat == cat or (cat == "mine" and SK.BoardIsMine(p))
+                    or (p.cat == "notice" and cat ~= "mine" and SK.db.boardStickyNotices ~= false)
                 if inCat and search then
                     local text = (p.title .. " " .. p.body .. " " .. p.author):lower()
                     inCat = text:find(search, 1, true) ~= nil
@@ -367,6 +382,7 @@ end
 
 function SK.BoardMarkRead()
     Board().lastRead = Now()
+    Board().pings = 0
     SK.Send("BOARD_CHANGED")
 end
 
@@ -418,12 +434,18 @@ function SK.BoardPost(cat, title, body, parent)
             return nil, L["give your post a title."]
         elseif why == "empty" then
             return nil, L["write something first."]
+        elseif why == "ruleset" then
+            if not (SK.ServerKind and SK.ServerKind()) then
+                return nil, L["Scrollkeeper can't tell your ruleset here. Pick it in /sk options > Sharing > Your ruleset."]
+            end
+            return nil, L["trade, doorway and odds posts are for your own ruleset only."]
         end
         return nil, L["that post couldn't be made (%s)."]:format(why)
     end
     p.from = nil
     if IAmTeam() then p.verified = true end
     Keep(p)
+    if p.parent ~= "" and SK.db.boardAutoFollow ~= false then Board().follow[p.parent] = true end
     Net.Send("BP", Fields(p))
     if p.cat == "notice" and p.parent == "" and IAmTeam() then SK.BoardMod("ok", p.id) end
     if SK.Track then SK.Track(parent and "board.reply" or "board.post." .. p.cat) end
@@ -490,6 +512,13 @@ Net.Handle("BP", function(sender, f)
     if not SK.BoardOn() then return end
     local p = Valid(FromFields(f))
     if not p then return end
+    -- It reached this character, and the game keeps the channel and
+    -- whispers to one faction: so it's this character's faction. Written
+    -- on the post, because the board is shared by all your characters
+    -- (your other-faction characters must never show it).
+    if not p.faction then p.faction = FactionOf(p) or MyFaction() end
+    local had = Board().posts[p.id]
+    if had and not had.faction then had.faction = p.faction end
     -- Straight from the author (their character ID matches who sent it):
     -- remember the name to whisper.
     local peer = SK.peers and SK.peers[sender]
@@ -505,6 +534,7 @@ Net.Handle("BP", function(sender, f)
     if p.cat == "notice" and Board().modLog["ok:" .. p.id] then p.verified = true end
     if Keep(p) then
         SK.Send("BOARD_CHANGED")
+        if SK.BoardPingFor then SK.Safely("board ping", SK.BoardPingFor, p) end
         -- Once a session, say there's something new (a setting).
         if not told and SK.db.boardNotify ~= false and p.parent == "" and SK.BoardVisible(p) then
             told = true
@@ -541,6 +571,7 @@ end
 -- same thing (an old "unban" sent again) can't undo a newer one.
 local function ModKey(action, a)
     if action == "ban" or action == "unban" then return "user:" .. tostring(a) end
+    if action == "pin" or action == "unpin" then return "pin:" .. tostring(a) end
     return action .. ":" .. tostring(a)
 end
 
@@ -561,6 +592,10 @@ local function ApplyMod(action, a, b, c)
     elseif action == "ok" and type(a) == "string" then
         local p = board.posts[a]
         if p and p.cat == "notice" then p.verified = true end
+    elseif action == "pin" and type(a) == "string" and a ~= "" then
+        board.pinned[a] = true
+    elseif action == "unpin" and type(a) == "string" then
+        board.pinned[a] = nil
     elseif action == "dev" and type(a) == "string" and a:match("^Player%-") then
         board.devs[a] = { name = Clean(c, 48), at = Now() }
     else
@@ -662,6 +697,197 @@ function SK.BoardModResend(m)
 end
 
 ------------------------------------------------------------------------
+-- Pings: a chat line (and a sound) when someone replies to your post or
+-- one you follow, reacts to yours, or says @YourName. Settings:
+-- boardPingReplies, boardPingReacts, boardPingMentions. At most a few
+-- every 10 seconds (catching up can bring many at once).
+------------------------------------------------------------------------
+
+local pingTimes, pingsHeld = {}, 0
+local function Ping(text)
+    local now = GetTime and GetTime() or time()
+    while pingTimes[1] and now - pingTimes[1] > 10 do table.remove(pingTimes, 1) end
+    if #pingTimes >= 3 then
+        pingsHeld = pingsHeld + 1
+        if pingsHeld == 1 and C_Timer then
+            C_Timer.After(10, function()
+                if pingsHeld > 0 then SK.Print(L["Fellow Mages board: %d more. /sk board"]:format(pingsHeld)) end
+                pingsHeld = 0
+            end)
+        end
+        return
+    end
+    pingTimes[#pingTimes + 1] = now
+    SK.Print(text)
+    if PlaySound and SOUNDKIT and SOUNDKIT.TELL_MESSAGE and SK.db.boardPingSound ~= false then pcall(PlaySound, SOUNDKIT.TELL_MESSAGE) end
+    Board().pings = (Board().pings or 0) + 1
+    if SK.RefreshBoardButton then SK.Safely("board button", SK.RefreshBoardButton) end
+end
+
+local function Short(text, n)
+    text = SK.PlainText and SK.PlainText(text) or text
+    if #text > n then text = text:sub(1, n):gsub("[\192-\255][\128-\191]*$", "") .. "..." end
+    return text
+end
+
+-- My first name, for @mentions ("Naage" from "Archmage Naage" too).
+local function MentionsMe(text)
+    local full = (SK.PlayerFullName and SK.PlayerFullName()) or UnitName("player") or ""
+    local lower = (" " .. tostring(text or ""):lower() .. " ")
+    for word in full:gmatch("[^%s%-]+") do
+        if #word >= 3 and lower:find("@" .. word:lower() .. "[^%w]") then return true end
+    end
+    return false
+end
+SK.BoardMentionsMe = MentionsMe
+
+-- A new post or reply just arrived (not mine): ping if it's for me.
+local function PingFor(p)
+    if SK.BoardIsMine(p) or p.demo or not SK.BoardVisible(p) then return end
+    local who = p.author ~= "" and p.author or L["a Fellow Mage"]
+    if p.parent ~= "" then
+        local top = Board().posts[p.parent]
+        local mine = top and SK.BoardIsMine(top)
+        if top and (mine or Board().follow[p.parent]) and SK.db.boardPingReplies ~= false then
+            Ping(L["%s replied to \"%s\": %s"]:format(who, Short(top.title, 30), Short(p.body, 60)))
+            return
+        end
+    end
+    if SK.db.boardPingMentions ~= false and MentionsMe(p.title .. " " .. p.body) then
+        Ping(L["%s mentioned you on the board: %s"]:format(who, Short(p.parent == "" and p.title or p.body, 60)))
+    end
+end
+
+SK.BoardPingFor = PingFor
+
+-- Mark your own post done (traded, found a door...): "[Done]" in front of
+-- the title, as an edit, so every version shows it.
+local DONE = "[Done] "
+function SK.BoardIsDone(p) return p and p.parent == "" and p.title:sub(1, #DONE) == DONE end
+function SK.BoardSetDone(id, done)
+    local p = Board().posts[id]
+    if not (p and SK.BoardIsMine(p) and p.parent == "") then return nil end
+    local title = p.title
+    if title:sub(1, #DONE) == DONE then title = title:sub(#DONE + 1) end
+    if done then title = DONE .. title end
+    return SK.BoardEdit(id, title, p.body)
+end
+
+-- Report a post or reply to the Scrollkeeper team (once each). Only the
+-- team's copies keep reports; nothing gets hidden by reports alone.
+--   BK|post id|reporter's character ID
+function SK.BoardReport(id)
+    local b = Board()
+    b.reported = type(b.reported) == "table" and b.reported or {}
+    if b.reported[id] or not b.posts[id] then return false end
+    b.reported[id] = Now()
+    Net.Send("BK", id, MyGUID())
+    return true
+end
+function SK.BoardReported(id) local r = Board().reported return r and r[id] ~= nil end
+Net.Handle("BK", function(sender, f)
+    if SK.OnBoardReport then SK.Safely("board report", SK.OnBoardReport, f[1], f[2], sender) end
+end)
+
+function SK.BoardFollow(id, on) Board().follow[id] = on and true or nil; SK.Send("BOARD_CHANGED") end
+function SK.BoardFollowing(id) return Board().follow[id] == true end
+function SK.BoardPings() return Board().pings or 0 end
+function SK.BoardClearPings() Board().pings = 0 end
+
+------------------------------------------------------------------------
+-- Reactions
+------------------------------------------------------------------------
+
+SK.BOARD_REACTIONS = { "heart", "laugh", "fire", "surprised" }
+local REACTION_OK = {}
+for _, e in ipairs(SK.BOARD_REACTIONS) do REACTION_OK[e] = true end
+local REACTIONS_PER_DAY = 200
+
+-- Kept as reactions[post id]["guid:emoji"] = { guid, e, on, at, name }:
+-- each mage can use each reaction once on a post (so several at a time).
+local function SendReaction(id, r, target)
+    local key = id .. ":" .. r.guid .. ":" .. r.e
+    local on = r.on and "1" or "0"
+    if target then Net.SendTo(target, "BX", key, on, r.at, r.name or "")
+    else Net.Send("BX", key, on, r.at, r.name or "") end
+end
+
+-- Add a reaction to a post, or take it back if it's already yours.
+-- Returns true, or nil and why.
+function SK.BoardReact(id, emoji)
+    local p = Board().posts[id]
+    if not (p and REACTION_OK[emoji]) then return nil end
+    local list = Board().reactions
+    list[id] = list[id] or {}
+    local guid, now = MyGUID(), Now()
+    local sent = 0
+    for _, byKey in pairs(list) do
+        for _, r in pairs(byKey) do
+            if type(r) == "table" and r.guid == guid and (r.at or 0) > now - 86400 then sent = sent + 1 end
+        end
+    end
+    if sent >= REACTIONS_PER_DAY then return nil, L["that's a lot of reactions today: try again tomorrow."] end
+    local key = guid .. ":" .. emoji
+    local had = list[id][key]
+    local r = { guid = guid, e = emoji, on = not (had and had.on), at = math.max(now, (had and had.at or 0) + 1), name = MyAuthor() }
+    list[id][key] = r
+    SendReaction(id, r)
+    SK.Send("BOARD_CHANGED")
+    if SK.Track then SK.Track("board.react") end
+    return true
+end
+
+-- A post's reactions: { [emoji] = { count, names = {...} } }, and yours
+-- as a set { [emoji] = true }.
+function SK.BoardReactions(id)
+    local out, mine = {}, {}
+    local b, me = Board(), MyGUID()
+    for _, r in pairs(b.reactions[id] or {}) do
+        if type(r) == "table" and r.on and REACTION_OK[r.e] and r.guid and not b.muted[r.guid] then
+            local e = out[r.e] or { count = 0, names = {} }
+            e.count = e.count + 1
+            e.names[#e.names + 1] = (r.name and r.name ~= "" and r.name) or L["a Fellow Mage"]
+            out[r.e] = e
+            if r.guid == me then mine[r.e] = true end
+        end
+    end
+    return out, mine
+end
+
+Net.Handle("BX", function(sender, f)
+    if not SK.BoardOn() then return end
+    local id, guid, e = (f[1] or ""):match("^(%x+):(.+):(%a+)$")
+    local at = tonumber(f[3])
+    if not (id and guid and at and REACTION_OK[e]) then return end
+    local p = Board().posts[id]
+    if not (p and SameFaction(p)) then return end
+    if at > Now() + 600 then return end
+    local list = Board().reactions
+    list[id] = list[id] or {}
+    local key = guid .. ":" .. e
+    local have = list[id][key]
+    local peer = SK.peers and SK.peers[sender]
+    local direct = peer and peer.guid == guid
+    if have and not (direct and at > (have.at or 0)) then return end
+    local name = (f[4] or ""):gsub("|", "/"):sub(1, 40)
+    list[id][key] = { guid = guid, e = e, on = f[2] == "1", at = at, name = name }
+    SK.Send("BOARD_CHANGED")
+    -- Someone reacted to mine (not a passed-on old one).
+    if f[2] == "1" and not have and direct and SK.BoardIsMine(p) and SK.db.boardPingReacts ~= false then
+        local tex = SK.EmojiTexture and SK.EmojiTexture(e)
+        Ping(L["%s reacted %s to \"%s\""]:format(name ~= "" and name or L["a Fellow Mage"],
+            tex and ("|T" .. tex .. ":0|t") or (":" .. e .. ":"), Short(p.parent == "" and p.title or p.body, 30)))
+    end
+end)
+
+-- Pass a post's reactions on (catch-up).
+local function PassOnReactions(id, target)
+    for _, r in pairs(Board().reactions[id] or {}) do
+        if type(r) == "table" and r.on and r.guid and REACTION_OK[r.e] then SendReaction(id, r, target) end
+    end
+end
+
+------------------------------------------------------------------------
 -- Catching up
 ------------------------------------------------------------------------
 
@@ -704,6 +930,7 @@ local function AnswerOtherRuleset(sender, since, mine)
             return a.at < b.at
         end)
         for _, p in ipairs(batch) do Net.Send("BP", Fields(p)) end
+        for _, p in ipairs(batch) do PassOnReactions(p.id) end
     end)
 end
 
@@ -746,6 +973,7 @@ local function OnAsk(sender, f)
         if SK.PassOnThemes then SK.PassOnThemes(sender) end
         if SK.PassOnNotes then SK.PassOnNotes(sender) end
         for _, p in ipairs(batch) do Net.SendTo(sender, "BP", Fields(p)) end
+        for _, p in ipairs(batch) do PassOnReactions(p.id, sender) end
     end)
 end
 

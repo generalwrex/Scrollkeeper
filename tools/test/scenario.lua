@@ -1725,3 +1725,210 @@ do
   local t = SK.FormatText("hi :) and <3 but not a:)b or (B)")
   print("FACES", t, "errors:", #ScrollkeeperDB.errors)
 end
+
+-- REACT: react, change, take back, and one from someone else
+do
+  SK.db.board = nil
+  local p = SK.BoardPost("general", "React test", "hello")
+  local ok1 = p and SK.BoardReact(p.id, "fire")
+  local c1, m1 = SK.BoardReactions(p and p.id or "")
+  local okH = p and SK.BoardReact(p.id, "heart")
+  local cB, mB = SK.BoardReactions(p and p.id or "")
+  local ok2 = p and SK.BoardReact(p.id, "fire")
+  local c2, m2 = SK.BoardReactions(p and p.id or "")
+  print("REACT", p ~= nil, ok1, c1.fire and c1.fire.count, m1.fire, "| both:", cB.fire and cB.fire.count, cB.heart and cB.heart.count, mB.fire, mB.heart,
+    "| fire back:", ok2, c2.fire, m2.fire, c2.heart and c2.heart.count, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- PACK: a packed message is unpacked into each message; old peers stop packing
+do
+  local got = {}
+  SK.Net.Handle("ZT", function(_, f) got[#got + 1] = f[1] end)
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "M\30ZT|one\30ZT|two\30ZT|three", "GUILD", "Packer-Realm")
+  local saved = SK.peers
+  SK.peers = { a = { version = "1.4.3", seen = time() }, b = { version = "dev", seen = time() } }
+  local okNew = SK.PackOK()
+  SK.peers.c = { version = "1.4.2", seen = time() }
+  local okOld = SK.PackOK()
+  SK.peers = saved
+  print("PACK", table.concat(got, ","), "| new:", okNew, "old:", okOld, "errors:", #ScrollkeeperDB.errors)
+end
+
+do
+  local t = SK.FormatText("hi \240\159\148\165 \226\157\164\239\184\143 \240\159\166\132 ok")
+  print("UNICODE", t, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- LINKS: item/spell links encoded, shown, URLs colored, plain text
+do
+  local enc = SK.EncodeLinks("buy |cff1eff00|Hitem:12345::::::::60:::::|h[Thing]|h|r and |cff71d5ff|Hspell:118|h[Polymorph]|h|r")
+  local shown = SK.FormatText("see https://github.com/generalwrex/scrollkeeper and *this* {i12345}")
+  local ids = SK.LinkedItems("{i5} x {i7} {i5}")
+  print("LINKS", enc, "|", shown, "|", #ids, "|", SK.PlainText("{i5}"), "errors:", #ScrollkeeperDB.errors)
+end
+
+-- PING: reply to my post pings; mention colored
+do
+  local oldFaction = UnitFactionGroup
+  UnitFactionGroup = function() return "Horde", "Horde" end
+  SK.db.board = nil
+  local p = SK.BoardPost("general", "Ping test", "hi")
+  local printed = {}
+  local oldPrint = SK.Print
+  SK.Print = function(t) printed[#printed + 1] = t end
+  local f = { "ab12cd", p and p.id or "", "g", tostring(time()), "PvE", "0", "Player-1-OTHER", "Other Mage", "", "thanks @Naage", "0", "H" }
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|" .. table.concat(f, "|"), "GUILD", "Other Mage")
+  SK.Print = oldPrint
+  UnitFactionGroup = oldFaction
+  print("PING", #printed, printed[1], "|", SK.FormatText("hey @Bob"), "errors:", #ScrollkeeperDB.errors)
+end
+
+-- DOORLOG and PIN
+do
+  SK.DoorLog("Bob", "asked to come to you", "info")
+  SK.ToggleDoorLog()
+  SK.db.board = nil
+  local p = SK.BoardPost("general", "Pin me", "x")
+  print("DOORLOG", #SK.db.doorLog, "| pinned before:", SK.BoardIsPinned(p), "errors:", #ScrollkeeperDB.errors)
+end
+
+-- DOORWORDS
+do
+  SK.db.doorWords = "need a port, ride pls"
+  local w = SK.DoorWords()
+  print("DOORWORDS", #w, w[#w], "errors:", #ScrollkeeperDB.errors)
+end
+
+-- TUTORIAL: every page opens
+do
+  SK.ToggleTutorial()
+  for i = 1, 11 do SK.ToggleTutorial(); SK.ToggleTutorial(i) end
+  print("TUTORIAL", ScrollkeeperTutorial ~= nil, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- TRIGGERS window
+do
+  SK.db.doorTriggers, SK.db.doorTriggersSeeded = nil, nil
+  SK.db.doorWords = "need a port"
+  SK.ToggleDoorTriggers()
+  local n = #SK.DoorTriggers()
+  table.remove(SK.DoorTriggers(), 2)
+  print("TRIGGERS", n, SK.DoorTriggers()[1], #SK.DoorWords(), "| reset:", #SK.ResetDoorTriggers(), "errors:", #ScrollkeeperDB.errors)
+end
+do
+  local function m(t, w) local lower = " " .. t:lower() .. " "; return lower:find("%f[%w]" .. w .. "%f[%W]") ~= nil end
+  print("WORDMATCH", m("inv pls", "inv"), m("my inventory", "inv"), m("can you invite me", "invite"), m("Liminal?", "liminal"))
+end
+
+-- BOUNDS: windows keep their buttons inside
+do
+  local function check(name, frame)
+    if not frame then print("BOUNDS", name, "no window") return end
+    frame._shown = true
+    local bad = CheckBounds(frame)
+    print("BOUNDS", name, #bad == 0 and "ok" or (#bad .. " outside:"))
+    for i = 1, math.min(#bad, 8) do print("   ", bad[i]) end
+  end
+  SK.ToggleDoors(); check("Doorways", ScrollkeeperDoorsFrame)
+  if not ScrollkeeperBoardFrame then SK.ToggleBoard() end
+  check("Board", ScrollkeeperBoardFrame)
+  check("Tutorial", ScrollkeeperTutorial)
+  check("Triggers", ScrollkeeperDoorTriggers)
+  local opens = { { "Panel", "TogglePanel", "ScrollkeeperPanel" }, { "Fellow Mages", "ToggleNetwork", "ScrollkeeperNetworkFrame" },
+    { "Scroll Bag", "ToggleScrollBag", "ScrollkeeperBagFrame" }, { "Codex", "ToggleGuide", "ScrollkeeperGuideFrame" },
+    { "Plan", "TogglePlan", "ScrollkeeperPlanFrame" }, { "Luck log", "ToggleLog", "ScrollkeeperLogFrame" },
+    { "Swap", "ToggleSwap", "ScrollkeeperSwapFrame" }, { "Options", "ToggleOptions", "ScrollkeeperOptionsFrame" },
+    { "Alts", "ToggleAltPanel", "ScrollkeeperAltFrame" }, { "Dev panel", "ToggleDevPanel", "SKDevPanel" } }
+  for _, o in ipairs(opens) do
+    if not _G[o[3]] and SK[o[2]] then pcall(SK[o[2]]) end
+    if _G[o[3]] then check(o[1], _G[o[3]]) end
+  end
+end
+
+-- INNS on the map
+do
+  local pins = SK.InnPins(1429)
+  SK.LearnInnSpot({ place = "Booty Bay, Stranglethorn Vale", map = 1434, x = 27, y = 77 })
+  print("INNPINS", #pins, pins[1] and pins[1].town, #SK.InnPins(1434), "errors:", #ScrollkeeperDB.errors)
+end
+do
+  SK.LearnInnSpot({ place = "Newtown, Somezone", map = 9999, x = 40, y = 50 })
+  print("FOUNDINN", SK.db.foundInns and SK.db.foundInns["Newtown"] ~= nil, #SK.InnPins(9999), "errors:", #ScrollkeeperDB.errors)
+end
+do
+  print("FUZZY", SK.FuzzyScore("rogmar", "Rog'mar Riverglades"), SK.FuzzyScore("stv", "Booty Bay Stranglethorn Vale"), SK.FuzzyScore("gdgz", "Gadgetzan Tanaris"), SK.FuzzyScore("xyz", "Gadgetzan"))
+end
+
+-- TELEPORTPOP: grouped with someone you whispered -> Teleport pop-up
+do
+  local rIG, rUN, rLC = IsInGroup, UnitName, SK.LiminalCount
+  IsInGroup = function() return true end
+  UnitName = function(u) if u == "party1" then return "Doorguy" end return rUN(u) end
+  SK.LiminalCount = function() return 2 end
+  fire("CHAT_MSG_WHISPER_INFORM", "liminal pls", "Doorguy-Realm")
+  SK.UpdateTeleportPop()
+  local pop = ScrollkeeperTeleportPop
+  print("TELEPORTPOP", pop and pop:IsShown(), pop and pop.button:GetAttribute("macrotext"))
+  if pop then pop._shown = true; local bad = CheckBounds(pop); print("BOUNDS", "TeleportPop", #bad == 0 and "ok" or (#bad .. " outside")) end
+  IsInGroup = function() return false end
+  SK.UpdateTeleportPop()
+  print("TELEPORTPOP after leaving", pop and pop:IsShown())
+  IsInGroup, UnitName, SK.LiminalCount = rIG, rUN, rLC
+end
+
+-- TELEPORTPOP leave: after the scroll, a Leave group button
+do
+  local rIG, rUN, rLC, rUP = IsInGroup, UnitName, SK.LiminalCount, UnitInParty
+  IsInGroup = function() return true end
+  UnitInParty = function(n) return n == "Doorguy" end
+  UnitName = function(u) if u == "party1" then return "Doorguy" end return rUN(u) end
+  SK.LiminalCount = function() return 2 end
+  fire("CHAT_MSG_WHISPER_INFORM", "liminal pls", "Doorguy-Realm")
+  SK.UpdateTeleportPop()
+  local rGIS = GetItemSpell
+  GetItemSpell = function() return "Liminal Passage", 99001 end
+  C_Item = C_Item or {}
+  local rCGIS = rawget(C_Item, "GetItemSpell")
+  C_Item.GetItemSpell = nil
+  local scrollSpell = 99001
+  fire("UNIT_SPELLCAST_SUCCEEDED", "player", "x", scrollSpell or 0)
+  SK.UpdateTeleportPop()
+  local pop = ScrollkeeperTeleportPop
+  print("POPLEAVE", pop and pop:IsShown(), pop and pop.leave:IsShown(), scrollSpell)
+  if pop then pop._shown = true; local bad = CheckBounds(pop); print("BOUNDS", "TeleportPopLeave", #bad == 0 and "ok" or (#bad .. " outside")) end
+  GetItemSpell = rGIS; C_Item.GetItemSpell = rCGIS
+  IsInGroup, UnitName, SK.LiminalCount, UnitInParty = rIG, rUN, rLC, rUP
+  SK.UpdateTeleportPop()
+  print("POPLEAVE gone", pop and pop:IsShown())
+end
+
+-- DOORACCEPT: a mage invites a door -> accepted; a warrior -> not
+do
+  local rMDP, rGPI, rAG, rIG = SK.MyDoorPlace, GetPlayerInfoByGUID, AcceptGroup, IsInGroup
+  local accepted = 0
+  SK.MyDoorPlace = function() return "Goldshire, Elwynn Forest" end
+  IsInGroup = function() return false end
+  AcceptGroup = function() accepted = accepted + 1 end
+  GetPlayerInfoByGUID = function(g) if g == "Player-1-MAGE" then return "Mage", "MAGE" end return "Warrior", "WARRIOR" end
+  fire("PARTY_INVITE_REQUEST", "Zappy", false, false, false, true, false, "Player-1-MAGE")
+  fire("PARTY_INVITE_REQUEST", "Bonky", false, false, false, true, false, "Player-1-WARR")
+  print("DOORACCEPT", accepted)
+  SK.MyDoorPlace, GetPlayerInfoByGUID, AcceptGroup, IsInGroup = rMDP, rGPI, rAG, rIG
+end
+
+-- RAIDSUB: door in another raid subgroup -> told to move
+do
+  local rIG, rIR, rGRI, rN, rLC, rUN = IsInGroup, IsInRaid, GetRaidRosterInfo, GetNumGroupMembers, SK.LiminalCount, UnitName
+  IsInGroup = function() return true end
+  IsInRaid = function() return true end
+  GetNumGroupMembers = function() return 2 end
+  UnitName = function(u) if u == "player" then return "Naage" end return rUN(u) end
+  GetRaidRosterInfo = function(i) if i == 1 then return "Naage", 0, 1 end return "Raidmage", 0, 3 end
+  SK.LiminalCount = function() return 1 end
+  fire("CHAT_MSG_WHISPER_INFORM", "liminal?", "Raidmage-Realm")
+  SK.UpdateTeleportPop()
+  local pop = ScrollkeeperTeleportPop
+  print("RAIDSUB", pop and pop:IsShown(), pop and pop.mode)
+  IsInGroup, IsInRaid, GetRaidRosterInfo, GetNumGroupMembers, SK.LiminalCount, UnitName = rIG, rIR, rGRI, rN, rLC, rUN
+  SK.UpdateTeleportPop()
+end
