@@ -56,7 +56,6 @@ local PLACES = {
     { town = "Southshore", map = 1424, side = "Alliance" },
     { town = "Refuge Pointe", map = 1417, side = "Alliance" },
     { town = "Aerie Peak", map = 1425, side = "Alliance" },
-    { town = "Nethergarde Keep", map = 1419, side = "Alliance" },
     { town = "Morgan's Vigil", map = 1428, side = "Alliance" },
     { town = "Dolanaar", map = 1438, side = "Alliance" },
     { town = "Auberdine", map = 1439, side = "Alliance" },

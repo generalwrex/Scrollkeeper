@@ -2,9 +2,13 @@
 
 ## Unreleased: 1.4.1
 
+> Fixed: no more "No player named ... is currently playing." spam from the Fellow Mages board.
 > News from the Scrollkeeper team now reaches you right away, not just with updates.
 > If something ever breaks, the team can switch it off for everyone until the fix is out.
 
+- Fixed: "No player named ... is currently playing." over and over in chat (1.4.0): catching up on the board whispered players it couldn't reach, like mages on another ruleset. Now it only answers mages on your own ruleset, never retries someone who isn't there for 10 minutes, and hides that message for Scrollkeeper's own whispers.
+- Board posts and replies only ever show to their author's own faction: Horde and Alliance never see each other's text. (A post says its faction; older posts show only when the game can tell their author's faction.)
+- Doorways: Nethergarde Keep is gone from the list; it has no inn, so nobody can rest there to be a door. Thanks foundmonster (#5).
 - New: **news from the Scrollkeeper team** shows in chat once, between updates too (signed by the team, so nobody else can send it).
 - New: if a feature ever breaks, the Scrollkeeper team can **switch it off** for everyone until a fix is out; Scrollkeeper tells you in chat when that happens, and when it's back.
 - When a new Scrollkeeper is out, the team can say so: if yours is older, you're told once (with Update messages on).
