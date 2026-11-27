@@ -158,10 +158,17 @@ SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
         return
     end
     if Net.IsMe(sender) then return end
+    if Net.Tap then SK.Quietly("net tap", Net.Tap, kind, fields, sender, source) end
+    Net.Deliver(kind, sender, fields, source)
+end)
+
+-- Hand a message to its handlers, as if it was just heard. (Also used by
+-- tools that get messages another way.)
+function Net.Deliver(kind, sender, fields, source)
     for _, fn in ipairs(handlers[kind] or {}) do
         SK.Safely("message " .. kind, fn, sender, fields, source)
     end
-end)
+end
 
 ------------------------------------------------------------------------
 -- Sending
@@ -214,6 +221,36 @@ function Net.Send(kind, ...)
     table.insert(queue, at, { key = key, text = text, priority = priority, only = only })
 end
 
+-- Addon whispers to someone who isn't there (offline, another ruleset)
+-- make the game say "No player named ... is currently playing." Those lines
+-- are hidden, and that name gets no more addon whispers for 10 minutes.
+local whisperedAt, unreachableAt = {}, {}
+local function Bare(name) return (tostring(name or ""):gsub("%-.*$", "")) end
+local function NoteWhisper(target)
+    whisperedAt[target] = GetTime()
+    whisperedAt[Bare(target)] = GetTime()
+end
+local function CantReach(target)
+    local at = unreachableAt[target] or unreachableAt[Bare(target)]
+    return at and GetTime() - at < 600
+end
+Net.CantReach = CantReach
+
+if ChatFrame_AddMessageEventFilter then
+    local pattern
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_SYSTEM", function(_, _, message)
+        if type(message) ~= "string" or type(ERR_CHAT_PLAYER_NOT_FOUND_S) ~= "string" then return false end
+        pattern = pattern or ("^" .. ERR_CHAT_PLAYER_NOT_FOUND_S:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1"):gsub("%%%%s", "(.+)") .. "$")
+        local name = message:match(pattern)
+        local at = name and (whisperedAt[name] or whisperedAt[Bare(name)])
+        if at and GetTime() - at < 30 then
+            unreachableAt[name], unreachableAt[Bare(name)] = GetTime(), GetTime()
+            return true
+        end
+        return false
+    end)
+end
+
 -- Queue a message for one player (a whisper), going out with the rest of
 -- the queue and its budget, so a batch of them can't trip the game's limit.
 function Net.SendTo(target, kind, ...)
@@ -249,7 +286,9 @@ function Net.Whisper(target, kind, ...)
     end
     local text = table.concat(parts, "|")
     if #text > MAX_LENGTH then return end
+    if CantReach(target) then return end
     budget = budget - 1   -- whispers spend the same budget
+    NoteWhisper(target)
     local ok, result = pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, text, "WHISPER", target)
     Net.Log({ dir = "out", kind = kind, where = "WHISPER", who = target, size = #text, result = tostring(ok and result) })
 end
@@ -289,6 +328,10 @@ local function SendNext()
     local message = table.remove(queue, 1)
     local retry = {}
     for _, destination in ipairs(destinations) do
+        if destination[1] == "WHISPER" then
+            if CantReach(destination[2]) then break end
+            NoteWhisper(destination[2])
+        end
         local ok, result = pcall(C_ChatInfo.SendAddonMessage, Net.PREFIX, message.text, destination[1], destination[2])
         local stats = Net.stats
         Net.Log({ dir = "out", kind = message.key:match("^[^|]+"), where = destination[1], size = #message.text,

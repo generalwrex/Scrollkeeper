@@ -4,13 +4,14 @@
 -- (saved in ScrollkeeperDB), new posts go out to everyone online, and
 -- when you log in you ask for what you missed.
 --
---   BP|id|parent|cat|at|ruleset|tier|guid|author|title|body|rev
+--   BP|id|parent|cat|at|ruleset|tier|guid|author|title|body|rev|faction
 --        a post (parent "") or a reply (parent = the post's id); rev: how
 --        many times its author edited it
 --   BE|id|rev|title|body   the author's edit (only counts straight from them)
 --   BD|id            the author takes their post (or reply) down
 --   BQ|since         "what's new since then?" (sent at login)
---   BA|name          "I'm answering name's BQ" (so only one player does)
+--   BA|name          "I'm answering name's BQ" (so only one player does);
+--                    name@ruleset: answering for that ruleset, on the channel
 --   BS|signature|action|a|b|c|at
 --                    moderation, signed with the dev team's key (Ed25519,
 --                    Core/Ed25519.lua). Everyone checks it with SK.BOARD_MOD_KEY below,
@@ -26,6 +27,9 @@
 --   * at most 3 posts and 30 replies a day per author
 --   * trade, doorway and odds posts only reach mages on your ruleset
 --   * posts are only text and numbers, never run as code
+--   * players' text never crosses factions: a post or reply only shows to
+--     its author's own faction (H or A, with the post; or the game's word
+--     for their character), and when that's unknown it doesn't show
 
 local _, SK = ...
 local L = SK.L
@@ -62,6 +66,24 @@ local function IAmTeam() return type(SK.BoardSigner) == "function" end
 SK.BoardIAmTeam = IAmTeam
 
 local function Now() return (GetServerTime and GetServerTime()) or time() end
+
+-- Your faction as a letter (H/A), and a post author's, if it can be known.
+local function MyFaction()
+    local f = UnitFactionGroup and UnitFactionGroup("player")
+    return f == "Horde" and "H" or f == "Alliance" and "A" or nil
+end
+local function FactionOf(p)
+    if p.faction then return p.faction end
+    local f = SK.FactionOfGUID and SK.FactionOfGUID(p.guid)
+    return f == "Horde" and "H" or f == "Alliance" and "A" or nil
+end
+-- Same faction as you (known for sure)? Text from anyone else never shows.
+local function SameFaction(p)
+    if p.demo then return true end
+    local mine, theirs = MyFaction(), FactionOf(p)
+    return mine ~= nil and theirs ~= nil and mine == theirs
+end
+SK.BoardSameFaction = SameFaction
 
 local function Board()
     local db = SK.db
@@ -143,6 +165,9 @@ local function Valid(p)
     if b.removed[p.id] or (p.parent ~= "" and b.removed[p.parent]) then return nil, "removed" end
     local ban = b.bans[p.guid]
     if ban and (ban.untilAt or 0) > now then return nil, "banned" end
+    -- The other faction (known): never kept.
+    local theirs, myFaction = FactionOf(p), MyFaction()
+    if theirs and myFaction and theirs ~= myFaction then return nil, "faction" end
     local mine = SK.ServerKind and SK.ServerKind()
     -- Trade, doorway and odds posts: only from your own ruleset (and one
     -- that doesn't say its ruleset doesn't count).
@@ -155,7 +180,8 @@ end
 
 local function Fields(p)
     local cat = BY_KEY[p.cat]
-    return p.id, p.parent, cat and cat.code or "g", p.at, p.ruleset, p.tier, p.guid, p.author, p.title, p.body, p.rev or 0
+    return p.id, p.parent, cat and cat.code or "g", p.at, p.ruleset, p.tier, p.guid, p.author, p.title, p.body, p.rev or 0,
+        p.faction or ""
 end
 
 local function FromFields(f)
@@ -165,6 +191,7 @@ local function FromFields(f)
         ruleset = Clean(f[5], 12), tier = tonumber(f[6]) or 0, guid = Clean(f[7], 40),
         author = Clean(f[8], 48), title = Clean(f[9], TITLE_MAX), body = Clean(f[10], MESSAGE_MAX),
         rev = math.max(0, math.min(99, tonumber(f[11]) or 0)),
+        faction = (f[12] == "H" or f[12] == "A") and f[12] or nil,
     }
 end
 
@@ -241,6 +268,7 @@ end
 function SK.BoardVisible(p)
     local b = Board()
     if b.hidden[p.id] or b.muted[p.guid] then return false end
+    if not SameFaction(p) then return false end
     if p.cat == "notice" and p.parent == "" and not (p.verified or p.demo) then return false end
     local ban = b.bans[p.guid]
     if ban and (ban.untilAt or 0) > Now() then return false end
@@ -345,7 +373,7 @@ function SK.BoardRoom(title)
         ruleset = (SK.ServerKind and SK.ServerKind()) or "", tier = MyTier(), guid = MyGUID(),
         author = MyAuthor(), title = title or "", body = "" }
     local text = "BP|" .. table.concat({ tostring(p.id), p.parent, "g", tostring(p.at), p.ruleset, tostring(p.tier),
-        p.guid, p.author, p.title, "", "99" }, "|")
+        p.guid, p.author, p.title, "", "99", "H" }, "|")
     return MESSAGE_MAX - #text
 end
 
@@ -364,7 +392,7 @@ function SK.BoardPost(cat, title, body, parent)
         id = ("%06x%02x"):format(Now() % 0x1000000, math.random(0, 255)),
         parent = parent or "", cat = cat, at = Now(),
         ruleset = (SK.ServerKind and SK.ServerKind()) or "", tier = MyTier(), guid = MyGUID(),
-        author = MyAuthor(), title = parent and "" or Clean(title, TITLE_MAX),
+        author = MyAuthor(), title = parent and "" or Clean(title, TITLE_MAX), faction = MyFaction(),
     }
     local room
     if parent then room = SK.BoardRoom(nil) else room = SK.BoardRoom(p.title) end
@@ -638,14 +666,56 @@ Net.Handle("BA", function(sender, f)
     if who then answering[who] = nil end
 end)
 
+-- Someone on another ruleset: whispers can't reach them, so one mage per
+-- ruleset sends that ruleset's shared posts (General, notices: not trade,
+-- doorways or odds) on the channel instead. At most once a minute.
+local channelAnsweredAt = 0
+local function AnswerOtherRuleset(sender, since, mine)
+    if GetTime() - channelAnsweredAt < 60 and channelAnsweredAt > 0 then return end
+    local list = {}
+    for _, p in pairs(Board().posts) do
+        local cat = SK.BoardCategory(p.cat)
+        if (p.at or 0) > since and p.ruleset == mine and not (cat and cat.mine) and SameFaction(p)
+            and not (p.cat == "notice" and p.parent == "" and not p.verified) then
+            list[#list + 1] = p
+        end
+    end
+    if #list == 0 then return end
+    local key = sender .. "@" .. mine
+    answering[key] = true
+    C_Timer.After(3 + math.random() * 9, function()
+        if not answering[key] then return end   -- someone else on our ruleset is answering
+        answering[key] = nil
+        if GetTime() - channelAnsweredAt < 60 and channelAnsweredAt > 0 then return end
+        channelAnsweredAt = GetTime()
+        Net.Send("BA", key)
+        table.sort(list, function(a, b) return a.at > b.at end)
+        local batch = {}
+        for i = 1, math.min(#list, CATCH_UP_MAX) do batch[i] = list[i] end
+        table.sort(batch, function(a, b)
+            if (a.parent == "") ~= (b.parent == "") then return a.parent == "" end
+            return a.at < b.at
+        end)
+        for _, p in ipairs(batch) do Net.Send("BP", Fields(p)) end
+    end)
+end
+
 Net.Handle("BQ", function(sender, f)
     if not SK.BoardOn() then return end
+    -- Only whisper someone known to be on our own ruleset, and not just
+    -- found unreachable. Anyone else gets the channel answer.
     local mine = SK.ServerKind and SK.ServerKind()
-    if mine and SK.RulesetOf and SK.RulesetOf(sender) and SK.RulesetOf(sender) ~= mine then return end
+    local theirs = SK.RulesetOf and SK.RulesetOf(sender)
+    if not mine then return end
+    if theirs ~= mine then
+        AnswerOtherRuleset(sender, tonumber(f[1]) or 0, mine)
+        return
+    end
+    if Net.CantReach and Net.CantReach(sender) then return end
     local since = tonumber(f[1]) or 0
     local list = {}
     for _, p in pairs(Board().posts) do
-        if (p.at or 0) > since and not (p.cat == "notice" and p.parent == "" and not p.verified) then
+        if (p.at or 0) > since and SameFaction(p) and not (p.cat == "notice" and p.parent == "" and not p.verified) then
             list[#list + 1] = p
         end
     end
