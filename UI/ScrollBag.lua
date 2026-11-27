@@ -641,6 +641,10 @@ local ACTIONS = {
     -- (up to your keep amounts) comes out.
     -- auto: started by Auto-sync, so it only speaks up when it moved something.
     bank = function(auto)
+        if SK.RemoteOff and SK.RemoteOff("Sync") then
+            if not auto then SK.Print(L["Sync is switched off by the Scrollkeeper team for now, until it's fixed."]) end
+            return
+        end
         if not SK.BankIsOpen() then
             if not auto then SK.Print(L["open your bank first, then click Sync bank extras."]) end
             return
@@ -674,6 +678,10 @@ local ACTIONS = {
     -- At the mailbox, both ways: on the Send Mail tab extras get attached
     -- (Mail extras), on the Inbox what your bags are missing comes out.
     mailsync = function(auto)
+        if SK.RemoteOff and SK.RemoteOff("Sync") then
+            if not auto then SK.Print(L["Sync is switched off by the Scrollkeeper team for now, until it's fixed."]) end
+            return
+        end
         if AtMailbox() and not auto then return SK.ScrollBagActions.mail() end
         if not AtInbox() then
             if not auto then SK.Print(L["open your mailbox first, then click Sync mail extras."]) end

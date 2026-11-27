@@ -10,7 +10,9 @@ with the top changelog entries as bullets.
     python tools/make-news.py 1.3.0      # say it's version 1.3.0
 
 Which entries: the newest "## 1.2.3" section, or every "## Unreleased..."
-section above the first released one. The release workflow runs this before
+section above the first released one. If a section has lines starting with
+"> ", those are the news, word for word (one line each); otherwise the top
+"New..." and "Fixed..." bullets are shortened into it. The release workflow runs this before
 packaging, with the tag's version, so every release gets its own news.
 """
 
@@ -37,15 +39,17 @@ SIGNOFFS = [
 
 
 def sections(text):
-    """[(heading, [top-level bullet text, ...])] in changelog order."""
+    """[(heading, [top-level bullet text, ...], [news lines])] in changelog order."""
     out = []
     for block in re.split(r"(?m)^## ", text)[1:]:
         heading, _, body = block.partition("\n")
-        bullets = []
+        bullets, news = [], []
         for line in body.splitlines():
             if line.startswith("- "):
                 bullets.append(line[2:].strip())
-        out.append((heading.strip(), bullets))
+            elif line.startswith("> "):
+                news.append(plain(line[2:].strip()))
+        out.append((heading.strip(), bullets, news))
     return out
 
 
@@ -74,12 +78,12 @@ def main():
     changelog = open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8").read()
     all_sections = sections(changelog)
     picked = []
-    for heading, bullets in all_sections:
+    for heading, bullets, news in all_sections:
         if heading.lower().startswith("unreleased"):
-            picked.append((heading, bullets))
+            picked.append((heading, bullets, news))
         else:
             if not picked:
-                picked.append((heading, bullets))
+                picked.append((heading, bullets, news))
             break
     if not picked:
         sys.exit("make-news: nothing in CHANGELOG.md")
@@ -92,20 +96,21 @@ def main():
     # The biggest sections first; one line from each (its first bullet),
     # then the other "New..." lines.
     picked.sort(key=lambda section: -len(section[1]))
-    bullets, seen = [], set()
-    for _, items in picked:
-        if items:
-            bullets.append(items[0])
-    for _, items in picked:
-        bullets.extend(item for item in items[1:] if item.startswith("New"))
-    lines = []
-    for bullet in bullets:
-        line = short(bullet)
-        if line and line not in seen:
-            seen.add(line)
-            lines.append(line)
-        if len(lines) >= MAX_BULLETS:
-            break
+    lines = [line for _, _, news in picked for line in news][:MAX_BULLETS]
+    if not lines:
+        bullets, seen = [], set()
+        for _, items, _ in picked:
+            if items:
+                bullets.append(items[0])
+        for _, items, _ in picked:
+            bullets.extend(item for item in items[1:] if item.startswith("New") or item.startswith("Fixed"))
+        for bullet in bullets:
+            line = short(bullet)
+            if line and line not in seen:
+                seen.add(line)
+                lines.append(line)
+            if len(lines) >= MAX_BULLETS:
+                break
 
     pick = int(hashlib.md5(version.encode()).hexdigest(), 16)
     if version == "update":

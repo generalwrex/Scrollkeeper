@@ -26,6 +26,12 @@ local function Ago(at)
     return L["%dd"]:format(math.floor(s / 86400))
 end
 
+-- "Horde" / "Alliance", in the game's language.
+local function MyFactionName()
+    local _, name = UnitFactionGroup and UnitFactionGroup("player")
+    return name or ""
+end
+
 local MAGE = "|cff69ccf0"
 local function AuthorText(p)
     local name = p.author ~= "" and p.author or L["a Fellow Mage"]
@@ -34,8 +40,11 @@ local function AuthorText(p)
     local parts = { color .. name .. "|r" }
     if dev then parts[#parts + 1] = "|cffff7aa8" .. L["[dev]"] .. "|r" end
     if (p.tier or 0) > 0 then parts[#parts + 1] = "|cffaaaaaa[" .. p.tier .. "]|r" end
+    -- Their ruleset, always: gold when it isn't yours, gray when it is.
     local mine = SK.ServerKind and SK.ServerKind()
-    if p.ruleset ~= "" and p.ruleset ~= mine then parts[#parts + 1] = "|cffffd27a" .. p.ruleset .. "|r" end
+    if p.ruleset and p.ruleset ~= "" then
+        parts[#parts + 1] = (p.ruleset ~= mine and "|cffffd27a" or "|cff9a9a9a") .. "[" .. p.ruleset .. "]|r"
+    end
     return table.concat(parts, " ")
 end
 
@@ -134,7 +143,9 @@ local function BuildCompose()
     c.left:SetPoint("TOPRIGHT", bodyBox, "BOTTOMRIGHT", -4, -4)
 
     c.note = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    c.note:SetPoint("TOPLEFT", bodyBox, "BOTTOMLEFT", 4, -4)
+    c.note:SetPoint("TOPLEFT", bodyBox, "BOTTOMLEFT", 26, -4)
+    c.emoji = SK.EmojiButton(c, c.body)
+    c.emoji:SetPoint("TOPLEFT", bodyBox, "BOTTOMLEFT", 2, -2)
     c.note:SetPoint("RIGHT", c.left, "LEFT", -8, 0)
     c.note:SetJustifyH("LEFT")
 
@@ -168,9 +179,9 @@ local function BuildCompose()
         if self.error then
             self.note:SetText("|cffff6666" .. self.error .. "|r")
         elseif cat and cat.mine then
-            self.note:SetText(L["Only mages on your ruleset see this."])
+            self.note:SetText(L["Only %s mages on your ruleset see this."]:format(MyFactionName()))
         else
-            self.note:SetText(L["Mages on every ruleset can see this."])
+            self.note:SetText(L["%s mages on every ruleset can see this."]:format(MyFactionName()))
         end
         local ready = cat and room >= 0 and (self.title:GetText() or "") ~= "" and (self.body:GetText() or "") ~= ""
         self.post:SetEnabled(ready and true or false)
@@ -419,7 +430,7 @@ local function Build()
     window.rules:SetPoint("TOPLEFT", catHeader, "BOTTOMLEFT", 6, -4 - #cats * 24 - 8)
     window.rules:SetWidth(CAT_W - 12)
     window.rules:SetJustifyH("LEFT")
-    window.rules:SetText(L["Posts last 7 days.\n3 posts a day each."])
+    window.rules:SetText(L["Posts last 7 days.\n3 posts a day each."] .. "\n" .. L["Horde and Alliance have separate boards."])
     window.unmute = Button(window, L["Unmute all"], CAT_W - 8, function() SK.BoardUnmuteAll(); SK.RefreshBoard() end,
         L["Show everyone's posts again: muted authors and hidden posts come back."])
     window.unmute:SetPoint("TOPLEFT", window.rules, "BOTTOMLEFT", -2, -10)
@@ -439,6 +450,12 @@ local function Build()
         window.filterMenu:SetShown(not window.filterMenu:IsShown())
     end, L["Show only some posts (new, unanswered, from the dev team, recent...) and choose the order."])
     window.filter:SetPoint("RIGHT", window.search, "LEFT", -10, 0)
+    window.refresh = Button(window, L["Refresh"], 74, function()
+        if SK.BoardCatchUp then SK.BoardCatchUp(true) end
+        SK.RefreshBoard()
+        SK.Track("board.refresh")
+    end, L["Ask other mages for posts you missed (like ones made while you were offline). New ones show in a few seconds."])
+    window.refresh:SetPoint("RIGHT", window.filter, "LEFT", -6, 0)
     window.search:SetAutoFocus(false)
     window.search:SetScript("OnTextChanged", function() SK.RefreshBoard() end)
     window.search:SetScript("OnEscapePressed", function(self) self:SetText(""); self:ClearFocus() end)
@@ -474,7 +491,7 @@ local function Build()
 
     -- Reply box, and what you can do with the post.
     window.reply = CreateFrame("EditBox", nil, window, "InputBoxTemplate")
-    window.reply:SetSize(DETAIL_W - 90, 20)
+    window.reply:SetSize(DETAIL_W - 116, 20)
     window.reply:SetPoint("TOPLEFT", scroll, "BOTTOMLEFT", 4, -12)
     window.reply:SetAutoFocus(false)
     window.reply:SetMaxBytes(200)
@@ -498,7 +515,9 @@ local function Build()
     window.reply:SetScript("OnEditFocusGained", function() window.replyHint:Hide() end)
     window.reply:SetScript("OnEditFocusLost", function(self) window.replyHint:SetShown((self:GetText() or "") == "") end)
     window.replyButton = Button(window, L["Reply"], 70, Reply)
-    window.replyButton:SetPoint("LEFT", window.reply, "RIGHT", 6, 0)
+    window.replyEmoji = SK.EmojiButton(window, window.reply)
+    window.replyEmoji:SetPoint("LEFT", window.reply, "RIGHT", 4, 0)
+    window.replyButton:SetPoint("LEFT", window.replyEmoji, "RIGHT", 4, 0)
 
     local function Current() return state.current end
     window.whisper = Button(window, WHISPER or L["Whisper"], 70, function()
@@ -573,12 +592,12 @@ local function ShowDetail(p, replies)
     end
     local cat = SK.BoardCategory(p.cat)
     c.title:SetPoint("TOPLEFT", 2, -2)
-    c.title:SetText(p.title)
+    c.title:SetText(SK.FormatText(p.title))
     c.meta:SetPoint("TOPLEFT", c.title, "BOTTOMLEFT", 0, -4)
     c.meta:SetText((cat and L[cat.name] or "") .. " · " .. AuthorText(p) .. " · " .. Ago(p.at)
         .. ((p.rev or 0) > 0 and (" |cff808080" .. L["(edited)"] .. "|r") or ""))
     c.body:SetPoint("TOPLEFT", c.meta, "BOTTOMLEFT", 0, -8)
-    c.body:SetText(p.body)
+    c.body:SetText(SK.FormatText(p.body))
     c.line:ClearAllPoints()
     c.line:SetPoint("TOPLEFT", c.body, "BOTTOMLEFT", 0, -10)
     c.line:SetSize(DETAIL_W - 34, 1)
@@ -596,7 +615,7 @@ local function ShowDetail(p, replies)
         row.head:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, i == 1 and -8 or -10)
         row.head:SetText(AuthorText(r) .. " |cff808080· " .. Ago(r.at) .. ((r.rev or 0) > 0 and (" " .. L["(edited)"]) or "") .. "|r")
         row.body:SetPoint("TOPLEFT", row.head, "BOTTOMLEFT", 0, -2)
-        row.body:SetText(r.body)
+        row.body:SetText(SK.FormatText(r.body))
         row.head:Show()
         row.body:Show()
         anchor = row.body
@@ -647,7 +666,7 @@ function SK.RefreshBoard()
         local n = replies[p.id] and #replies[p.id] or 0
         local pin = p.cat == "notice" and "|TInterface\\Buttons\\UI-GuildButton-PublicNote-Up:12:12|t |cffffc94d" or ""
         local new = (p.at or 0) > (state.readBefore or 0) and not SK.BoardIsMine(p) and not p.demo
-        row.label:SetText(pin .. p.title .. (pin ~= "" and "|r" or "") .. (new and (" |cff40ff40" .. L["new"] .. "|r") or ""))
+        row.label:SetText(pin .. SK.FormatText(p.title) .. (pin ~= "" and "|r" or "") .. (new and (" |cff40ff40" .. L["new"] .. "|r") or ""))
         row.sub:SetText(AuthorText(p) .. " |cff808080· " .. Ago(p.at)
             .. (n > 0 and (" · " .. L["%d |4reply:replies;"]:format(n)) or "") .. "|r")
         local sel = selectTex[row]

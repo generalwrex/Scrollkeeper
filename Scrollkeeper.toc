@@ -59,6 +59,7 @@ Network\Share.lua
 Network\Usage.lua
 Network\Board.lua
 Network\Themes.lua
+Network\Notes.lua
 
 # Map: pins on the world map.
 Map\Pins.lua
@@ -77,6 +78,7 @@ UI\Mail.lua
 UI\Swap.lua
 UI\Log.lua
 UI\Doors.lua
+UI\Format.lua
 UI\Board.lua
 UI\Plan.lua
 UI\Guide.lua

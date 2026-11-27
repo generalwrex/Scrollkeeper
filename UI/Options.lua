@@ -135,6 +135,8 @@ local SECTIONS = {
         { "check", "shareUsage", "Share anonymous usage stats (recommended)", "Opt-in, off unless you turn it on. Counts which windows, buttons and settings get used, so we know which features people rely on most and can fix and improve those first. Totally anonymous: just counts under a random ID, plus your class, faction, game language, rough Comprehension skill and which bag and map addons you use, never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None." },
         { "check", "themesShared", "Holiday themes from the network", "New holiday themes come from the Scrollkeeper team over the network, no update needed (they're only colors). Off: no new ones." },
         { "check", "boardOn", "Fellow Mages board", "Posts and replies from other Scrollkeeper mages, kept for 7 days (/sk board). Off: you don't get or send posts." },
+        { "check", "textEmoji", "Board: show emojis", "Show :fire:, :sheep:, :skull: and the rest as icons in posts and replies. Off: you see them as typed.", dependsOn = "boardOn" },
+        { "check", "textMarkdown", "Board: show formatting", "Show **bold**, *italic*, `code`, ~~strike~~, and - or > at the start as colors, a bullet or a quote. Off: you see the stars and marks as typed.", dependsOn = "boardOn" },
         { "check", "boardNotify", "Board: tell me about new posts", "Say once a session in chat when the board has new posts.", dependsOn = "boardOn" },
         { "choice", "boardRulesets", "Board: General posts from", "Trade, doorway and odds posts are always your ruleset only. This is for General posts and notices.", choices = {
             { "all", "All rulesets", "Mages on every ruleset, with their ruleset shown by their name." },
