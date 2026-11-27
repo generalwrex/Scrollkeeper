@@ -1,12 +1,13 @@
 # Scrollkeeper
 
-## Unreleased: news and switches from the Scrollkeeper team
+## Unreleased: 1.4.1
 
 > News from the Scrollkeeper team now reaches you right away, not just with updates.
 > If something ever breaks, the team can switch it off for everyone until the fix is out.
 
 - New: **news from the Scrollkeeper team** shows in chat once, between updates too (signed by the team, so nobody else can send it).
 - New: if a feature ever breaks, the Scrollkeeper team can **switch it off** for everyone until a fix is out; Scrollkeeper tells you in chat when that happens, and when it's back.
+- When a new Scrollkeeper is out, the team can say so: if yours is older, you're told once (with Update messages on).
 - Better in-game news for each update.
 
 ## 1.4.0
