@@ -1693,3 +1693,35 @@ do
   SK.BOARD_MOD_KEY, SK.BoardSigner = real, signer
   print("TEAMNOTES news:", okNews, "off:", okOff, boardOff, moduleOff, "back:", boardBack, "received:", syncOff, "forged ignored:", bagStill, "errors:", #ScrollkeeperDB.errors)
 end
+
+-- TEAM VERSION: an older copy is told once
+do
+  local E = SK.Ed25519
+  local seed = string.rep("\8", 32)
+  local real, signer = SK.BOARD_MOD_KEY, SK.BoardSigner
+  SK.BOARD_MOD_KEY = E.ToBase64(E.PublicKey(seed))
+  SK.BoardSigner = function(t) return E.Sign(t, seed) end
+  local ok = SK.SendTeamNote("ver", "latest", "99.0.0", "")
+  local bad = SK.SendTeamNote("ver", "latest", "soon", "")
+  SK.BOARD_MOD_KEY, SK.BoardSigner = real, signer
+  SK.db.teamNotes = {}
+  print("TEAMVER announced:", ok, "bad refused:", bad == nil, "errors:", #ScrollkeeperDB.errors)
+end
+
+-- FORMAT: emojis and markdown, and both off
+do
+  local a = SK.FormatText("**big** *soft* `x` ~~no~~ :fire: :nope: :FIRE:")
+  local b = SK.FormatText("- item")
+  local q = SK.FormatText("> said")
+  local many = select(2, SK.FormatText(string.rep(":x:", 20)):gsub("|T", ""))
+  SK.db.textEmoji, SK.db.textMarkdown = false, false
+  local off = SK.FormatText("**big** :fire:")
+  SK.db.textEmoji, SK.db.textMarkdown = true, true
+  local btn = SK.EmojiButton(UIParent, CreateFrame("EditBox"))
+  print("FORMAT", a, "|", b, "|", q, "| capped:", many, "| off:", off, "| button:", btn ~= nil, "errors:", #ScrollkeeperDB.errors)
+end
+
+do
+  local t = SK.FormatText("hi :) and <3 but not a:)b or (B)")
+  print("FACES", t, "errors:", #ScrollkeeperDB.errors)
+end
