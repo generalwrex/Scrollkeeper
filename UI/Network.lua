@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Network.lua
 -- The network pane: other Scrollkeeper users you can hear, and the
 -- community's odds for each scroll tier. It is built twice:

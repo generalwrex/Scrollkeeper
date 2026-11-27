@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/GuildBank.lua
 -- Marks untranslated scrolls in the guild bank that someone would level
 -- from: you, your own mages, or guildies running Scrollkeeper.

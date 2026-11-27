@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-19.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Doors.lua
 -- Doorways (/sk doors): getting somewhere with Scroll of Liminal Passage.
 --

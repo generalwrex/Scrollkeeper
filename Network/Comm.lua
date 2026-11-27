@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Comm.lua
 -- How copies of Scrollkeeper on different players' computers talk.
 --

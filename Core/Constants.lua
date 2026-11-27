@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Core/Constants.lua
 -- IDs read from the live game with /sk scan (build 1.60.1.70938).
 

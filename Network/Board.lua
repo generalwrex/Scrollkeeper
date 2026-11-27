@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-26.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Board.lua
 -- The Fellow Mages board: short posts and replies that last 7 days.
 -- There's no server: every Scrollkeeper keeps its own copy of the posts

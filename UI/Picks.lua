@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Picks.lua
 -- Right-click anything that suggests a scroll (the panel's Familiar and
 -- Imbue buttons, the imbue/familiar pop-up) for a row of all your scrolls

@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/BagAddons.lua
 -- Scroll Bag marks wherever you look at your bags: a small colored corner
 -- on each mage scroll (green keep, red extra, orange part of the stack is

@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-26.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Core/Ed25519.lua
 -- Ed25519 signatures (RFC 8032) in plain Lua 5.1, for the board's
 -- moderation: the dev team signs with its secret key, and every

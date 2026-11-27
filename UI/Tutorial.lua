@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-27.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Tutorial.lua
 -- The tutorial (/sk tutorial): the mage scroll system from the start, a
 -- page at a time (Back / Next), with a "Show me" button that opens the

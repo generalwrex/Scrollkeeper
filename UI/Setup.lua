@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Setup.lua
 -- The first-time setup: a short walk-through the first time you log in
 -- with Scrollkeeper. One question per page, big buttons with a picture and

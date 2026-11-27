@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-26.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Board.lua
 -- The Fellow Mages board window (/sk board): categories on the left, the
 -- posts in the middle, the picked post with its replies on the right.

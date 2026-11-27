@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/ScrollBag.lua
 -- The Scroll Bag (/sk bag, or the bag button on the panel): every deciphered
 -- mage scroll you own, in your bags, bank and mail, and what to do with it.

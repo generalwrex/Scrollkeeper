@@ -1,3 +1,5 @@
+<!-- Scrollkeeper by generalwrex. Created 2026-11-19.
+     Read the LICENSE file before using any of this code. -->
 <!-- Scrollkeeper key bindings (Options > Key Bindings > AddOns > Scrollkeeper).
      Each one clicks a secure button made in UI/Unlock.lua or UI/Renew.lua: addon code can't
      use items itself, but a key that clicks a secure button can. -->

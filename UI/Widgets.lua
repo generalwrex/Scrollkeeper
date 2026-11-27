@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Widgets.lua
 -- Small building blocks the panel is made from: a progress bar and an
 -- item button. Keeping them here keeps UI/Panel.lua about layout only.

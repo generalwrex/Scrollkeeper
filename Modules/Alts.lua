@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Alts.lua
 -- Your own mages, remembered across your account, so your other
 -- characters can help them.

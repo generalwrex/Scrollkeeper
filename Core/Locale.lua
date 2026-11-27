@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Core/Locale.lua
 -- Translations. Every piece of text the player sees goes through SK.L:
 --

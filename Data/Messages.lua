@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-18.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Data/Messages.lua
 -- One-time chat messages from Natop. Each one is printed once per account,
 -- the first time you open the panel after it's added.

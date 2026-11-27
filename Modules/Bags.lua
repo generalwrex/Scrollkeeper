@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Bags.lua
 -- Finds mage scrolls, Light Feathers and Bundles of Scrolls in the bags.
 

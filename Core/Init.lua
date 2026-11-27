@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Core/Init.lua
 -- Sets up the shared table every file uses (called `SK`), the saved settings,
 -- a small event system, and safe-call helpers.

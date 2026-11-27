@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Data/News.lua
 -- MADE BY tools/make-news.py FROM CHANGELOG.md: don't edit by hand, run it again.
 -- The update's news, in chat once per account (see Data/Messages.lua).

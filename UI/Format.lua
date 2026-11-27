@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-26.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Format.lua
 -- Text formatting for the board (and anything else players write):
 -- emojis as :name: and a little markdown, done when the text is shown.

@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Books.lua
 -- Books you hand in to the librarians (Owen Thadd in Undercity, Garion
 -- Wendell in Stormwind), and where they're found.

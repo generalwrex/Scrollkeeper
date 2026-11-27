@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Options.lua
 -- Scrollkeeper's own settings window (/sk options, the gear on the panel,
 -- right-click the minimap button). Sections down the left, their settings

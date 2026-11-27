@@ -1,3 +1,5 @@
+// Scrollkeeper by generalwrex. Created 2026-11-15.
+// Read the LICENSE file before using any of this code.
 const fengari = require('fengari');
 const { lua, lauxlib, lualib, to_luastring } = fengari;
 const fs = require('fs'), path = require('path');

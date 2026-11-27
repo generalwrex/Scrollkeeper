@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-26.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Themes.lua
 -- Holiday themes, sent by the dev team and signed with its key (see
 -- Network/Board.lua), so new ones can come out without an update.

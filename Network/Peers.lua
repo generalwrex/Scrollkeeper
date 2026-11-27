@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Peers.lua
 -- Who else runs Scrollkeeper, and what their mages can use.
 --

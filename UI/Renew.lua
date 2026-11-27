@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-21.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Renew.lua
 -- Two key bindings (Key Bindings > AddOns > Scrollkeeper):
 --   "Imbue your weapon"   uses your best imbue scroll on your main-hand weapon

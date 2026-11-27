@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-18.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Backup.lua
 -- A full backup of everything Scrollkeeper saved (settings, luck log,
 -- drops, books, alts, prices, what you heard from others), as one piece

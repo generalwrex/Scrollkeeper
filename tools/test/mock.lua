@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Minimal WoW mock for loading Scrollkeeper outside the game.
 
 -- WoW's bit library (LuaBitOp: 32-bit, signed results), from Lua 5.3's operators.

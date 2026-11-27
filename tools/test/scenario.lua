@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 local SK = __NS
 fire("ADDON_LOADED", "Scrollkeeper")
 fire("PLAYER_LOGIN")

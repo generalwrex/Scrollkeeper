@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-26.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Notes.lua
 -- Notes from the Scrollkeeper team, signed with its key (see
 -- Network/Board.lua), so they can't come from anyone else:

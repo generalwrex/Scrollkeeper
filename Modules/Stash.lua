@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Stash.lua
 -- The Scroll Bag's numbers: every deciphered mage scroll you own, wherever
 -- it is (bags, bank, mail), and what to do with it.

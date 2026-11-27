@@ -1,3 +1,5 @@
+# Scrollkeeper by generalwrex. Created 2026-11-15.
+# Read the LICENSE file before using any of this code.
 """Merge Scrollkeeper exports (/sk export) from many players.
 
 Usage:
@@ -112,6 +114,19 @@ def pack(players):
     return base64.b64encode(shifted).decode("ascii")
 
 
+def keep_header(target, out):
+    """Keep the file's header (author, creation date, license note) on top."""
+    if target.exists():
+        header = []
+        for line in target.read_text(encoding="utf-8").split("\n"):
+            if line.startswith("-- Scrollkeeper by ") or line.startswith("-- Read the LICENSE"):
+                header.append(line)
+            else:
+                break
+        return header + out
+    return out
+
+
 def write_lua(players, path):
     """Data/Community.lua: every player's data, packed. Data/Unpack.lua reads
     it into SK.COMMUNITY_DATA (keyed by export id, so the addon can skip a
@@ -132,6 +147,7 @@ def write_lua(players, path):
         out.append(f'    "{packed[i:i + 100]}",')
     out.append("})")
     target = Path(path)
+    out = keep_header(target, out)
     if target.exists():
         backup = Path(__file__).with_name("Community.lua.bak")
         backup.write_bytes(target.read_bytes())
@@ -190,6 +206,7 @@ def write_lua_table(players, path):
     # Keep the previous one as tools/community/Community.lua.bak (not next to
     # it in Data/, which ships with the addon), so a bad rebuild can be undone.
     target = Path(path)
+    out = keep_header(target, out)
     if target.exists():
         backup = Path(__file__).with_name("Community.lua.bak")
         backup.write_bytes(target.read_bytes())
