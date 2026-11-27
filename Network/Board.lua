@@ -9,7 +9,10 @@
 --        many times its author edited it
 --   BE|id|rev|title|body   the author's edit (only counts straight from them)
 --   BD|id            the author takes their post (or reply) down
---   BQ|since         "what's new since then?" (sent at login)
+--   BQ|since         "what's new since then?" (1.4.0; still answered)
+--   BR|since         the same, from 1.4.1 on. A new kind so 1.4.0 copies
+--                    never hear it: they'd whisper answers across rulesets
+--                    and get "No player named ..." over and over.
 --   BA|name          "I'm answering name's BQ" (so only one player does);
 --                    name@ruleset: answering for that ruleset, on the channel
 --   BS|signature|action|a|b|c|at
@@ -77,11 +80,15 @@ local function FactionOf(p)
     local f = SK.FactionOfGUID and SK.FactionOfGUID(p.guid)
     return f == "Horde" and "H" or f == "Alliance" and "A" or nil
 end
--- Same faction as you (known for sure)? Text from anyone else never shows.
+-- Same faction as you? Text from the other faction never shows. A post
+-- that doesn't say (from 1.4.0) and whose author the game can't place
+-- counts as yours: it could only have reached you over the channel or a
+-- whisper, and the game keeps both to one faction.
 local function SameFaction(p)
     if p.demo then return true end
     local mine, theirs = MyFaction(), FactionOf(p)
-    return mine ~= nil and theirs ~= nil and mine == theirs
+    if theirs == nil then return true end
+    return mine == theirs
 end
 SK.BoardSameFaction = SameFaction
 
@@ -700,7 +707,7 @@ local function AnswerOtherRuleset(sender, since, mine)
     end)
 end
 
-Net.Handle("BQ", function(sender, f)
+local function OnAsk(sender, f)
     if not SK.BoardOn() then return end
     -- Only whisper someone known to be on our own ruleset, and not just
     -- found unreachable. Anyone else gets the channel answer.
@@ -740,18 +747,22 @@ Net.Handle("BQ", function(sender, f)
         if SK.PassOnNotes then SK.PassOnNotes(sender) end
         for _, p in ipairs(batch) do Net.SendTo(sender, "BP", Fields(p)) end
     end)
-end)
+end
+
+Net.Handle("BQ", OnAsk)
+Net.Handle("BR", OnAsk)
 
 -- Ask what's new: at login, and when you open the board (at most every 5 min).
+-- now: the Refresh button (at most every 20 seconds).
 local askedAt = 0
-function SK.BoardCatchUp()
-    if not SK.BoardOn() or GetTime() - askedAt < 300 and askedAt > 0 then return end
+function SK.BoardCatchUp(now)
+    if not SK.BoardOn() or GetTime() - askedAt < (now and 20 or 300) and askedAt > 0 then return end
     askedAt = GetTime()
     local newest = Now() - KEEP_SECONDS
     for _, p in pairs(Board().posts) do
         if (p.at or 0) > newest and not SK.BoardIsMine(p) then newest = p.at end
     end
-    Net.Send("BQ", newest)
+    Net.Send("BR", newest)
 end
 
 -- Other addons can reach Scrollkeeper through this.

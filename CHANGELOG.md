@@ -8,11 +8,12 @@
 > Horde and Alliance have separate boards: your posts only ever reach your own faction.
 > New: emojis and **formatting** on the Fellow Mages board: type :fire: or pick from the new button.
 
+- Fixed: logging in or pressing Refresh no longer makes mages on 1.4.0 get "No player named ..." spam: catching up asks in a new way that 1.4.0 doesn't answer.
 - Fixed: "No player named ... is currently playing." over and over in chat (1.4.0): catching up on the board whispered players it couldn't reach, like mages on another ruleset. Now it only answers mages on your own ruleset, never retries someone who isn't there for 10 minutes, and hides that message for Scrollkeeper's own whispers.
 - Board: a Refresh button, to ask other mages for posts you missed.
 - Board: posts from other rulesets now reach you even if you were offline when they were posted. Catching up used to only work within your own ruleset; now one mage per ruleset sends its General posts and notices on the channel (trade, doorway and odds posts stay on their own ruleset).
 - Board: every post and reply shows the author's ruleset by their name, like [PvE] (gold when it's not yours).
-- Board posts and replies only ever show to their author's own faction: Horde and Alliance never see each other's text. (A post says its faction; older posts show only when the game can tell their author's faction.)
+- Board posts and replies only ever show to their author's own faction: Horde and Alliance never see each other's text. (A post says its faction. Posts from 1.4.0 don't, but they can only reach you from your own faction anyway, so they show.)
 - Doorways: Nethergarde Keep is gone from the list; it has no inn, so nobody can rest there to be a door. Thanks foundmonster (#5).
 - New: **emojis and formatting on the board.** Smiley faces (type :) :D ;) :( <3 and more, or :smile:), plus :fire:, :sheep:, :skull: and other game icons, or pick one from the new button by the text box. **Bold**, *italic*, `code`, ~~strike~~, and - or > at the start for bullets and quotes. Both can be switched off in /sk options > Sharing.
 - New: **news from the Scrollkeeper team** shows in chat once, between updates too (signed by the team, so nobody else can send it).
