@@ -51,6 +51,7 @@ Modules\Chat.lua
 Modules\Backfire.lua
 Modules\Farm.lua
 Modules\Stash.lua
+Modules\NotYet.lua
 
 # Network: talking to other players' Scrollkeeper.
 Network\Comm.lua

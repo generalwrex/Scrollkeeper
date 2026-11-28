@@ -59,9 +59,65 @@ SK.BOARD_CATEGORIES = {
     { key = "tips", code = "t", name = "Odds and tips", mine = true },
     { key = "general", code = "g", name = "General" },
 }
-local BY_CODE, BY_KEY = {}, {}
-for _, c in ipairs(SK.BOARD_CATEGORIES) do BY_CODE[c.code] = c; BY_KEY[c.key] = c end
-function SK.BoardCategory(key) return BY_KEY[key] end
+-- The dev team can add categories (like Discord channels) and take any
+-- away but Notices and General, with signed "cat"/"uncat" messages. Custom
+-- keys start with "x" and are their own code in posts. A post in a category
+-- you don't have (taken away, or not heard of yet) shows under General.
+local BUILT_IN = {}
+for i, c in ipairs(SK.BOARD_CATEGORIES) do c.order = i; BUILT_IN[#BUILT_IN + 1] = c end
+local KEEP_ALWAYS = { notice = true, general = true }
+local BY_CODE, BY_KEY, DECODE = {}, {}, {}
+for _, c in ipairs(BUILT_IN) do DECODE[c.code] = c.key end
+local CAT_MAX = 12   -- categories in the list, at most
+local BUILT_IN_KEY = {}
+for _, c in ipairs(BUILT_IN) do BUILT_IN_KEY[c.key] = true end
+
+local function RebuildCategories()
+    local edits = SK.db and type(SK.db.board) == "table" and type(SK.db.board.cats) == "table" and SK.db.board.cats or {}
+    local list = {}
+    for _, c in ipairs(BUILT_IN) do
+        local e = edits[c.key]
+        if not (e and e.gone and not KEEP_ALWAYS[c.key]) then
+            local copy = {}
+            for k, v in pairs(c) do copy[k] = v end
+            if e and not e.gone and e.name and e.name ~= "" then copy.name = e.name end
+            list[#list + 1] = copy
+        end
+    end
+    local custom = {}
+    for key, e in pairs(edits) do
+        if key:match("^x%w+$") and not e.gone and e.name and e.name ~= "" then
+            custom[#custom + 1] = { key = key, code = key, name = e.name, mine = e.mine or nil, custom = true, at = e.at or 0 }
+            DECODE[key] = key
+        end
+    end
+    table.sort(custom, function(a, b) return a.at < b.at end)
+    -- General stays last.
+    local general
+    for i = #list, 1, -1 do if list[i].key == "general" then general = table.remove(list, i) end end
+    for _, c in ipairs(custom) do list[#list + 1] = c end
+    list[#list + 1] = general
+    SK.BOARD_CATEGORIES = list
+    BY_CODE, BY_KEY = {}, {}
+    for _, c in ipairs(list) do BY_CODE[c.code] = c; BY_KEY[c.key] = c end
+end
+RebuildCategories()
+SK.BoardRebuildCategories = RebuildCategories
+-- Changes whenever a category is added, renamed or taken away.
+function SK.BoardCategorySig()
+    local parts = {}
+    for _, c in ipairs(SK.BOARD_CATEGORIES) do parts[#parts + 1] = c.key .. "=" .. c.name end
+    return table.concat(parts, ";")
+end
+SK.On("READY", function() SK.Safely("board categories", RebuildCategories) end)
+
+function SK.BoardCategory(key)
+    if key == nil or key == "mine" then return nil end
+    return BY_KEY[key] or BY_KEY.general
+end
+-- Where a post shows: its own category, or General if that's gone.
+local function ShownCat(p) return BY_KEY[p.cat] and p.cat or "general" end
+SK.BoardShownCat = ShownCat
 
 -- The dev team's public key (base64). Only the team's secret key can
 -- make signatures this accepts.
@@ -112,6 +168,7 @@ local function Board()
     b.reactions = type(b.reactions) == "table" and b.reactions or {}   -- post id -> "guid:emoji" -> { guid, e, on, at, name }
     b.follow = type(b.follow) == "table" and b.follow or {}      -- post id -> true: ping me about its replies
     b.pinned = type(b.pinned) == "table" and b.pinned or {}      -- post id -> true: pinned by the dev team (signed)
+    b.cats = type(b.cats) == "table" and b.cats or {}            -- category key -> { name, mine, gone, at } (signed)
     return b
 end
 SK.BoardData = Board
@@ -170,7 +227,7 @@ end
 local function Valid(p)
     if type(p.id) ~= "string" or not p.id:match("^%x+$") or #p.id > 12 then return nil, "id" end
     local cat = BY_KEY[p.cat]
-    if not cat then return nil, "category" end
+    if not cat and not (BUILT_IN_KEY and BUILT_IN_KEY[p.cat]) and not tostring(p.cat):match("^x%w+$") then return nil, "category" end
     local now = Now()
     if not p.at or p.at < now - KEEP_SECONDS or p.at > now + 600 then return nil, "date" end
     if p.body == "" then return nil, "empty" end
@@ -194,16 +251,30 @@ local function Valid(p)
     return p
 end
 
+-- Classes as one letter in posts (any class can post: alts use it too).
+local CLASS_CODE = { WARRIOR = "W", PALADIN = "P", HUNTER = "H", ROGUE = "R", PRIEST = "I", SHAMAN = "S",
+    MAGE = "M", WARLOCK = "L", DRUID = "D", DEATHKNIGHT = "K", MONK = "O", DEMONHUNTER = "E", EVOKER = "V" }
+local CLASS_FROM = {}
+for class, code in pairs(CLASS_CODE) do CLASS_FROM[code] = class end
+local function MyClass()
+    local _, class = UnitClass and UnitClass("player")
+    return SK.Known(class)
+end
+
 local function Fields(p)
-    local cat = BY_KEY[p.cat]
-    return p.id, p.parent, cat and cat.code or "g", p.at, p.ruleset, p.tier, p.guid, p.author, p.title, p.body, p.rev or 0,
-        p.faction or ""
+    local code
+    for _, c in ipairs(BUILT_IN) do if c.key == p.cat then code = c.code end end
+    code = code or (tostring(p.cat):match("^x%w+$") and p.cat) or "g"
+    return p.id, p.parent, code, p.at, p.ruleset, p.tier, p.guid, p.author, p.title, p.body, p.rev or 0,
+        p.faction or "", CLASS_CODE[p.class or ""] or ""
 end
 
 local function FromFields(f)
-    local cat = BY_CODE[f[3] or ""]
+    local code = f[3] or ""
+    local key = DECODE[code] or (code:match("^x%w+$") and #code <= 8 and code) or ""
     return {
-        id = f[1] or "", parent = f[2] or "", cat = cat and cat.key or "", at = tonumber(f[4]),
+        class = CLASS_FROM[f[13] or ""],
+        id = f[1] or "", parent = f[2] or "", cat = key, at = tonumber(f[4]),
         ruleset = Clean(f[5], 12), tier = tonumber(f[6]) or 0, guid = Clean(f[7], 40),
         author = Clean(f[8], 48), title = Clean(f[9], TITLE_MAX), body = Clean(f[10], MESSAGE_MAX),
         rev = math.max(0, math.min(99, tonumber(f[11]) or 0)),
@@ -240,7 +311,7 @@ local function Tidy()
     for id in pairs(b.follow) do if not posts[id] then b.follow[id] = nil end end
     for id in pairs(b.pinned) do if not posts[id] then b.pinned[id] = nil end end
     for key, m in pairs(b.modLog) do
-        local keep = type(m) == "table" and (m.at or 0) > now - DEV_DAYS * 86400
+        local keep = type(m) == "table" and ((m.at or 0) > now - DEV_DAYS * 86400 or m.action == "cat" or m.action == "uncat")
         if keep and m.action == "ban" then keep = (tonumber(m.b) or 0) > now end
         if keep and (m.action == "ok" or m.action == "pin") then keep = b.posts[m.a] ~= nil end
         if not keep then b.modLog[key] = nil end
@@ -340,7 +411,7 @@ function SK.BoardPosts(cat, search)
         if SK.BoardVisible(p) then
             if p.parent == "" then
                 -- Notices stay pinned on top of every category (not "Your posts").
-                local inCat = not cat or p.cat == cat or (cat == "mine" and SK.BoardIsMine(p))
+                local inCat = not cat or ShownCat(p) == cat or (cat == "mine" and SK.BoardIsMine(p))
                     or (p.cat == "notice" and cat ~= "mine" and SK.db.boardStickyNotices ~= false)
                 if inCat and search then
                     local text = (p.title .. " " .. p.body .. " " .. p.author):lower()
@@ -367,7 +438,7 @@ end
 function SK.BoardCounts()
     local counts, total = {}, 0
     for _, p in ipairs((SK.BoardPosts())) do
-        counts[p.cat] = (counts[p.cat] or 0) + 1
+        counts[ShownCat(p)] = (counts[ShownCat(p)] or 0) + 1
         total = total + 1
     end
     return counts, total
@@ -398,7 +469,7 @@ function SK.BoardRoom(title)
         ruleset = (SK.ServerKind and SK.ServerKind()) or "", tier = MyTier(), guid = MyGUID(),
         author = MyAuthor(), title = title or "", body = "" }
     local text = "BP|" .. table.concat({ tostring(p.id), p.parent, "g", tostring(p.at), p.ruleset, tostring(p.tier),
-        p.guid, p.author, p.title, "", "99", "H" }, "|")
+        p.guid, p.author, p.title, "", "99", "H", "M" }, "|")
     return MESSAGE_MAX - #text
 end
 
@@ -418,6 +489,7 @@ function SK.BoardPost(cat, title, body, parent)
         parent = parent or "", cat = cat, at = Now(),
         ruleset = (SK.ServerKind and SK.ServerKind()) or "", tier = MyTier(), guid = MyGUID(),
         author = MyAuthor(), title = parent and "" or Clean(title, TITLE_MAX), faction = MyFaction(),
+        class = MyClass(),
     }
     local room
     if parent then room = SK.BoardRoom(nil) else room = SK.BoardRoom(p.title) end
@@ -574,6 +646,7 @@ end
 local function ModKey(action, a)
     if action == "ban" or action == "unban" then return "user:" .. tostring(a) end
     if action == "pin" or action == "unpin" then return "pin:" .. tostring(a) end
+    if action == "cat" or action == "uncat" then return "cat:" .. tostring(a) end
     return action .. ":" .. tostring(a)
 end
 
@@ -598,6 +671,14 @@ local function ApplyMod(action, a, b, c)
         board.pinned[a] = true
     elseif action == "unpin" and type(a) == "string" then
         board.pinned[a] = nil
+    elseif action == "cat" and type(a) == "string" and (a:match("^x%w+$") or BUILT_IN_KEY[a]) and #a <= 8 then
+        local name = Clean(c, 24)
+        if name == "" then return false end
+        board.cats[a] = { name = name, mine = (b == "m") or nil, at = Now() }
+        RebuildCategories()
+    elseif action == "uncat" and type(a) == "string" and not KEEP_ALWAYS[a] then
+        board.cats[a] = { gone = true, at = Now() }
+        RebuildCategories()
     elseif action == "dev" and type(a) == "string" and a:match("^Player%-") then
         board.devs[a] = { name = Clean(c, 48), at = Now() }
     else
@@ -661,7 +742,8 @@ end
 
 local function Heard(m)
     local now = Now()
-    if not (m.at and m.at > now - DEV_DAYS * 86400 and m.at < now + 600) then return end
+    local lasting = m.action == "cat" or m.action == "uncat"   -- categories don't run out
+    if not (m.at and (lasting or m.at > now - DEV_DAYS * 86400) and m.at < now + 600) then return end
     SK.VerifySigned(Payload(m.action, m.a, m.b, m.c, m.at), m.sig, function() Accept(m) end)
 end
 
@@ -683,6 +765,22 @@ function SK.BoardMod(action, a, b, c)
     Board().modLog[ModKey(action, a)] = m
     Net.Send("BS", m.sig, m.action, m.a, m.b, m.c, m.at)
     return true
+end
+
+-- Dev team: add a category (or rename one, by key), or take one away.
+function SK.BoardAddCategory(name, mineOnly, key)
+    name = Clean(name, 24)
+    if name == "" then return false, L["give the category a name."] end
+    if not key then
+        if #SK.BOARD_CATEGORIES >= CAT_MAX then return false, L["that's the most categories the board can show."] end
+        key = ("x%05x"):format(math.random(0, 0xFFFFF))
+    end
+    return SK.BoardMod("cat", key, mineOnly and "m" or "", name)
+end
+
+function SK.BoardRemoveCategory(key)
+    if KEEP_ALWAYS[key] then return false, L["Notices and General can't be taken away."] end
+    return SK.BoardMod("uncat", key, "", "")
 end
 
 -- Every signed message still in force, to pass on to mages who were

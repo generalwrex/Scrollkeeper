@@ -8,17 +8,15 @@ local _, SK = ...
 
 SK.MESSAGES = SK.MESSAGES or {}
 table.insert(SK.MESSAGES, 1, {
-    id = "news-1.3.0",
+    id = "news-1.4.3",
     alert = true,
     lines = {
-        "|TInterface\\GossipFrame\\AvailableQuestIcon:16:16|t |cffffe14dHi from Natop! Scrollkeeper 1.3.0 just landed:|r",
-        "|cff40c8ff>|r |cffffffffNew: the Scroll Bag. Every deciphered mage scroll you own in one list, counted across your bags, bank and mail, grouped like the panel with imbues split by weapon.|r",
-        "|cff40c8ff>|r |cffffffffNew: pins. Right-click the panel's Familiar or Imbue button for all your scrolls of that kind: click one to use it, click its star to pin it.|r",
-        "|cff40c8ff>|r |cffffffffNew weapon? Scrollkeeper says which imbues for it are waiting in your bank or mail.|r",
-        "|cff40c8ff>|r |cffffffffNew in /sk options: Modules. Turn off what you don't use and its button leaves the panel; the rest close up.|r",
-        "|cff40c8ff>|r |cffffffffNew theme: Modern. Flat slate panels, square buttons and boxes with thin borders that light up blue when you point at them, slate-blue section bars.|r",
-        "|cff40c8ff>|r |cffffffffNew: Theme in /sk options > Panel. Classic, Dark and Darker classic.|r",
-        "|cff40c8ff>|r |cffffffffNew: a red ? in the corner of every Scrollkeeper window.|r",
-        "|cff9fe0ffThanks for playing with it! Ideas welcome (/sk options > About). - Natop (Archmage Naage)|r",
+        "|TInterface\\GossipFrame\\AvailableQuestIcon:16:16|t |cffffe14dHey, Natop here! Scrollkeeper 1.4.3 is out. Here's what's new:|r",
+        "|cff40c8ff>|r |cffffffffNew: react to board posts and replies with a heart, laugh, fire or wow.|r",
+        "|cff40c8ff>|r |cffffffffNew: /sk tutorial, a quick tour of how mage scrolls work (thanks Navacado!).|r",
+        "|cff40c8ff>|r |cffffffffNew: get pinged when someone replies, reacts or @mentions you, and shift-click item links into posts.|r",
+        "|cff40c8ff>|r |cffffffffNew: Doorways pops up a Teleport button once you're grouped with a door, and knows far more inns.|r",
+        "|cff40c8ff>|r |cffffffffNew: you all use the Scroll Bag a lot, so it got a big update: scrolls you don't have yet, favorites on top, and banking the ones you can't use yet.|r",
+        "|cff9fe0ffHave fun, and tell me what breaks: /sk options > About. - Natop (Archmage Naage)|r",
     },
 })

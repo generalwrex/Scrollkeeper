@@ -1,12 +1,14 @@
 # Scrollkeeper
 
-## Unreleased: 1.4.3
+## 1.4.3
 
 Thanks to **Magnus Magoo** for testing the board, Doorways and Fellow Mages with us, **Navacado** for the tutorial idea, and **Count Turbo** for saying "DO IT!" to the board!
 
 > New: react to board posts and replies with a heart, laugh, fire or wow.
 > New: /sk tutorial, a quick tour of how mage scrolls work (thanks Navacado!).
 > New: get pinged when someone replies, reacts or @mentions you, and shift-click item links into posts.
+> New: Doorways pops up a Teleport button once you're grouped with a door, and knows far more inns.
+> New: you all use the Scroll Bag a lot, so it got a big update: scrolls you don't have yet, favorites on top, and banking the ones you can't use yet.
 
 - Fixed: on realms whose name doesn't say the ruleset (or is blank), you couldn't post or reply in trade, doorway and odds. Scrollkeeper now also goes by what mages on your realm say, and there's a new setting to pick it yourself (/sk options > Sharing > Your ruleset). It tells you once if it can't tell.
 - New: **reactions on the board.** Heart, laugh, fire or wow on any post or reply: pick from the little smiley under it (use as many as you like), click one of yours again to take it back, hover to see who. Only reactions someone used show, and the post list shows them on each post.
@@ -56,6 +58,11 @@ Thanks to **Magnus Magoo** for testing the board, Doorways and Fellow Mages with
 - Doorways: an innkeeper pin on the map, drawn on top of the game's own inn icon (Inns button on the map, or Map: inns in /sk options): how many doors are open there, and a click opens Doorways on that town. Spots are learned wherever you or a Scrollkeeper door rests, and places that aren't in Doorways' list yet (Forever keeps adding them) get added the same way.
 - Doorways: a **Teleport to X** pop-up shows up on its own once you're grouped with a door, so you don't have to find the scroll in your bags. Not resting yet? It offers your mage city teleports and your Hearthstone first, then turns into Teleport once you are. After the teleport it offers **Thanks & leave** (says thanks in party) or **Leave group**. It works however you got there: the Doorways window, your own whisper, or their invite. Drag it anywhere; setting "Doorways: Teleport button pop-up".
 - Map: the scroll filter has **Scrolls: none**, to see just doors and inns.
+- Scroll Bag: scrolls you can't use yet (deciphered ones above your level, undeciphered ones above your Comprehension) can wait in the bank. At the bank Scrollkeeper asks (or just does it), and when a level or skill-up makes them usable, chat tells you and they come back out at the bank. Setting "Scrolls I can't use yet": ask / by itself / off.
+- Scroll Bag: star any scroll as a **favorite**: favorites get their own group at the top. (Pinning a familiar or imbue for the buttons moved to the right-click menu.) Scrolls you have none of show in their categories, so you can set keep amounts before you get them: orange **Wanted**, red **Too low** (your level is too low) and gray **Outgrown** (imbues, combat scrolls and familiars from tiers you're past), each with a chip, plus **Other weapons** to hide imbues for weapons not in your main hand to show or hide them.
+- Doorways: with Questie installed (optional), every innkeeper Questie knows gets an inn pin right on them, in every zone (setting "Inns from Questie").
+- Board: the dev team can add, rename and take away categories, like Discord channels (**+ Category** under the list, right-click a category to edit it). No limit: the list scrolls. Notices and General always stay, and posts in a removed category show under General. Names show in each poster's class color, since alts of any class post too (setting "Names in class colors").
+- Doorways: dungeons and raids no longer count as inns (someone resting inside one made Scarlet Monastery show up). Right-click a learned place in **Where to** to forget it.
 - Doorways: in a raid, the Teleport pop-up checks you're in the door's subgroup (the scroll only reaches your own party) and says which group they're in if not. The tutorial now lists what a teleport needs: same party, both resting, mages only.
 - Doorways: in a group you don't lead, whispers asking for a door still send the invite (your leader gets it as a suggested invite).
 - Doorways: while you're a door and resting, an invite from a **mage** is accepted by itself (setting "Doorways: accept mages' invites"). Anyone else still gets the usual box.

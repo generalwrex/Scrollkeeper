@@ -151,8 +151,8 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
             GameTooltip:Show()
         end)
         row:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        row:SetScript("OnMouseUp", function(self)
-            if not self.itemID and self.onClick then self.onClick() return end
+        row:SetScript("OnMouseUp", function(self, button)
+            if not self.itemID and self.onClick then self.onClick(button) return end
             if not (self.itemID and IsModifiedClick and IsModifiedClick("CHATLINK")) then return end
             local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, self.itemID))
             if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end

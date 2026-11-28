@@ -55,6 +55,13 @@ newObj = function(parent, kind)
     if k == "SetAttribute" then return function(self, a, v) self._attrs[a] = v end end
     if k == "GetAttribute" then return function(self, a) return self._attrs[a] end end
     if k == "SetText" then return function(self, v) self._text = v end end
+    -- Text width, roughly as the game draws it: about 6 px a letter, with
+    -- color codes and |T icons|t counted as what they show.
+    if k == "GetStringWidth" or k == "GetUnboundedStringWidth" then return function(self)
+      local t = tostring(rawget(self, "_text") or "")
+      t = t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|T.-|t", "WW")
+      return #t * 6
+    end end
     if k == "SetChecked" then return function(self, v) self._checked = v and true or false end end
     if k == "GetChecked" then return function(self) return self._checked end end
     if k == "GetText" then return function(self) return self._text end end

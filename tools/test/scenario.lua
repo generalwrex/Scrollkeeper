@@ -1215,6 +1215,14 @@ if SK.isMage then
   SK.UseBagPreset("satchel")
   SK.ToggleScrollBag(); SK.RefreshScrollBag(); runTimers()
   print("BAG window built:", ScrollkeeperBagFrame ~= nil, "errors:", #ScrollkeeperDB.errors)
+  -- favorites on top, scrolls you don't have at the bottom
+  SK.ToggleFavorite(277489); SK.RefreshScrollBag()
+  local firstRow
+  for _, e in ipairs((SK.StashList())) do if e.favorite then firstRow = e.itemID end end
+  local bagWin = ScrollkeeperBagFrame
+  if bagWin then bagWin._shown = true; local bad = CheckBounds(bagWin); print("BOUNDS", "ScrollBagFull", #bad == 0 and "ok" or (#bad .. " outside")) end
+  print("BAGFAV", firstRow, SK.IsFavorite(277489))
+  SK.ToggleFavorite(277489)
   -- sell at a vendor: two Odd Melon stacks (3 and 5), keep 1 -> sell the 3, split 4 off the 5
   MerchantFrame = { IsShown = function() return true end }
   local sold, cursor = {}, nil
@@ -1619,6 +1627,32 @@ do
   SK.BoardMod("dev", "Player-1-0DEF", nil, "Natop")
   local isDev = SK.BoardIsDev("Player-1-0DEF")
   local list = #SK.BoardModList()
+  -- categories: add one, post in it, take it away (posts go to General), can't take General away
+  local rUFG = UnitFactionGroup
+  UnitFactionGroup = function() return "Horde" end
+  local catOk = SK.BoardAddCategory("Trading Post", false)
+  local newKey
+  for _, c in ipairs(SK.BOARD_CATEGORIES) do if c.name == "Trading Post" then newKey = c.key end end
+  fire("CHAT_MSG_ADDON", "Scrollkeeper", "BP|cafe0001||" .. tostring(newKey) .. "|" .. now .. "|" .. rs .. "|175|Player-9-0CAF|Cat Mage|In new cat|Hi|0|H|W", "GUILD", "Cat-Realm")
+  local cp = SK.BoardData().posts.cafe0001
+  local inNew = #(SK.BoardPosts(newKey)) == 1
+  local cls = SK.BoardData().posts.cafe0001 and SK.BoardData().posts.cafe0001.class
+  SK.BoardRemoveCategory(newKey)
+  local gone = SK.BoardCategory(newKey).key == "general"
+  local inGeneral = false
+  for _, p in ipairs((SK.BoardPosts("general"))) do if p.id == "cafe0001" then inGeneral = true end end
+  local keepGeneral = SK.BoardRemoveCategory("general") == false
+  -- many categories: the list scrolls (no limit)
+  for i = 1, 14 do SK.BoardAddCategory("Extra " .. i, false) end
+  SK.ToggleBoard()
+  SK.RefreshBoard()
+  local manyCats = #SK.BOARD_CATEGORIES
+  local bw = ScrollkeeperBoardFrame or _G.ScrollkeeperBoard
+  print("BOARDMANYSHOWN", bw ~= nil, bw and bw:IsShown())
+  if bw then bw._shown = true; local bad = CheckBounds(bw); print("BOUNDS", "BoardManyCats", #bad == 0 and "ok" or (#bad .. " outside: " .. tostring(bad[1]))) end
+  SK.ToggleBoard()
+  UnitFactionGroup = rUFG
+  print("BOARDCATS", catOk, newKey, inNew, cls, gone, inGeneral, keepGeneral, manyCats)
   SK.BoardSigner = nil
   local ok, why = SK.BoardMod("remove", "beef0003")
   SK.BOARD_MOD_KEY = realKey
@@ -1933,4 +1967,73 @@ do
   print("RAIDSUB", pop and pop:IsShown(), pop and pop.mode)
   IsInGroup, IsInRaid, GetRaidRosterInfo, GetNumGroupMembers, SK.LiminalCount, UnitName = rIG, rIR, rGRI, rN, rLC, rUN
   SK.UpdateTeleportPop()
+end
+
+-- FORGETINN: a learned non-inn can be forgotten and stays forgotten
+do
+  SK.db.foundInns = SK.db.foundInns or {}
+  SK.db.foundInns["Scarlet Monastery"] = { zone = "Tirisfal Glades", side = "both" }
+  SK.ForgetFoundInn("Scarlet Monastery")
+  print("FORGETINN", SK.db.foundInns["Scarlet Monastery"] == nil, SK.db.ignoredInns["Scarlet Monastery"])
+end
+
+-- NOTYET: bank scrolls you can't use yet, take them out when you can
+do
+  local rRead, rIs, rOpen, rBags, rUse, rLvl = SK.ReadScrollSlot, SK.IsScrollItem, SK.BankIsOpen, SK.BankBags, C_Container.UseContainerItem, UnitLevel
+  local rInfo, rNum = C_Container.GetContainerItemInfo, C_Container.GetContainerNumSlots
+  local level = 30
+  UnitLevel = function() return level end
+  SK.IsScrollItem = function() return true end
+  SK.BankIsOpen = function() return true end
+  SK.BankBags = function() return { -1 } end
+  local where = { [0] = { [1] = { itemID = 277499, stackCount = 3, itemName = "Scroll of Greater Cryoblast" } }, [-1] = {} }
+  C_Container.GetContainerNumSlots = function(bag) if bag == 0 or bag == -1 then return 4 end return 0 end
+  C_Container.GetContainerItemInfo = function(bag, slot) return where[bag] and where[bag][slot] end
+  C_Container.UseContainerItem = function(bag, slot)
+    local it = where[bag][slot]; where[bag][slot] = nil
+    local to = bag == -1 and 0 or -1
+    for s = 1, 4 do if not where[to][s] then where[to][s] = it break end end
+  end
+  SK.ReadScrollSlot = function(bag, slot) return nil, true, 46 end
+  local rFree = C_Container.GetContainerNumFreeSlots
+  C_Container.GetContainerNumFreeSlots = function(bag)
+    if not where[bag] then return 0, 0 end
+    local n = 4
+    for _ in pairs(where[bag]) do n = n - 1 end
+    return n, 0
+  end
+  SK.db.bagNotYet = "auto"
+  fire("BANKFRAME_OPENED"); runTimers(); for _ = 1, 8 do tickAll() end
+  local banked = where[-1][1] ~= nil and where[0][1] == nil
+  local held = SK.NotYetHeld(277499)
+  level = 46
+  fire("PLAYER_LEVEL_UP", 46); runTimers()
+  fire("BANKFRAME_OPENED"); runTimers(); for _ = 1, 8 do tickAll() end
+  local back = where[0][1] ~= nil
+  print("NOTYET", banked, held, back, SK.NotYetHeld(277499))
+  SK.ReadScrollSlot, SK.IsScrollItem, SK.BankIsOpen, SK.BankBags, C_Container.UseContainerItem, UnitLevel = rRead, rIs, rOpen, rBags, rUse, rLvl
+  C_Container.GetContainerItemInfo, C_Container.GetContainerNumSlots = rInfo, rNum
+  C_Container.GetContainerNumFreeSlots = rFree
+  SK.db.bagNotYet = "ask"
+end
+
+-- QUESTIEINNS: Questie's innkeepers become inn pins (optional)
+do
+  local mods = {
+    Townsfolk = { townsfolk = { Innkeeper = { 101, 102 } } },
+    QuestieDB = { QueryNPCSingle = function(id, key)
+        if key == "spawns" then return id == 101 and { [9001] = { { 64.6, 84.2 } } } or { [9001] = { { 78.8, 54.0 } } } end
+        if key == "name" then return id == 101 and "Barracks Master Harlan" or "Powderfuse Innkeeper" end
+      end, IsFriendlyToPlayer = function() return true end },
+    ZoneDB = { GetUiMapIdByAreaId = function(_, area) return area == 9001 and 2548 or nil end },
+  }
+  QuestieLoader = { ImportModule = function(_, name) return mods[name] end }
+  local pins = SK.InnPins(2548)
+  local harlan, moved
+  for _, p in ipairs(pins) do
+    if p.innkeeper == "Barracks Master Harlan" then harlan = p end
+    if p.town == "Powderfuse Port" and p.innkeeper then moved = p.x end
+  end
+  print("QUESTIEINNS", #pins, harlan and harlan.x, moved)
+  QuestieLoader = nil
 end

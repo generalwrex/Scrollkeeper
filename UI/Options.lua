@@ -167,6 +167,7 @@ local SECTIONS = {
         { "check", "boardPingSound", "Ping sound", "Play the whisper sound with board pings.", dependsOn = "boardOn" },
         { "check", "boardAutoFollow", "Follow posts I reply to", "Get reply pings for posts you've replied to, not just your own. You can follow or unfollow any post from its ••• menu.", dependsOn = "boardOn" },
         { "check", "boardShowOnline", "Show who's online", "A green dot by the name of mages who are online right now (heard from in the last 10 minutes), so you know who might answer.", dependsOn = "boardOn" },
+        { "check", "boardClassColors", "Names in class colors", "Show each poster's name in their class color (alts of any class can post). Older Scrollkeepers don't send it, so some names stay plain.", dependsOn = "boardOn" },
         { "check", "boardStickyNotices", "Pin notices", "Team notices stay on top of every category.", dependsOn = "boardOn" },
         { "check", "boardHideDone", "Hide done posts", "Hide posts their author marked done (traded, found a door...).", dependsOn = "boardOn" },
         { "check", "boardWordFilter", "Word filter", "Show swear words as ****.", dependsOn = "boardOn" },
@@ -183,6 +184,10 @@ local SECTIONS = {
     { name = "Scroll Bag", icon = "Interface\\Icons\\INV_Misc_Bag_10", items = {
         { "check", "bagCountBank", "Count my bank", "The Scroll Bag counts what's in your bank too, as of your last visit." },
         { "check", "bagCountMail", "Count my mail", "The Scroll Bag counts scrolls in your mailbox too, as of the last time you opened it." },
+        { "check", "bagFavoritesTop", "Favorites at the top", "Starred scrolls get their own Favorites group at the top of the Scroll Bag." },
+        { "check", "bagShowMissing", "Show scrolls I have none of yet", "Scrolls you have none of show in their categories (orange), so you can set how many to keep before you get them. The chips on the Scroll Bag switch these too." },
+        { "check", "bagShowTooHigh", "Show ones I can't use yet", "Scrolls your level is too low for, in red, with the level they need." },
+        { "check", "bagShowOutleveled", "Show outleveled ones", "Scrolls from tiers you're past, in gray." },
         { "check", "bagSetAside", "Set aside imbues for weapons I don't have", "An imbue for a weapon you don't own (in your bags, bank or hands) is set aside instead of extra. Bank them with Deposit set aside." },
         { "check", "bagWeaponAlert", "Tell me about imbues for a new weapon", "When you equip or loot a kind of weapon you didn't have, say which imbues for it are waiting in your bank or mail." },
         { "check", "bagChatStatus", "Keep or extra in the decipher message", "The \"deciphered:\" chat line also says whether the new scroll is a keep, an extra or set aside." },
@@ -191,6 +196,11 @@ local SECTIONS = {
         { "check", "bagJunk", "Extras count as junk in bag addons", "In bag addons with a junk list (Baganator), your extras count as junk, so its sell-junk button sells them too. Off by default: some people sell junk without looking." },
         { "check", "bagConfirm", "Ask before selling extras", "Sell extras shows what it'll sell and asks first." },
         { "check", "bagAllowDelete", "Delete extras button", "Adds a Delete extras button to the Scroll Bag. It always asks first." },
+        { "choice", "bagNotYet", "Scrolls I can't use yet", "Deciphered scrolls above your level and undeciphered ones above your Comprehension can wait in the bank. When a level or skill-up makes them usable, chat tells you, and they come back out at the bank.", choices = {
+            { "ask", "Ask at the bank", "When you open your bank, ask before banking them or taking them back out." },
+            { "auto", "Do it by itself", "Bank them and take them back out on their own." },
+            { "off", "Off", "Leave them where they are." },
+        } },
         { "check", "bagAutoSyncBank", "Sync the bank automatically", "When you open your bank, Sync bank extras runs on its own, so your bags end up with your keep amounts. Also a check on the Scroll Bag." },
         { "check", "bagAutoSyncMail", "Sync mail automatically", "When you open your mailbox, Sync mail extras runs on its own once your mail comes in." },
         { "check", "bagHideErrors", "Hide the game's errors while moving scrolls", "While the Scroll Bag stacks, sells, syncs or deposits, the game's red messages like \"Couldn't split those items\" (and their sound) are hidden. Scrollkeeper still stops and tells you in chat if a move really won't go." },
@@ -203,6 +213,7 @@ local SECTIONS = {
         { "check", "mapPins", "Map pins", "Show libraries and the spots where untranslated scrolls dropped on the world map." },
         { "check", "mapDoors", "Map: doors (Doorways)", "A pin for each Scrollkeeper mage who's a door right now. Also a button on the map.", dependsOn = "mapPins" },
         { "check", "mapInns", "Map: inns (Doorways)", "Our own innkeeper pin on the map, on top of the game's, with how many doors are open there; click it to open Doorways on that town.", dependsOn = "mapPins" },
+        { "check", "mapQuestieInns", "Inns from Questie", "With Questie installed, Doorways knows every innkeeper Questie does: an inn pin right on each one, in every zone. Questie isn't needed for anything else.", dependsOn = "mapInns" },
         { "slider", "mapPinScale", "Map pin size", "How big the scroll and book spots are on the map (libraries keep their size).", 0.5, 2, 0.1, Percent, dependsOn = "mapPins" },
     } },
     { name = "Language", icon = "Interface\\Icons\\INV_Misc_Note_02", items = {

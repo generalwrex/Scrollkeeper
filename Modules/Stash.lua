@@ -292,6 +292,17 @@ function SK.TogglePin(itemID)
     SK.Send("REMINDERS_CHANGED")
 end
 
+-- Favorites: any scroll, starred in the Scroll Bag; they sit at the top.
+function SK.IsFavorite(itemID)
+    return type(SK.db.bagFavorites) == "table" and SK.db.bagFavorites[itemID] and true or false
+end
+
+function SK.ToggleFavorite(itemID)
+    SK.db.bagFavorites = type(SK.db.bagFavorites) == "table" and SK.db.bagFavorites or {}
+    SK.db.bagFavorites[itemID] = not SK.db.bagFavorites[itemID] or nil
+    SK.Send("STASH_CHANGED")
+end
+
 -- The main-hand weapon's kind ("staff", "dagger"...), or nil.
 function SK.MainHandKind()
     local subClassID = SK.MainHandWeapon and SK.MainHandWeapon()
@@ -450,6 +461,7 @@ function SK.StashList()
         e.keep = SK.KeepAmount(e.itemID)
         e.status, e.extra, e.why = SK.StashStatus(e.itemID, e.total, owned)
         e.pinned = SK.IsPinned(e.itemID)
+        e.favorite = SK.IsFavorite(e.itemID)
     end
     table.sort(entries, function(a, b) return a.name < b.name end)
     return entries, owned

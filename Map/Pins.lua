@@ -116,12 +116,13 @@ local function AddPinLines(data, first)
         GameTooltip:AddLine(data.auto and L["Invites you by itself."] or L["Gets a pop-up to invite you."], 0.7, 0.7, 0.7)
         GameTooltip:AddLine(L["Click to open Doorways on them."], 0.6, 0.6, 0.6)
     elseif data.kind == "inn" then
-        Title(data.town)
+        Title(data.town or data.innkeeper or L["Inn"])
+        if data.innkeeper and data.town then GameTooltip:AddLine(data.innkeeper, 0.8, 0.8, 0.8) end
         GameTooltip:AddLine(L["An inn: rest here to be a door, or come here with Liminal Passage."], 1, 1, 1, true)
         if data.doors > 0 then
             GameTooltip:AddLine(L["%d |4door:doors; open here right now."]:format(data.doors), 0.25, 1, 0.25)
         end
-        GameTooltip:AddLine(L["Click to open Doorways on this town."], 0.6, 0.6, 0.6)
+        GameTooltip:AddLine(data.town and L["Click to open Doorways on this town."] or L["Click to open Doorways."], 0.6, 0.6, 0.6)
     elseif data.kind == "zone" then
         Title(data.name or L["Untranslated scrolls"])
         GameTooltip:AddLine(L["%d untranslated scrolls found here."]:format(data.total), 1, 1, 1)
@@ -232,7 +233,8 @@ function ScrollkeeperMapPinMixin:OnClick(button)
         return
     end
     if data.kind == "inn" then
-        if SK.ShowDoorTown then SK.ShowDoorTown(data.town) end
+        if data.town and SK.ShowDoorTown then SK.ShowDoorTown(data.town)
+        elseif SK.ToggleDoors then SK.ToggleDoors() end
         return
     end
     if data.kind == "zone" then

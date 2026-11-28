@@ -52,7 +52,9 @@ local function AuthorText(p, short)
     local name = p.author ~= "" and p.author or L["a Fellow Mage"]
     if SK.db.boardShowOnline ~= false and IsOnline(p.guid) then name = "|TInterface\\FriendsFrame\\StatusIcon-Online:12:12|t" .. name end
     local dev = p.team or SK.BoardIsDev(p.guid)
-    local color = dev and "|cffff7aa8" or MAGE
+    -- Their class color (any class can post: alts use the board too).
+    local classColor = p.class and SK.db.boardClassColors ~= false and RAID_CLASS_COLORS and RAID_CLASS_COLORS[p.class]
+    local color = dev and "|cffff7aa8" or (classColor and ("|c" .. (classColor.colorStr or "ffffffff"))) or MAGE
     local parts = { color .. name .. "|r" }
     if dev then parts[#parts + 1] = "|cffff7aa8" .. L["[dev]"] .. "|r" end
     if short then return table.concat(parts, " ") end
@@ -117,22 +119,13 @@ local function BuildCompose()
     heading:SetPoint("TOPLEFT", 18, -16)
     heading:SetText(L["New post"])
 
-    -- Category buttons: two rows.
+    -- Category buttons, in rows (the dev team can add categories, so
+    -- they're laid out again each time).
     c.cats = {}
-    local x, y = 18, -38
-    for _, cat in ipairs(SK.BOARD_CATEGORIES) do
-        local b = Button(c, L[cat.name], 0, function() c.cat = cat.key; c:Refresh() end)
-        local width = math.max(70, ((b:GetFontString() and b:GetFontString():GetStringWidth()) or 60) + 20)
-        b:SetWidth(width)
-        if x + width > 400 then x, y = 18, y - 26 end
-        b:SetPoint("TOPLEFT", x, y)
-        x = x + width + 4
-        b.key = cat.key
-        c.cats[#c.cats + 1] = b
-    end
 
     local titleLabel = c:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     titleLabel:SetPoint("TOPLEFT", 18, -98)
+    c.titleLabel = titleLabel
     titleLabel:SetText(L["Title"])
     c.title = CreateFrame("EditBox", nil, c, "InputBoxTemplate")
     c.title:SetSize(330, 20)
@@ -146,6 +139,7 @@ local function BuildCompose()
     local bodyBox = Box(c)
     bodyBox:SetPoint("TOPLEFT", 16, -122)
     bodyBox:SetSize(388, 76)
+    c.bodyBox = bodyBox
     c.body = CreateFrame("EditBox", nil, bodyBox)
     c.body:SetPoint("TOPLEFT", 8, -6)
     c.body:SetPoint("BOTTOMRIGHT", -8, 6)
@@ -191,11 +185,41 @@ local function BuildCompose()
     local cancel = Button(c, CANCEL or L["Cancel"], 80, function() c:Hide() end)
     cancel:SetPoint("RIGHT", c.post, "LEFT", -6, 0)
 
-    function c:Refresh()
-        for _, b in ipairs(self.cats) do
+    function c:LayoutCats()
+        local x, y, n = 18, -38, 0
+        for _, b in ipairs(self.cats) do b:Hide() end
+        for _, cat in ipairs(SK.BOARD_CATEGORIES) do
             -- Editing: the category stays what it was.
-            local allowed = self.editing and b.key == self.cat or (not self.editing and SK.BoardCanPostIn(b.key))
-            b:SetShown(allowed and true or false)
+            local allowed = self.editing and cat.key == self.cat or (not self.editing and SK.BoardCanPostIn(cat.key))
+            if allowed then
+                n = n + 1
+                local b = self.cats[n]
+                if not b then
+                    b = Button(self, "", 0, function(btn) self.cat = btn.key; self:Refresh() end)
+                    b:SetScript("OnClick", function(btn) self.cat = btn.key; self:Refresh() end)
+                    self.cats[n] = b
+                end
+                b.key = cat.key
+                b:SetText(L[cat.name])
+                local width = math.max(70, ((b:GetFontString() and b:GetFontString():GetStringWidth()) or 60) + 20)
+                b:SetWidth(width)
+                if x + width > 400 then x, y = 18, y - 26 end
+                b:ClearAllPoints()
+                b:SetPoint("TOPLEFT", x, y)
+                x = x + width + 4
+                b:Show()
+            end
+        end
+        -- More than two rows: push the rest down.
+        local extra = math.max(0, (-38 - y) - 26)
+        self.titleLabel:SetPoint("TOPLEFT", 18, -98 - extra)
+        self.bodyBox:SetPoint("TOPLEFT", 16, -122 - extra)
+        self:SetHeight(262 + extra)
+    end
+
+    function c:Refresh()
+        self:LayoutCats()
+        for _, b in ipairs(self.cats) do
             if b.key == self.cat then b:LockHighlight() else b:UnlockHighlight() end
         end
         local cat = SK.BoardCategory(self.cat)
@@ -381,6 +405,133 @@ end
 -- The window
 ------------------------------------------------------------------------
 
+------------------------------------------------------------------------
+-- The category list on the left. The dev team can add, rename and take
+-- away categories (signed, like pins), so it's laid out again whenever
+-- they change.
+------------------------------------------------------------------------
+
+-- (Newer game dialogs call their text box EditBox, older ones editBox.)
+local function PopupBox(self) return self.editBox or self.EditBox end
+
+if StaticPopupDialogs then
+    StaticPopupDialogs["SCROLLKEEPER_BOARD_NEWCAT"] = {
+        text = L["New board category (everyone sees it). Name:"],
+        button1 = L["All rulesets"], button2 = L["My ruleset only"], button3 = CANCEL or L["Cancel"],
+        hasEditBox = true, maxLetters = 24, timeout = 0, whileDead = true, hideOnEscape = true,
+        OnAccept = function(self)
+            local ok, why = SK.BoardAddCategory(PopupBox(self):GetText(), false)
+            if not ok and why then SK.Print(why) end
+        end,
+        OnCancel = function(self, _, reason)
+            if reason ~= "clicked" then return end
+            local ok, why = SK.BoardAddCategory(PopupBox(self):GetText(), true)
+            if not ok and why then SK.Print(why) end
+        end,
+        EditBoxOnEnterPressed = function(self)
+            local ok, why = SK.BoardAddCategory(self:GetText(), false)
+            if not ok and why then SK.Print(why) end
+            self:GetParent():Hide()
+        end,
+        EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+    }
+    StaticPopupDialogs["SCROLLKEEPER_BOARD_EDITCAT"] = {
+        text = L["Board category \"%s\": rename it, or take it away (its posts show under General)."],
+        button1 = L["Rename"], button2 = L["Take away"], button3 = CANCEL or L["Cancel"],
+        hasEditBox = true, maxLetters = 24, timeout = 0, whileDead = true, hideOnEscape = true,
+        OnShow = function(self, data) local box = PopupBox(self) if data and box then box:SetText(data.name) box:HighlightText() end end,
+        OnAccept = function(self, data)
+            local ok, why = SK.BoardAddCategory(PopupBox(self):GetText(), data.mine, data.key)
+            if not ok and why then SK.Print(why) end
+        end,
+        OnCancel = function(_, data, reason)
+            if reason ~= "clicked" then return end
+            local ok, why = SK.BoardRemoveCategory(data.key)
+            if not ok and why then SK.Print(why) end
+        end,
+        EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+    }
+end
+
+function SK.BoardLayoutCategories()
+    if not (window and window.catButtons) then return end
+    local cats = { { key = nil, name = "All" } }
+    for _, cat in ipairs(SK.BOARD_CATEGORIES) do cats[#cats + 1] = cat end
+    cats[#cats + 1] = { key = "mine", name = "Your posts" }
+    local team = SK.BoardIAmTeam and SK.BoardIAmTeam()
+    for _, b in ipairs(window.catButtons) do b:Hide() end
+    for i, cat in ipairs(cats) do
+        local b = window.catButtons[i]
+        if not b then
+            b = CreateFrame("Button", nil, window)
+            b:SetSize(CAT_W, 22)
+            b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+            b.bg = b:CreateTexture(nil, "BACKGROUND")
+            b.bg:SetAllPoints()
+            b.bg:SetColorTexture(1, 0.82, 0, 0.15)
+            local hl = b:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetAllPoints()
+            hl:SetColorTexture(1, 1, 1, 0.06)
+            b.label = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            b.label:SetPoint("LEFT", 8, 0)
+            b.count = b:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+            b.count:SetPoint("RIGHT", -8, 0)
+            b:SetScript("OnClick", function(self, button)
+                local c = self.cat
+                if button == "RightButton" then
+                    if team and c.key and c.key ~= "mine" and StaticPopup_Show then
+                        StaticPopup_Show("SCROLLKEEPER_BOARD_EDITCAT", L[c.name], nil, { key = c.key, name = L[c.name], mine = c.mine })
+                    end
+                    return
+                end
+                picked.cat, picked.post = c.key, nil
+                SK.RefreshBoard()
+            end)
+            b:SetScript("OnEnter", function(self)
+                local c = self.cat
+                if not (c.mine or team) then return end
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText(L[c.name])
+                if c.mine then
+                    GameTooltip:AddLine(L["Your ruleset only: you can't trade, group or whisper across rulesets."], 1, 1, 1, true)
+                end
+                if team and c.key and c.key ~= "mine" then
+                    GameTooltip:AddLine(L["Dev team: right-click to rename or take it away."], 0.6, 0.6, 0.6, true)
+                end
+                GameTooltip:Show()
+            end)
+            b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            window.catButtons[i] = b
+        end
+        b.cat, b.key = cat, cat.key
+        b.label:SetText(L[cat.name])
+        b:ClearAllPoints()
+        b:SetPoint("TOPLEFT", window.catHeader, "BOTTOMLEFT", 0, -4 - (i - 1) * 24)
+        b:Show()
+    end
+    -- Dev team: add a category.
+    if team then
+        if not state.addCatButton then
+            state.addCatButton = Button(window, L["+ Category"], CAT_W - 8, function()
+                if StaticPopup_Show then StaticPopup_Show("SCROLLKEEPER_BOARD_NEWCAT") end
+            end, L["Dev team: add a board category for everyone (signed, like pins)."])
+        end
+        state.addCatButton:ClearAllPoints()
+        state.addCatButton:SetPoint("TOPLEFT", window.catHeader, "BOTTOMLEFT", 2, -4 - #cats * 24 - 4)
+        state.addCatButton:Show()
+    elseif state.addCatButton then
+        state.addCatButton:Hide()
+    end
+    window.rules:ClearAllPoints()
+    window.rules:SetPoint("TOPLEFT", window.catHeader, "BOTTOMLEFT", 6, -4 - #cats * 24 - 8 - (team and 28 or 0))
+    -- The picked category is gone: back to All.
+    if picked.cat and picked.cat ~= "mine" then
+        local found
+        for _, cat in ipairs(SK.BOARD_CATEGORIES) do if cat.key == picked.cat then found = true end end
+        if not found then picked.cat = nil end
+    end
+end
+
 local function Build()
     local ok, frame = pcall(CreateFrame, "Frame", "ScrollkeeperBoardFrame", UIParent, "PortraitFrameTemplate")
     if not (ok and frame and frame.SetTitle) then
@@ -429,42 +580,9 @@ local function Build()
     local catHeader = SK.UI.CreateHeader(window, L["Categories"], CAT_W)
     catHeader:SetPoint("TOPLEFT", 16, TOP)
     window.catButtons = {}
-    local cats = { { key = nil, name = "All" } }
-    for _, cat in ipairs(SK.BOARD_CATEGORIES) do cats[#cats + 1] = cat end
-    cats[#cats + 1] = { key = "mine", name = "Your posts" }
-    for i, cat in ipairs(cats) do
-        local b = CreateFrame("Button", nil, window)
-        b:SetSize(CAT_W, 22)
-        b:SetPoint("TOPLEFT", catHeader, "BOTTOMLEFT", 0, -4 - (i - 1) * 24)
-        b.bg = b:CreateTexture(nil, "BACKGROUND")
-        b.bg:SetAllPoints()
-        b.bg:SetColorTexture(1, 0.82, 0, 0.15)
-        local hl = b:CreateTexture(nil, "HIGHLIGHT")
-        hl:SetAllPoints()
-        hl:SetColorTexture(1, 1, 1, 0.06)
-        b.label = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        b.label:SetPoint("LEFT", 8, 0)
-        b.label:SetText(L[cat.name])
-        b.count = b:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-        b.count:SetPoint("RIGHT", -8, 0)
-        b.key = cat.key
-        b:SetScript("OnClick", function()
-            picked.cat, picked.post = cat.key, nil
-            SK.RefreshBoard()
-        end)
-        if cat.mine then
-            b:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetText(L[cat.name])
-                GameTooltip:AddLine(L["Your ruleset only: you can't trade, group or whisper across rulesets."], 1, 1, 1, true)
-                GameTooltip:Show()
-            end)
-            b:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        end
-        window.catButtons[#window.catButtons + 1] = b
-    end
+    window.catHeader = catHeader
     window.rules = window:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    window.rules:SetPoint("TOPLEFT", catHeader, "BOTTOMLEFT", 6, -4 - #cats * 24 - 8)
+    SK.BoardLayoutCategories()
     window.rules:SetWidth(CAT_W - 12)
     window.rules:SetJustifyH("LEFT")
     window.rules:SetText(L["Posts last 7 days.\n3 posts a day each."] .. "\n" .. L["Horde and Alliance have separate boards."])
@@ -997,12 +1115,17 @@ end
 function SK.RefreshBoard()
     if not (window and window:IsShown()) then return end
     local on = SK.BoardOn()
+    if state.catCount ~= #SK.BOARD_CATEGORIES or state.catSig ~= (SK.BoardCategorySig and SK.BoardCategorySig()) then
+        state.catCount = #SK.BOARD_CATEGORIES
+        state.catSig = SK.BoardCategorySig and SK.BoardCategorySig()
+        SK.BoardLayoutCategories()
+    end
     local counts, total = SK.BoardCounts()
     state.newIn = {}
     for _, p in pairs(SK.BoardData().posts) do
         if (p.at or 0) > (state.readBefore or 0) and not SK.BoardIsMine(p) and SK.BoardVisible(p) then
             local top = p.parent == "" and p or SK.BoardData().posts[p.parent]
-            if top then state.newIn[top.cat] = true end
+            if top then state.newIn[SK.BoardShownCat(top)] = true end
         end
     end
     for _, b in ipairs(window.catButtons) do

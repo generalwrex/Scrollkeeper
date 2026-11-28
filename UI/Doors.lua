@@ -151,6 +151,8 @@ local function Resting() return IsResting and IsResting() and true or false end
 -- Where I'm resting, in words: "Goldshire, Elwynn Forest" or "Ironforge".
 local function RestingPlace()
     if not Resting() then return nil end
+    -- Dungeons and raids aren't inns, even if the game says you're resting.
+    if IsInInstance and SK.Known(IsInInstance()) then return nil end
     local zone = (GetRealZoneText and GetRealZoneText()) or (GetZoneText and GetZoneText()) or ""
     local sub = GetSubZoneText and GetSubZoneText() or ""
     if zone == "" then return nil end
@@ -314,10 +316,25 @@ local function AddFound(town, f)
     return place
 end
 
+-- Forget a learned place (not an inn after all). It stays forgotten.
+function SK.ForgetFoundInn(town)
+    SK.db.foundInns = type(SK.db.foundInns) == "table" and SK.db.foundInns or {}
+    SK.db.ignoredInns = type(SK.db.ignoredInns) == "table" and SK.db.ignoredInns or {}
+    SK.db.foundInns[town] = nil
+    SK.db.ignoredInns[town] = true
+    for i = #PLACES, 1, -1 do
+        if PLACES[i].found and PLACES[i].town == town then table.remove(PLACES, i) end
+    end
+    if selected and type(selected) == "table" and selected.town == town then selected = "all" end
+    SK.Print(L["Doorways forgot %s."]:format(town))
+    SK.RefreshDoors()
+end
+
 local function FoundInn(door)
     local town, zone = tostring(door.place):match("^([^,]+), (.+)$")
     town = town or door.place
     if not town or town == "" then return nil end
+    if type(SK.db.ignoredInns) == "table" and SK.db.ignoredInns[town] then return nil end
     SK.db.foundInns = type(SK.db.foundInns) == "table" and SK.db.foundInns or {}
     local mine = UnitFactionGroup and UnitFactionGroup("player")
     local f = SK.db.foundInns[town] or { zone = zone or town, map = door.map, side = mine or "both" }
@@ -346,6 +363,56 @@ function SK.LearnInnSpot(door)
 end
 
 -- The inns on a map you can use: { town, x, y (0-1), doors, capital }.
+------------------------------------------------------------------------
+-- Questie's innkeepers (optional: only when Questie is installed). Its
+-- database knows every innkeeper and where they stand, so Doorways gets
+-- every inn, right on the innkeeper. Read once, by map.
+------------------------------------------------------------------------
+
+local questieInns   -- uiMapID -> list of { x, y, name } (0-100)
+local function QuestieInns(mapID)
+    if not questieInns then
+        if not (QuestieLoader and QuestieLoader.ImportModule) then return {} end
+        local ok, list = pcall(function()
+            local townsfolk = QuestieLoader:ImportModule("Townsfolk")
+            local db = QuestieLoader:ImportModule("QuestieDB")
+            local zones = QuestieLoader:ImportModule("ZoneDB")
+            local ids = townsfolk and type(townsfolk.townsfolk) == "table" and townsfolk.townsfolk["Innkeeper"]
+            if type(ids) ~= "table" or not (db and db.QueryNPCSingle and zones and zones.GetUiMapIdByAreaId) then return nil end
+            local byMap = {}
+            for _, id in pairs(ids) do
+                local friendly = true
+                if db.IsFriendlyToPlayer then
+                    friendly = db.IsFriendlyToPlayer(db.QueryNPCSingle(id, "friendlyToFaction"))
+                end
+                local spawns = friendly and db.QueryNPCSingle(id, "spawns")
+                if type(spawns) == "table" then
+                    local name = db.QueryNPCSingle(id, "name")
+                    for areaId, points in pairs(spawns) do
+                        local map = zones:GetUiMapIdByAreaId(areaId)
+                        if map and type(points) == "table" then
+                            for _, pt in ipairs(points) do
+                                local x, y = tonumber(pt[1]), tonumber(pt[2])
+                                if x and y and x >= 0 and y >= 0 then
+                                    byMap[map] = byMap[map] or {}
+                                    table.insert(byMap[map], { x = x, y = y, name = name })
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            return byMap
+        end)
+        -- Questie fills its list after it loads: try again later if it's empty.
+        if not ok or not list then return {} end
+        if next(list) == nil then return {} end
+        questieInns = list
+    end
+    return questieInns[mapID] or {}
+end
+SK.QuestieInns = QuestieInns
+
 function SK.InnPins(mapID)
     local out = {}
     local mine = UnitFactionGroup and UnitFactionGroup("player")
@@ -361,6 +428,33 @@ function SK.InnPins(mapID)
             if spot and spot.map == mapID then
                 out[#out + 1] = { town = place.town, x = spot.x / 100, y = spot.y / 100, doors = open[place] or 0,
                     capital = place.capital }
+            end
+        end
+    end
+    -- Questie's innkeepers: right on the innkeeper. One near a pin we
+    -- already have moves that pin onto the innkeeper; the rest get the
+    -- nearest town on the map (if any is close), else open Doorways on all.
+    if SK.db.mapQuestieInns ~= false then
+        for _, inn in ipairs(QuestieInns(mapID)) do
+            local x, y = inn.x / 100, inn.y / 100
+            local near, nearD
+            for _, pin in ipairs(out) do
+                local d = math.sqrt((pin.x - x) ^ 2 + (pin.y - y) ^ 2)
+                if d < 0.05 and (not nearD or d < nearD) then near, nearD = pin, d end
+            end
+            if near then
+                if not near.innkeeper then near.x, near.y, near.innkeeper = x, y, inn.name end
+            else
+                local town, townD
+                for _, place in ipairs(PLACES) do
+                    local spot = place.x and { map = place.map, x = place.x, y = place.y } or spots[place.town]
+                    if spot and spot.map == mapID then
+                        local d = math.sqrt((spot.x / 100 - x) ^ 2 + (spot.y / 100 - y) ^ 2)
+                        if d < 0.12 and (not townD or d < townD) then town, townD = place, d end
+                    end
+                end
+                out[#out + 1] = { town = town and town.town, x = x, y = y, innkeeper = inn.name,
+                    doors = town and open[town] or 0 }
             end
         end
     end
@@ -812,20 +906,41 @@ end)
 local pop, popWho, popPending, popDone
 local Resting = Resting
 
+-- The door you're grouped with, if any. In a raid the scroll only reaches
+-- your own subgroup, so a door elsewhere in the raid comes back with
+-- elsewhere = their subgroup number.
 local function DoorInGroup()
     if not (IsInGroup and IsInGroup()) then return nil end
-    if IsInRaid and IsInRaid() then return nil end
-    if trip and not trip.teleported and InGroupWith(trip.short) then return trip.short end
     local doorNames = {}
     for _, door in ipairs(SK.OpenDoors()) do doorNames[door.short:lower()] = true end
-    for i = 1, 4 do
-        local name = UnitName and SK.Known(UnitName("party" .. i))
-        if type(name) == "string" then
-            local key = Net.ShortName(name):lower()
-            if doorNames[key] or (whispered[key] and time() - whispered[key] < 600) then
-                return Net.ShortName(name)
+    local function IsDoor(name)
+        local key = Net.ShortName(name):lower()
+        if trip and not trip.teleported and trip.short:lower() == key then return true end
+        return doorNames[key] or (whispered[key] and time() - whispered[key] < 600)
+    end
+    if IsInRaid and IsInRaid() and GetRaidRosterInfo then
+        local me = UnitName and SK.Known(UnitName("player"))
+        local members, mySub = {}, nil
+        for i = 1, (GetNumGroupMembers and GetNumGroupMembers() or 0) do
+            local name, _, sub = SK.Try(GetRaidRosterInfo, i)
+            name, sub = SK.Known(name), SK.Known(sub)
+            if type(name) == "string" then
+                if me and Net.ShortName(name) == me then mySub = sub else members[#members + 1] = { name = name, sub = sub } end
             end
         end
+        local other
+        for _, m in ipairs(members) do
+            if IsDoor(m.name) then
+                if m.sub == mySub then return Net.ShortName(m.name) end
+                other = other or m
+            end
+        end
+        if other then return Net.ShortName(other.name), other.sub end
+        return nil
+    end
+    for i = 1, 4 do
+        local name = UnitName and SK.Known(UnitName("party" .. i))
+        if type(name) == "string" and IsDoor(name) then return Net.ShortName(name) end
     end
 end
 
@@ -957,7 +1072,8 @@ function SK.UpdateTeleportPop()
         end
         return
     end
-    local who = (SK.LiminalCount() > 0) and DoorInGroup() or nil
+    local who, elsewhere
+    if SK.LiminalCount() > 0 then who, elsewhere = DoorInGroup() end
     if not who then
         if pop then pop:Hide() end
         popWho = nil
@@ -967,11 +1083,17 @@ function SK.UpdateTeleportPop()
     -- Both of you have to be resting. Not resting yet: the button hearths
     -- you home first (if the Hearthstone is ready), then turns into Teleport.
     local resting = Resting()
-    local mode = resting and "teleport" or "hearth"
+    local mode = elsewhere and "subgroup" or resting and "teleport" or "hearth"
     if who ~= popWho or mode ~= pop.mode then
         local fresh = who ~= popWho
         popWho, pop.mode = who, mode
-        if resting then
+        if elsewhere then
+            -- In the raid but not your subgroup: the scroll can't reach them.
+            pop.button:SetAttribute("macrotext", "")
+            pop.button:SetText(L["Not in your party"])
+            pop.title:SetText(L["%s is in raid group %d: you need to be in the same subgroup (the raid leader can move you)."]:format(who, elsewhere))
+            ShowPorts(false)
+        elseif resting then
             pop.button:SetAttribute("macrotext", "/target " .. who .. "\n/use item:" .. SK.LIMINAL_PASSAGE)
             pop.button:SetText(L["Teleport to %s"]:format(who))
             pop.title:SetText(L["Doorways: grouped with %s"]:format(who))
@@ -1233,6 +1355,9 @@ SK.On("CHAT_MSG_WHISPER", function(text, sender, ...)
     SK.DoorLog(short, L["whispered for a door (\"%s\")"]:format(hit), "info")
     if IsInGroup and IsInGroup() and not (UnitIsGroupLeader and SK.Known(UnitIsGroupLeader("player"))) then
         SK.DoorLog(short, L["you're not the group leader: the invite goes to your leader as a suggestion"], "info")
+    end
+    if IsInRaid and IsInRaid() then
+        SK.DoorLog(short, L["you're in a raid: they have to be moved into your subgroup to teleport to you"], "info")
     end
     invitesSent[#invitesSent + 1] = time()
     if C_PartyInfo and C_PartyInfo.InviteUnit then SK.Try(C_PartyInfo.InviteUnit, sender)
@@ -1742,8 +1867,15 @@ function SK.RefreshDoors()
                 if entry.own then tip:AddLine(L["You can teleport here with your own spell."], 0.6, 0.6, 0.6) end
             end
             tip:AddLine(L["%d open doors"]:format(entry.doors), 0.25, 1, 0.25)
+            if not entry.all and entry.place.found then
+                tip:AddLine(L["Learned from a door resting here. Right-click to forget it if it isn't an inn."], 0.6, 0.6, 0.6, true)
+            end
         end
-        row.onClick = function()
+        row.onClick = function(button)
+            if button == "RightButton" and not entry.all and entry.place.found then
+                SK.ForgetFoundInn(entry.place.town)
+                return
+            end
             SK.Track(entry.all and "doors.place.all" or "doors.place")
             selected = entry.all and "all" or entry.place
             SK.RefreshDoors()
@@ -2040,10 +2172,12 @@ end
 local function PinStrings(pin, out)
     local function Take(t, depth)
         if type(t) ~= "table" or depth > 2 then return end
-        if depth > 0 and t.GetObjectType then return end
+        -- Questie's pins keep their NPC in pin.icon.data (a frame's table).
+        if depth > 0 and t.GetObjectType and not (depth == 1 and t.data) then return end
         for k, v in pairs(t) do
             if type(v) == "string" and #v < 120 then out[#out + 1] = v
-            elseif type(v) == "table" and type(k) == "string" and not v.GetObjectType then Take(v, depth + 1) end
+            elseif type(v) == "table" and type(k) == "string" and (not v.GetObjectType or (k == "icon" and v.data)) then Take(v, depth + 1)
+            elseif type(v) == "number" and (k == "Id" or k == "id" or k == "npcId" or k == "Type") then out[#out + 1] = k .. "=" .. v end
         end
     end
     Take(pin, 0)
@@ -2088,8 +2222,9 @@ end
 -- how the game draws its innkeepers.
 local function DumpPins()
     local pins = AllPins()
+    local lines = {}
     for n, pin in ipairs(pins) do
-        if n > 40 then break end
+        if n > 80 then break end
         local ok, line = pcall(function()
             local strings = PinStrings(pin, {})
             local textures = {}
@@ -2099,11 +2234,18 @@ local function DumpPins()
             end
             return ("%d %s %.1f,%.1f | %s | %s"):format(n, tostring(pin.pinTemplate or "?"),
                 (tonumber(pin.normalizedX) or 0) * 100, (tonumber(pin.normalizedY) or 0) * 100,
-                table.concat(strings, "; "):sub(1, 140), table.concat(textures, ", "):sub(1, 100))
+                table.concat(strings, "; "):sub(1, 260), table.concat(textures, ", "):sub(1, 100))
         end)
-        SK.Print(ok and line or (n .. " ? " .. tostring(line)))
+        lines[#lines + 1] = ok and line or (n .. " ? " .. tostring(line))
     end
-    SK.Print(("%d pins on this map."):format(#pins))
+    lines[#lines + 1] = ("%d pins on map %s."):format(#pins, tostring(WorldMapFrame:GetMapID()))
+    -- In a copy box (Ctrl+A, Ctrl+C), and kept in the saved data too.
+    SK.db.innDebug = lines
+    if SK.ShowTextBox then
+        SK.ShowTextBox(L["Inn scan: map icons"], table.concat(lines, "\n"))
+    else
+        for _, line in ipairs(lines) do SK.Print(line) end
+    end
 end
 
 local function ReportScan(mapID, found)

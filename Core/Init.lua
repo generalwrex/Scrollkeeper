@@ -27,7 +27,7 @@ end
 SK.name = ADDON_NAME
 -- The packager fills in the real version from the git tag. A copy run
 -- straight from the repo has no tag, so it reports the version below.
-SK.version = "1.4.2"
+SK.version = "1.4.3"
 
 -- Translations (see Core/Locale.lua and the Locales folder). Set up here,
 -- in the first file, so every other file can use SK.L right away: any text
@@ -289,6 +289,11 @@ local DEFAULTS = {
     moduleNetwork = true,    -- ...the Fellow Mages window
     bagCountBank = true,     -- Scroll Bag: count what's in your bank (remembered from your last visit)
     bagCountMail = true,     -- ...and in your mailbox
+    bagNotYet = "ask",       -- ...scrolls you can't use yet: bank them (ask / auto / off)
+    bagFavoritesTop = true,  -- ...favorites (starred) at the top
+    bagShowMissing = true,   -- ...scrolls you have none of yet, in their categories (orange)
+    bagShowTooHigh = true,   -- ...ones your level is too low for (red)
+    bagShowOutleveled = true, -- ...ones from tiers you're past (gray)
     bagSetAside = true,      -- ...imbues for a weapon you don't own are "set aside", not extra
     bagWeaponAlert = true,   -- ...new weapon: say which imbues for it wait in your bank or mail
     bagChatStatus = true,    -- ...the "deciphered:" chat line says keep, extra or set aside
@@ -323,6 +328,7 @@ local DEFAULTS = {
     boardPingMentions = true,-- ...when someone says @YourName
     boardPingSound = true,   -- ...with a sound
     boardAutoFollow = true,  -- ...follow posts you reply to
+    boardClassColors = true, -- ...names in their class color
     boardShowOnline = true,  -- ...a green dot by mages who are online now
     boardStickyNotices = true, -- ...team notices pinned on top of every category
     boardHideDone = false,   -- ...hide posts marked done
@@ -331,6 +337,7 @@ local DEFAULTS = {
     boardNotify = true,      -- ...say once a session when there are new posts
     showUnknownRuleset = false,   -- Fellow Mages: list mages on very old versions whose ruleset can't be told
     mapDoors = true,         -- map pins for open doors (Doorways)
+    mapQuestieInns = true,   -- ...using Questie's innkeepers too, when Questie is installed
     mapInns = true,          -- map pins for inns (Doorways), drawn on top of the game's inn icons
     doorGreet = true,        -- Doorways: say hi in party when someone joins to use you as a door
     doorGreetText = nil,
