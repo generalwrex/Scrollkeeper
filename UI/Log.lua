@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-18.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Log.lua
 -- The Luck Log window (/sk log, or the dice on the panel): what your
 -- deciphers turned into, tier by tier, next to everyone's odds, and how

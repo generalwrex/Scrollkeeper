@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Minimap.lua
 -- The round button on the edge of the minimap, like most addons have.
 --

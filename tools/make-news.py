@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Scrollkeeper by generalwrex. Created 2026-11-24.
+# Read the LICENSE file before using any of this code.
 """Make the in-game news from CHANGELOG.md.
 
 Writes Data/News.lua: one chat message, shown once per account the first
@@ -141,6 +143,16 @@ def main():
     out.append("        " + lua("|cff9fe0ff" + signoff + "|r") + ",")
     out += ["    },", "})", ""]
     path = os.path.join(ROOT, "Data", "News.lua")
+    # Keep the file's header (author, creation date, license note) on top.
+    if os.path.exists(path):
+        old = open(path, encoding="utf-8").read().split("\n")
+        header = []
+        for line in old:
+            if line.startswith("-- Scrollkeeper by ") or line.startswith("-- Read the LICENSE"):
+                header.append(line)
+            else:
+                break
+        out = header + out
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write("\n".join(out))
     print(f"make-news: wrote Data/News.lua for {version} ({len(lines)} bullets)")

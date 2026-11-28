@@ -1,3 +1,5 @@
+# Scrollkeeper by generalwrex. Created 2026-11-19.
+# Read the LICENSE file before using any of this code.
 """Scrollkeeper: watch WoW Forever builds for scroll changes.
 
 Every Forever build is on wago.tools (product "wowf"). This script:

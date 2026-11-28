@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Minimal WoW mock for loading Scrollkeeper outside the game.
 
 -- WoW's bit library (LuaBitOp: 32-bit, signed results), from Lua 5.3's operators.
@@ -20,19 +22,51 @@ do
   }
 end
 local frames = {}
-local function newObj()
-  local o = { _scripts = {}, _events = {}, _attrs = {}, _shown = true, _text = nil }
+local allObjs = {}
+-- Layout: SetPoint/SetSize are recorded so CheckBounds() can tell whether
+-- things sit inside their window.
+local function NormPoint(self, point, rel, relPoint, x, y)
+  if type(rel) == "number" then rel, relPoint, x, y = nil, nil, rel, relPoint end
+  if type(relPoint) == "number" then relPoint, x, y = nil, relPoint, x end
+  if type(rel) == "string" then rel = _G[rel] end
+  return { point = point, rel = rel or rawget(self, "_parent") or UIParent, relPoint = relPoint or point, x = x or 0, y = y or 0 }
+end
+local newObj
+newObj = function(parent, kind)
+  local o = { _scripts = {}, _events = {}, _attrs = {}, _shown = true, _text = nil, _parent = parent, _kind = kind, _points = {} }
+  allObjs[#allObjs + 1] = o
   return setmetatable(o, { __index = function(t, k)
+    if k == "SetPoint" then return function(self, ...) table.insert(self._points, NormPoint(self, ...)) end end
+    if k == "ClearAllPoints" then return function(self) self._points = {} end end
+    if k == "SetAllPoints" then return function(self, rel)
+      rel = rel or self._parent
+      self._points = { { point = "TOPLEFT", rel = rel, relPoint = "TOPLEFT", x = 0, y = 0 },
+                       { point = "BOTTOMRIGHT", rel = rel, relPoint = "BOTTOMRIGHT", x = 0, y = 0 } }
+    end end
+    if k == "SetSize" then return function(self, w, h) self._w, self._h = w, h end end
+    if k == "SetWidth" then return function(self, w) self._w = w end end
+    if k == "SetHeight" then return function(self, h) self._h = h end end
+    if k == "GetWidth" then return function(self) return rawget(self, "_w") or 0 end end
+    if k == "GetHeight" then return function(self) return rawget(self, "_h") or 0 end end
+    if k == "GetParent" then return function(self) return rawget(self, "_parent") end end
     if k == "SetScript" then return function(self, n, f) self._scripts[n] = f end end
     if k == "RegisterEvent" then return function(self, e) self._events[e] = true end end
     if k == "UnregisterEvent" then return function(self, e) self._events[e] = nil end end
     if k == "SetAttribute" then return function(self, a, v) self._attrs[a] = v end end
     if k == "GetAttribute" then return function(self, a) return self._attrs[a] end end
     if k == "SetText" then return function(self, v) self._text = v end end
+    -- Text width, roughly as the game draws it: about 6 px a letter, with
+    -- color codes and |T icons|t counted as what they show.
+    if k == "GetStringWidth" or k == "GetUnboundedStringWidth" then return function(self)
+      local t = tostring(rawget(self, "_text") or "")
+      t = t:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""):gsub("|T.-|t", "WW")
+      return #t * 6
+    end end
     if k == "SetChecked" then return function(self, v) self._checked = v and true or false end end
     if k == "GetChecked" then return function(self) return self._checked end end
     if k == "GetText" then return function(self) return self._text end end
-    if k == "CreateFontString" or k == "CreateTexture" then return function() return newObj() end end
+    if k == "CreateFontString" then return function(self) return newObj(self, "FontString") end end
+    if k == "CreateTexture" then return function(self) return newObj(self, "Texture") end end
     if k == "IsShown" then return function(self) return self._shown end end
     if k == "SetShown" then return function(self, v) self._shown = v and true or false end end
     if k == "Show" then return function(self) self._shown = true end end
@@ -55,8 +89,98 @@ local function newObj()
 end
 function CreateFrame(kind, name, parent, template)
   if template == "CharacterStatFrameCategoryTemplate" then error("no template") end
-  local f = newObj(); frames[#frames+1] = f; if name then _G[name] = f end; return f end
+  local f = newObj(parent, kind); f._template = template; f._name = name
+  frames[#frames+1] = f; if name then _G[name] = f end; return f end
 UIParent = newObj(); GameTooltip = newObj()
+UIParent._w, UIParent._h = 1920, 1080
+UIParent._points = { { point = "BOTTOMLEFT", rel = nil, relPoint = "BOTTOMLEFT", x = 0, y = 0 } }
+
+-- Where something is on screen: left, right, top, bottom (y grows up), or
+-- nil if its anchors or size aren't known.
+local H = { LEFT = 0, CENTER = 0.5, RIGHT = 1, TOP = 0.5, BOTTOM = 0.5 }
+local function Parts(point)
+  point = point or "CENTER"
+  local v = point:find("TOP") and 1 or point:find("BOTTOM") and 0 or 0.5
+  local h = point:find("LEFT") and 0 or point:find("RIGHT") and 1 or 0.5
+  return h, v
+end
+local rectCache
+local function Rect(o, depth)
+  if o == UIParent then return 0, 1920, 1080, 0 end
+  depth = depth or 0
+  if depth > 40 then return nil end
+  if rectCache[o] ~= nil then return table.unpack(rectCache[o] or {}) end
+  local G = function(k) return rawget(o, k) end
+  rectCache[o] = false
+  local xs, ys = {}, {}
+  for _, p in ipairs(G("_points") or {}) do
+    local l, r, t, b = Rect(p.rel or UIParent, depth + 1)
+    if not (l and r and t and b) then return nil end
+    local rh, rv = Parts(p.relPoint)
+    local ax, ay = l + (r - l) * rh + p.x, b + (t - b) * rv + p.y
+    local h, v = Parts(p.point)
+    xs[#xs + 1] = { h, ax }
+    ys[#ys + 1] = { v, ay }
+  end
+  if #xs == 0 then return nil end
+  local function Solve(list, size)
+    local a, b = list[1], nil
+    for i = 2, #list do if list[i][1] ~= a[1] then b = list[i] end end
+    if b then
+      -- two different edges: size from them
+      local s = (b[2] - a[2]) / (b[1] - a[1])
+      return a[2] - a[1] * s, a[2] - a[1] * s + s
+    end
+    if not size or size == 0 then return nil end
+    local lo = a[2] - a[1] * size
+    return lo, lo + size
+  end
+  local l, r = Solve(xs, G("_w"))
+  local b, t = Solve(ys, G("_h"))
+  if not (l and r and b and t) then
+    rectCache[o] = false
+    return nil
+  end
+  rectCache[o] = { l, r, t, b }
+  return l, r, t, b
+end
+
+local function Inside(o, root)
+  local p = rawget(o, "_parent")
+  while p do
+    if p == root then return true end
+    if rawget(p, "_kind") == "ScrollFrame" then return false end
+    p = rawget(p, "_parent")
+  end
+  return false
+end
+
+-- Everything shown inside root that sticks out of it (by more than 2 px).
+function CheckBounds(root)
+  rectCache = {}
+  local L, R, T, B = Rect(root)
+  if not L then return { "window has no size" } end
+  local out = {}
+  for _, o in ipairs(allObjs) do
+    -- Side tabs (name ends in TabN) sit outside on purpose, like the spellbook's.
+    local tab, q = false, o
+    while q and q ~= root do
+      if tostring(rawget(q, "_name") or ""):match("Tab%d+$") then tab = true end
+      q = rawget(q, "_parent")
+    end
+    if not tab and o ~= root and Inside(o, root) and rawget(o, "_shown") ~= false then
+      local hidden = false
+      local p = rawget(o, "_parent")
+      while p and p ~= root do if rawget(p, "_shown") == false then hidden = true end p = rawget(p, "_parent") end
+      local l, r, t, b = Rect(o)
+      if not hidden and l and b and (l < L - 2 or r > R + 2 or t > T + 2 or b < B - 2) then
+        out[#out + 1] = ("%s %q: %d..%d x %d..%d (window %d..%d x %d..%d)"):format(rawget(o, "_kind") or "?",
+          tostring(rawget(o, "_text") or rawget(o, "_name") or ""), l, r, b, t, L, R, B, T)
+      end
+    end
+  end
+  return out
+end
 function fire(ev, ...) for _, f in ipairs(frames) do if f._events[ev] and f._scripts.OnEvent then f._scripts.OnEvent(f, ev, ...) end end end
 local now = 1000
 function time() return now end

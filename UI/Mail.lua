@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Mail.lua
 -- At the mailbox: who could use the untranslated scrolls you're carrying.
 --

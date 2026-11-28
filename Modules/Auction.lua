@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Auction.lua
 -- Scroll prices from the auction house, gathered by Scrollkeeper itself.
 --

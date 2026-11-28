@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Theme.lua
 -- How Scrollkeeper's windows look (/sk options > Panel > Theme):
 --

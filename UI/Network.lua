@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Network.lua
 -- The network pane: other Scrollkeeper users you can hear, and the
 -- community's odds for each scroll tier. It is built twice:
@@ -47,8 +49,10 @@ end
 -- redraws it, where fill(row, item) sets row.label and row.value.
 -- twoLine: taller rows with a smaller row.sub line under the label (and
 -- visibleRows counts those taller rows).
+-- twoLine: true for a name with details under it; 3 for one more line
+-- under that (row.third).
 function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
-    local ROW_HEIGHT = twoLine and 30 or ROW_HEIGHT
+    local ROW_HEIGHT = twoLine == 3 and 44 or twoLine and 30 or ROW_HEIGHT
     local height = visibleRows * ROW_HEIGHT
     local listWidth = width - 22          -- room for the scrollbar on the right
     local scroll = CreateFrame("ScrollFrame", nil, host, "UIPanelScrollFrameTemplate")
@@ -106,6 +110,13 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
             row.sub:SetJustifyH("LEFT")
             row.sub:SetWordWrap(false)
             row.value:Hide()
+            if twoLine == 3 then
+                row.third = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                row.third:SetPoint("TOPLEFT", row.sub, "BOTTOMLEFT", 0, -3)
+                row.third:SetWidth(listWidth - 20)
+                row.third:SetJustifyH("LEFT")
+                row.third:SetWordWrap(false)
+            end
         end
 
         -- Rows that show an item (row.itemID): its tooltip on hover, and
@@ -140,8 +151,8 @@ function SK.UI.CreateScrollList(host, width, visibleRows, twoLine)
             GameTooltip:Show()
         end)
         row:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        row:SetScript("OnMouseUp", function(self)
-            if not self.itemID and self.onClick then self.onClick() return end
+        row:SetScript("OnMouseUp", function(self, button)
+            if not self.itemID and self.onClick then self.onClick(button) return end
             if not (self.itemID and IsModifiedClick and IsModifiedClick("CHATLINK")) then return end
             local link = C_Item and select(2, SK.Try(C_Item.GetItemInfo, self.itemID))
             if link and ChatEdit_InsertLink then ChatEdit_InsertLink(link) end

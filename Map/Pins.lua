@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Map/Pins.lua
 -- Pins on the world map:
 --   book icon     a library: the two known ones, plus any where Study
@@ -34,6 +36,15 @@ function ScrollkeeperMapPinMixin:OnLoad()
     if self.UseFrameLevelType then self:UseFrameLevelType("PIN_FRAME_LEVEL_AREA_POI") end
 end
 
+-- The map sets every pin's layer again whenever it redraws, so inn pins
+-- get lifted above the game's own inn icons each time, not just once.
+function ScrollkeeperMapPinMixin:ApplyFrameLevel()
+    if MapCanvasPinMixin and MapCanvasPinMixin.ApplyFrameLevel then MapCanvasPinMixin.ApplyFrameLevel(self) end
+    if self.data and self.data.kind == "inn" and self.GetFrameLevel then
+        self:SetFrameLevel(math.min(self:GetFrameLevel() + 100, 9000))
+    end
+end
+
 function ScrollkeeperMapPinMixin:OnAcquired(data)
     self.data = data
     self:SetPosition(data.x, data.y)
@@ -49,6 +60,14 @@ function ScrollkeeperMapPinMixin:OnAcquired(data)
         self:SetSize(16 * (tonumber(SK.db and SK.db.mapPinScale) or 1), 16 * (tonumber(SK.db and SK.db.mapPinScale) or 1))
         self.Count:SetText("")
         self:SetAlpha(1)
+    elseif data.kind == "inn" then
+        -- A town with an inn (Doorways): rest here to be a door.
+        self.Icon:SetTexture("Interface\\Minimap\\Tracking\\Innkeeper")
+        local size = 14 * (tonumber(SK.db and SK.db.mapPinScale) or 1)
+        self:SetSize(size, size)
+        self.Count:SetText(data.doors > 0 and data.doors or "")
+        self:SetAlpha(1)
+        self:ApplyFrameLevel()
     elseif data.kind == "zone" then
         -- Continent map: one faint marker per zone with its scroll total.
         self.Icon:SetTexture((SK.db and SK.db.untranslatedIcon) or ICON_SCROLL)
@@ -96,6 +115,14 @@ local function AddPinLines(data, first)
         GameTooltip:AddLine(L["A door: resting in %s."]:format(data.place or "?"), 1, 1, 1, true)
         GameTooltip:AddLine(data.auto and L["Invites you by itself."] or L["Gets a pop-up to invite you."], 0.7, 0.7, 0.7)
         GameTooltip:AddLine(L["Click to open Doorways on them."], 0.6, 0.6, 0.6)
+    elseif data.kind == "inn" then
+        Title(data.town or data.innkeeper or L["Inn"])
+        if data.innkeeper and data.town then GameTooltip:AddLine(data.innkeeper, 0.8, 0.8, 0.8) end
+        GameTooltip:AddLine(L["An inn: rest here to be a door, or come here with Liminal Passage."], 1, 1, 1, true)
+        if data.doors > 0 then
+            GameTooltip:AddLine(L["%d |4door:doors; open here right now."]:format(data.doors), 0.25, 1, 0.25)
+        end
+        GameTooltip:AddLine(data.town and L["Click to open Doorways on this town."] or L["Click to open Doorways."], 0.6, 0.6, 0.6)
     elseif data.kind == "zone" then
         Title(data.name or L["Untranslated scrolls"])
         GameTooltip:AddLine(L["%d untranslated scrolls found here."]:format(data.total), 1, 1, 1)
@@ -155,7 +182,7 @@ end
 
 -- Other Scrollkeeper pins drawn over this one (their centers closer than
 -- the two pins' half sizes), libraries first, then books, then scrolls.
-local KIND_ORDER = { door = 0, library = 1, book = 2, drop = 3 }
+local KIND_ORDER = { door = 0, inn = 1, library = 2, book = 3, drop = 4 }
 local function StackedWith(pin)
     local list = {}
     local map = pin.GetMap and pin:GetMap()
@@ -203,6 +230,11 @@ function ScrollkeeperMapPinMixin:OnClick(button)
     if button ~= "LeftButton" or not data then return end
     if data.kind == "door" then
         if SK.ShowDoor then SK.ShowDoor(data.sender) end
+        return
+    end
+    if data.kind == "inn" then
+        if data.town and SK.ShowDoorTown then SK.ShowDoorTown(data.town)
+        elseif SK.ToggleDoors then SK.ToggleDoors() end
         return
     end
     if data.kind == "zone" then
@@ -292,12 +324,13 @@ local waitingBooks = {}
 --   SK.db.mapTiers = "all", "mine" (tiers you still level from) or a tier
 ------------------------------------------------------------------------
 
-local FILTERS = { "all", "mine", 1, 15, 50, 175 }
+local FILTERS = { "all", "mine", 1, 15, 50, 175, "none" }
 
 -- The tiers to show, as a set, or nil for all.
 local function WantedTiers()
     local filter = SK.db and SK.db.mapTiers or "all"
     if filter == "all" then return nil end
+    if filter == "none" then return {} end
     if type(filter) == "number" then return { [filter] = true } end
     -- "mine": tiers that still give you skill-ups (on a mage).
     if not SK.isMage then return nil end
@@ -331,6 +364,7 @@ local function FilterLabel()
     local filter = SK.db and SK.db.mapTiers or "all"
     if filter == "all" then return L["Scrolls: all"] end
     if filter == "mine" then return L["Scrolls: my tiers"] end
+    if filter == "none" then return L["Scrolls: none"] end
     return L["Scrolls: tier %d"]:format(filter)
 end
 
@@ -356,16 +390,53 @@ local function MakeFilterButton()
     filterButton:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
         GameTooltip:AddLine(L["Scrollkeeper: which scroll spots to show"])
-        GameTooltip:AddLine(L["Click: next. Right-click: back. My tiers = the ones you still get skill-ups from."], 1, 1, 1, true)
+        GameTooltip:AddLine(L["Click: next. Right-click: back. My tiers = the ones you still get skill-ups from. None = no scroll spots, just doors and inns."], 1, 1, 1, true)
         GameTooltip:Show()
     end)
     filterButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    -- Toggles next to it: open doors, and our inn pins (Doorways).
+    local function Toggle(name, key, default, label, tip)
+        local b = CreateFrame("Button", name, parent, "UIPanelButtonTemplate")
+        b:SetSize(64, 20)
+        b:SetFrameLevel(parent:GetFrameLevel() + 20)
+        if b.GetFontString and b:GetFontString() then b:GetFontString():SetFontObject(GameFontHighlightSmall) end
+        b.Update = function(self)
+            local on = SK.db[key]
+            if on == nil then on = default end
+            self:SetText((on and "|cff40ff40" or "|cff808080") .. label .. "|r")
+            self:SetShown(SK.db.mapPins and SK.ModuleOn("Doors") and true or false)
+        end
+        b:SetScript("OnClick", function(self)
+            local on = SK.db[key]
+            if on == nil then on = default end
+            SK.db[key] = not on
+            self:Update()
+            if provider then provider:RefreshAllData() end
+        end)
+        b:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOMLEFT")
+            GameTooltip:AddLine(label)
+            GameTooltip:AddLine(tip, 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        return b
+    end
+    filterButton.doors = Toggle("ScrollkeeperMapDoors", "mapDoors", true, L["Doors"],
+        L["Scrollkeeper mages who are a door right now (Doorways). Click a door to open Doorways on them."])
+    filterButton.doors:SetPoint("RIGHT", filterButton, "LEFT", -4, 0)
+    filterButton.inns = Toggle("ScrollkeeperMapInns", "mapInns", true, L["Inns"],
+        L["Our pin on each inn, with how many doors are open there; click one to open Doorways on that town. They sit on top of the game's own inn icons."])
+    filterButton.inns:SetPoint("RIGHT", filterButton.doors, "LEFT", -4, 0)
 end
 
 local function UpdateFilterButton()
     if not filterButton then return end
     filterButton:SetText(FilterLabel())
     filterButton:SetShown(SK.db.mapPins and true or false)
+    if filterButton.doors then filterButton.doors:Update() end
+    if filterButton.inns then filterButton.inns:Update() end
 end   -- book item IDs whose names the game is still loading
 
 -- Is this one of the books on the list (Data/BookSpots.lua)? Its spot, or nil.
@@ -543,8 +614,15 @@ local function CreateProvider()
             library.kind = "library"
             self:GetMap():AcquirePin(TEMPLATE, library)
         end
+        -- Inns (Doorways): where to rest to be a door (setting mapInns).
+        if SK.db.mapInns ~= false and SK.InnPins and SK.ModuleOn("Doors") then
+            for _, inn in ipairs(SK.InnPins(mapID)) do
+                inn.kind = "inn"
+                self:GetMap():AcquirePin(TEMPLATE, inn)
+            end
+        end
         -- Open doors (Doorways): Scrollkeeper users resting here right now.
-        for _, door in ipairs(SK.OpenDoors and SK.OpenDoors() or {}) do
+        for _, door in ipairs(SK.db.mapDoors ~= false and SK.OpenDoors and SK.OpenDoors() or {}) do
             if door.map == mapID and door.x and door.y then
                 self:GetMap():AcquirePin(TEMPLATE, { kind = "door", x = door.x / 100, y = door.y / 100,
                     sender = door.sender, short = door.short, place = door.place, auto = door.auto })
@@ -563,7 +641,7 @@ local function CreateProvider()
                 for _, counts in pairs(SK.DropCells(zoneID) or {}) do
                     total = total + (counts.mine or 0) + (counts.others or 0)
                 end
-                if total > 0 then
+                if total > 0 and SK.db.mapTiers ~= "none" then
                     local zoneInfo = SK.Try(C_Map.GetMapInfo, zoneID)
                     self:GetMap():AcquirePin(TEMPLATE, { kind = "zone", x = (left + right) / 2, y = (top + bottom) / 2,
                         total = total, mapID = zoneID, name = type(zoneInfo) == "table" and zoneInfo.name or nil,

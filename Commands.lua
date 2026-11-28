@@ -100,6 +100,9 @@ commands.codex = function() SK.ToggleGuide() end
 commands.bag = function() SK.ToggleScrollBag() end
 commands.bags = commands.bag
 commands.guide = commands.codex
+commands.tutorial = function() SK.ToggleTutorial() end
+commands.tour = commands.tutorial
+commands.innscan = function(rest) rest = (rest or ""):lower() SK.InnScan(rest:find("all") ~= nil, rest:find("debug") ~= nil) end
 commands.about = function()
     SK.Print(L["version %s by generalwrex. Links are in /sk options > About."]:format(SK.version))
     print("  " .. L["In game: %s (PvE). Say hi!"]:format(SK.AUTHOR_CHARACTER or "Archmage Naage"))
@@ -113,7 +116,7 @@ commands.restore = function() SK.ShowRestore() end
 commands.config = commands.options
 
 commands.help = function()
-    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk bag, /sk codex, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk board, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
+    SK.Print(L["commands: /sk, /sk simple, /sk advanced, /sk options, /sk bag, /sk codex, /sk tutorial, /sk plan, /sk log, /sk logchat, /sk net, /sk swap, /sk doors, /sk board, /sk mail, /sk backup, /sk restore, /sk bug, /sk scan, /sk setup, /sk about, /sk demo, /sk reset"])
 end
 
 SK.commands = commands

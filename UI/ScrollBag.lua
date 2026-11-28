@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/ScrollBag.lua
 -- The Scroll Bag (/sk bag, or the bag button on the panel): every deciphered
 -- mage scroll you own, in your bags, bank and mail, and what to do with it.
@@ -31,10 +33,28 @@ local COLUMN_X = { bags = 262, bank = 296, mail = 330 }
 local GROUP_ORDER = { "upgrades", "imbues:staff", "imbues:dagger", "imbues:sword", "imbues:other", "familiars", "combat", "utility" }
 local GROUP_LABELS = { upgrades = "Upgrades", familiars = "Familiars", combat = "Combat", utility = "Utility",
     ["imbues:staff"] = "Imbues: staff", ["imbues:dagger"] = "Imbues: dagger", ["imbues:sword"] = "Imbues: sword",
-    ["imbues:other"] = "Imbues" }
+    ["imbues:other"] = "Imbues", favorites = "Favorites" }
+
+-- Scrolls you have none of: why, its color, label, and the setting that shows them.
+local MISSING_SETTING = { none = "bagShowMissing", toohigh = "bagShowTooHigh", outleveled = "bagShowOutleveled" }
+local MISSING_COLORS = { none = { 1, 0.6, 0.2 }, toohigh = { 1, 0.33, 0.33 }, outleveled = { 0.6, 0.6, 0.6 } }
+local MISSING_LABELS = { none = "Wanted", toohigh = "Too low", outleveled = "Outgrown" }
+
+-- Hiding imbues for weapons you don't have in your main hand (setting bagShowOtherWeapons).
+-- Upgrades have their own Show switch (setting bagShowUpgrades), apart from Wanted.
+local function HiddenUpgrade(e)
+    return e.category == "upgrades" and SK.db.bagShowUpgrades == false
+end
+
+local function OtherWeapon(e)
+    if SK.db.bagShowOtherWeapons ~= false or not e.weapon or e.category ~= "imbues" then return false end
+    local hand = SK.MainHandKind and SK.MainHandKind()
+    return hand ~= nil and e.weapon ~= hand
+end
 
 local window
 local filter = "all"
+local state = {}
 local rows, headers = {}, {}
 
 local function Protected(itemID) return SK.db.bagProtected and SK.db.bagProtected[itemID] or false end
@@ -394,6 +414,7 @@ end
 -- "Keep all" means keep them wherever they are: nothing comes out for it.
 local function Wanted(e)
     if e.status == "aside" then return 0 end
+    if SK.NotYetHeld and SK.NotYetHeld(e.itemID) then return 0 end   -- banked until you can use it
     local keep = SK.KeepAmount(e.itemID)
     if keep == nil then return 0 end
     return math.max(0, keep - e.bags)
@@ -939,6 +960,14 @@ local function Build()
         window.chips[key] = chip
         previous = chip
     end
+    -- Show: a menu of checkboxes (Wanted, Too low, Outgrown, Other weapons).
+    local show = Chip(window, "show")
+    show:SetPoint("LEFT", previous, "RIGHT", 16, 0)
+    show:SetScript("OnClick", function(self)
+        SK.Track("bag.showmenu")
+        SK.ShowBagShowMenu()
+    end)
+    window.chips.show = show
     -- Column headings over the list: Bags / Bank / Mail / Keep / Status / All.
     local headings = {
         { L["Bags"], 16 + COLUMN_X.bags, 32, WHERE_COLORS.bags },
@@ -1213,7 +1242,10 @@ function SK.ShowBagRowMenu(row)
         SK.db.bagProtected[e.itemID] = not SK.db.bagProtected[e.itemID] or nil
         SK.RefreshScrollBag()
     end }
-    if row.pin and row.pin:IsShown() then
+    items[#items + 1] = { text = L["Favorite (at the top)"], checked = SK.IsFavorite(e.itemID), run = function()
+        SK.ToggleFavorite(e.itemID)
+    end }
+    if e.category == "familiars" or (e.category == "imbues" and e.weapon) then
         items[#items + 1] = { text = L["Pin (the buttons and pop-up use it)"], checked = SK.IsPinned(e.itemID), run = function()
             SK.TogglePin(e.itemID)
         end }
@@ -1237,7 +1269,12 @@ function SK.ShowBagRowMenu(row)
         end
     end }
 
-    menu.title:SetText(e.name or "")
+    SK.BagMenuDraw(menu, e.name or "", items)
+end
+
+-- Draws one of the Scroll Bag's small menus at the cursor.
+function SK.BagMenuDraw(menu, title, items)
+    menu.title:SetText(title)
     local y, n = -28, 0
     for _, item in ipairs(items) do
         if item.gap then
@@ -1268,6 +1305,32 @@ function SK.ShowBagRowMenu(row)
     menu:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x / scale - 6, cy / scale + 6)
     menu.openedAt = GetTime()
     menu:Show()
+end
+
+-- The Show menu: which scrolls you have none of to list, and other weapons.
+function SK.ShowBagShowMenu()
+    local menu = RowMenu()
+    local counts = state.missingCounts or { none = 0, toohigh = 0, outleveled = 0 }
+    local function Toggle(key) return function() SK.db[key] = SK.db[key] == false SK.RefreshScrollBag() end end
+    local function Dot(why)
+        local c = MISSING_COLORS[why]
+        return ("|cff%02x%02x%02x"):format(math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255))
+    end
+    local items = {
+        { text = Dot("none") .. L["Wanted"] .. "|r (" .. counts.none .. ") - " .. L["you have none yet"],
+            checked = SK.db.bagShowMissing ~= false, run = Toggle("bagShowMissing") },
+        { text = Dot("toohigh") .. L["Too low"] .. "|r (" .. counts.toohigh .. ") - " .. L["your level's too low"],
+            checked = SK.db.bagShowTooHigh ~= false, run = Toggle("bagShowTooHigh") },
+        { text = Dot("outleveled") .. L["Outgrown"] .. "|r (" .. counts.outleveled .. ") - " .. L["better ones now"],
+            checked = SK.db.bagShowOutleveled ~= false, run = Toggle("bagShowOutleveled") },
+        { gap = true },
+        { text = L["Upgrades"] .. " - " .. L["weapon upgrade scrolls"],
+            checked = SK.db.bagShowUpgrades ~= false, run = Toggle("bagShowUpgrades") },
+        { text = L["Imbues for other weapons"] .. " - " .. L["not in your main hand"],
+            checked = SK.db.bagShowOtherWeapons ~= false, run = Toggle("bagShowOtherWeapons") },
+    }
+    SK.BagMenuDraw(menu, L["Show in the list"], items)
+    menu:SetWidth(300)
 end
 
 local function Row(i)
@@ -1302,11 +1365,13 @@ local function Row(i)
     r.pin.tex = r.pin:CreateTexture(nil, "OVERLAY")
     r.pin.tex:SetAllPoints()
     r.pin.tex:SetTexture("Interface\\COMMON\\FavoritesIcon")
-    r.pin:SetScript("OnClick", function(self) if self.itemID then SK.TogglePin(self.itemID) end end)
+    r.pin:SetScript("OnClick", function(self)
+        if self.itemID then SK.Track("bag.favorite") SK.ToggleFavorite(self.itemID) end
+    end)
     r.pin:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText(SK.IsPinned(self.itemID) and L["Pinned"] or L["Pin it"])
-        GameTooltip:AddLine(L["The Familiar and Imbue buttons, key bindings and pop-ups use your pinned scroll. Imbues get one pin per weapon kind."], 1, 1, 1, true)
+        GameTooltip:SetText(SK.IsFavorite(self.itemID) and L["Favorite"] or L["Make it a favorite"])
+        GameTooltip:AddLine(L["Favorites sit at the top of the Scroll Bag. (To pin a familiar or imbue for the buttons, right-click the row.)"], 1, 1, 1, true)
         GameTooltip:Show()
     end)
     r.pin:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -1403,7 +1468,42 @@ local function Row(i)
     return r
 end
 
+-- A scroll you don't have: grayed, with the tier it comes from and
+-- whether you can use it yet.
+local function FillMissingRow(r, e, striped)
+    r.entry, r.itemID, r.total = e, e.itemID, 0
+    SK.UI.Stripe(r.stripe, striped)
+    local c = MISSING_COLORS[e.why or "none"] or MISSING_COLORS.none
+    local hex = ("|cff%02x%02x%02x"):format(math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255))
+    r.border:SetColorTexture(c[1] * 0.55, c[2] * 0.55, c[3] * 0.55, 1)
+    r.icon:SetTexture((C_Item and SK.Try(C_Item.GetItemIconByID, e.itemID)) or "Interface\\Icons\\INV_Scroll_03")
+    if r.icon.SetDesaturated then r.icon:SetDesaturated(true) end
+    r.name:SetText(hex .. e.name:gsub("^Scroll of ", "") .. "|r")
+    r.pin.itemID = e.itemID
+    r.pin:Show()
+    r.pin.tex:SetDesaturated(not e.favorite)
+    r.pin.tex:SetAlpha(e.favorite and 1 or 0.35)
+    for _, where in ipairs(WHERE) do r.where[where]:SetText("|cff505050-|r") end
+    r.minus:Show() r.plus:Show()
+    r.keep:SetText(e.keep == nil and L["all"] or tostring(e.keep))
+    if e.why == "toohigh" then
+        r.status:SetText(hex .. L["Level %d"]:format(e.useLevel or 0) .. "|r")
+    elseif e.why == "outleveled" then
+        r.status:SetText(hex .. L["Outgrown"] .. "|r")
+    elseif e.keep == 0 then
+        -- Keeping none: you don't want it, so don't say Wanted.
+        r.status:SetText("|cff808080" .. L["Not wanted"] .. "|r")
+        r.name:SetText("|cff808080" .. e.name:gsub("^Scroll of ", "") .. "|r")
+    else
+        r.status:SetText(hex .. L["Wanted"] .. "|r")
+    end
+    r.count:SetText(hex .. "0|r")
+end
+
 local function FillRow(r, e, striped)
+    if e.missing then return FillMissingRow(r, e, striped) end
+    if r.icon.SetDesaturated then r.icon:SetDesaturated(false) end
+    r.minus:Show() r.plus:Show()
     r.entry, r.itemID, r.total = e, e.itemID, e.total
     SK.UI.Stripe(r.stripe, striped)
     local c = COLORS[e.status] or COLORS.keep
@@ -1413,12 +1513,12 @@ local function FillRow(r, e, striped)
     local marks = ""
     if e.bound then marks = marks .. " |TInterface\\PetBattles\\PetBattle-LockIcon:12:12|t" end
     if Protected(e.itemID) then marks = marks .. " |TInterface\\Common\\Indicator-Yellow:12:12|t" end
+    if e.pinned then marks = marks .. " |cff66bbff" .. L["(pinned)"] .. "|r" end
     r.name:SetText(name .. marks)
-    local pinnable = e.category == "familiars" or (e.category == "imbues" and e.weapon)
     r.pin.itemID = e.itemID
-    r.pin:SetShown(pinnable and true or false)
-    r.pin.tex:SetDesaturated(not e.pinned)
-    r.pin.tex:SetAlpha(e.pinned and 1 or 0.35)
+    r.pin:Show()
+    r.pin.tex:SetDesaturated(not e.favorite)
+    r.pin.tex:SetAlpha(e.favorite and 1 or 0.35)
     -- Bags / Bank / Mail counts ("-" for none)
     for _, where in ipairs(WHERE) do
         local n = e[where] or 0
@@ -1482,26 +1582,100 @@ function SK.RefreshScrollBag()
     end
     local chipNames = { all = L["All"], extra = L["Extra"], aside = L["Set aside"], bound = L["Bound"] }
     for key, chip in pairs(window.chips) do
+      if key ~= "show" then
         chip.text:SetText(chipNames[key] .. " " .. counts[key])
         chip:SetWidth((chip.text:GetStringWidth() or 40) + 18)
         local on = key == filter
         chip:SetBackdropColor(on and 0.23 or 0, on and 0.16 or 0, on and 0.07 or 0, on and 1 or 0.4)
         chip:SetBackdropBorderColor(on and 0.66 or 0.42, on and 0.54 or 0.33, on and 0.23 or 0.15, 1)
         chip.text:SetTextColor(on and 1 or 0.79, on and 0.82 or 0.7, on and 0 or 0.48)
+      end
     end
 
     -- Groups
     local groups = {}
     for _, e in ipairs(entries) do
         local show = filter == "all" or (filter == "bound" and e.bound) or e.status == filter
+        if show and (OtherWeapon(e) or HiddenUpgrade(e)) then show = false end
         if show then
-            local key = GroupKey(e)
+            local key = (e.favorite and SK.db.bagFavoritesTop ~= false) and "favorites" or GroupKey(e)
             groups[key] = groups[key] or {}
             table.insert(groups[key], e)
         end
     end
+    -- Scrolls you have none of, in their own categories (red), so you can
+    -- set keep amounts before you get them. The "None" chip hides them
+    -- (setting bagShowMissing).
+    local missingCounts = { none = 0, outleveled = 0, toohigh = 0 }
+    if filter == "all" then
+        local have = {}
+        for _, e in ipairs(entries) do have[e.itemID] = true end
+        local tierOf = {}
+        for tier, names in pairs(SK.TIER_RESULTS or {}) do
+            for _, n in ipairs(names) do tierOf[n] = tier end
+        end
+        local missing = {}
+        for itemID, name in pairs(SK.MAGE_SCROLL_IDS or {}) do
+            if not have[itemID] then
+                local short = tostring(name):gsub("^Scroll of ", "")
+                local tier = tierOf[short] or tierOf[tostring(name)]
+                -- The level the item itself needs (some, like Scroll of the
+                -- Saber, need none). Not known until the game has loaded it.
+                local minLevel = C_Item and C_Item.GetItemInfo and select(5, SK.Try(C_Item.GetItemInfo, itemID))
+                if not minLevel and C_Item and C_Item.RequestLoadItemDataByID then SK.Try(C_Item.RequestLoadItemDataByID, itemID) end
+                minLevel = tonumber(minLevel)
+                missing[#missing + 1] = { itemID = itemID, missing = true, total = 0, tier = tier,
+                    useLevel = minLevel and minLevel > 1 and minLevel or nil,
+                    name = (C_Item and SK.Try(C_Item.GetItemNameByID, itemID)) or tostring(name),
+                    category = SK.StashCategory and SK.StashCategory(itemID) or "utility",
+                    weapon = SK.ImbueWeapon and SK.ImbueWeapon(itemID),
+                    keep = SK.KeepAmount(itemID), favorite = SK.IsFavorite and SK.IsFavorite(itemID) }
+            end
+        end
+        -- Why you have none: outleveled (a tier below yours, gray), can't use
+        -- yet (your level's too low, red), or just none yet (orange).
+        local skill = SK.GetComprehension and SK.GetComprehension()
+        local myTier = 0
+        for _, t in ipairs(SK.TIERS or {}) do if skill and skill.effective >= t then myTier = t end end
+        local myLevel = UnitLevel and SK.Known(UnitLevel("player")) or 0
+        for _, e in ipairs(missing) do
+            if e.useLevel and myLevel < e.useLevel then e.why = "toohigh"
+            -- Only imbues, combat scrolls and familiars get outgrown (there are better
+            -- ones later: Rat +2 int, Frog +6, Cat +12). Upgrades like Scroll of the Saber and
+            -- handy scrolls stay worth having.
+            elseif e.tier and e.tier < myTier and (e.category == "imbues" or e.category == "combat" or e.category == "familiars") then e.why = "outleveled"
+            else e.why = "none" end
+            if e.category ~= "upgrades" then missingCounts[e.why] = missingCounts[e.why] + 1 end
+        end
+        table.sort(missing, function(x, z) return x.name < z.name end)
+        for _, e in ipairs(missing) do
+            local on = e.category == "upgrades" or SK.db[MISSING_SETTING[e.why]] ~= false
+            if on and not OtherWeapon(e) and not HiddenUpgrade(e) then
+                local key = (e.favorite and SK.db.bagFavoritesTop ~= false) and "favorites" or GroupKey(e)
+                groups[key] = groups[key] or {}
+                table.insert(groups[key], e)
+            end
+        end
+    end
+    state.missingCounts = missingCounts
+    local showChip = rawget(window.chips, "show")
+    if showChip then
+        local hidden = 0
+        for _, setting in pairs(MISSING_SETTING) do if SK.db[setting] == false then hidden = hidden + 1 end end
+        if SK.db.bagShowOtherWeapons == false then hidden = hidden + 1 end
+        if SK.db.bagShowUpgrades == false then hidden = hidden + 1 end
+        showChip.text:SetText(L["Show"] .. (hidden > 0 and (" |cff808080(" .. L["%d hidden"]:format(hidden) .. ")|r") or "") .. " |TInterface\\ChatFrame\\ChatFrameExpandArrow:10:10:0:0|t")
+        showChip:SetWidth((showChip.text:GetStringWidth() or 40) + 18)
+        showChip:SetBackdropColor(0, 0, 0, 0.4)
+        showChip:SetBackdropBorderColor(0.66, 0.54, 0.23, 1)
+        showChip.text:SetTextColor(1, 0.82, 0)
+        showChip:SetShown(filter == "all")
+    end
+    local order = { "favorites" }
+    for _, key in ipairs(GROUP_ORDER) do order[#order + 1] = key end
+
     local y, nr, nh, striped = 0, 0, 0, false
-    for _, key in ipairs(GROUP_ORDER) do
+    for _, key in ipairs(order) do
         local list = groups[key]
         if list then
             nh = nh + 1
@@ -1509,7 +1683,7 @@ function SK.RefreshScrollBag()
             h:ClearAllPoints()
             h:SetPoint("TOPLEFT", 0, -y)
             local total = 0
-            for _, e in ipairs(list) do total = total + e.total end
+            for _, e in ipairs(list) do total = total + (e.total or 0) end
             local label = L[GROUP_LABELS[key]]
             local kind = key:match("^imbues:(%a+)$")
             local right = L["%d |4kind:kinds; · %d"]:format(#list, total)

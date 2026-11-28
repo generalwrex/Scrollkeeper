@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Usage.lua
 -- Anonymous usage stats: which windows and buttons people use, and which
 -- settings they change, so Scrollkeeper can get better where it matters.

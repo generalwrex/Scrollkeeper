@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-24.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Help.lua
 -- A red "?" in the title bar of every Scrollkeeper window. Point at it
 -- for what the window is and how to use it; click it to keep that open

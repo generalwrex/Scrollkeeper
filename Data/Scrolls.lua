@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Data/Scrolls.lua
 -- What each tier of untranslated scroll can turn into.
 --

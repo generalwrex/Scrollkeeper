@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Decipher.lua
 -- Picks the next scroll to decipher and keeps the luck log.
 --

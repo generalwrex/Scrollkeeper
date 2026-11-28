@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Options.lua
 -- Scrollkeeper's own settings window (/sk options, the gear on the panel,
 -- right-click the minimap button). Sections down the left, their settings
@@ -27,6 +29,11 @@ SK.TEAM = {
 -- People who helped: { name, what they did }. Shown on the About page.
 SK.CREDITS = {
     { "Lofi Frostbeats", "Fellow Mage network user (RP-PvP Horde) who shared most of the community's tier 175 odds" },
+    { "Magnus Magoo", "tested the board, Doorways and Fellow Mages with us" },
+    { "Navacado", "the idea for a tutorial that explains the scrolls" },
+    { "foundmonster", "reported Nethergarde Keep in Doorways (it has no inn)" },
+    { "Count Turbo", "said \"DO IT!\" to the Fellow Mages board, so we did" },
+    { "Everyone sharing scroll data", "every decipher you share makes the odds and drop spots better for all mages" },
 }
 
 SK.LINKS = {
@@ -85,7 +92,7 @@ local MODULES = {
     { "Swap", "Scroll Swap", "Who has spare scrolls you'd level from, and who'd want yours." },
     { "Doors", "Doorways", "Getting around with Scroll of Liminal Passage, and the running-low warning." },
     { "Network", "Fellow Mages", "The Fellow Mages window (the Advanced view still shows them)." },
-    { "Board", "Fellow Mages board", "The board button on the panel (/sk board still opens it). The board itself is in Sharing." },
+    { "Board", "Fellow Mages board", "The board button on the panel (/sk board still opens it). Its settings have their own page: Fellow Mages board." },
 }
 
 local SECTIONS = {
@@ -124,7 +131,6 @@ local SECTIONS = {
     { name = "Tooltips and chat", icon = "Interface\\Icons\\INV_Letter_15", items = {
         { "check", "showTooltips", "Tooltip lines", "Mages see whether they can decipher a scroll. Other classes see that it is a mage scroll." },
         { "check", "announce", "Decipher messages", "Prints a chat line such as \"deciphered: Scroll of Frog Familiar\"." },
-        { "check", "updateNotice", "Update messages", "Say in chat (once per session) when another player has a newer Scrollkeeper than you." },
         { "check", "chatHelper", "Chat notes", "When someone links a scroll in chat and asks who needs it, add a note only you see: is it a skill-up for you or your mages." },
     } },
     { name = "Sharing", icon = "Interface\\Icons\\INV_Misc_GroupLooking", items = {
@@ -134,17 +140,40 @@ local SECTIONS = {
             { "none", "None (not recommended)", "Nothing is sent. No Fellow Mages or swap board, but each update's odds still show." } } },
         { "check", "shareUsage", "Share anonymous usage stats (recommended)", "Opt-in, off unless you turn it on. Counts which windows, buttons and settings get used, so we know which features people rely on most and can fix and improve those first. Totally anonymous: just counts under a random ID, plus your class, faction, game language, rough Comprehension skill and which bag and map addons you use, never your name, realm, guild, chat, gold, bags or where you are. Not sent when Sharing is None." },
         { "check", "themesShared", "Holiday themes from the network", "New holiday themes come from the Scrollkeeper team over the network, no update needed (they're only colors). Off: no new ones." },
-        { "check", "boardOn", "Fellow Mages board", "Posts and replies from other Scrollkeeper mages, kept for 7 days (/sk board). Off: you don't get or send posts." },
-        { "check", "textEmoji", "Board: show emojis", "Show :fire:, :sheep:, :skull: and the rest as icons in posts and replies. Off: you see them as typed.", dependsOn = "boardOn" },
-        { "check", "textMarkdown", "Board: show formatting", "Show **bold**, *italic*, `code`, ~~strike~~, and - or > at the start as colors, a bullet or a quote. Off: you see the stars and marks as typed.", dependsOn = "boardOn" },
-        { "check", "boardNotify", "Board: tell me about new posts", "Say once a session in chat when the board has new posts.", dependsOn = "boardOn" },
-        { "choice", "boardRulesets", "Board: General posts from", "Trade, doorway and odds posts are always your ruleset only. This is for General posts and notices.", choices = {
-            { "all", "All rulesets", "Mages on every ruleset, with their ruleset shown by their name." },
-            { "mine", "Only my ruleset", "Just mages you could whisper or group with." } } },
+        { "check", "showUnknownRuleset", "Fellow Mages: show old versions", "Mages on Scrollkeeper older than 1.2.0 don't say their ruleset, and the public channel reaches every ruleset, so they may not be on yours (whispers and mail won't reach them). Off: only listed when they're in your guild, group or friends." },
+        { "choice", "rulesetPick", "Your ruleset", "Scrollkeeper reads it from your realm's name. Some realms don't say (or give no name): this is for characters there. Realms whose name says it always go by the name.", choices = {
+            { "auto", "Automatic", "From your realm's name, or what mages on your realm say." },
+            { "pve", "PvE", "" }, { "pvp", "PvP", "" }, { "rp", "RP", "" }, { "rppvp", "RP-PvP", "" } } },
         { "check", "liminalDoor", "Doorways: be a door", "While you rest in an inn or a city, mages on your server can ask to come to you with Scroll of Liminal Passage. You get a pop-up to invite them. /sk doors opens Doorways." },
-        { "check", "doorAutoInvite", "Doorways: invite by myself", "Invite mages who ask right away, without the pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes.", dependsOn = "liminalDoor" },
+        { "check", "doorGreet", "Doorways: say hi in party", "When someone joins your group to use you as a door, say a line in party (change it with Greeting... on Doorways).", dependsOn = "liminalDoor" },
+        { "check", "doorGreetPlug", "Doorways: mention Scrollkeeper", "With the party hello, one more line: \"(Doorways is part of Scrollkeeper, a mage scroll addon on CurseForge.)\"", dependsOn = "doorGreet" },
+        { "check", "doorTeleportPop", "Doorways: Teleport button pop-up", "When you're grouped with a door (someone you asked, a Scrollkeeper door, or someone you whispered in the last 10 minutes), a small Teleport button pops up so you don't have to find the scroll in your bags." },
+        { "check", "doorWhisperInvite", "Doorways: answer whispers", "While you're a door, anyone who whispers you something like \"can I teleport to you?\" or \"liminal pls\" gets invited by themselves (no addon needed on their side). Add your own with Invite triggers... on Doorways.", dependsOn = "liminalDoor" },
+        { "check", "doorAcceptMages", "Doorways: accept mages' invites", "While you're a door and resting, an invite from a mage is accepted by itself (they want to teleport to you). Invites from anyone else still show the usual box.", dependsOn = "liminalDoor" },
+        { "check", "doorAutoInvite", "Doorways: skip the pop-up", "When a Scrollkeeper mage asks to come to you, invite them right away instead of asking you first with a pop-up (when you're not in a group, or lead one with room). At most 6 invites in 10 minutes.", dependsOn = "liminalDoor" },
         { "check", "oddsStandard", "Odds: list standard scrolls", "Community odds list standard scrolls (like Scroll of Strength) one by one. Off: they're merged into one Standard Scrolls row." },
         { "slider", "offlineMinutes", "Keep offline mages for", "When hovering a name in Fellow Mages finds that mage offline, their name turns gray and stays in the list this long.", 1, 15, 1, Minutes },
+    } },
+    { name = "Fellow Mages board", icon = "Interface\\Icons\\INV_Misc_Note_02", note = "The board itself is a module (Modules) and needs Sharing on.", items = {
+        { "check", "boardOn", "Get and send posts", "Posts and replies from other Scrollkeeper mages, kept for 7 days (/sk board). Off: you don't get or send posts." },
+        { "choice", "boardRulesets", "General posts from", "Trade, doorway and odds posts are always your ruleset only. This is for General posts and notices.", choices = {
+            { "all", "All rulesets", "Mages on every ruleset, with their ruleset shown by their name." },
+            { "mine", "Only my ruleset", "Just mages you could whisper or group with." } } },
+        { "check", "textEmoji", "Show emojis", "Show :fire:, :sheep:, :skull: and the rest as icons in posts and replies. Off: you see them as typed.", dependsOn = "boardOn" },
+        { "check", "textMarkdown", "Show formatting", "Show **bold**, *italic*, `code`, ~~strike~~, and - or > at the start as colors, a bullet or a quote. Off: you see the stars and marks as typed.", dependsOn = "boardOn" },
+        { "check", "boardPingReplies", "Ping me about replies", "A line in chat when someone replies to your post, or to one you follow.", dependsOn = "boardOn" },
+        { "check", "boardPingReacts", "Ping me about reactions", "A line in chat when someone reacts to your post or reply.", dependsOn = "boardOn" },
+        { "check", "boardPingMentions", "Ping me about @mentions", "A line in chat when someone writes @ and your name in a post or reply.", dependsOn = "boardOn" },
+        { "check", "boardPingSound", "Ping sound", "Play the whisper sound with board pings.", dependsOn = "boardOn" },
+        { "check", "boardAutoFollow", "Follow posts I reply to", "Get reply pings for posts you've replied to, not just your own. You can follow or unfollow any post from its ••• menu.", dependsOn = "boardOn" },
+        { "check", "boardShowOnline", "Show who's online", "A green dot by the name of mages who are online right now (heard from in the last 10 minutes), so you know who might answer.", dependsOn = "boardOn" },
+        { "check", "boardClassColors", "Names in class colors", "Show each poster's name in their class color (alts of any class can post). Older Scrollkeepers don't send it, so some names stay plain.", dependsOn = "boardOn" },
+        { "check", "boardStickyNotices", "Pin notices", "Team notices stay on top of every category.", dependsOn = "boardOn" },
+        { "check", "boardHideDone", "Hide done posts", "Hide posts their author marked done (traded, found a door...).", dependsOn = "boardOn" },
+        { "check", "boardWordFilter", "Word filter", "Show swear words as ****.", dependsOn = "boardOn" },
+        { "choice", "boardFontSize", "Text size", "How big posts and replies are in the post pane.", dependsOn = "boardOn", choices = {
+            { "small", "Small", "" }, { "normal", "Normal", "" }, { "large", "Large", "" } } },
+        { "check", "boardNotify", "Tell me about new posts", "Say once a session in chat when the board has new posts.", dependsOn = "boardOn" },
     } },
     { name = "Mailbox and auction house", icon = "Interface\\Icons\\INV_Misc_Coin_01", items = {
         { "check", "mailHelper", "Mailbox helper", "At the mailbox, list your mages, guildies and friends who could use your spare scrolls. Click one to fill in the mail." },
@@ -155,6 +184,10 @@ local SECTIONS = {
     { name = "Scroll Bag", icon = "Interface\\Icons\\INV_Misc_Bag_10", items = {
         { "check", "bagCountBank", "Count my bank", "The Scroll Bag counts what's in your bank too, as of your last visit." },
         { "check", "bagCountMail", "Count my mail", "The Scroll Bag counts scrolls in your mailbox too, as of the last time you opened it." },
+        { "check", "bagFavoritesTop", "Favorites at the top", "Starred scrolls get their own Favorites group at the top of the Scroll Bag." },
+        { "check", "bagShowMissing", "Show scrolls I have none of yet", "Scrolls you have none of show in their categories (orange), so you can set how many to keep before you get them. The chips on the Scroll Bag switch these too." },
+        { "check", "bagShowTooHigh", "Show ones I can't use yet", "Scrolls your level is too low for, in red, with the level they need." },
+        { "check", "bagShowOutleveled", "Show outleveled ones", "Scrolls from tiers you're past, in gray." },
         { "check", "bagSetAside", "Set aside imbues for weapons I don't have", "An imbue for a weapon you don't own (in your bags, bank or hands) is set aside instead of extra. Bank them with Deposit set aside." },
         { "check", "bagWeaponAlert", "Tell me about imbues for a new weapon", "When you equip or loot a kind of weapon you didn't have, say which imbues for it are waiting in your bank or mail." },
         { "check", "bagChatStatus", "Keep or extra in the decipher message", "The \"deciphered:\" chat line also says whether the new scroll is a keep, an extra or set aside." },
@@ -163,6 +196,11 @@ local SECTIONS = {
         { "check", "bagJunk", "Extras count as junk in bag addons", "In bag addons with a junk list (Baganator), your extras count as junk, so its sell-junk button sells them too. Off by default: some people sell junk without looking." },
         { "check", "bagConfirm", "Ask before selling extras", "Sell extras shows what it'll sell and asks first." },
         { "check", "bagAllowDelete", "Delete extras button", "Adds a Delete extras button to the Scroll Bag. It always asks first." },
+        { "choice", "bagNotYet", "Scrolls I can't use yet", "Deciphered scrolls above your level and undeciphered ones above your Comprehension can wait in the bank. When a level or skill-up makes them usable, chat tells you, and they come back out at the bank.", choices = {
+            { "ask", "Ask at the bank", "When you open your bank, ask before banking them or taking them back out." },
+            { "auto", "Do it by itself", "Bank them and take them back out on their own." },
+            { "off", "Off", "Leave them where they are." },
+        } },
         { "check", "bagAutoSyncBank", "Sync the bank automatically", "When you open your bank, Sync bank extras runs on its own, so your bags end up with your keep amounts. Also a check on the Scroll Bag." },
         { "check", "bagAutoSyncMail", "Sync mail automatically", "When you open your mailbox, Sync mail extras runs on its own once your mail comes in." },
         { "check", "bagHideErrors", "Hide the game's errors while moving scrolls", "While the Scroll Bag stacks, sells, syncs or deposits, the game's red messages like \"Couldn't split those items\" (and their sound) are hidden. Scrollkeeper still stops and tells you in chat if a move really won't go." },
@@ -173,6 +211,9 @@ local SECTIONS = {
     { name = "Modules", icon = "Interface\\Icons\\INV_Misc_Gear_01", note = "Turn off what you don't use: its panel button goes away, and so does everything it adds.", items = {} },
     { name = "Map", icon = "Interface\\Icons\\INV_Misc_Map_01", items = {
         { "check", "mapPins", "Map pins", "Show libraries and the spots where untranslated scrolls dropped on the world map." },
+        { "check", "mapDoors", "Map: doors (Doorways)", "A pin for each Scrollkeeper mage who's a door right now. Also a button on the map.", dependsOn = "mapPins" },
+        { "check", "mapInns", "Map: inns (Doorways)", "Our own innkeeper pin on the map, on top of the game's, with how many doors are open there; click it to open Doorways on that town.", dependsOn = "mapPins" },
+        { "check", "mapQuestieInns", "Inns from Questie", "With Questie installed, Doorways knows every innkeeper Questie does: an inn pin right on each one, in every zone. Questie isn't needed for anything else.", dependsOn = "mapInns" },
         { "slider", "mapPinScale", "Map pin size", "How big the scroll and book spots are on the map (libraries keep their size).", 0.5, 2, 0.1, Percent, dependsOn = "mapPins" },
     } },
     { name = "Language", icon = "Interface\\Icons\\INV_Misc_Note_02", items = {
@@ -181,8 +222,10 @@ local SECTIONS = {
     { name = "Backup", icon = "Interface\\Icons\\INV_Misc_Book_09", page = "backup" },
     { name = "About", icon = "Interface\\Icons\\INV_Misc_QuestionMark", page = "about" },
 }
+local modulesSection
+for _, section in ipairs(SECTIONS) do if section.name == "Modules" then modulesSection = section end end
 for _, module in ipairs(MODULES) do
-    table.insert(SECTIONS[7].items, { "check", "module" .. module[1], module[2], module[3] })
+    table.insert(modulesSection.items, { "check", "module" .. module[1], module[2], module[3] })
 end
 SK.OPTION_SECTIONS = SECTIONS   -- for the test harness
 

@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-20.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Data/Unpack.lua
 -- Reads the packed community data (Data/Community.lua) into
 -- SK.COMMUNITY_DATA. It's plain data, only ever read as numbers and names.

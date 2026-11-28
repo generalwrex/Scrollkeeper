@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Integrations.lua
 -- Optional extras that use other addons when they're installed. None of
 -- them are required; each checks first and does nothing if it's missing.

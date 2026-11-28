@@ -51,6 +51,7 @@ Modules\Chat.lua
 Modules\Backfire.lua
 Modules\Farm.lua
 Modules\Stash.lua
+Modules\NotYet.lua
 
 # Network: talking to other players' Scrollkeeper.
 Network\Comm.lua
@@ -82,6 +83,7 @@ UI\Format.lua
 UI\Board.lua
 UI\Plan.lua
 UI\Guide.lua
+UI\Tutorial.lua
 UI\ScrollBag.lua
 UI\Icon.lua
 UI\Picks.lua

@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Farm.lua
 -- The farming planner: how far to your next goal, and how long it'll take.
 --

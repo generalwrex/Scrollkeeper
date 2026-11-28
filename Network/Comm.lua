@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Comm.lua
 -- How copies of Scrollkeeper on different players' computers talk.
 --
@@ -26,7 +28,20 @@ local BUDGET_MAX, BUDGET_PER_SECOND = 8, 0.8
 local budget, budgetAt = BUDGET_MAX, 0
 -- Which messages go first. Who's online (hello, "who's there?", doors,
 -- spares) must never wait behind bulk data (odds, drop spots...).
-local PRIORITY = { Q = 1, H = 1, G = 2, S = 2, DA = 2, DY = 2, DN = 2 }
+-- Lower goes first: quick, small things people are waiting on ahead of
+-- bulk (shares, stats). Anything not listed is 3.
+local PRIORITY = { Q = 1, H = 1, DC = 1, DH = 1, G = 2, S = 2, DA = 2, DY = 2, DN = 2,
+    BP = 2, BE = 2, BD = 2, BX = 2, BS = 2, BA = 2, UZ = 4 }
+
+-- Packing: several queued messages for the same places go out as one
+-- ("M" + record separator + message + separator + message...), so fewer
+-- messages hit the server. Only while every mage we hear can unpack it
+-- (1.4.3+, see SK.PackOK in Peers.lua), and the team can switch it off.
+local PACK_SEP = "\30"
+local function CanPack()
+    if SK.RemoteOff and SK.RemoteOff("pack") then return false end
+    return SK.PackOK and SK.PackOK() or false
+end
 local nextSendAt = 0                   -- after a "throttled" answer, wait a little
 local MAX_LENGTH = 250                 -- the game allows 255 bytes per message
 
@@ -123,8 +138,7 @@ function Net.ResetStats()
     Net.log, Net.heard = {}, {}
 end
 
-SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
-    if prefix ~= Net.PREFIX or type(text) ~= "string" then return end
+local function OnMessage(text, source, sender)
     local stats = Net.stats
     local fields = Split(text)
     local kind = table.remove(fields, 1)
@@ -160,6 +174,16 @@ SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
     if Net.IsMe(sender) then return end
     if Net.Tap then SK.Quietly("net tap", Net.Tap, kind, fields, sender, source) end
     Net.Deliver(kind, sender, fields, source)
+end
+
+SK.On("CHAT_MSG_ADDON", function(prefix, text, source, sender)
+    if prefix ~= Net.PREFIX or type(text) ~= "string" then return end
+    -- A pack: each message in it on its own.
+    if text:sub(1, 2) == "M" .. PACK_SEP then
+        for part in text:sub(3):gmatch("[^" .. PACK_SEP .. "]+") do OnMessage(part, source, sender) end
+        return
+    end
+    OnMessage(text, source, sender)
 end)
 
 -- Hand a message to its handlers, as if it was just heard. (Also used by
@@ -326,6 +350,19 @@ local function SendNext()
     if budget < #destinations then return end
     budget = budget - #destinations
     local message = table.remove(queue, 1)
+    -- Fill the message up with the next ones going to the same places.
+    if not message.only and queue[1] and not queue[1].only and CanPack() then
+        local parts, length = { message.text }, 2 + #message.text
+        while queue[1] and not queue[1].only and length + 1 + #queue[1].text <= MAX_LENGTH do
+            local nextOne = table.remove(queue, 1)
+            parts[#parts + 1] = nextOne.text
+            length = length + 1 + #nextOne.text
+        end
+        if #parts > 1 then
+            message = { key = message.key, text = "M" .. PACK_SEP .. table.concat(parts, PACK_SEP), priority = message.priority }
+            Net.stats.packed = (Net.stats.packed or 0) + #parts
+        end
+    end
     local retry = {}
     for _, destination in ipairs(destinations) do
         if destination[1] == "WHISPER" then

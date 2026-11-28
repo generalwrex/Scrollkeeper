@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Study.lua
 -- Tracks the one-hour Study cooldown, and whether you are standing
 -- somewhere Study works based on librarian world coordinates.

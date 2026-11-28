@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-21.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Data/BookSpots.lua
 -- Where every book for the librarians sits in the world.
 --

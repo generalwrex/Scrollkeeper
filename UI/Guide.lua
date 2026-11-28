@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-21.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Guide.lua
 -- The Codex (/sk codex, also /sk guide): everything in one place.
 --   Scrolls  every mage scroll, tier by tier: what it does (the game's own

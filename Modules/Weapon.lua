@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Weapon.lua
 -- Things worth a reminder:
 --   * no weapon imbue, while you carry imbue scrolls

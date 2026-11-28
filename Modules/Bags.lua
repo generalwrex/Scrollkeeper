@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Bags.lua
 -- Finds mage scrolls, Light Feathers and Bundles of Scrolls in the bags.
 
@@ -99,6 +101,10 @@ local function ReadSlotTooltip(bag, slot)
         ImbueWeaponFromLines(data.lines)
 end
 
+-- For other files (Modules/NotYet.lua): Comprehension needed, mage only,
+-- level needed, imbue weapon, for any bag or bank slot.
+SK.ReadScrollSlot = ReadSlotTooltip
+
 ------------------------------------------------------------------------
 -- Scanning
 ------------------------------------------------------------------------
@@ -108,6 +114,7 @@ local function IsScrollItem(itemID)
     local _, _, _, _, _, classID, subClassID = SK.Try(C_Item.GetItemInfoInstant, itemID)
     return classID == SK.ITEM_CLASS_CONSUMABLE and subClassID == SK.ITEM_SUBCLASS_SCROLL
 end
+SK.IsScrollItem = IsScrollItem
 
 -- Returns a table describing what is in the bags right now:
 --   untranslated  list of { bag, slot, itemID, name, needs }   (needs = Comprehension required)

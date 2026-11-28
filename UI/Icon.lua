@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: UI/Icon.lua
 -- The scroll icon: a small square you can keep on screen while you play.
 --

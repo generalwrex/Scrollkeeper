@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-15.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Network/Peers.lua
 -- Who else runs Scrollkeeper, and what their mages can use.
 --
@@ -25,10 +27,25 @@ local function VersionNumber(text)
     return tonumber(a) * 10000 + tonumber(b) * 100 + (tonumber(c) or 0)
 end
 
+-- Can every mage we hear unpack packed messages (1.4.3+, or a dev copy)?
+-- Nobody heard yet, or anyone older or unknown: no.
+local PACK_FROM = 10403
+function SK.PackOK()
+    local any = false
+    for _, peer in pairs(SK.peers) do
+        if not peer.demo and (time() - (peer.seen or 0)) < STALE_SECONDS then
+            local v = peer.version
+            if v ~= "dev" and VersionNumber(v) < PACK_FROM then return false end
+            any = true
+        end
+    end
+    return any
+end
+
 -- Someone runs a newer Scrollkeeper: say so once per session. (Also with
 -- sharing set to None: Network/Comm.lua passes just the version along.)
 function SK.NoteVersion(version)
-    if warnedNewer or not (SK.db and SK.db.updateNotice ~= false) then return end
+    if warnedNewer or not SK.db then return end
     if VersionNumber(version) > VersionNumber(SK.version) then
         warnedNewer = true
         SK.Print(L["a newer version (%s) is out. You have %s. Update it on CurseForge, Wago or WowUp."]:format(tostring(version), SK.version))
@@ -385,6 +402,22 @@ end
 local KIND_LABELS = { pve = "PvE", pvp = "PvP", rp = "RP", rppvp = "RP-PvP", hardcore = "Hardcore" }
 -- The realm name is sometimes empty (seen right after logging in), so
 -- the last one we got is remembered for this character.
+local LABEL_KINDS = { PvE = "pve", PvP = "pvp", RP = "rp", ["RP-PvP"] = "rppvp", Hardcore = "hardcore" }
+
+-- No realm name to go by (some Forever realms give none): what mages on
+-- this same realm say in their hellos, if most of them agree.
+local function RulesetFromNeighbors()
+    local votes, best, bestN, total = {}, nil, 0, 0
+    for sender, peer in pairs(SK.peers or {}) do
+        if type(sender) == "string" and not sender:find("-", 1, true) and peer.ruleset and LABEL_KINDS[peer.ruleset] then
+            votes[peer.ruleset] = (votes[peer.ruleset] or 0) + 1
+            total = total + 1
+        end
+    end
+    for label, n in pairs(votes) do if n > bestN then best, bestN = label, n end end
+    if best and bestN >= 2 and bestN * 3 >= total * 2 then return LABEL_KINDS[best] end
+end
+
 function SK.ServerKind()
     local kind = RealmKind(Plain(SK.RealmName()))
     if not kind and GetNormalizedRealmName then kind = RealmKind(Plain(SK.Try(GetNormalizedRealmName))) end
@@ -394,8 +427,27 @@ function SK.ServerKind()
         saved.rulesetOf = type(saved.rulesetOf) == "table" and saved.rulesetOf or {}
         if kind then saved.rulesetOf[guid] = kind else kind = saved.rulesetOf[guid] end
     end
+    -- No realm name: what you picked in /sk options (it's per account, so
+    -- it only counts where the realm name doesn't say), else your realm's mages.
+    local pick = SK.db and SK.db.rulesetPick
+    if not kind and pick and pick ~= "auto" and KIND_LABELS[pick] then kind = pick end
+    if not kind then kind = RulesetFromNeighbors() end
     return kind and KIND_LABELS[kind]
 end
+
+-- Can't tell at all: say so once per character, a minute after login.
+SK.Listen("READY", function()
+    if not (C_Timer and C_Timer.After) then return end
+    C_Timer.After(60, function()
+        if SK.ServerKind() then return end
+        local guid = UnitGUID and SK.Known(UnitGUID("player"))
+        if not (SK.db and type(guid) == "string") then return end
+        SK.db.rulesetAsked = type(SK.db.rulesetAsked) == "table" and SK.db.rulesetAsked or {}
+        if SK.db.rulesetAsked[guid] then return end
+        SK.db.rulesetAsked[guid] = true
+        SK.Print(L["can't tell which ruleset this realm is (its name doesn't say). Pick it in /sk options > Sharing > Your ruleset, so board posts and Fellow Mages work right."])
+    end)
+end)
 
 -- Someone's ruleset: what their hello says (1.2.1+), else from their realm
 -- (name suffix or character ID; no realm known means it's ours). Or nil.
@@ -438,6 +490,11 @@ local function Unreachable(sender, peer)
     -- They told us their ruleset (1.2.0 and up): that settles it.
     local mine = SK.ServerKind and SK.ServerKind()
     if peer.ruleset and mine and peer.ruleset ~= mine then return true end
+    -- No ruleset said (Scrollkeeper before 1.2.0) and only heard on the
+    -- public channel, which spans rulesets with no realm in the name: can't
+    -- tell, so not listed (a setting). Guild, group and friends are fine.
+    if not peer.ruleset and mine and (peer.source == "CHANNEL" or peer.source == nil)
+        and not (SK.db and SK.db.showUnknownRuleset) then return true end
     local realms = MyRealms()
     -- Another ruleset: the sender name says so ("Name-Realm"), or their ID does.
     local senderRealm = sender:match("%-([^%-]+)$")
@@ -614,12 +671,21 @@ end
 
 -- Everyone heard from recently, mages first (anonymous players aren't listed).
 function SK.PeerList()
-    local list = {}
+    local list, byMage = {}, {}
     for name, peer in pairs(SK.peers) do
         if Fresh(peer) and not peer.anonymous and not Unreachable(name, peer) then
-            list[#list + 1] = { name = Net.ShortName(name), sender = name, peer = peer }
+            -- Several alts of the same mage (or the mage and an alt): list that
+            -- mage once, by whoever was heard most recently, the mage first.
+            local mage = (peer.class ~= "MAGE" and (peer.alt and peer.alt.name or peer.altName) or Net.ShortName(name)):lower()
+            local entry = { name = Net.ShortName(name), sender = name, peer = peer }
+            local have = byMage[mage]
+            local better = not have
+                or (peer.class == "MAGE") ~= (have.peer.class == "MAGE") and peer.class == "MAGE"
+                or (peer.class == "MAGE") == (have.peer.class == "MAGE") and (peer.seen or 0) > (have.peer.seen or 0)
+            if better then byMage[mage] = entry end
         end
     end
+    for _, entry in pairs(byMage) do list[#list + 1] = entry end
     table.sort(list, function(a, b)
         local am, bm = a.peer.class == "MAGE", b.peer.class == "MAGE"
         if am ~= bm then return am end

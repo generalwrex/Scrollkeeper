@@ -1,3 +1,5 @@
+-- Scrollkeeper by generalwrex. Created 2026-11-16.
+-- Read the LICENSE file before using any of this code.
 -- Scrollkeeper: Modules/Backfire.lua
 -- Counts how often Comprehend Scroll backfires and turns you into a sheep.
 --
